@@ -1,0 +1,91 @@
+{
+  "url": "https://vanna.ai/docs/configure",
+  "title": "Chat with your",
+  "content": "Chat with your\n\nChoose your LLM provider and database to generate ready-to-use code for your Vanna agent.\n\nInstall the Package\n\nConfigure Your LLM\n\nConfigure Your Database\n\nConfigure Your Agent Memory\n\nAgent memory allows your agent to learn from past interactions by storing successful question-SQL pairs (or really more generically question-tool-argument tuples).\n\t\t\t\tWhen users ask similar questions in the future, the agent can search its memory to find relevant examples,\n\t\t\t\timproving accuracy and reducing the need to regenerate SQL from scratch.\n\nConfigure User Authentication\n\nDefine how users are identified and authenticated in your application. This example shows a simple cookie-based\n\t\t\t\tauthentication system that assigns group memberships based on user email.\n\nCreate Your Agent\n\nRun the Server\n\nComplete Code\n\nCopy and paste this complete example to get started with your configuration:",
+  "code_blocks": [
+    {
+      "language": "bash",
+      "code": "# Install Vanna with your selected dependencies \npip install 'vanna[anthropic,fastapi]'"
+    },
+    {
+      "language": "python",
+      "code": "# Set up Anthropic Claude as your LLM\nfrom vanna.integrations.anthropic import AnthropicLlmService\n\nllm = AnthropicLlmService(\n    model=\"claude-sonnet-4-5\",\n    api_key=\"sk-ant-...\"  # Or use os.getenv(\"ANTHROPIC_API_KEY\")\n)"
+    },
+    {
+      "language": "python",
+      "code": "# Import SQLite tool\nfrom vanna.tools import RunSqlTool\nfrom vanna.integrations.sqlite import SqliteRunner\n\n# Set up database connection\ndb_tool = RunSqlTool(\n    sql_runner=SqliteRunner(database_path=\"./your_database.db\")\n)"
+    },
+    {
+      "language": "python",
+      "code": "# Import agent memory tools\nfrom vanna.tools.agent_memory import SaveQuestionToolArgsTool, SearchSavedCorrectToolUsesTool, SaveTextMemoryTool\nfrom vanna.integrations.local.agent_memory import DemoAgentMemory\nfrom vanna.core.registry import ToolRegistry\n\n# Set up agent memory for learning from questions and SQL\nagent_memory = DemoAgentMemory(max_items=1000)\n\n# Register memory tools (they access agent_memory via ToolContext)\ntools = ToolRegistry()\ntools.register_local_tool(SaveQuestionToolArgsTool(), access_groups=['admin'])\ntools.register_local_tool(SearchSavedCorrectToolUsesTool(), access_groups=['admin', 'user'])\ntools.register_local_tool(SaveTextMemoryTool(), access_groups=['admin', 'user'])"
+    },
+    {
+      "language": "python",
+      "code": "# Import user authentication classes\nfrom vanna.core.user import UserResolver, User, RequestContext\n\n# Create a simple user resolver\nclass SimpleUserResolver(UserResolver):\n    async def resolve_user(self, request_context: RequestContext) -> User:\n        user_email = request_context.get_cookie('vanna_email') or 'guest@example.com'\n        group = 'admin' if user_email == 'admin@example.com' else 'user'\n        return User(id=user_email, email=user_email, group_memberships=[group])\n\n# Initialize the user resolver\nuser_resolver = SimpleUserResolver()"
+    },
+    {
+      "language": "python",
+      "code": "# Import base classes\nfrom vanna import Agent\nfrom vanna.core.registry import ToolRegistry\nfrom vanna.tools import VisualizeDataTool\n\n# Register tools\ntools = ToolRegistry()\ntools.register_local_tool(db_tool, access_groups=['admin', 'user'])\ntools.register_local_tool(SaveQuestionToolArgsTool(), access_groups=['admin'])\ntools.register_local_tool(SearchSavedCorrectToolUsesTool(), access_groups=['admin', 'user'])\ntools.register_local_tool(SaveTextMemoryTool(), access_groups=['admin', 'user'])\ntools.register_local_tool(VisualizeDataTool(), access_groups=['admin', 'user'])\n\n# Create your agent\nagent = Agent(\n    llm_service=llm,\n    tool_registry=tools,\n    user_resolver=user_resolver,\n    agent_memory=agent_memory\n)"
+    },
+    {
+      "language": "python",
+      "code": "# Run the server with FastAPI\nfrom vanna.servers.fastapi import VannaFastAPIServer\n\nserver = VannaFastAPIServer(agent)\nserver.run()  # Access at http://localhost:8000"
+    },
+    {
+      "language": "python",
+      "code": "# All imports at the top\nfrom vanna import Agent\nfrom vanna.core.registry import ToolRegistry\nfrom vanna.core.user import UserResolver, User, RequestContext\nfrom vanna.tools import RunSqlTool, VisualizeDataTool\nfrom vanna.tools.agent_memory import SaveQuestionToolArgsTool, SearchSavedCorrectToolUsesTool, SaveTextMemoryTool\nfrom vanna.servers.fastapi import VannaFastAPIServer\nfrom vanna.integrations.anthropic import AnthropicLlmService\nfrom vanna.integrations.sqlite import SqliteRunner\nfrom vanna.integrations.local.agent_memory import DemoAgentMemory\n\n# Configure your LLM\nllm = AnthropicLlmService(\n    model=\"claude-sonnet-4-5\",\n    api_key=\"sk-ant-...\"  # Or use os.getenv(\"ANTHROPIC_API_KEY\")\n)\n\n# Configure your database\ndb_tool = RunSqlTool(\n    sql_runner=SqliteRunner(database_path=\"./your_database.db\")\n)\n\n# Configure your agent memory\nagent_memory = DemoAgentMemory(max_items=1000)\n\n# Configure user authentication\nclass SimpleUserResolver(UserResolver):\n    async def resolve_user(self, request_context: RequestContext) -> User:\n        user_email = request_context.get_cookie('vanna_email') or 'guest@example.com'\n        group = 'admin' if user_email == 'admin@example.com' else 'user'\n        return User(id=user_email, email=user_email, group_memberships=[group])\n\nuser_resolver = SimpleUserResolver()\n\n# Create your agent\ntools = ToolRegistry()\ntools.register_local_tool(db_tool, access_groups=['admin', 'user'])\ntools.register_local_tool(SaveQuestionToolArgsTool(), access_groups=['admin'])\ntools.register_local_tool(SearchSavedCorrectToolUsesTool(), access_groups=['admin', 'user'])\ntools.register_local_tool(SaveTextMemoryTool(), access_groups=['admin', 'user'])\ntools.register_local_tool(VisualizeDataTool(), access_groups=['admin', 'user'])\n\nagent = Agent(\n    llm_service=llm,\n    tool_registry=tools,\n    user_resolver=user_resolver,\n    agent_memory=agent_memory\n)\n\n# Run the server\nserver = VannaFastAPIServer(agent)\nserver.run()  # Access at http://localhost:8000"
+    }
+  ],
+  "headings": [
+    {
+      "level": "h1",
+      "text": "Chat with your"
+    },
+    {
+      "level": "h2",
+      "text": "Install the Package"
+    },
+    {
+      "level": "h2",
+      "text": "Configure Your LLM"
+    },
+    {
+      "level": "h2",
+      "text": "Configure Your Database"
+    },
+    {
+      "level": "h2",
+      "text": "Configure Your Agent Memory"
+    },
+    {
+      "level": "h2",
+      "text": "Configure User Authentication"
+    },
+    {
+      "level": "h2",
+      "text": "Create Your Agent"
+    },
+    {
+      "level": "h2",
+      "text": "Run the Server"
+    },
+    {
+      "level": "h2",
+      "text": "Complete Code"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    }
+  ]
+}

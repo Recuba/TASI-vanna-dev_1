@@ -1,0 +1,67 @@
+{
+  "url": "https://vanna.ai/docs/databases",
+  "title": "Database Connection Strings",
+  "content": "Documentation Under Construction\n\nThis reference page will provide connection string formats and setup snippets for all built-in database connectors. Most users will configure their database in the Quick Start—this is for reference.\n\nPlanned Content\n\nWant to contribute or suggest improvements?\n\nWhen complete, this will show:\n\nDatabase\n\nModule\n\nConnection Format\n\nStatus\n\nPostgreSQL\n\n✅ Production\n\nMySQL\n\n✅ Production\n\nSQLite\n\n✅ Dev/Testing\n\nSnowflake\n\nAccount URL + OAuth\n\n✅ Production\n\nBigQuery\n\nService account JSON\n\n✅ Production",
+  "code_blocks": [
+    {
+      "language": "",
+      "code": "vanna.integrations.postgres"
+    },
+    {
+      "language": "",
+      "code": "postgresql://user:pass@host:5432/db"
+    },
+    {
+      "language": "",
+      "code": "vanna.integrations.mysql"
+    },
+    {
+      "language": "",
+      "code": "mysql://user:pass@host:3306/db"
+    },
+    {
+      "language": "",
+      "code": "vanna.integrations.sqlite"
+    },
+    {
+      "language": "",
+      "code": "sqlite:///path/to/db.sqlite3"
+    },
+    {
+      "language": "",
+      "code": "vanna.integrations.snowflake"
+    },
+    {
+      "language": "",
+      "code": "vanna.integrations.bigquery"
+    }
+  ],
+  "headings": [
+    {
+      "level": "h3",
+      "text": "Documentation Under Construction"
+    },
+    {
+      "level": "h4",
+      "text": "Planned Content"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/advanced/custom-database",
+      "text": "Custom Database Connectors"
+    }
+  ]
+}

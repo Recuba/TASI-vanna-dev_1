@@ -1,0 +1,34 @@
+{
+  "url": "https://vanna.ai/docs/llm/anthropic",
+  "title": "Anthropic Claude",
+  "content": "Documentation Under Construction\n\nThis page will show how to configure and use Anthropic Claude models with Vanna.\n\nPlanned Content\n\nWant to contribute or suggest improvements?",
+  "code_blocks": [],
+  "headings": [
+    {
+      "level": "h3",
+      "text": "Documentation Under Construction"
+    },
+    {
+      "level": "h4",
+      "text": "Planned Content"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/llm",
+      "text": "Llm"
+    }
+  ]
+}

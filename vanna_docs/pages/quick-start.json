@@ -1,0 +1,21 @@
+{
+  "url": "https://vanna.ai/docs/quick-start",
+  "title": "Quick Start",
+  "content": "Try Vanna in 30 seconds with sample data on Google Colab.\n\nThe notebook includes the Chinook sample database (a music store) where you can try natural language queries like:\n\n“What are the top 5 selling albums?”\n\n“Show me total sales by country”\n\n“Which artists have the most tracks?”\n\nChoose your LLM provider and database to get copy-paste ready code.",
+  "code_blocks": [],
+  "headings": [],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    }
+  ]
+}

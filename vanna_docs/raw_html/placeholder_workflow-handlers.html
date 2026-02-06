@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#15a8a8" />
+
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="32x32" />
+		<link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16" />
+		<link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
+		<link rel="icon" type="image/svg+xml" href="/vanna.svg" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.json" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+		<!-- Google tag (gtag.js) -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-1YZ053XQJ4"></script>
+		<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+
+		gtag('config', 'G-1YZ053XQJ4');
+
+		function gtag_report_conversion() {
+			console.log('gtag');
+		gtag('event', 'conversion', {
+			'send_to': 'AW-1047571796/EttBCO-3lrgYENTawvMD'
+		});
+		}
+		</script>
+		
+		<link href="../../_app/immutable/assets/0.zksLnzhI.css" rel="stylesheet">
+		<link href="../../_app/immutable/assets/GitHubStars.YEdjEA4A.css" rel="stylesheet">
+		<link href="../../_app/immutable/assets/2.xnTvn9Bk.css" rel="stylesheet">
+		<link href="../../_app/immutable/assets/43.DSVmCKC3.css" rel="stylesheet">
+		<link href="../../_app/immutable/assets/style.C5WwWho8.css" rel="stylesheet"><!--[--><link rel="icon" href="data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'%20standalone='no'?%3e%3c!DOCTYPE%20svg%20PUBLIC%20'-//W3C//DTD%20SVG%201.1//EN'%20'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'%3e%3csvg%20height='100%25'%20stroke-miterlimit='10'%20style='fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;'%20version='1.1'%20viewBox='0%200%201024%201024'%20width='100%25'%20xml:space='preserve'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:vectornator='http://vectornator.io'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cdefs%3e%3clinearGradient%20gradientTransform='matrix(1.09331%200%200%201.09331%20-47.1838%20-88.8946)'%20gradientUnits='userSpaceOnUse'%20id='LinearGradient'%20x1='237.82'%20x2='785.097'%20y1='549.609'%20y2='549.609'%3e%3cstop%20offset='0'%20stop-color='%23009efd'/%3e%3cstop%20offset='1'%20stop-color='%232af598'/%3e%3c/linearGradient%3e%3c/defs%3e%3cg%20id='Layer-1'%3e%3cg%20opacity='1'%3e%3cpath%20d='M212.828%20215.239C213.095%20281.169%20213.629%20413.028%20213.629%20413.028C213.629%20413.028%20511.51%20808.257%20513.993%20809.681C612.915%20677.809%20810.759%20414.065%20810.759%20414.065C810.759%20414.065%20811.034%20280.901%20811.172%20214.319C662.105%20362.973%20662.105%20362.973%20513.038%20511.627C362.933%20363.433%20362.933%20363.433%20212.828%20215.239Z'%20fill='url(%23LinearGradient)'%20fill-rule='nonzero'%20opacity='1'%20stroke='none'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e"/> <link rel="canonical" href="https://vanna.ai/docs/placeholder/workflow-handlers"/>  <meta name="description" content="Build AI agents that ship to production. User-scoped execution, rich UI components, and quota management built-in."/> <meta name="robots" content="index, follow, max-image-preview:large"/> <meta name="author" content="Vanna AI Team"/> <meta name="googlebot" content="index, follow"/>  <meta property="og:site_name" content="Vanna AI"/> <meta property="og:description" content="Build AI agents that ship to production. User-scoped execution, rich UI components, and quota management built-in."/> <meta property="og:image:width" content="1200"/> <meta property="og:image:height" content="630"/> <meta property="og:url" content="https://vanna.ai/docs/placeholder/workflow-handlers"/> <meta property="og:type" content="website"/> <meta property="og:locale" content="en_US"/> <meta name="twitter:card" content="summary_large_image"/> <meta name="twitter:site" content="@vannadotai"/> <meta name="twitter:creator" content="@vannadotai"/> <meta name="twitter:description" content="Build AI agents that ship to production. User-scoped execution, rich UI components, and quota management built-in."/> <!----><script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Vanna AI","url":"https://vanna.ai","logo":"https://vanna.ai/vanna.svg","sameAs":["https://github.com/vanna-ai/vanna","https://twitter.com/vannadotai","https://linkedin.com/company/vanna-ai"],"description":"Build AI agents that ship to production. User-scoped execution, rich UI components, and quota management built-in."}</script><!----> <!----><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","url":"https://vanna.ai","name":"Vanna AI","description":"Build AI agents that ship to production. User-scoped execution, rich UI components, and quota management built-in.","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://vanna.ai/docs?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script><!----><!--]--><!--[--><meta property="og:image" content="https://vanna.ai/og/architecture.png"/> <meta name="twitter:image" content="https://vanna.ai/og/architecture.png"/><!--]--><!--[--><!----><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Docs","item":"https://vanna.ai/docs"},{"@type":"ListItem","position":2,"name":"Placeholder","item":"https://vanna.ai/docs/placeholder"},{"@type":"ListItem","position":3,"name":"Workflow Handlers","item":"https://vanna.ai/docs/placeholder/workflow-handlers"}]}</script><!----><!--]--><title>Workflow Handlers - Vanna AI Docs</title>
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[--><!----><!--[--><!----><div class="relative min-h-screen bg-gradient-to-b from-vanna-cream via-white to-vanna-cream"><div class="pointer-events-none absolute inset-0 overflow-hidden"><div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(21,168,168,0.12),transparent_60%),radial-gradient(circle_at_bottom_right,rgba(254,93,38,0.08),transparent_65%)]"></div> <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, rgba(2, 61, 96, 0.3) 1px, transparent 0); background-size: 32px 32px;"></div> <div class="absolute inset-0 bg-grid-vanna-navy opacity-20" style="background-image: linear-gradient(rgba(2, 61, 96, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(2, 61, 96, 0.1) 1px, transparent 1px); background-size: 100px 100px;"></div> <div class="absolute left-[10%] top-[-12%] h-[26rem] w-[26rem] rounded-full bg-gradient-to-br from-vanna-teal/40 via-vanna-cream to-transparent blur-[180px]"></div> <div class="absolute right-[-12%] top-[18%] h-[30rem] w-[30rem] rounded-full bg-gradient-to-br from-vanna-orange/30 via-vanna-magenta/20 to-transparent blur-[220px]"></div></div> <nav class="sticky top-0 z-50 h-16 bg-vanna-cream/95 backdrop-blur border-b border-vanna-teal/30"><div class="h-full mx-auto flex items-center justify-between px-4 lg:px-8"><div class="flex items-center gap-4"><button class="lg:hidden p-2 text-vanna-navy hover:text-vanna-teal transition-colors" aria-label="Toggle sidebar"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button> <a href="/" class="flex items-center gap-2 text-sm font-medium text-vanna-navy hover:text-vanna-teal transition-colors font-sans"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> <span class="hidden sm:inline">Back to Vanna.ai</span> <span class="sm:hidden">Back</span></a></div> <span class="hidden md:block text-lg font-semibold text-vanna-navy font-serif">Documentation</span> <!--[--><a href="https://app.vanna.ai" class="inline-flex items-center justify-center font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 font-serif bg-vanna-teal text-white shadow-[0_12px_30px_rgba(21,168,168,0.35)] hover:shadow-[0_16px_40px_rgba(21,168,168,0.45)] hover:translate-y-[-1px] focus-visible:ring-vanna-teal focus-visible:ring-offset-white h-9 px-3 text-sm rounded-full"><!---->Get Started Free<!----></a><!--]--><!----></div></nav><!----> <div class="flex relative"><aside class=" -translate-x-full lg:translate-x-0 fixed lg:sticky top-0 lg:top-16 left-0 h-screen lg:h-[calc(100vh-4rem)] w-72 bg-vanna-cream/90 backdrop-blur-sm border-r border-vanna-teal/30 transition-transform duration-300 ease-in-out z-40 overflow-y-auto "><nav class="p-6"><div class="mb-8"><a href="/" class="flex items-center space-x-3 group"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="100%" stroke-miterlimit="10" style="fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;" version="1.1" viewBox="0 0 1024 1024" width="100%" xml:space="preserve" class="h-9 w-9"><defs><linearGradient gradientTransform="matrix(1.09331 0 0 1.09331 -47.1838 -88.8946)" gradientUnits="userSpaceOnUse" id="VannaLogoGradient" x1="237.82" x2="785.097" y1="549.609" y2="549.609"><stop offset="0" stop-color="#009efd"></stop><stop offset="1" stop-color="#2af598"></stop></linearGradient></defs><g id="Layer-1"><!--[--><circle cx="512" cy="512" r="480" fill="#023d60" opacity="1"></circle><!--]--><g opacity="1"><path d="M212.828 215.239C213.095 281.169 213.629 413.028 213.629 413.028C213.629 413.028 511.51 808.257 513.993 809.681C612.915 677.809 810.759 414.065 810.759 414.065C810.759 414.065 811.034 280.901 811.172 214.319C662.105 362.973 662.105 362.973 513.038 511.627C362.933 363.433 362.933 363.433 212.828 215.239Z" fill="url(#VannaLogoGradient)" fill-rule="nonzero" opacity="1" stroke="none"></path></g></g></svg><!----> <div><div class="text-xl font-semibold text-vanna-navy group-hover:text-vanna-teal transition-colors font-serif">Vanna AI</div> <div class="text-xs text-slate-500">Documentation</div></div></a></div> <div class="space-y-1"><!--[--><div class="mb-2"><button class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:bg-vanna-teal/5 rounded-lg transition-colors group"><span class="flex items-center gap-2 group-hover:text-vanna-navy transition-colors min-w-0 flex-1 text-left"><!--[--><span class="text-base flex-shrink-0">🚀</span><!--]--> <span class="leading-tight break-words">Getting Started</span></span> <svg class="w-4 h-4 flex-shrink-0 ml-2 transition-transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button> <!--[--><ul class="mt-1 space-y-0.5 pl-2"><!--[--><li><a href="/docs" class="group block px-3 py-2 text-sm rounded-lg transition-all text-slate-700 hover:bg-vanna-teal/10 hover:text-vanna-navy" title="What is Vanna 2.0?"><div class="flex items-start gap-2"><div class="flex items-start min-w-0 flex-1"><!--[!--><!--]--> <span class="leading-tight break-words">What is Vanna 2.0?</span></div> <!--[!--><!--]--></div></a></li><li><a href="/docs/quick-start" class="group block px-3 py-2 text-sm rounded-lg transition-all text-slate-700 hover:bg-vanna-teal/10 hover:text-vanna-navy" title="Quickstart with Sample Database"><div class="flex items-start gap-2"><div class="flex items-start min-w-0 flex-1"><!--[!--><!--]--> <span class="leading-tight break-words">Quickstart with Sample Database</span></div> <!--[--><span class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-vanna-teal/20 text-vanna-navy font-medium whitespace-nowrap leading-tight">30 sec</span><!--]--></div></a></li><li><a href="/docs/configure" class="group block px-3 py-2 text-sm rounded-lg transition-all text-slate-700 hover:bg-vanna-teal/10 hover:text-vanna-navy" title="Connect to Your Own Database"><div class="flex items-start gap-2"><div class="flex items-start min-w-0 flex-1"><!--[!--><!--]--> <span class="leading-tight break-words">Connect to Your Own Database</span></div> <!--[--><span class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-vanna-teal/20 text-vanna-navy font-medium whitespace-nowrap leading-tight">5 min</span><!--]--></div></a></li><li><a href="/docs/migration" class="group block px-3 py-2 text-sm rounded-lg transition-all text-slate-700 hover:bg-vanna-teal/10 hover:text-vanna-navy" title="Migration from 0.x"><div class="flex items-start gap-2"><div class="flex items-start min-w-0 flex-1"><!--[!--><!--]--> <span class="leading-tight break-words">Migration from 0.x</span></div> <!--[!--><!--]--></div></a></li><!--]--></ul><!--]--></div><div class="mb-2"><button class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:bg-vanna-teal/5 rounded-lg transition-colors group"><span class="flex items-center gap-2 group-hover:text-vanna-navy transition-colors min-w-0 flex-1 text-left"><!--[--><span class="text-base flex-shrink-0">🔐</span><!--]--> <span class="leading-tight break-words">Authentication &amp; Permissions</span></span> <svg class="w-4 h-4 flex-shrink-0 ml-2 transition-transform " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button> <!--[!--><!--]--></div><div class="mb-2"><button class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:bg-vanna-teal/5 rounded-lg transition-colors group"><span class="flex items-center gap-2 group-hover:text-vanna-navy transition-colors min-w-0 flex-1 text-left"><!--[--><span class="text-base flex-shrink-0">🎨</span><!--]--> <span class="leading-tight break-words">Web UI</span></span> <svg class="w-4 h-4 flex-shrink-0 ml-2 transition-transform " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button> <!--[!--><!--]--></div><div class="mb-2"><button class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:bg-vanna-teal/5 rounded-lg transition-colors group"><span class="flex items-center gap-2 group-hover:text-vanna-navy transition-colors min-w-0 flex-1 text-left"><!--[--><span class="text-base flex-shrink-0">🚢</span><!--]--> <span class="leading-tight break-words">Deployment</span></span> <svg class="w-4 h-4 flex-shrink-0 ml-2 transition-transform " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button> <!--[!--><!--]--></div><div class="mb-2"><button class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:bg-vanna-teal/5 rounded-lg transition-colors group"><span class="flex items-center gap-2 group-hover:text-vanna-navy transition-colors min-w-0 flex-1 text-left"><!--[--><span class="text-base flex-shrink-0">🔧</span><!--]--> <span class="leading-tight break-words">Customization</span></span> <svg class="w-4 h-4 flex-shrink-0 ml-2 transition-transform " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button> <!--[!--><!--]--></div><div class="mb-2"><button class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:bg-vanna-teal/5 rounded-lg transition-colors group"><span class="flex items-center gap-2 group-hover:text-vanna-navy transition-colors min-w-0 flex-1 text-left"><!--[--><span class="text-base flex-shrink-0">🎓</span><!--]--> <span class="leading-tight break-words">Advanced</span></span> <svg class="w-4 h-4 flex-shrink-0 ml-2 transition-transform " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button> <!--[!--><!--]--></div><div class="mb-2"><button class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:bg-vanna-teal/5 rounded-lg transition-colors group"><span class="flex items-center gap-2 group-hover:text-vanna-navy transition-colors min-w-0 flex-1 text-left"><!--[--><span class="text-base flex-shrink-0">🔍</span><!--]--> <span class="leading-tight break-words">API Reference</span></span> <svg class="w-4 h-4 flex-shrink-0 ml-2 transition-transform " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button> <!--[!--><!--]--></div><div class="mb-2"><button class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider hover:bg-vanna-teal/5 rounded-lg transition-colors group"><span class="flex items-center gap-2 group-hover:text-vanna-navy transition-colors min-w-0 flex-1 text-left"><!--[--><span class="text-base flex-shrink-0">❓</span><!--]--> <span class="leading-tight break-words">Help &amp; Support</span></span> <svg class="w-4 h-4 flex-shrink-0 ml-2 transition-transform " fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button> <!--[!--><!--]--></div><!--]--></div> <div class="mt-8 px-3"><a href="https://github.com/vanna-ai/vanna" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-lg hover:border-slate-300 hover:shadow-md transition-all group svelte-qyb6s4"><svg class="w-5 h-5 text-slate-700 group-hover:text-slate-900 transition-colors" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg> <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Star</span> <div class="flex items-center space-x-1 px-2 py-0.5 bg-slate-100 rounded-md min-w-[3rem] justify-center"><!--[--><div class="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div><!--]--></div></a><!----></div> <div class="mt-6 pt-6 border-t border-slate-200"><div class="space-y-2"><a href="/" class="flex items-center space-x-2 px-3 py-2 text-sm text-slate-600 hover:text-vanna-navy hover:bg-vanna-teal/10 rounded-lg transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg> <span>Back to Home</span></a></div></div></nav><!----></aside> <!--[!--><!--]--> <div class="flex-1 flex relative"><main class="flex-1 px-4 py-8 lg:px-12 lg:py-12 max-w-4xl relative"><!--[--><nav aria-label="Breadcrumb" class="flex items-center space-x-2 text-sm mb-6"><!--[--><!--[!--><!--]--> <!--[!--><a href="/docs" class="text-slate-600 hover:text-blue-600 transition-colors">Docs</a><!--]--><!--[--><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg><!--]--> <!--[!--><a href="/docs/placeholder" class="text-slate-600 hover:text-blue-600 transition-colors">Placeholder</a><!--]--><!--[--><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg><!--]--> <!--[--><span class="font-medium text-slate-900">Workflow Handlers</span><!--]--><!--]--></nav><!--]--> <!--[!--><!--]--> <article class="prose prose-slate max-w-none"><!--[--><!----><div class="mb-8 rounded-lg border-2 border-vanna-magenta/40 bg-gradient-to-br from-vanna-magenta/10 via-vanna-orange/5 to-vanna-cream/40 p-6 shadow-[0_4px_12px_rgba(191,19,99,0.2)]"><div class="flex items-start space-x-3"><div class="flex-shrink-0 mt-0.5"><svg class="h-6 w-6 text-vanna-magenta" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></div> <div class="flex-1"><h3 class="text-base font-semibold text-vanna-navy mb-2">AI-Generated Placeholder Documentation</h3> <p class="text-sm text-slate-700 mb-3">This documentation page has been automatically generated by a Large Language Model (LLM) and serves as placeholder content. The information provided here may be incomplete, inaccurate, or subject to change.</p> <p class="text-sm text-slate-700">For accurate and complete information, please refer to the <a href="https://github.com/vanna-ai/vanna" target="_blank" rel="noopener noreferrer" class="text-vanna-teal hover:text-vanna-navy font-medium underline">Vanna source code on GitHub</a>.</p></div></div></div> <!----><h1 id="workflow-handlers"><a aria-hidden="true" tabindex="-1" href="#workflow-handlers"><span class="icon icon-link"></span></a>Workflow Handlers</h1> <p>Workflow handlers allow you to intercept user messages and execute deterministic workflows before they reach the LLM. This is the first extensibility point in the agent’s message processing pipeline.</p> <div class="flow-container svelte-txa2qx"><div class="legend svelte-txa2qx"><div class="legend-item svelte-txa2qx"><div class="legend-color workflow-handler svelte-txa2qx"></div> <span>Workflow Handler - First interceptor</span></div> <div class="legend-item svelte-txa2qx"><div class="legend-color triggered-path svelte-txa2qx"></div> <span>Triggered Path - Skip LLM, return UI</span></div> <div class="legend-item svelte-txa2qx"><div class="legend-color normal-path svelte-txa2qx"></div> <span>Normal Path - Continue to LLM</span></div> <div class="legend-item svelte-txa2qx"><div class="legend-color starter-ui svelte-txa2qx"></div> <span>Starter UI - Welcome/onboarding flow</span></div></div> <!--[!--><div class="flow-wrapper loading svelte-txa2qx">Loading diagram...</div><!--]--></div><!----> <h2 id="workflowhandler-interface"><a aria-hidden="true" tabindex="-1" href="#workflowhandler-interface"><span class="icon icon-link"></span></a>WorkflowHandler Interface</h2> <p>All workflow handlers extend the <code>WorkflowHandler</code> base class:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">from</span> vanna<span class="token punctuation">.</span>core<span class="token punctuation">.</span>workflow <span class="token keyword">import</span> WorkflowHandler<span class="token punctuation">,</span> TriggerResult
+<span class="token keyword">from</span> vanna<span class="token punctuation">.</span>core<span class="token punctuation">.</span>user <span class="token keyword">import</span> User
+<span class="token keyword">from</span> vanna<span class="token punctuation">.</span>core<span class="token punctuation">.</span>storage <span class="token keyword">import</span> Conversation
+<span class="token keyword">from</span> vanna<span class="token punctuation">.</span>components <span class="token keyword">import</span> UiComponent
+
+<span class="token keyword">class</span> <span class="token class-name">WorkflowHandler</span><span class="token punctuation">(</span>ABC<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>
+        self<span class="token punctuation">,</span>
+        agent<span class="token punctuation">:</span> Agent<span class="token punctuation">,</span>
+        user<span class="token punctuation">:</span> User<span class="token punctuation">,</span>
+        conversation<span class="token punctuation">:</span> Conversation<span class="token punctuation">,</span>
+        message<span class="token punctuation">:</span> <span class="token builtin">str</span>
+    <span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> TriggerResult<span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">"""Attempt to handle a workflow for the given message"""</span>
+        <span class="token keyword">pass</span>
+    
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">get_starter_ui</span><span class="token punctuation">(</span>
+        self<span class="token punctuation">,</span>
+        agent<span class="token punctuation">:</span> Agent<span class="token punctuation">,</span>
+        user<span class="token punctuation">:</span> User<span class="token punctuation">,</span>
+        conversation<span class="token punctuation">:</span> Conversation
+    <span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> Optional<span class="token punctuation">[</span>List<span class="token punctuation">[</span>UiComponent<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">"""Provide UI components when a conversation starts"""</span>
+        <span class="token keyword">return</span> <span class="token boolean">None</span></code><!----></pre> <h2 id="triggerresult"><a aria-hidden="true" tabindex="-1" href="#triggerresult"><span class="icon icon-link"></span></a>TriggerResult</h2> <p>When a workflow is handled, it returns a <code>TriggerResult</code>:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">from</span> dataclasses <span class="token keyword">import</span> dataclass
+<span class="token keyword">from</span> typing <span class="token keyword">import</span> List<span class="token punctuation">,</span> Optional<span class="token punctuation">,</span> Union<span class="token punctuation">,</span> AsyncGenerator<span class="token punctuation">,</span> Callable<span class="token punctuation">,</span> Awaitable
+
+<span class="token decorator annotation punctuation">@dataclass</span>
+<span class="token keyword">class</span> <span class="token class-name">TriggerResult</span><span class="token punctuation">:</span>
+    triggered<span class="token punctuation">:</span> <span class="token builtin">bool</span>  <span class="token comment"># If True, skip LLM processing</span>
+    components<span class="token punctuation">:</span> Optional<span class="token punctuation">[</span>Union<span class="token punctuation">[</span>List<span class="token punctuation">[</span>UiComponent<span class="token punctuation">]</span><span class="token punctuation">,</span> AsyncGenerator<span class="token punctuation">[</span>UiComponent<span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token boolean">None</span>
+    conversation_mutation<span class="token punctuation">:</span> Optional<span class="token punctuation">[</span>Callable<span class="token punctuation">[</span><span class="token punctuation">[</span>Conversation<span class="token punctuation">]</span><span class="token punctuation">,</span> Awaitable<span class="token punctuation">[</span><span class="token boolean">None</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token boolean">None</span></code><!----></pre> <h2 id="registering-handlers"><a aria-hidden="true" tabindex="-1" href="#registering-handlers"><span class="icon icon-link"></span></a>Registering Handlers</h2> <p>Add handlers when creating your agent:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">from</span> vanna <span class="token keyword">import</span> Agent<span class="token punctuation">,</span> DefaultWorkflowHandler
+
+<span class="token comment"># Option 1: Use the default handler (recommended for most users)</span>
+agent <span class="token operator">=</span> Agent<span class="token punctuation">(</span>
+    llm_service<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    tool_registry<span class="token operator">=</span>tool_registry<span class="token punctuation">,</span>
+    user_resolver<span class="token operator">=</span>user_resolver
+    <span class="token comment"># workflow_handler defaults to DefaultWorkflowHandler()</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># Option 2: Use a custom handler</span>
+agent <span class="token operator">=</span> Agent<span class="token punctuation">(</span>
+    llm_service<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    tool_registry<span class="token operator">=</span>tool_registry<span class="token punctuation">,</span>
+    user_resolver<span class="token operator">=</span>user_resolver<span class="token punctuation">,</span>
+    workflow_handler<span class="token operator">=</span>MyCustomHandler<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># Option 3: Disable workflow handling entirely</span>
+agent <span class="token operator">=</span> Agent<span class="token punctuation">(</span>
+    llm_service<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    tool_registry<span class="token operator">=</span>tool_registry<span class="token punctuation">,</span>
+    user_resolver<span class="token operator">=</span>user_resolver<span class="token punctuation">,</span>
+    workflow_handler<span class="token operator">=</span><span class="token boolean">None</span>
+<span class="token punctuation">)</span></code><!----></pre> <h2 id="default-workflow-handler"><a aria-hidden="true" tabindex="-1" href="#default-workflow-handler"><span class="icon icon-link"></span></a>Default Workflow Handler</h2> <p>Vanna includes a <code>DefaultWorkflowHandler</code> that provides:</p> <h3 id="-setup-health-checking"><a aria-hidden="true" tabindex="-1" href="#-setup-health-checking"><span class="icon icon-link"></span></a>🔍 <strong>Setup Health Checking</strong></h3> <ul><li>Automatically detects critical tools (<code>run_sql</code>)</li> <li>Warns about missing memory tools</li> <li>Suggests improvements for incomplete setups</li></ul> <h3 id="-smart-starter-ui"><a aria-hidden="true" tabindex="-1" href="#-smart-starter-ui"><span class="icon icon-link"></span></a>🎨 <strong>Smart Starter UI</strong></h3> <ul><li><strong>Complete Setup</strong>: Welcome message with quick actions</li> <li><strong>Functional Setup</strong>: SQL available, suggestions for memory/viz tools</li> <li><strong>Incomplete Setup</strong>: Clear error messages and setup guidance</li></ul> <h3 id="-built-in-commands"><a aria-hidden="true" tabindex="-1" href="#-built-in-commands"><span class="icon icon-link"></span></a>💬 <strong>Built-in Commands</strong></h3> <ul><li><code>/help</code> - Show help and available commands</li> <li><code>/status</code> - Detailed setup status report</li></ul> <h3 id="-tool-analysis"><a aria-hidden="true" tabindex="-1" href="#-tool-analysis"><span class="icon icon-link"></span></a>📊 <strong>Tool Analysis</strong></h3> <p>The default handler checks for:</p> <ul><li><strong>Critical</strong>: <code>run_sql</code>, <code>sql_query</code>, <code>execute_sql</code> (required)</li> <li><strong>Memory</strong>: <code>search_saved_correct_tool_uses</code>, <code>save_question_tool_args</code> (recommended)</li> <li><strong>Visualization</strong>: <code>visualize_data</code>, <code>create_chart</code>, <code>plot_data</code> (optional)</li> <li><strong>Utilities</strong>: <code>calculator</code>, etc.</li></ul> <h3 id="example-starter-ui"><a aria-hidden="true" tabindex="-1" href="#example-starter-ui"><span class="icon icon-link"></span></a>Example Starter UI</h3> <pre class="language-python"><!----><code class="language-python"><span class="token comment"># Complete setup - shows success message</span>
+StatusCardComponent<span class="token punctuation">(</span>
+    title<span class="token operator">=</span><span class="token string">"SQL Connection"</span><span class="token punctuation">,</span> 
+    status<span class="token operator">=</span><span class="token string">"success"</span><span class="token punctuation">,</span>
+    description<span class="token operator">=</span><span class="token string">"Database connection configured and ready"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># Missing SQL - shows error</span>
+StatusCardComponent<span class="token punctuation">(</span>
+    title<span class="token operator">=</span><span class="token string">"SQL Connection"</span><span class="token punctuation">,</span>
+    status<span class="token operator">=</span><span class="token string">"error"</span><span class="token punctuation">,</span> 
+    description<span class="token operator">=</span><span class="token string">"No SQL tool detected - this is required"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># Missing memory - shows warning  </span>
+StatusCardComponent<span class="token punctuation">(</span>
+    title<span class="token operator">=</span><span class="token string">"Memory System"</span><span class="token punctuation">,</span>
+    status<span class="token operator">=</span><span class="token string">"warning"</span><span class="token punctuation">,</span>
+    description<span class="token operator">=</span><span class="token string">"Memory tools not configured - I won't remember patterns"</span>
+<span class="token punctuation">)</span></code><!----></pre> <h2 id="use-cases"><a aria-hidden="true" tabindex="-1" href="#use-cases"><span class="icon icon-link"></span></a>Use Cases</h2> <h3 id="1-command-handling"><a aria-hidden="true" tabindex="-1" href="#1-command-handling"><span class="icon icon-link"></span></a>1. Command Handling</h3> <p>Handle slash commands and quick actions:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">CommandHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> message<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"/help"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                components<span class="token operator">=</span><span class="token punctuation">[</span>
+                    RichTextComponent<span class="token punctuation">(</span>
+                        content<span class="token operator">=</span><span class="token string">"## Available Commands&#92;n&#92;n- &#96;/help&#96; - Show this help&#92;n- &#96;/reset&#96; - Clear conversation&#92;n- &#96;/report&#96; - Generate report"</span><span class="token punctuation">,</span>
+                        markdown<span class="token operator">=</span><span class="token boolean">True</span>
+                    <span class="token punctuation">)</span>
+                <span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+        
+        <span class="token keyword">if</span> message<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"/reset"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">clear_conversation</span><span class="token punctuation">(</span>conv<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                conv<span class="token punctuation">.</span>messages<span class="token punctuation">.</span>clear<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                components<span class="token operator">=</span><span class="token punctuation">[</span>
+                    StatusCardComponent<span class="token punctuation">(</span>
+                        title<span class="token operator">=</span><span class="token string">"Conversation Reset"</span><span class="token punctuation">,</span>
+                        status<span class="token operator">=</span><span class="token string">"success"</span><span class="token punctuation">,</span>
+                        description<span class="token operator">=</span><span class="token string">"Your conversation has been cleared."</span>
+                    <span class="token punctuation">)</span>
+                <span class="token punctuation">]</span><span class="token punctuation">,</span>
+                conversation_mutation<span class="token operator">=</span>clear_conversation
+            <span class="token punctuation">)</span>
+        
+        <span class="token comment"># Continue to LLM</span>
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h3 id="2-rate-limiting-with-upgrade-ui"><a aria-hidden="true" tabindex="-1" href="#2-rate-limiting-with-upgrade-ui"><span class="icon icon-link"></span></a>2. Rate Limiting with Upgrade UI</h3> <p>Enforce quotas and show upgrade prompts:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">from</span> vanna<span class="token punctuation">.</span>components <span class="token keyword">import</span> StatusCardComponent<span class="token punctuation">,</span> ButtonComponent<span class="token punctuation">,</span> ButtonGroupComponent
+
+<span class="token keyword">class</span> <span class="token class-name">RateLimitHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> quota_service<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>quota_service <span class="token operator">=</span> quota_service
+    
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment"># Check user's quota</span>
+        remaining <span class="token operator">=</span> <span class="token keyword">await</span> self<span class="token punctuation">.</span>quota_service<span class="token punctuation">.</span>get_remaining<span class="token punctuation">(</span>user<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">)</span>
+        
+        <span class="token keyword">if</span> remaining <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                components<span class="token operator">=</span><span class="token punctuation">[</span>
+                    StatusCardComponent<span class="token punctuation">(</span>
+                        title<span class="token operator">=</span><span class="token string">"Monthly Limit Reached"</span><span class="token punctuation">,</span>
+                        status<span class="token operator">=</span><span class="token string">"warning"</span><span class="token punctuation">,</span>
+                        description<span class="token operator">=</span><span class="token string-interpolation"><span class="token string">f"You've used all </span><span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token keyword">await</span> self<span class="token punctuation">.</span>quota_service<span class="token punctuation">.</span>get_quota<span class="token punctuation">(</span>user<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span></span><span class="token string"> messages this month"</span></span><span class="token punctuation">,</span>
+                        icon<span class="token operator">=</span><span class="token string">"⚠️"</span>
+                    <span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    RichTextComponent<span class="token punctuation">(</span>
+                        content<span class="token operator">=</span><span class="token string">"## Upgrade to Continue&#92;n&#92;n✨ **Pro Plan Benefits:**&#92;n- Unlimited messages&#92;n- Priority support&#92;n- Advanced features&#92;n- Custom integrations"</span><span class="token punctuation">,</span>
+                        markdown<span class="token operator">=</span><span class="token boolean">True</span>
+                    <span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    ButtonGroupComponent<span class="token punctuation">(</span>
+                        buttons<span class="token operator">=</span><span class="token punctuation">[</span>
+                            <span class="token punctuation">&#123;</span>
+                                <span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"Upgrade Now"</span><span class="token punctuation">,</span>
+                                <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string-interpolation"><span class="token string">f"https://billing.example.com/upgrade?user=</span><span class="token interpolation"><span class="token punctuation">&#123;</span>user<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">,</span>
+                                <span class="token string">"variant"</span><span class="token punctuation">:</span> <span class="token string">"primary"</span>
+                            <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+                            <span class="token punctuation">&#123;</span>
+                                <span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"View Usage"</span><span class="token punctuation">,</span>
+                                <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"/usage"</span><span class="token punctuation">,</span>
+                                <span class="token string">"variant"</span><span class="token punctuation">:</span> <span class="token string">"secondary"</span>
+                            <span class="token punctuation">&#125;</span>
+                        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+                        orientation<span class="token operator">=</span><span class="token string">"horizontal"</span>
+                    <span class="token punctuation">)</span>
+                <span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+        
+        <span class="token comment"># Decrement quota and continue</span>
+        <span class="token keyword">await</span> self<span class="token punctuation">.</span>quota_service<span class="token punctuation">.</span>decrement<span class="token punctuation">(</span>user<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h3 id="3-pattern-based-routing"><a aria-hidden="true" tabindex="-1" href="#3-pattern-based-routing"><span class="icon icon-link"></span></a>3. Pattern-Based Routing</h3> <p>Route specific patterns to tools:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">import</span> re
+
+<span class="token keyword">class</span> <span class="token class-name">ReportHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment"># Match report generation patterns</span>
+        report_patterns <span class="token operator">=</span> <span class="token punctuation">[</span>
+            <span class="token string">r"generate (w+) report"</span><span class="token punctuation">,</span>
+            <span class="token string">r"create (w+) analysis"</span><span class="token punctuation">,</span>
+            <span class="token string">r"show me (w+) data"</span>
+        <span class="token punctuation">]</span>
+        
+        <span class="token keyword">for</span> pattern <span class="token keyword">in</span> report_patterns<span class="token punctuation">:</span>
+            <span class="token keyword">match</span> <span class="token operator">=</span> re<span class="token punctuation">.</span>search<span class="token punctuation">(</span>pattern<span class="token punctuation">,</span> message<span class="token punctuation">.</span>lower<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> <span class="token keyword">match</span><span class="token punctuation">:</span>
+                report_type <span class="token operator">=</span> <span class="token keyword">match</span><span class="token punctuation">.</span>group<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+                
+                <span class="token comment"># Execute report tool directly</span>
+                tool <span class="token operator">=</span> <span class="token keyword">await</span> agent<span class="token punctuation">.</span>tool_registry<span class="token punctuation">.</span>get_tool<span class="token punctuation">(</span><span class="token string">"generate_report"</span><span class="token punctuation">)</span>
+                context <span class="token operator">=</span> ToolContext<span class="token punctuation">(</span>
+                    user<span class="token operator">=</span>user<span class="token punctuation">,</span>
+                    conversation_id<span class="token operator">=</span>conversation<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">,</span>
+                    request_id<span class="token operator">=</span><span class="token builtin">str</span><span class="token punctuation">(</span>uuid<span class="token punctuation">.</span>uuid4<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">)</span>
+                
+                result <span class="token operator">=</span> <span class="token keyword">await</span> tool<span class="token punctuation">.</span>execute<span class="token punctuation">(</span>context<span class="token punctuation">,</span> <span class="token punctuation">&#123;</span><span class="token string">"type"</span><span class="token punctuation">:</span> report_type<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+                
+                <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                    triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                    components<span class="token operator">=</span><span class="token punctuation">[</span>result<span class="token punctuation">.</span>ui_component<span class="token punctuation">]</span> <span class="token keyword">if</span> result<span class="token punctuation">.</span>ui_component <span class="token keyword">else</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+                <span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h3 id="4-state-based-workflows"><a aria-hidden="true" tabindex="-1" href="#4-state-based-workflows"><span class="icon icon-link"></span></a>4. State-Based Workflows</h3> <p>Handle onboarding and multi-step processes:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">OnboardingHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment"># Check if user needs onboarding</span>
+        <span class="token keyword">if</span> user<span class="token punctuation">.</span>metadata<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"needs_onboarding"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            step <span class="token operator">=</span> user<span class="token punctuation">.</span>metadata<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"onboarding_step"</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+            
+            <span class="token keyword">if</span> step <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">:</span>
+                <span class="token comment"># Welcome step</span>
+                <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">update_step</span><span class="token punctuation">(</span>conv<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                    user<span class="token punctuation">.</span>metadata<span class="token punctuation">[</span><span class="token string">"onboarding_step"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">2</span>
+                
+                <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                    triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                    components<span class="token operator">=</span><span class="token punctuation">[</span>
+                        RichTextComponent<span class="token punctuation">(</span>
+                            content<span class="token operator">=</span><span class="token string">"# Welcome to Vanna! 👋&#92;n&#92;nLet's get you set up in 3 quick steps."</span><span class="token punctuation">,</span>
+                            markdown<span class="token operator">=</span><span class="token boolean">True</span>
+                        <span class="token punctuation">)</span><span class="token punctuation">,</span>
+                        ButtonComponent<span class="token punctuation">(</span>
+                            label<span class="token operator">=</span><span class="token string">"Get Started"</span><span class="token punctuation">,</span>
+                            action<span class="token operator">=</span><span class="token string">"Continue onboarding"</span><span class="token punctuation">,</span>
+                            variant<span class="token operator">=</span><span class="token string">"primary"</span>
+                        <span class="token punctuation">)</span>
+                    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+                    conversation_mutation<span class="token operator">=</span>update_step
+                <span class="token punctuation">)</span>
+            
+            <span class="token keyword">elif</span> step <span class="token operator">==</span> <span class="token number">2</span><span class="token punctuation">:</span>
+                <span class="token comment"># Configuration step</span>
+                <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                    triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                    components<span class="token operator">=</span><span class="token punctuation">[</span>
+                        StatusCardComponent<span class="token punctuation">(</span>
+                            title<span class="token operator">=</span><span class="token string">"Step 2: Database Connection"</span><span class="token punctuation">,</span>
+                            status<span class="token operator">=</span><span class="token string">"pending"</span><span class="token punctuation">,</span>
+                            description<span class="token operator">=</span><span class="token string">"Let's connect to your database"</span>
+                        <span class="token punctuation">)</span><span class="token punctuation">,</span>
+                        <span class="token comment"># ... configuration UI</span>
+                    <span class="token punctuation">]</span>
+                <span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h3 id="5-permission-based-access"><a aria-hidden="true" tabindex="-1" href="#5-permission-based-access"><span class="icon icon-link"></span></a>5. Permission-Based Access</h3> <p>Control access to features:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">PermissionHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment"># Check for admin commands</span>
+        <span class="token keyword">if</span> message<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"/admin"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token string">"admin"</span> <span class="token keyword">not</span> <span class="token keyword">in</span> user<span class="token punctuation">.</span>group_memberships<span class="token punctuation">:</span>
+                <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                    triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                    components<span class="token operator">=</span><span class="token punctuation">[</span>
+                        StatusCardComponent<span class="token punctuation">(</span>
+                            title<span class="token operator">=</span><span class="token string">"Access Denied"</span><span class="token punctuation">,</span>
+                            status<span class="token operator">=</span><span class="token string">"error"</span><span class="token punctuation">,</span>
+                            description<span class="token operator">=</span><span class="token string">"You don't have permission to use admin commands."</span><span class="token punctuation">,</span>
+                            icon<span class="token operator">=</span><span class="token string">"🚫"</span>
+                        <span class="token punctuation">)</span>
+                    <span class="token punctuation">]</span>
+                <span class="token punctuation">)</span>
+            
+            <span class="token comment"># Handle admin commands</span>
+            <span class="token keyword">if</span> <span class="token string">"/admin users"</span> <span class="token keyword">in</span> message<span class="token punctuation">:</span>
+                <span class="token comment"># Show user management interface</span>
+                <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                    triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                    components<span class="token operator">=</span><span class="token punctuation">[</span>
+                        <span class="token comment"># Admin UI components</span>
+                    <span class="token punctuation">]</span>
+                <span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h2 id="starter-ui"><a aria-hidden="true" tabindex="-1" href="#starter-ui"><span class="icon icon-link"></span></a>Starter UI</h2> <p>Provide welcome messages and quick actions:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">StarterUIHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">get_starter_ui</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment"># Role-based starter UI</span>
+        <span class="token keyword">if</span> <span class="token string">"analyst"</span> <span class="token keyword">in</span> user<span class="token punctuation">.</span>group_memberships<span class="token punctuation">:</span>
+            <span class="token comment"># Get available report tools dynamically</span>
+            tools <span class="token operator">=</span> <span class="token keyword">await</span> agent<span class="token punctuation">.</span>tool_registry<span class="token punctuation">.</span>get_schemas<span class="token punctuation">(</span>user<span class="token punctuation">)</span>
+            report_tools <span class="token operator">=</span> <span class="token punctuation">[</span>t <span class="token keyword">for</span> t <span class="token keyword">in</span> tools <span class="token keyword">if</span> t<span class="token punctuation">.</span>name<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"report_"</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+            
+            buttons <span class="token operator">=</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">&#123;</span>
+                    <span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string-interpolation"><span class="token string">f"📊 </span><span class="token interpolation"><span class="token punctuation">&#123;</span>tool<span class="token punctuation">.</span>name<span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">'report_'</span><span class="token punctuation">,</span> <span class="token string">''</span><span class="token punctuation">)</span><span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span></span><span class="token string"> Report"</span></span><span class="token punctuation">,</span>
+                    <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string-interpolation"><span class="token string">f"/</span><span class="token interpolation"><span class="token punctuation">&#123;</span>tool<span class="token punctuation">.</span>name<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">,</span>
+                    <span class="token string">"variant"</span><span class="token punctuation">:</span> <span class="token string">"secondary"</span>
+                <span class="token punctuation">&#125;</span>
+                <span class="token keyword">for</span> tool <span class="token keyword">in</span> report_tools<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span>  <span class="token comment"># Show top 3</span>
+            <span class="token punctuation">]</span>
+            
+            <span class="token keyword">return</span> <span class="token punctuation">[</span>
+                RichTextComponent<span class="token punctuation">(</span>
+                    content<span class="token operator">=</span><span class="token string-interpolation"><span class="token string">f"# Welcome back, </span><span class="token interpolation"><span class="token punctuation">&#123;</span>user<span class="token punctuation">.</span>username<span class="token punctuation">&#125;</span></span><span class="token string">! 👋&#92;n&#92;nReady to analyze some data?"</span></span><span class="token punctuation">,</span>
+                    markdown<span class="token operator">=</span><span class="token boolean">True</span>
+                <span class="token punctuation">)</span><span class="token punctuation">,</span>
+                ButtonGroupComponent<span class="token punctuation">(</span>
+                    buttons<span class="token operator">=</span>buttons<span class="token punctuation">,</span>
+                    orientation<span class="token operator">=</span><span class="token string">"vertical"</span>
+                <span class="token punctuation">)</span>
+            <span class="token punctuation">]</span>
+        
+        <span class="token keyword">elif</span> user<span class="token punctuation">.</span>metadata<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"is_new_user"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> <span class="token punctuation">[</span>
+                RichTextComponent<span class="token punctuation">(</span>
+                    content<span class="token operator">=</span><span class="token string">"# Welcome to Vanna! 🎉&#92;n&#92;nI'm your AI data assistant. Try one of these to get started:"</span><span class="token punctuation">,</span>
+                    markdown<span class="token operator">=</span><span class="token boolean">True</span>
+                <span class="token punctuation">)</span><span class="token punctuation">,</span>
+                ButtonGroupComponent<span class="token punctuation">(</span>
+                    buttons<span class="token operator">=</span><span class="token punctuation">[</span>
+                        <span class="token punctuation">&#123;</span><span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"📖 Show Tutorial"</span><span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"/tutorial"</span><span class="token punctuation">,</span> <span class="token string">"variant"</span><span class="token punctuation">:</span> <span class="token string">"primary"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+                        <span class="token punctuation">&#123;</span><span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"💡 Example Query"</span><span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"/example"</span><span class="token punctuation">,</span> <span class="token string">"variant"</span><span class="token punctuation">:</span> <span class="token string">"secondary"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+                        <span class="token punctuation">&#123;</span><span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"🔧 Setup Guide"</span><span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"/setup"</span><span class="token punctuation">,</span> <span class="token string">"variant"</span><span class="token punctuation">:</span> <span class="token string">"secondary"</span><span class="token punctuation">&#125;</span>
+                    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+                    orientation<span class="token operator">=</span><span class="token string">"vertical"</span>
+                <span class="token punctuation">)</span>
+            <span class="token punctuation">]</span>
+        
+        <span class="token keyword">return</span> <span class="token boolean">None</span>  <span class="token comment"># No starter UI for other users</span>
+    
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment"># Handle starter UI actions</span>
+        <span class="token keyword">if</span> message <span class="token operator">==</span> <span class="token string">"/tutorial"</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                components<span class="token operator">=</span><span class="token punctuation">[</span>
+                    <span class="token comment"># Tutorial content</span>
+                <span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h2 id="execution-flow"><a aria-hidden="true" tabindex="-1" href="#execution-flow"><span class="icon icon-link"></span></a>Execution Flow</h2> <ol><li><strong>User sends message</strong> → Agent receives message</li> <li><strong>User resolution</strong> → Identify user and load context</li> <li><strong>Conversation loading</strong> → Load or create conversation</li> <li><strong>Workflow handler</strong> → <code>try_handle()</code> called <strong>before</strong> message added to conversation</li> <li><strong>If triggered=True</strong> → Stream components and exit (skip LLM)</li> <li><strong>If triggered=False</strong> → Add message to conversation and continue to LLM</li></ol> <pre class="language-python"><!----><code class="language-python"><span class="token comment"># Agent execution flow (simplified)</span>
+<span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">send_message</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> user<span class="token punctuation">,</span> message<span class="token punctuation">,</span> conversation_id<span class="token operator">=</span><span class="token boolean">None</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment"># 1. Load conversation</span>
+    conversation <span class="token operator">=</span> <span class="token keyword">await</span> self<span class="token punctuation">.</span>conversation_store<span class="token punctuation">.</span>get_conversation<span class="token punctuation">(</span>conversation_id<span class="token punctuation">,</span> user<span class="token punctuation">)</span>
+    
+    <span class="token comment"># 2. Try workflow handler FIRST</span>
+    <span class="token keyword">if</span> self<span class="token punctuation">.</span>workflow_handler<span class="token punctuation">:</span>
+        result <span class="token operator">=</span> <span class="token keyword">await</span> self<span class="token punctuation">.</span>workflow_handler<span class="token punctuation">.</span>try_handle<span class="token punctuation">(</span>self<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span>
+        
+        <span class="token keyword">if</span> result<span class="token punctuation">.</span>triggered<span class="token punctuation">:</span>
+            <span class="token comment"># Stream components and exit</span>
+            <span class="token keyword">for</span> component <span class="token keyword">in</span> result<span class="token punctuation">.</span>components<span class="token punctuation">:</span>
+                <span class="token keyword">yield</span> component
+            <span class="token keyword">return</span>  <span class="token comment"># Skip LLM</span>
+    
+    <span class="token comment"># 3. Add message to conversation</span>
+    conversation<span class="token punctuation">.</span>add_message<span class="token punctuation">(</span>Message<span class="token punctuation">(</span>role<span class="token operator">=</span><span class="token string">"user"</span><span class="token punctuation">,</span> content<span class="token operator">=</span>message<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    
+    <span class="token comment"># 4. Continue to LLM...</span></code><!----></pre> <h2 id="combining-with-other-features"><a aria-hidden="true" tabindex="-1" href="#combining-with-other-features"><span class="icon icon-link"></span></a>Combining with Other Features</h2> <p>Workflow handlers work alongside other extensibility points:</p> <pre class="language-python"><!----><code class="language-python">agent <span class="token operator">=</span> Agent<span class="token punctuation">(</span>
+    llm_service<span class="token operator">=</span>llm<span class="token punctuation">,</span>
+    tool_registry<span class="token operator">=</span>tool_registry<span class="token punctuation">,</span>
+    user_resolver<span class="token operator">=</span>user_resolver<span class="token punctuation">,</span>
+    workflow_handler<span class="token operator">=</span>CommandHandler<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>  <span class="token comment"># First: handle commands</span>
+    lifecycle_hooks<span class="token operator">=</span><span class="token punctuation">[</span>QuotaHook<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>      <span class="token comment"># Then: track usage</span>
+    llm_middlewares<span class="token operator">=</span><span class="token punctuation">[</span>CachingMiddleware<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>  <span class="token comment"># Finally: LLM processing</span>
+<span class="token punctuation">)</span></code><!----></pre> <h2 id="customizing-the-default-handler"><a aria-hidden="true" tabindex="-1" href="#customizing-the-default-handler"><span class="icon icon-link"></span></a>Customizing the Default Handler</h2> <p>You can customize the <code>DefaultWorkflowHandler</code>:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">from</span> vanna <span class="token keyword">import</span> DefaultWorkflowHandler
+
+<span class="token comment"># Custom welcome message</span>
+handler <span class="token operator">=</span> DefaultWorkflowHandler<span class="token punctuation">(</span>
+    welcome_message<span class="token operator">=</span><span class="token string">"# Welcome to AcmeCorp Data Assistant!&#92;n&#92;nI'm here to help with your analytics needs."</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># Extend the default handler</span>
+<span class="token keyword">class</span> <span class="token class-name">CustomDefaultHandler</span><span class="token punctuation">(</span>DefaultWorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment"># Handle custom commands first</span>
+        <span class="token keyword">if</span> message<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"/acme"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                components<span class="token operator">=</span><span class="token punctuation">[</span>
+                    RichTextComponent<span class="token punctuation">(</span>content<span class="token operator">=</span><span class="token string">"AcmeCorp specific feature..."</span><span class="token punctuation">)</span>
+                <span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+        
+        <span class="token comment"># Fall back to default behavior</span>
+        <span class="token keyword">return</span> <span class="token keyword">await</span> <span class="token builtin">super</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>try_handle<span class="token punctuation">(</span>agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span>
+    
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">get_starter_ui</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        components <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token builtin">super</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>get_starter_ui<span class="token punctuation">(</span>agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">)</span>
+        
+        <span class="token comment"># Add company-specific branding</span>
+        <span class="token keyword">if</span> components<span class="token punctuation">:</span>
+            components<span class="token punctuation">.</span>insert<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> RichTextComponent<span class="token punctuation">(</span>
+                content<span class="token operator">=</span><span class="token string">"*Powered by AcmeCorp Analytics Platform*"</span><span class="token punctuation">,</span>
+                markdown<span class="token operator">=</span><span class="token boolean">True</span>
+            <span class="token punctuation">)</span><span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> components</code><!----></pre> <h2 id="observability"><a aria-hidden="true" tabindex="-1" href="#observability"><span class="icon icon-link"></span></a>Observability</h2> <p>The agent automatically creates observability spans:</p> <ul><li><code>agent.workflow_handler.try_handle</code> - Time spent in try_handle()</li> <li><code>agent.workflow_handler.starter_ui</code> - Time spent generating starter UI</li></ul> <pre class="language-python"><!----><code class="language-python"><span class="token comment"># Access observability in your handler</span>
+<span class="token keyword">class</span> <span class="token class-name">ObservableHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> agent<span class="token punctuation">.</span>observability_provider<span class="token punctuation">:</span>
+            span <span class="token operator">=</span> <span class="token keyword">await</span> agent<span class="token punctuation">.</span>observability_provider<span class="token punctuation">.</span>create_span<span class="token punctuation">(</span>
+                <span class="token string">"custom.workflow.processing"</span><span class="token punctuation">,</span>
+                attributes<span class="token operator">=</span><span class="token punctuation">&#123;</span><span class="token string">"message_type"</span><span class="token punctuation">:</span> self<span class="token punctuation">.</span>classify_message<span class="token punctuation">(</span>message<span class="token punctuation">)</span><span class="token punctuation">&#125;</span>
+            <span class="token punctuation">)</span>
+            
+            <span class="token comment"># ... processing logic ...</span>
+            
+            <span class="token keyword">await</span> agent<span class="token punctuation">.</span>observability_provider<span class="token punctuation">.</span>end_span<span class="token punctuation">(</span>span<span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h2 id="best-practices"><a aria-hidden="true" tabindex="-1" href="#best-practices"><span class="icon icon-link"></span></a>Best Practices</h2> <ol><li><strong>Keep handlers focused</strong> - One responsibility per handler</li> <li><strong>Be efficient</strong> - Handlers run on every message</li> <li><strong>Handle errors gracefully</strong> - Don’t crash the agent</li> <li><strong>Use proper UI components</strong> - Leverage the rich component system</li> <li><strong>Consider conversation state</strong> - Think about multi-turn workflows</li> <li><strong>Test thoroughly</strong> - Unit test all workflow paths</li> <li><strong>Document patterns</strong> - Make message patterns clear</li> <li><strong>Use observability</strong> - Monitor handler performance</li></ol> <h2 id="advanced-examples"><a aria-hidden="true" tabindex="-1" href="#advanced-examples"><span class="icon icon-link"></span></a>Advanced Examples</h2> <h3 id="multi-step-workflow-with-state"><a aria-hidden="true" tabindex="-1" href="#multi-step-workflow-with-state"><span class="icon icon-link"></span></a>Multi-Step Workflow with State</h3> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">SurveyHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        survey_state <span class="token operator">=</span> user<span class="token punctuation">.</span>metadata<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"survey_state"</span><span class="token punctuation">)</span>
+        
+        <span class="token keyword">if</span> message <span class="token operator">==</span> <span class="token string">"/survey"</span> <span class="token keyword">or</span> survey_state<span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token keyword">not</span> survey_state<span class="token punctuation">:</span>
+                <span class="token comment"># Start survey</span>
+                <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">start_survey</span><span class="token punctuation">(</span>conv<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                    user<span class="token punctuation">.</span>metadata<span class="token punctuation">[</span><span class="token string">"survey_state"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token string">"step"</span><span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"answers"</span><span class="token punctuation">:</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">&#125;</span>
+                
+                <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                    triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                    components<span class="token operator">=</span><span class="token punctuation">[</span>
+                        StatusCardComponent<span class="token punctuation">(</span>
+                            title<span class="token operator">=</span><span class="token string">"Customer Feedback Survey"</span><span class="token punctuation">,</span>
+                            status<span class="token operator">=</span><span class="token string">"pending"</span><span class="token punctuation">,</span>
+                            description<span class="token operator">=</span><span class="token string">"Help us improve - 3 quick questions"</span>
+                        <span class="token punctuation">)</span><span class="token punctuation">,</span>
+                        RichTextComponent<span class="token punctuation">(</span>content<span class="token operator">=</span><span class="token string">"**Question 1:** How satisfied are you with our service?"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                        ButtonGroupComponent<span class="token punctuation">(</span>
+                            buttons<span class="token operator">=</span><span class="token punctuation">[</span>
+                                <span class="token punctuation">&#123;</span><span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"😍 Very Satisfied"</span><span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"survey:q1:5"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+                                <span class="token punctuation">&#123;</span><span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"😊 Satisfied"</span><span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"survey:q1:4"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+                                <span class="token punctuation">&#123;</span><span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"😐 Neutral"</span><span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"survey:q1:3"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+                                <span class="token punctuation">&#123;</span><span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"😞 Unsatisfied"</span><span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"survey:q1:2"</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+                                <span class="token punctuation">&#123;</span><span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string">"😡 Very Unsatisfied"</span><span class="token punctuation">,</span> <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string">"survey:q1:1"</span><span class="token punctuation">&#125;</span>
+                            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+                            orientation<span class="token operator">=</span><span class="token string">"vertical"</span>
+                        <span class="token punctuation">)</span>
+                    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+                    conversation_mutation<span class="token operator">=</span>start_survey
+                <span class="token punctuation">)</span>
+            
+            <span class="token keyword">elif</span> message<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"survey:"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token comment"># Handle survey responses</span>
+                parts <span class="token operator">=</span> message<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">":"</span><span class="token punctuation">)</span>
+                question<span class="token punctuation">,</span> answer <span class="token operator">=</span> parts<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> parts<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+                
+                survey_state<span class="token punctuation">[</span><span class="token string">"answers"</span><span class="token punctuation">]</span><span class="token punctuation">[</span>question<span class="token punctuation">]</span> <span class="token operator">=</span> answer
+                next_step <span class="token operator">=</span> survey_state<span class="token punctuation">[</span><span class="token string">"step"</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token number">1</span>
+                
+                <span class="token keyword">if</span> next_step <span class="token operator">&lt;=</span> <span class="token number">3</span><span class="token punctuation">:</span>
+                    <span class="token comment"># Continue survey</span>
+                    survey_state<span class="token punctuation">[</span><span class="token string">"step"</span><span class="token punctuation">]</span> <span class="token operator">=</span> next_step
+                    <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                        triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                        components<span class="token operator">=</span><span class="token punctuation">[</span>self<span class="token punctuation">.</span>_get_survey_question<span class="token punctuation">(</span>next_step<span class="token punctuation">)</span><span class="token punctuation">]</span>
+                    <span class="token punctuation">)</span>
+                <span class="token keyword">else</span><span class="token punctuation">:</span>
+                    <span class="token comment"># Complete survey</span>
+                    <span class="token keyword">del</span> user<span class="token punctuation">.</span>metadata<span class="token punctuation">[</span><span class="token string">"survey_state"</span><span class="token punctuation">]</span>
+                    <span class="token keyword">await</span> self<span class="token punctuation">.</span>_save_survey_results<span class="token punctuation">(</span>user<span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">,</span> survey_state<span class="token punctuation">[</span><span class="token string">"answers"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+                    
+                    <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                        triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                        components<span class="token operator">=</span><span class="token punctuation">[</span>
+                            StatusCardComponent<span class="token punctuation">(</span>
+                                title<span class="token operator">=</span><span class="token string">"Survey Complete"</span><span class="token punctuation">,</span>
+                                status<span class="token operator">=</span><span class="token string">"success"</span><span class="token punctuation">,</span>
+                                description<span class="token operator">=</span><span class="token string">"Thank you for your feedback! 🙏"</span>
+                            <span class="token punctuation">)</span>
+                        <span class="token punctuation">]</span>
+                    <span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h3 id="dynamic-tool-menu"><a aria-hidden="true" tabindex="-1" href="#dynamic-tool-menu"><span class="icon icon-link"></span></a>Dynamic Tool Menu</h3> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">ToolMenuHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> message <span class="token operator">==</span> <span class="token string">"/tools"</span> <span class="token keyword">or</span> message <span class="token operator">==</span> <span class="token string">"/menu"</span><span class="token punctuation">:</span>
+            <span class="token comment"># Get available tools for user</span>
+            tools <span class="token operator">=</span> <span class="token keyword">await</span> agent<span class="token punctuation">.</span>tool_registry<span class="token punctuation">.</span>get_schemas<span class="token punctuation">(</span>user<span class="token punctuation">)</span>
+            
+            <span class="token comment"># Group tools by category</span>
+            categories <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+            <span class="token keyword">for</span> tool <span class="token keyword">in</span> tools<span class="token punctuation">:</span>
+                category <span class="token operator">=</span> tool<span class="token punctuation">.</span>metadata<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"category"</span><span class="token punctuation">,</span> <span class="token string">"General"</span><span class="token punctuation">)</span>
+                <span class="token keyword">if</span> category <span class="token keyword">not</span> <span class="token keyword">in</span> categories<span class="token punctuation">:</span>
+                    categories<span class="token punctuation">[</span>category<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+                categories<span class="token punctuation">[</span>category<span class="token punctuation">]</span><span class="token punctuation">.</span>append<span class="token punctuation">(</span>tool<span class="token punctuation">)</span>
+            
+            <span class="token comment"># Build menu components</span>
+            components <span class="token operator">=</span> <span class="token punctuation">[</span>
+                RichTextComponent<span class="token punctuation">(</span>
+                    content<span class="token operator">=</span><span class="token string">"# Available Tools 🛠️&#92;n&#92;nChoose a tool to get started:"</span><span class="token punctuation">,</span>
+                    markdown<span class="token operator">=</span><span class="token boolean">True</span>
+                <span class="token punctuation">)</span>
+            <span class="token punctuation">]</span>
+            
+            <span class="token keyword">for</span> category<span class="token punctuation">,</span> category_tools <span class="token keyword">in</span> categories<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                buttons <span class="token operator">=</span> <span class="token punctuation">[</span>
+                    <span class="token punctuation">&#123;</span>
+                        <span class="token string">"label"</span><span class="token punctuation">:</span> <span class="token string-interpolation"><span class="token string">f"</span><span class="token interpolation"><span class="token punctuation">&#123;</span>tool<span class="token punctuation">.</span>metadata<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'icon'</span><span class="token punctuation">,</span> <span class="token string">'⚙️'</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span></span><span class="token string"> </span><span class="token interpolation"><span class="token punctuation">&#123;</span>tool<span class="token punctuation">.</span>name<span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">'_'</span><span class="token punctuation">,</span> <span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">,</span>
+                        <span class="token string">"action"</span><span class="token punctuation">:</span> <span class="token string-interpolation"><span class="token string">f"/tool </span><span class="token interpolation"><span class="token punctuation">&#123;</span>tool<span class="token punctuation">.</span>name<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">,</span>
+                        <span class="token string">"variant"</span><span class="token punctuation">:</span> <span class="token string">"secondary"</span>
+                    <span class="token punctuation">&#125;</span>
+                    <span class="token keyword">for</span> tool <span class="token keyword">in</span> category_tools<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span>  <span class="token comment"># Limit per category</span>
+                <span class="token punctuation">]</span>
+                
+                components<span class="token punctuation">.</span>extend<span class="token punctuation">(</span><span class="token punctuation">[</span>
+                    RichTextComponent<span class="token punctuation">(</span>content<span class="token operator">=</span><span class="token string-interpolation"><span class="token string">f"## </span><span class="token interpolation"><span class="token punctuation">&#123;</span>category<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    ButtonGroupComponent<span class="token punctuation">(</span>buttons<span class="token operator">=</span>buttons<span class="token punctuation">,</span> orientation<span class="token operator">=</span><span class="token string">"vertical"</span><span class="token punctuation">)</span>
+                <span class="token punctuation">]</span><span class="token punctuation">)</span>
+            
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> components<span class="token operator">=</span>components<span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h2 id="error-handling"><a aria-hidden="true" tabindex="-1" href="#error-handling"><span class="icon icon-link"></span></a>Error Handling</h2> <p>Handle errors gracefully in your workflow handlers:</p> <pre class="language-python"><!----><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">RobustHandler</span><span class="token punctuation">(</span>WorkflowHandler<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">async</span> <span class="token keyword">def</span> <span class="token function">try_handle</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> agent<span class="token punctuation">,</span> user<span class="token punctuation">,</span> conversation<span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">try</span><span class="token punctuation">:</span>
+            <span class="token comment"># Your workflow logic</span>
+            <span class="token keyword">if</span> message<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"/risky-operation"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                result <span class="token operator">=</span> <span class="token keyword">await</span> self<span class="token punctuation">.</span>perform_risky_operation<span class="token punctuation">(</span>user<span class="token punctuation">,</span> message<span class="token punctuation">)</span>
+                <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> components<span class="token operator">=</span><span class="token punctuation">[</span>result<span class="token punctuation">]</span><span class="token punctuation">)</span>
+            
+        <span class="token keyword">except</span> PermissionError<span class="token punctuation">:</span>
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                components<span class="token operator">=</span><span class="token punctuation">[</span>
+                    StatusCardComponent<span class="token punctuation">(</span>
+                        title<span class="token operator">=</span><span class="token string">"Permission Denied"</span><span class="token punctuation">,</span>
+                        status<span class="token operator">=</span><span class="token string">"error"</span><span class="token punctuation">,</span>
+                        description<span class="token operator">=</span><span class="token string">"You don't have permission for this operation."</span>
+                    <span class="token punctuation">)</span>
+                <span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+        <span class="token keyword">except</span> ValidationError <span class="token keyword">as</span> e<span class="token punctuation">:</span>
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                components<span class="token operator">=</span><span class="token punctuation">[</span>
+                    StatusCardComponent<span class="token punctuation">(</span>
+                        title<span class="token operator">=</span><span class="token string">"Invalid Input"</span><span class="token punctuation">,</span>
+                        status<span class="token operator">=</span><span class="token string">"error"</span><span class="token punctuation">,</span>
+                        description<span class="token operator">=</span><span class="token string-interpolation"><span class="token string">f"Please check your input: </span><span class="token interpolation"><span class="token punctuation">&#123;</span><span class="token builtin">str</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">&#125;</span></span><span class="token string">"</span></span>
+                    <span class="token punctuation">)</span>
+                <span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+        <span class="token keyword">except</span> Exception <span class="token keyword">as</span> e<span class="token punctuation">:</span>
+            <span class="token comment"># Log unexpected errors</span>
+            logger<span class="token punctuation">.</span>error<span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Workflow handler error: </span><span class="token interpolation"><span class="token punctuation">&#123;</span>e<span class="token punctuation">&#125;</span></span><span class="token string">"</span></span><span class="token punctuation">,</span> exc_info<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+            
+            <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>
+                triggered<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                components<span class="token operator">=</span><span class="token punctuation">[</span>
+                    StatusCardComponent<span class="token punctuation">(</span>
+                        title<span class="token operator">=</span><span class="token string">"Something went wrong"</span><span class="token punctuation">,</span>
+                        status<span class="token operator">=</span><span class="token string">"error"</span><span class="token punctuation">,</span>
+                        description<span class="token operator">=</span><span class="token string">"Please try again or contact support if the problem persists."</span>
+                    <span class="token punctuation">)</span>
+                <span class="token punctuation">]</span>
+            <span class="token punctuation">)</span>
+        
+        <span class="token keyword">return</span> TriggerResult<span class="token punctuation">(</span>triggered<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span></code><!----></pre> <h2 id="see-also"><a aria-hidden="true" tabindex="-1" href="#see-also"><span class="icon icon-link"></span></a>See Also</h2> <ul><li><a href="/docs/placeholder/lifecycle-hooks">Lifecycle Hooks</a> - Hook into agent execution lifecycle</li> <li><a href="/docs/placeholder/llm-middlewares">LLM Middlewares</a> - Intercept LLM requests/responses</li> <li><a href="/docs/placeholder/ui-components">UI Components</a> - Available UI components for handlers</li> <li><a href="/docs/placeholder/context-enrichers">Context Enrichers</a> - Add data to tool execution context</li> <li><a href="/docs/placeholder/observability">Observability</a> - Monitor handler performance</li></ul><!----><!----><!----><!--]--><!----></article></main> <aside class="hidden xl:block w-64 self-start sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto border-l border-vanna-teal/30 bg-vanna-cream/40 backdrop-blur-sm py-8"><div class="px-6"><!--[!--><!--]--><!----></div></aside></div></div></div><!----><!--]--><!----><!----><!--]--> <!--[!--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_16trznd = {
+						base: new URL("../..", location).pathname.slice(0, -1),
+						env: {}
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("../../_app/immutable/entry/start.DcOBynbd.js"),
+						import("../../_app/immutable/entry/app.-MFgy3Ey.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2, 4, 43],
+							data: [null,null,null,null],
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>

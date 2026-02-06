@@ -1,0 +1,78 @@
+{
+  "url": "https://vanna.ai/docs/guides/when-to-build-agents",
+  "title": "When to Build Agents",
+  "content": "Building AI agents is powerful, but not every problem needs an agent. Use this guide to decide when Vanna Agents is the right fit and how to design agents that stay safe, efficient, and trustworthy.\n\nRequests can branch into different tool sequences\n\nMultiple data sources or verification steps are required\n\nExample: “Analyze sales data, compare to forecast, and propose next actions”\n\nAgents consume more tokens than single-shot prompts\n\nUse agents when the output unblocks a human or drives revenue\n\nManage cost with\n\nDatabase queries validate against schemas\n\nCode changes run tests or linters\n\nFile edits are diff-able and reversible\n\nAgents make progress independently but within guardrails\n\nThrottle with\n\nThe workflow is a deterministic decision tree\n\nA single tool call or prompt solves the task\n\nMistakes are irreversible or extremely costly to detect\n\nSwap registries and configs; keep the orchestration identical for predictable behavior.\n\nReal-time status, tasks, and progress bars turn opaque reasoning into a clear workflow.\n\nAgents only see what you feed them in the request:\n\nKeep tool descriptions concise; they’re in the LLM prompt budget.\n\nUse dual outputs so the LLM gets summaries while humans see full data.\n\nPass critical routing info (workspace, org, locale) via\n\nThe registry enforces permissions before execution—no extra checks required.\n\nAll tools are async—a good pattern is to delegate I/O or batching inside the tool. If you need parallel execution, implement a custom registry or lifecycle hook that schedules tasks concurrently while respecting shared state.\n\nFollow the\n\nDeep-dive into the\n\nCompare deployment options in",
+  "code_blocks": [
+    {
+      "language": "",
+      "code": "AgentConfig(max_tokens=..., max_tool_iterations=...)"
+    },
+    {
+      "language": "",
+      "code": "max_tool_iterations"
+    },
+    {
+      "language": "",
+      "code": "context.metadata"
+    },
+    {
+      "language": "python",
+      "code": "context"
+    },
+    {
+      "language": "python",
+      "code": "config"
+    },
+    {
+      "language": "",
+      "code": "max_tool_iterations"
+    },
+    {
+      "language": "",
+      "code": "RunSqlTool"
+    },
+    {
+      "language": "",
+      "code": "VisualizeDataTool"
+    },
+    {
+      "language": "",
+      "code": "max_tokens"
+    },
+    {
+      "language": "",
+      "code": "max_tool_iterations"
+    },
+    {
+      "language": "",
+      "code": "required_permissions"
+    }
+  ],
+  "headings": [],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/guides",
+      "text": "Guides"
+    },
+    {
+      "url": "https://vanna.ai/docs/concepts/how-it-works",
+      "text": "architecture"
+    },
+    {
+      "url": "https://vanna.ai/docs/guides/oss-vs-premium",
+      "text": "OSS vs. hosted"
+    }
+  ]
+}

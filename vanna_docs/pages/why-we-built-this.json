@@ -1,0 +1,31 @@
+{
+  "url": "https://vanna.ai/docs/why-we-built-this",
+  "title": "Why We Built Vanna 2.0",
+  "content": "When we open-sourced Vanna, our goal was clear: become the default tool people reach for when they want to generate SQL using LLMs.\n\nThe original Vanna was optimized for GPT-4 and single-user demos. While it continues to gain new users daily, it’s fundamentally a product of its era—built before we truly understood what production AI agents needed.\n\nWe learned three critical lessons from our enterprise customers:\n\nEvery enterprise customer asked the same question: “How do I make this work for multiple users with different permissions?” Most agent frameworks are built for single-user demos or operate in “global” scope. They simply don’t have multi-tenant isolation built in. Adding it yourself means building your own wrapper framework on top of the framework—you end up rewriting everything when you go from prototype to production.\n\nWhen a SQL query returns 10,000 rows, dumping that into the LLM’s context is a waste of tokens. But showing the user just “Query succeeded” is a waste of their time.\n\nWe discovered that\n\nNobody else was solving this problem. Other agent frameworks focused on streaming text. But production applications need status cards that update, progress bars that fill, and artifacts that render externally—not append-only chat logs.\n\nWhen an enterprise says “we want to self-host,” they don’t just mean the agent loop. They mean:\n\nSecure Python sandboxes for code execution\n\nAudit logs for compliance\n\nQuota management per user\n\nRow-level security for database access\n\nConversation persistence with encryption\n\nLLM failover when Claude is down\n\nThese aren’t nice-to-haves. They’re table stakes for production. And every customer was building the same infrastructure from scratch.\n\nWe’re at the threshold of GPT-5 class models—models with dramatically improved reasoning, longer context windows, and true agentic capabilities. But here’s the problem:\n\nVanna 2.0 is our answer. It’s not an incremental update—it’s a complete rethinking of what an agent framework should be in the GPT-5 era.\n\nThe core problem with existing agent frameworks is that they’re built for single-user demos or operate in global scope. Multi-tenant isolation is an afterthought, if it’s considered at all. This creates a gap between prototyping and production that costs months of engineering time and introduces security risks.\n\nPOC Hell: The Enterprise Agent Crisis\n\nMost enterprise AI agent deployments never make it past proof-of-concept. The demo works perfectly for a single user. But when it's time to deploy to real users with different permissions, everything breaks.\n\nTeams spend 6+ months rewriting their entire agent architecture to add user isolation, permission enforcement, and audit logging. By the time they're ready to deploy, the business has moved on or the budget is gone.\n\nEvery request in Vanna 2.0 carries user identity, permissions, and workspace context from the moment it enters the system until tools finish executing. User isolation isn’t something you configure—it’s impossible to build an agent without it.\n\nUser context flows automatically to every tool\n\nTools enforce their own permission logic based on user identity\n\nNo manual plumbing required - it’s built into the framework\n\nMulti-tenant by design, not an afterthought\n\nTools return results optimized for both LLM reasoning and user interaction. The LLM sees: “Query returned 1,247 rows.” The user sees: an interactive data table with sort, filter, and export.\n\nUnlike other frameworks where you prototype with one architecture and rewrite for production, Vanna 2.0 uses the same codebase from first prototype to multi-tenant production:\n\nNo rewrites. No surprises. The same agent that works on your laptop scales to 10,000 users.\n\nHere’s what we realized:\n\nThe technical foundation we built for SQL agents turned out to be exactly what enterprises need for\n\nWe’re not trying to be:\n\nWe’re the agent framework for\n\nWe’re not anchored to SQL anymore. Vanna 2.0 is a platform for building\n\nOur roadmap:\n\nLaunch Vanna 2.0 open source framework\n\nLaunch Cloud Platform with premium features\n\nEnterprise VPC deployments\n\nFirst-party tools marketplace (Python sandboxes, RLS, failover)\n\nEcosystem of community-built tools and templates\n\nWe learned from older versions of Vanna. We listened to our enterprise customers. We saw where the market is heading.\n\nVanna 2.0 isn’t just a better version of what exists—it’s what should have existed from the beginning.\n\nIf you’re building AI agents for production, we built this for you.",
+  "code_blocks": [
+    {
+      "language": "",
+      "code": "MockLlmService"
+    }
+  ],
+  "headings": [
+    {
+      "level": "h4",
+      "text": "POC Hell: The Enterprise Agent Crisis"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    }
+  ]
+}

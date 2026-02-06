@@ -1,0 +1,91 @@
+{
+  "url": "https://vanna.ai/docs/test-presentation",
+  "title": "Test Presentation Page",
+  "content": "This is a test page for debugging the Reveal.js presentation layout with code blocks, images, and auto-animate.\n\nWelcome to Vanna 2.0\n\nA production-grade framework for building conversational AI agents\n\n👤 User-Aware from Day One\n\nEvery request has an authenticated user\n\nPermissions enforced automatically\n\nGroup-based access control\n\nMulti-tenancy built-in\n\nQuick Start Code\n\nKey Features\n\nUser-aware execution\n\nKey Features\n\nUser-aware execution\n\nPermission-based tools\n\nKey Features\n\nUser-aware execution\n\nPermission-based tools\n\nRich UI components\n\nKey Features\n\nUser-aware execution\n\nPermission-based tools\n\nRich UI components\n\nComposable architecture\n\nKey Features\n\nUser-aware execution\n\nPermission-based tools\n\nRich UI components\n\nComposable architecture\n\nProduction-ready\n\nArchitecture Diagram\n\n🔐 Permission-Based Tools\n\n🎨 Rich UI Components\n\nStream interactive components, not just text\n\nDataFrames, charts, status cards\n\nProgress bars and real-time updates\n\nDashboard-quality experiences\n\nComposable Architecture\n\nSwap LLM providers\n\nComposable Architecture\n\nSwap LLM providers\n\nPluggable storage backends\n\nDeploy anywhere\n\nReady to Get Started?\n\nBuild your first agent in 5 minutes\n\nThis is just some text below the presentation to see how it flows with the rest of the page content.\n\nYou can navigate the slides using:\n\nArrow keys (left/right)\n\nSwipe gestures on mobile\n\nThe on-screen controls\n\nTry resizing your browser window or viewing on different devices to test the responsive behavior.",
+  "code_blocks": [
+    {
+      "language": "python",
+      "code": "from vanna import Agent\nfrom vanna.tools import QueryTool\n\n# Create your agent\nagent = Agent(\n    tools=[QueryTool()],\n    llm=\"claude-sonnet-4\"\n)\n\n# Run a query\nresponse = agent.run(\"Show me sales by region\")"
+    },
+    {
+      "language": "python",
+      "code": "class SensitiveTool(Tool):\n    @property\n    def required_permissions(self):\n        return [\"admin\", \"write_data\"]\n\n    async def execute(self, context, args):\n        # Only executes if user has permissions\n        return ToolResult(success=True)"
+    }
+  ],
+  "headings": [
+    {
+      "level": "h2",
+      "text": "Welcome to Vanna 2.0"
+    },
+    {
+      "level": "h2",
+      "text": "👤 User-Aware from Day One"
+    },
+    {
+      "level": "h2",
+      "text": "Quick Start Code"
+    },
+    {
+      "level": "h2",
+      "text": "Key Features"
+    },
+    {
+      "level": "h2",
+      "text": "Key Features"
+    },
+    {
+      "level": "h2",
+      "text": "Key Features"
+    },
+    {
+      "level": "h2",
+      "text": "Key Features"
+    },
+    {
+      "level": "h2",
+      "text": "Key Features"
+    },
+    {
+      "level": "h2",
+      "text": "Architecture Diagram"
+    },
+    {
+      "level": "h2",
+      "text": "🔐 Permission-Based Tools"
+    },
+    {
+      "level": "h2",
+      "text": "🎨 Rich UI Components"
+    },
+    {
+      "level": "h2",
+      "text": "Composable Architecture"
+    },
+    {
+      "level": "h2",
+      "text": "Composable Architecture"
+    },
+    {
+      "level": "h2",
+      "text": "Ready to Get Started?"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/tutorials/quickstart-5min",
+      "text": "View Quickstart →"
+    }
+  ]
+}

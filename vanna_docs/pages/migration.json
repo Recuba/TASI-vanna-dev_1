@@ -1,0 +1,74 @@
+{
+  "url": "https://vanna.ai/docs/migration",
+  "title": "Migration Guide: Vanna 0.x to Vanna 2.0+",
+  "content": "This guide will help you migrate from Vanna 0.x (legacy) to Vanna 2.0+, the new user-aware agent framework.\n\nVanna 2.0+ represents a fundamental architectural shift from a simple LLM wrapper to a full-fledged\n\n✅\n\n✅\n\n✅\n\n✅\n\n✅\n\n✅\n\n✅\n\n❌ Direct method calls (\n\n❌ Monolithic\n\n❌ No user context → User-aware at every layer\n\n❌ Simple text responses → Rich streaming UI components\n\nImplements both\n\nAutomatically wraps\n\nExposes training data as searchable memory via\n\nProvides memory tools:\n\nMaintains your existing database connection and training data\n\nFeature\n\nVanna 0.x\n\nVanna 2.0+\n\nNone\n\nDirect method calls (\n\nAgent-based with streaming components\n\nMonolithic methods\n\nModular\n\nPlain text/DataFrames\n\nRich UI components (tables, charts, code)\n\nSystem prompts, context enrichers, RAG tools\n\nOld Vanna Flask\n\nBuilt-in web component + backend\n\nNone\n\nServer-Sent Events by default\n\nNone\n\nGroup-based access control on tools\n\nNone\n\nBuilt-in audit logging system",
+  "code_blocks": [
+    {
+      "language": "",
+      "code": "vn.ask()"
+    },
+    {
+      "language": "",
+      "code": "VannaBase"
+    },
+    {
+      "language": "",
+      "code": "ToolRegistry"
+    },
+    {
+      "language": "",
+      "code": "AgentMemory"
+    },
+    {
+      "language": "",
+      "code": "vn.run_sql()"
+    },
+    {
+      "language": "",
+      "code": "run_sql"
+    },
+    {
+      "language": "",
+      "code": "AgentMemory"
+    },
+    {
+      "language": "",
+      "code": "save_question_tool_args"
+    },
+    {
+      "language": "",
+      "code": "search_saved_correct_tool_uses"
+    },
+    {
+      "language": "",
+      "code": "vn.ask()"
+    },
+    {
+      "language": "",
+      "code": "vn.train()"
+    },
+    {
+      "language": "",
+      "code": "vn.connect_to_postgres()"
+    },
+    {
+      "language": "",
+      "code": "SqlRunner"
+    }
+  ],
+  "headings": [],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    }
+  ]
+}

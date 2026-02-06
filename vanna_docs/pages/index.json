@@ -1,0 +1,34 @@
+{
+  "url": "https://vanna.ai/docs",
+  "title": "What is Vanna 2.0?",
+  "content": "Vanna 2.0 is a\n\nAt its heart, Vanna is simple:\n\nEvery successful interaction is saved to\n\nThe agent searches past SQL queries and tool usage patterns\n\nIt adapts successful examples to the current context\n\nYour agent learns your database schema, business logic, and query patterns without manual training\n\nQuickstart with Sample Data\n\nUse the sample Chinook SQLite database\n\nQuickstart with Your Own Data\n\nConnect to your database in Python\n\nMigrate from 0.x\n\nMoving from Vanna 0.x to v2",
+  "code_blocks": [],
+  "headings": [
+    {
+      "level": "h3",
+      "text": "Quickstart with Sample Data"
+    },
+    {
+      "level": "h3",
+      "text": "Quickstart with Your Own Data"
+    },
+    {
+      "level": "h3",
+      "text": "Migrate from 0.x"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    }
+  ]
+}

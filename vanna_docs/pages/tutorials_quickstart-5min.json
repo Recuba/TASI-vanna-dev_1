@@ -1,0 +1,91 @@
+{
+  "url": "https://vanna.ai/docs/tutorials/quickstart-5min",
+  "title": "5-Minute Quickstart",
+  "content": "Build and run your first Vanna agent with a web UI in 5 minutes.\n\nPython 3.8 or higher\n\nAnthropic API key (\n\nCreate\n\nOutput:\n\n“What tables are in this database?”\n\n“Show me the top 10 customers by total spending”\n\n“How many tracks are there?”\n\nThe agent generates SQL, executes it, and shows results in the web UI!\n\n🎉\n\nYou registered a SQL query tool that users in the ‘users’ group can access.\n\nThe agent knows how to use Claude to decide when to query the database.\n\nFastAPI server with built-in web UI for chatting with your agent.\n\nNow users can ask: “Show me a chart of sales by month”\n\nUsers can export query results to CSV/Excel.\n\n15-Minute Tutorial\n\nAdd permissions and customize the UI\n\nCreate Custom Tools\n\nBuild tools beyond SQL queries\n\nAdd Authentication\n\nIntegrate with your auth system\n\nDeploy to Production\n\nDocker, Kubernetes, and more\n\n✅ SQL agent that answers natural language questions\n\n✅ Web UI for interacting with your data\n\n✅ Permission-based access control\n\n✅ Production-ready FastAPI server",
+  "code_blocks": [
+    {
+      "language": "",
+      "code": "app.py"
+    },
+    {
+      "language": "undefined",
+      "code": "Your app is running at:\nhttp://localhost:8000"
+    },
+    {
+      "language": "",
+      "code": "demo@example.com"
+    },
+    {
+      "language": "python",
+      "code": "server"
+    },
+    {
+      "language": "",
+      "code": "OpenAILlmService"
+    },
+    {
+      "language": "",
+      "code": "server.run(port=3000)"
+    },
+    {
+      "language": "",
+      "code": "AnthropicLlmService"
+    },
+    {
+      "language": "",
+      "code": "OpenAILlmService"
+    },
+    {
+      "language": "",
+      "code": "OllamaLlmService"
+    }
+  ],
+  "headings": [
+    {
+      "level": "h4",
+      "text": "15-Minute Tutorial"
+    },
+    {
+      "level": "h4",
+      "text": "Create Custom Tools"
+    },
+    {
+      "level": "h4",
+      "text": "Add Authentication"
+    },
+    {
+      "level": "h4",
+      "text": "Deploy to Production"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/tutorials",
+      "text": "Tutorials"
+    },
+    {
+      "url": "https://vanna.ai/docs/how-to/tools/define-tool",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/how-to/security/authentication",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/how-to/deployment/docker",
+      "text": ""
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "url": "https://vanna.ai/docs/troubleshooting",
+  "title": "Troubleshooting",
+  "content": "Documentation Under Construction\n\nThis page will provide solutions to common issues encountered when setting up and running Vanna 2.0, including debugging tips and diagnostic tools.\n\nPlanned Content\n\nWant to contribute or suggest improvements?\n\nWhen complete, this will include:\n\nPython version compatibility\n\nDependency conflicts\n\nPlatform-specific problems\n\nDatabase connection failures\n\nLLM API authentication errors\n\nNetwork and firewall problems\n\nTool execution errors\n\nPermission denied errors\n\nMemory and performance issues\n\nEnable debug logging\n\nUse dev mode for better error messages\n\nTest components individually\n\nCheck server health endpoints",
+  "code_blocks": [],
+  "headings": [
+    {
+      "level": "h3",
+      "text": "Documentation Under Construction"
+    },
+    {
+      "level": "h4",
+      "text": "Planned Content"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    }
+  ]
+}

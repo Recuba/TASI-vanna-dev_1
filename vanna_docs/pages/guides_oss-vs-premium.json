@@ -1,0 +1,206 @@
+{
+  "url": "https://vanna.ai/docs/guides/oss-vs-premium",
+  "title": "OSS vs Premium",
+  "content": "The updated Python SDK submodule shows that every Vanna agent is really a composition of services: an\n\nCapability\n\nCompatible OSS / third-party adapters\n\nVanna-hosted option (batteries-included)\n\nLLM service\n\nAnthropic Messages via\n\nManaged Vanna LLM endpoints with pre-tuned model routing, guardrails, and automatic regression evaluation on model updates\n\nTool execution\n\nPython SDKs such as Snowflake, Slack, or Jira wrapped in a subclass of\n\nVanna Tool Registry with role-aware permissions, audit trails, automatic schema validation, and centralized credentials management\n\nConversation store\n\nDatabases like Supabase/PostgreSQL or Redis that you access from a custom\n\nVanna Managed Conversation Store with encrypted retention, PII scrubbing, time-travel restore, and configurable retention policies\n\nSystem prompt management\n\nPromptLayer, FeatureForm, or Git-backed prompt repos that you read from a subclass of\n\nVanna System Prompt Builder that versions prompts per agent, ships safer defaults, and captures prompt→outcome analytics for continuous tuning\n\nLifecycle governance\n\nLaunchDarkly/Unleash feature flags or internal quota services invoked from\n\nPolicy-driven lifecycle hooks that enforce quotas, approvals, session limits, and compliance checks without custom glue code\n\nLLM middleware & safety\n\nGuardrails AI, Presidio scrubbing, or custom caching layers invoked from\n\nInline Vanna middleware with automatic caching, redaction, multi-provider failover, token accounting, and SOC2-aligned audit logging\n\nContext enrichment\n\nPinecone, Weaviate, or warehouse lookups fetched inside\n\nManaged Vanna context enrichers with zero-copy connectors to your sources, adaptive retrieval, and enrichment telemetry\n\nObservability\n\nOpenTelemetry, Datadog, or Honeycomb exporters that satisfy\n\nVanna Observability with unified traces, live conversation playback, SLA alerting, and long-term cost analytics tuned to agent workflows\n\nError recovery\n\nTenacity-based retry logic or SQS retry queues wrapped in\n\nVanna Recovery Orchestrator with adaptive retry budgets, safe fallbacks, and incident timelines surfaced directly in the admin console\n\nConversation filtering\n\nOpenAI Moderation, AWS Comprehend, or custom regex/PII detectors called from\n\nBuilt-in policy filters tuned to Vanna components that catch sensitive data, redact secrets, and route escalations before prompting\n\nEvaluations\n\nCustom harnesses that emit\n\nVanna Evaluation Suite with curated datasets, scoring templates, regression dashboards, and release gates wired into agent deployments\n\nAuthentication & users\n\nAuth0, Clerk, Supabase, or Cognito adapters that fulfill the\n\nVanna Identity layer with built-in session management, granular permissions, and audit-friendly user history shared across teams\n\nTogether, the hosted stack mirrors the same abstractions exported by the open-source SDK, but with production-grade defaults, compliance controls, and instrumentation that let teams ship faster and sleep better.\n\nCapability\n\nDIY vibe\n\nVanna hosted\n\nLLMs\n\nJuggle API keys and model quirks\n\nOne endpoint that stays safe and fast\n\nTools\n\nWrite wrappers, handle creds, hope permissions are right\n\nPlug-and-play tools with guardrails built in\n\nMemory\n\nStand up databases, manage retention, scrub data manually\n\nSecure conversation history with compliance defaults\n\nPrompts\n\nKeep prompt files in sync across teams\n\nVersioned prompts with analytics and safe defaults\n\nGovernance\n\nBuild quota checks and approvals yourself\n\nPolicies and approvals ready to flip on\n\nSafety\n\nChain together redaction, caching, fallbacks\n\nMiddleware that handles it automatically\n\nContext\n\nMaintain your own RAG pipelines\n\nManaged connectors that inject the right context\n\nObservability\n\nWire up traces, dashboards, alerts\n\nFull telemetry and playback out of the box\n\nRecovery\n\nScript retries and fallbacks\n\nAutomated recovery flows with admin visibility\n\nFiltering\n\nGlue together moderation and PII detectors\n\nBuilt-in policies that block issues before they reach the model\n\nEvaluations\n\nSpin up QA scripts and keep datasets fresh by hand\n\nRegression tests, scoring, and launch gates already wired in\n\nAuthentication\n\nStitch together login, session, and RBAC checks\n\nUnified auth, permissions, and user audit logs\n\nShip a standardized Vanna container that bundles LLM endpoint, registry, observability, and evaluation services.\n\nDeploy on a single VM in the customer’s cloud (EC2, Compute Engine, Azure VM); networking is limited to outbound calls to sanctioned data sources.\n\nQuick integration with customer SSO via a lightweight\n\nGoal: validate value in weeks, collect telemetry, and finalize the production requirements document.\n\nStand up dedicated databases, object storage, and observability stacks inside the customer’s cloud account.\n\nDeploy Vanna components to separate subnets or Kubernetes clusters with autoscaling, HA, and customer-managed keys.\n\nIntegrate with enterprise IdP, logging (e.g., Splunk, Datadog), and ticketing for lifecycle hooks and approvals.\n\nMigrate from the POC container to modular services (LLM, tools, evaluations, observability) that comply with customer compliance policies.\n\nOffering\n\nScope\n\nHosting model\n\nSupport & SLAs\n\nIndicative pricing*\n\nDIY + Vanna consulting\n\nCustomer builds against the OSS SDK; Vanna provides design reviews, implementation playbooks, and evaluation templates over a 6–8 week engagement\n\nCustomer-owned infrastructure\n\nSlack/email support during engagement, optional quarterly health checks\n\nFrom $45k one-time + optional $5k/month retainer\n\nVanna managed in your cloud\n\nVanna deploys and operates the managed stack inside the customer’s AWS/GCP/Azure account, including production integrations and ongoing evaluations\n\nCustomer cloud account with Vanna-managed workloads\n\n24/5 support, 99.5% availability SLA, shared runbooks, quarterly optimization workshops\n\nFrom $12k/month + usage-based LLM costs\n\n*Pricing is indicative; final quotes depend on user counts, data residency, and compliance scope.",
+  "code_blocks": [
+    {
+      "language": "",
+      "code": "LlmService"
+    },
+    {
+      "language": "",
+      "code": "ToolRegistry"
+    },
+    {
+      "language": "",
+      "code": "LlmService"
+    },
+    {
+      "language": "",
+      "code": "submodules/vanna-user-agents/python-sdk/vanna/core/llm/base.py"
+    },
+    {
+      "language": "",
+      "code": "submodules/vanna-user-agents/python-sdk/vanna/core/tool/base.py"
+    },
+    {
+      "language": "",
+      "code": "Evaluator"
+    },
+    {
+      "language": "",
+      "code": "submodules/vanna-user-agents/python-sdk/vanna/core/evaluation/base.py"
+    },
+    {
+      "language": "",
+      "code": "UserService"
+    },
+    {
+      "language": "",
+      "code": "submodules/vanna-user-agents/python-sdk/vanna/core/user/base.py"
+    },
+    {
+      "language": "",
+      "code": "AnthropicLlmService"
+    },
+    {
+      "language": "",
+      "code": "OpenAILlmService"
+    },
+    {
+      "language": "",
+      "code": "LlmService"
+    },
+    {
+      "language": "",
+      "code": "send_request"
+    },
+    {
+      "language": "",
+      "code": "stream_request"
+    },
+    {
+      "language": "",
+      "code": "validate_tools"
+    },
+    {
+      "language": "",
+      "code": "execute"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/tool/base.py"
+    },
+    {
+      "language": "",
+      "code": "ConversationStore"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/storage/base.py"
+    },
+    {
+      "language": "",
+      "code": "MemoryConversationStore"
+    },
+    {
+      "language": "",
+      "code": "SystemPromptBuilder"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/system_prompt/base.py"
+    },
+    {
+      "language": "",
+      "code": "LifecycleHook"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/lifecycle/base.py"
+    },
+    {
+      "language": "",
+      "code": "LlmMiddleware"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/middleware/base.py"
+    },
+    {
+      "language": "",
+      "code": "ContextEnricher"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/enricher/base.py"
+    },
+    {
+      "language": "",
+      "code": "ToolContext"
+    },
+    {
+      "language": "",
+      "code": "ObservabilityProvider"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/observability/base.py"
+    },
+    {
+      "language": "",
+      "code": "record_metric"
+    },
+    {
+      "language": "",
+      "code": "create_span"
+    },
+    {
+      "language": "",
+      "code": "ErrorRecoveryStrategy"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/recovery/base.py"
+    },
+    {
+      "language": "",
+      "code": "RecoveryAction"
+    },
+    {
+      "language": "",
+      "code": "ConversationFilter"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/filter/base.py"
+    },
+    {
+      "language": "",
+      "code": "AgentResult"
+    },
+    {
+      "language": "",
+      "code": "Evaluator"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/evaluation/base.py"
+    },
+    {
+      "language": "",
+      "code": "EvaluationRunner"
+    },
+    {
+      "language": "",
+      "code": "UserService"
+    },
+    {
+      "language": "",
+      "code": "submodules/.../core/user/base.py"
+    },
+    {
+      "language": "",
+      "code": "UserService"
+    }
+  ],
+  "headings": [],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/guides",
+      "text": "Guides"
+    }
+  ]
+}

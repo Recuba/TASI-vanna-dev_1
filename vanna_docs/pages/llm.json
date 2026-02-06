@@ -1,0 +1,34 @@
+{
+  "url": "https://vanna.ai/docs/llm",
+  "title": "LLM Reference",
+  "content": "Documentation Under Construction\n\nThis reference page will show how to configure Anthropic Claude, OpenAI GPT, and other LLM providers. Most users will configure their LLM in the Quick Start—this is for reference.\n\nPlanned Content\n\nWant to contribute or suggest improvements?\n\nWhen complete, this will show:\n\nComing soon: Guidance on:",
+  "code_blocks": [],
+  "headings": [
+    {
+      "level": "h3",
+      "text": "Documentation Under Construction"
+    },
+    {
+      "level": "h4",
+      "text": "Planned Content"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/advanced/custom-llm",
+      "text": "Custom LLM Integration"
+    }
+  ]
+}

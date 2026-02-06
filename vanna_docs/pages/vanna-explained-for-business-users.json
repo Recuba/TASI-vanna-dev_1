@@ -1,0 +1,34 @@
+{
+  "url": "https://vanna.ai/docs/vanna-explained-for-business-users",
+  "title": "Vanna 2.0 Explained for Business Users",
+  "content": "Think of Vanna 2.0 as\n\nWhen you build an AI agent for just yourself, you don’t worry about:\n\nWho can see what data\n\nWho has permission to do what\n\nTracking who did what and when\n\nHow the AI sees data versus how users see it\n\nBut when you build an AI agent for your company,\n\nVanna 2.0 makes this automatic. Instead of spending months adding user permissions and building separate outputs for the AI versus the user interface, it’s built-in from day one.\n\nMost AI agent frameworks are built for demos—one user, no security concerns, no real data. When companies try to deploy these to real users, they hit a wall:\n\nCompanies end up spending\n\nVanna 2.0 solves both problems:\n\nEvery action an agent takes automatically knows:\n\nThis isn’t something you configure—it’s impossible to build an agent in Vanna 2.0\n\nWhen your agent queries a database and gets 10,000 rows:\n\nWhy does this matter?\n\nYour AI processes faster and costs less (it’s not reading 10,000 rows)\n\nYour users get rich, interactive experiences (not just text summaries)\n\nYou don’t have to build this yourself—it happens automatically\n\nYou’re building an AI agent that will have multiple users with different permissions\n\nYou need database queries, file access, or API calls to respect user boundaries\n\nYou want to go from prototype to production without rewriting everything\n\nOther frameworks make it easy to build a demo.\n\nIf you’re building an AI agent for your company, your customers, or your users—not just for yourself—Vanna 2.0 is built for you.",
+  "code_blocks": [
+    {
+      "language": "undefined",
+      "code": "User asks: \"Show me customer revenue\"\nAgent queries database → Returns ALL customer data (security breach!)\nDeveloper manually adds: Check user permissions\nDeveloper manually adds: Filter query by user's allowed customers\nDeveloper manually adds: Log who accessed what\nDeveloper manually adds: Rate limit per user"
+    }
+  ],
+  "headings": [],
+  "links": [
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "text": ""
+    },
+    {
+      "url": "https://vanna.ai/docs/concepts/how-it-works",
+      "text": "How It Works"
+    },
+    {
+      "url": "https://vanna.ai/docs/why-we-built-this",
+      "text": "Why We Built This"
+    }
+  ]
+}

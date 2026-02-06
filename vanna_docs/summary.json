@@ -1,0 +1,392 @@
+{
+  "source": "https://vanna.ai/docs",
+  "scraper": "Scrapling",
+  "timestamp": "2026-02-05 23:16:01",
+  "total_pages": 40,
+  "total_errors": 12,
+  "total_content_chars": 42095,
+  "total_code_blocks": 201,
+  "pages": [
+    {
+      "url": "https://vanna.ai/docs",
+      "title": "What is Vanna 2.0?",
+      "filename": "index.json",
+      "content_length": 486,
+      "code_blocks": 0,
+      "headings": 3
+    },
+    {
+      "url": "https://vanna.ai/docs/quick-start",
+      "title": "Quick Start",
+      "filename": "quick-start.json",
+      "content_length": 353,
+      "code_blocks": 0,
+      "headings": 0
+    },
+    {
+      "url": "https://vanna.ai/docs/troubleshooting",
+      "title": "Troubleshooting",
+      "filename": "troubleshooting.json",
+      "content_length": 653,
+      "code_blocks": 0,
+      "headings": 2
+    },
+    {
+      "url": "https://vanna.ai/docs/test-presentation",
+      "title": "Test Presentation Page",
+      "filename": "test-presentation.json",
+      "content_length": 1504,
+      "code_blocks": 2,
+      "headings": 14
+    },
+    {
+      "url": "https://vanna.ai/docs/why-we-built-this",
+      "title": "Why We Built Vanna 2.0",
+      "filename": "why-we-built-this.json",
+      "content_length": 4513,
+      "code_blocks": 1,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/vanna-explained-for-business-users",
+      "title": "Vanna 2.0 Explained for Business Users",
+      "filename": "vanna-explained-for-business-users.json",
+      "content_length": 1513,
+      "code_blocks": 1,
+      "headings": 0
+    },
+    {
+      "url": "https://vanna.ai/docs/auth",
+      "title": "Authentication Overview",
+      "filename": "auth.json",
+      "content_length": 528,
+      "code_blocks": 2,
+      "headings": 2
+    },
+    {
+      "url": "https://vanna.ai/docs/auth/patterns",
+      "title": "Authentication Patterns",
+      "filename": "auth_patterns.json",
+      "content_length": 300,
+      "code_blocks": 0,
+      "headings": 2
+    },
+    {
+      "url": "https://vanna.ai/docs/databases",
+      "title": "Database Connection Strings",
+      "filename": "databases.json",
+      "content_length": 533,
+      "code_blocks": 8,
+      "headings": 2
+    },
+    {
+      "url": "https://vanna.ai/docs/llm",
+      "title": "LLM Reference",
+      "filename": "llm.json",
+      "content_length": 334,
+      "code_blocks": 0,
+      "headings": 2
+    },
+    {
+      "url": "https://vanna.ai/docs/llm/anthropic",
+      "title": "Anthropic Claude",
+      "filename": "llm_anthropic.json",
+      "content_length": 176,
+      "code_blocks": 0,
+      "headings": 2
+    },
+    {
+      "url": "https://vanna.ai/docs/llm/choosing",
+      "title": "Choosing a Model",
+      "filename": "llm_choosing.json",
+      "content_length": 227,
+      "code_blocks": 0,
+      "headings": 2
+    },
+    {
+      "url": "https://vanna.ai/docs/llm/openai",
+      "title": "OpenAI GPT",
+      "filename": "llm_openai.json",
+      "content_length": 170,
+      "code_blocks": 0,
+      "headings": 2
+    },
+    {
+      "url": "https://vanna.ai/docs/guides/oss-vs-premium",
+      "title": "OSS vs Premium",
+      "filename": "guides_oss-vs-premium.json",
+      "content_length": 6008,
+      "code_blocks": 45,
+      "headings": 0
+    },
+    {
+      "url": "https://vanna.ai/docs/guides/when-to-build-agents",
+      "title": "When to Build Agents",
+      "filename": "guides_when-to-build-agents.json",
+      "content_length": 1655,
+      "code_blocks": 11,
+      "headings": 0
+    },
+    {
+      "url": "https://vanna.ai/docs/migration",
+      "title": "Migration Guide: Vanna 0.x to Vanna 2.0+",
+      "filename": "migration.json",
+      "content_length": 953,
+      "code_blocks": 13,
+      "headings": 0
+    },
+    {
+      "url": "https://vanna.ai/docs/tutorials/quickstart-5min",
+      "title": "5-Minute Quickstart",
+      "filename": "tutorials_quickstart-5min.json",
+      "content_length": 1015,
+      "code_blocks": 9,
+      "headings": 4
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/audit-logging",
+      "title": "Audit Logging",
+      "filename": "placeholder_audit-logging.json",
+      "content_length": 803,
+      "code_blocks": 7,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/auth",
+      "title": "Authentication & Permissions",
+      "filename": "placeholder_auth.json",
+      "content_length": 926,
+      "code_blocks": 3,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/built-in-tools",
+      "title": "Built-in Tools",
+      "filename": "placeholder_built-in-tools.json",
+      "content_length": 1764,
+      "code_blocks": 23,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/charts",
+      "title": "Custom Charts",
+      "filename": "placeholder_charts.json",
+      "content_length": 637,
+      "code_blocks": 2,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/context-enrichers",
+      "title": "Context Enrichers",
+      "filename": "placeholder_context-enrichers.json",
+      "content_length": 525,
+      "code_blocks": 1,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/conversation-filters",
+      "title": "Conversation Filters",
+      "filename": "placeholder_conversation-filters.json",
+      "content_length": 592,
+      "code_blocks": 3,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/custom-tools",
+      "title": "Custom Tools",
+      "filename": "placeholder_custom-tools.json",
+      "content_length": 695,
+      "code_blocks": 2,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/deployment/fastapi",
+      "title": "Deploying with FastAPI",
+      "filename": "placeholder_deployment_fastapi.json",
+      "content_length": 1021,
+      "code_blocks": 10,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/deployment/flask",
+      "title": "Deploying with Flask",
+      "filename": "placeholder_deployment_flask.json",
+      "content_length": 825,
+      "code_blocks": 7,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/error-recovery",
+      "title": "Error Recovery",
+      "filename": "placeholder_error-recovery.json",
+      "content_length": 610,
+      "code_blocks": 0,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/lifecycle-hooks",
+      "title": "Lifecycle Hooks",
+      "filename": "placeholder_lifecycle-hooks.json",
+      "content_length": 662,
+      "code_blocks": 1,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/llm-context-enhancers",
+      "title": "LLM Context Enhancers",
+      "filename": "placeholder_llm-context-enhancers.json",
+      "content_length": 1201,
+      "code_blocks": 5,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/llm-middlewares",
+      "title": "LLM Middlewares",
+      "filename": "placeholder_llm-middlewares.json",
+      "content_length": 594,
+      "code_blocks": 1,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/memory-backends",
+      "title": "Tool Memory",
+      "filename": "placeholder_memory-backends.json",
+      "content_length": 1746,
+      "code_blocks": 1,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/observability",
+      "title": "Observability",
+      "filename": "placeholder_observability.json",
+      "content_length": 468,
+      "code_blocks": 0,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/python",
+      "title": "Python SDK Reference",
+      "filename": "placeholder_python.json",
+      "content_length": 538,
+      "code_blocks": 0,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/system-prompts",
+      "title": "System Prompts",
+      "filename": "placeholder_system-prompts.json",
+      "content_length": 880,
+      "code_blocks": 6,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/training",
+      "title": "Manual Training Guide",
+      "filename": "placeholder_training.json",
+      "content_length": 1646,
+      "code_blocks": 1,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/ui-features",
+      "title": "UI Feature Flags",
+      "filename": "placeholder_ui-features.json",
+      "content_length": 1084,
+      "code_blocks": 6,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/web-ui",
+      "title": "Web UI",
+      "filename": "placeholder_web-ui.json",
+      "content_length": 1136,
+      "code_blocks": 4,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/web-ui/customization",
+      "title": "Web UI Customization",
+      "filename": "placeholder_web-ui_customization.json",
+      "content_length": 695,
+      "code_blocks": 0,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/workflow-handlers",
+      "title": "Workflow Handlers",
+      "filename": "placeholder_workflow-handlers.json",
+      "content_length": 1223,
+      "code_blocks": 18,
+      "headings": 1
+    },
+    {
+      "url": "https://vanna.ai/docs/configure",
+      "title": "Chat with your",
+      "filename": "configure.json",
+      "content_length": 903,
+      "code_blocks": 8
+    }
+  ],
+  "errors": [
+    {
+      "url": "https://vanna.ai/docs/advanced/custom-database",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/advanced/custom-llm",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/concepts/how-it-works",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/guides",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/how-to/deployment/docker",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/how-to/security/authentication",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/how-to/tools/define-tool",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/deployment",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/placeholder/ui-components",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/tutorials",
+      "status": 404,
+      "error": "HTTP 404"
+    },
+    {
+      "url": "https://vanna.ai/docs/web-ui/placeholder/customization",
+      "status": 404,
+      "error": "HTTP 404"
+    }
+  ]
+}
