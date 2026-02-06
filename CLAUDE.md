@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Required Reading
+
+Before making any changes to this codebase, you **must** read:
+
+1. **`AGENTS.md`** - Agent configuration rules, constraints, and behavioral guidelines. Always read this file at the start of every session.
+2. **`vanna-skill/SKILL.md`** and files in **`vanna-skill/references/`** - Authoritative Vanna 2.0 API patterns, correct method signatures, and integration best practices. All Vanna-related code must conform to these references.
+3. **`vanna_docs/`** - Scraped official Vanna documentation. Consult when implementing new features, debugging, or uncertain about any Vanna API.
+
+When writing or modifying Vanna code, always verify your approach against the skill references and documentation first. Do not guess at API signatures or patterns — look them up.
+
 ## Project Overview
 
 TASI Saudi Stock Market AI Analyst built on **Vanna 2.0** framework. Natural language queries are converted to SQL against a normalized SQLite database of ~500 Saudi-listed companies, with Plotly chart generation. Frontend uses the `<vanna-chat>` web component with a custom Ra'd AI gold-themed dark UI.
