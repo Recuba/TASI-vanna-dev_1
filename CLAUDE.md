@@ -2,15 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Required Reading
+## Required Reading (Mandatory)
 
-Before making any changes to this codebase, you **must** read:
+**At the start of every session**, before making any changes, you MUST read:
 
-1. **`AGENTS.md`** - Agent configuration rules, constraints, and behavioral guidelines. Always read this file at the start of every session.
-2. **`vanna-skill/SKILL.md`** and files in **`vanna-skill/references/`** - Authoritative Vanna 2.0 API patterns, correct method signatures, and integration best practices. All Vanna-related code must conform to these references.
-3. **`vanna_docs/`** - Scraped official Vanna documentation. Consult when implementing new features, debugging, or uncertain about any Vanna API.
+1. **`AGENTS.md`** - Read this FIRST, every time. Contains agent configuration rules, constraints, and behavioral guidelines that govern how you operate in this repo.
 
-When writing or modifying Vanna code, always verify your approach against the skill references and documentation first. Do not guess at API signatures or patterns — look them up.
+2. **`vanna-skill/SKILL.md`** and **`vanna-skill/references/`** - The authoritative source for Vanna 2.0 API patterns, correct method signatures, tool registration, and integration best practices. All Vanna-related code MUST conform to these references. When in doubt, read the relevant reference file before writing code.
+
+3. **`vanna_docs/`** - Scraped official Vanna documentation (JSON pages and raw HTML). Consult these when implementing new features, debugging issues, or working with any Vanna API you haven't used before.
+
+**Hard rules:**
+- Never guess at Vanna API signatures or patterns — look them up in the skill references and docs first.
+- If a pattern in the codebase conflicts with the skill/docs, flag it rather than silently propagating the incorrect pattern.
+- Always cross-reference `vanna-skill/references/` for the correct way to register tools, build system prompts, configure agents, set up servers, and integrate LLMs/databases.
 
 ## Project Overview
 
