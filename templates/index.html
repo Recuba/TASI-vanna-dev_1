@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ra'd AI - Saudi Stock Market AI Analyst</title>
+    <meta name="description" content="AI-powered Saudi stock market analysis. Query TASI data with natural language.">
+
+    <!-- Tajawal Font (Arabic-friendly, great for English) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Vanna Chat Web Component (must be type="module" for ES module imports) -->
+    <script type="module" src="https://img.vanna.ai/vanna-components.js"></script>
+
+    <style>
+        /* ===================================================================
+           CSS CUSTOM PROPERTIES - Ra'd AI Design Tokens
+           =================================================================== */
+        :root {
+            /* Gold Palette */
+            --gold-primary: #D4A84B;
+            --gold-light: #E8C872;
+            --gold-dark: #B8860B;
+            --gold-gradient: linear-gradient(135deg, #D4A84B 0%, #E8C872 50%, #B8860B 100%);
+            --gold-glow: rgba(212, 168, 75, 0.3);
+            --gold-border: rgba(212, 168, 75, 0.2);
+            --gold-border-hover: rgba(212, 168, 75, 0.6);
+
+            /* Backgrounds */
+            --bg-dark: #0E0E0E;
+            --bg-card: #1A1A1A;
+            --bg-card-hover: #252525;
+            --bg-input: #2A2A2A;
+            --bg-page: radial-gradient(ellipse at top, #1a1a1a 0%, #0E0E0E 50%);
+
+            /* Text */
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --text-muted: #707070;
+
+            /* Accent Colors */
+            --accent-green: #4CAF50;
+            --accent-red: #FF6B6B;
+            --accent-blue: #4A9FFF;
+            --accent-warning: #FFA726;
+
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+
+            /* Radii */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-pill: 9999px;
+
+            /* Transitions */
+            --transition-base: 0.3s ease;
+
+            /* Layout */
+            --content-max-width: 960px;
+            --header-height: 64px;
+        }
+
+        /* ===================================================================
+           RESET & BASE
+           =================================================================== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-page);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ===================================================================
+           CUSTOM SCROLLBAR (Gold-themed)
+           =================================================================== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(212, 168, 75, 0.3);
+            border-radius: var(--radius-pill);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 168, 75, 0.5);
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(212, 168, 75, 0.3) var(--bg-dark);
+        }
+
+        /* ===================================================================
+           ANIMATIONS
+           =================================================================== */
+        @keyframes goldPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes dotBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        @keyframes subtleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* ===================================================================
+           HEADER
+           =================================================================== */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(14, 14, 14, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--gold-border);
+            padding: 0 var(--space-lg);
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-inner {
+            width: 100%;
+            max-width: var(--content-max-width);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            background: var(--gold-gradient);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--bg-dark);
+            letter-spacing: -0.5px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 12px rgba(212, 168, 75, 0.25);
+        }
+
+        .header-text {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .header-text h1 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.2px;
+            line-height: 1.3;
+        }
+
+        .header-text p {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+
+        .header-status {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: goldPulse 2s ease-in-out infinite;
+        }
+
+        .status-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent-green);
+        }
+
+        /* ===================================================================
+           MAIN CONTENT WRAPPER
+           =================================================================== */
+        .app-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-sm) var(--space-md);
+            width: 100%;
+            min-height: 0;
+        }
+
+        .content-column {
+            width: 100%;
+            max-width: var(--content-max-width);
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            gap: var(--space-sm);
+        }
+
+        /* ===================================================================
+           HERO / BRAND SECTION
+           =================================================================== */
+        .hero-section {
+            text-align: center;
+            padding: var(--space-md) 0 var(--space-xs);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.3;
+            margin-bottom: var(--space-xs);
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+
+        /* ===================================================================
+           QUICK STATS BAR
+           =================================================================== */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .stat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--gold-border);
+            border-radius: var(--radius-pill);
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all var(--transition-base);
+        }
+
+        .stat-pill:hover {
+            border-color: var(--gold-border-hover);
+            color: var(--text-primary);
+        }
+
+        .stat-pill .stat-icon {
+            font-size: 14px;
+        }
+
+        .stat-pill .stat-value {
+            color: var(--gold-primary);
+            font-weight: 700;
+        }
+
+        /* ===================================================================
+           EXAMPLE QUESTION CHIPS
+           =================================================================== */
+        .suggestions-section {
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .suggestions-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: var(--space-md);
+            text-align: center;
+        }
+
+        .suggestions-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: var(--space-sm);
+        }
+
+        .suggestion-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--gold-border);
+            border-radius: var(--radius-pill);
+            padding: 8px 16px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            text-align: left;
+            line-height: 1.3;
+            white-space: nowrap;
+            position: relative;
+            z-index: 10;
+        }
+
+        .suggestion-chip:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--gold-primary);
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px var(--gold-glow);
+            transform: translateY(-2px);
+        }
+
+        .suggestion-chip:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px var(--gold-glow);
+        }
+
+        .chip-icon {
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+
+        /* ===================================================================
+           CHAT AREA
+           =================================================================== */
+        .chat-container {
+            height: calc(100vh - 200px);
+            min-height: 500px;
+            background: var(--bg-card);
+            border: 1px solid var(--gold-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        vanna-chat {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ===================================================================
+           PLOTLY CHART DARK THEME OVERRIDES
+           =================================================================== */
+        .js-plotly-plot,
+        .plotly,
+        .plot-container {
+            background: var(--bg-card) !important;
+        }
+
+        .js-plotly-plot .plotly .main-svg {
+            background: transparent !important;
+        }
+
+        .js-plotly-plot .plotly .modebar {
+            background: rgba(26, 26, 26, 0.8) !important;
+        }
+
+        .js-plotly-plot .plotly .modebar-btn path {
+            fill: var(--text-muted) !important;
+        }
+
+        .js-plotly-plot .plotly .modebar-btn:hover path {
+            fill: var(--gold-primary) !important;
+        }
+
+        /* ===================================================================
+           LOADING DOTS ANIMATION
+           =================================================================== */
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--gold-primary);
+            border-radius: 50%;
+            animation: dotBounce 1.4s ease-in-out infinite both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0s; }
+
+        /* ===================================================================
+           FOOTER
+           =================================================================== */
+        .app-footer {
+            text-align: center;
+            padding: var(--space-md) var(--space-lg);
+            border-top: 1px solid rgba(212, 168, 75, 0.08);
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .footer-text a {
+            color: var(--gold-primary);
+            text-decoration: none;
+            transition: color var(--transition-base);
+        }
+
+        .footer-text a:hover {
+            color: var(--gold-light);
+        }
+
+        .footer-divider {
+            display: inline-block;
+            margin: 0 8px;
+            color: rgba(112, 112, 112, 0.4);
+        }
+
+        /* ===================================================================
+           RESPONSIVE DESIGN
+           =================================================================== */
+
+        /* Tablets and below */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 22px;
+            }
+
+            .hero-subtitle {
+                font-size: 13px;
+            }
+
+            .stats-bar {
+                gap: var(--space-xs);
+            }
+
+            .stat-pill {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+
+            .app-main {
+                padding: var(--space-sm) var(--space-sm);
+            }
+
+            .hero-section {
+                padding: var(--space-sm) 0 var(--space-xs);
+            }
+
+            .suggestion-chip {
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 480px) {
+            :root {
+                --header-height: 56px;
+            }
+
+            .header-text h1 {
+                font-size: 15px;
+            }
+
+            .header-text p {
+                display: none;
+            }
+
+            .status-label {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 20px;
+            }
+
+            .chat-container {
+                height: calc(100vh - 240px);
+                min-height: 400px;
+                border-radius: var(--radius-sm);
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .suggestions-grid {
+                gap: var(--space-xs);
+            }
+        }
+
+        /* Large screens */
+        @media (min-width: 1200px) {
+            :root {
+                --content-max-width: 1040px;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================================================================
+         HEADER
+         ================================================================ -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="brand-mark" aria-hidden="true">RA</div>
+            <div class="header-text">
+                <h1>Ra'd AI</h1>
+                <p>Saudi Financial Intelligence Platform</p>
+            </div>
+            <div class="header-status">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span class="status-label">Online</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================================================================
+         MAIN CONTENT
+         ================================================================ -->
+    <main class="app-main">
+        <div class="content-column">
+
+            <!-- Hero / Brand Title -->
+            <section class="hero-section">
+                <h2 class="hero-title">Saudi Stock Market AI Analyst</h2>
+                <p class="hero-subtitle">
+                    Ask questions in plain English about TASI-listed companies, financials, and market data.
+                </p>
+
+                <!-- Quick Stats Bar -->
+                <div class="stats-bar">
+                    <div class="stat-pill">
+                        <span class="stat-icon" aria-hidden="true">&#xe001;</span>
+                        <span class="stat-value">~500</span> Companies
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-icon" aria-hidden="true">&#x1F4CA;</span>
+                        <span class="stat-value">10</span> Tables
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-icon" aria-hidden="true">&#x1F3E6;</span>
+                        TASI Data
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-icon" aria-hidden="true">&#x26A1;</span>
+                        Powered by <span class="stat-value">Claude</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Example Question Chips -->
+            <section class="suggestions-section" aria-label="Example questions">
+                <p class="suggestions-label">Try asking</p>
+                <div class="suggestions-grid">
+                    <button class="suggestion-chip" data-query="Chart the top 10 companies by market cap">
+                        <span class="chip-icon" aria-hidden="true">&#x1F4CA;</span>
+                        Bar chart: Top 10 by market cap
+                    </button>
+                    <button class="suggestion-chip" data-query="Show a heatmap of ROE, ROA, and profit margin for the top 15 companies by market cap">
+                        <span class="chip-icon" aria-hidden="true">&#x1F525;</span>
+                        Heatmap: Profitability metrics
+                    </button>
+                    <button class="suggestion-chip" data-query="Plot the annual revenue trend for Saudi Aramco (2222.SR) over all available periods">
+                        <span class="chip-icon" aria-hidden="true">&#x1F4C8;</span>
+                        Line chart: Aramco revenue trend
+                    </button>
+                    <button class="suggestion-chip" data-query="Compare average P/E ratio, P/B ratio, and dividend yield across all sectors in a chart">
+                        <span class="chip-icon" aria-hidden="true">&#x1F504;</span>
+                        Chart: Sector valuation comparison
+                    </button>
+                    <button class="suggestion-chip" data-query="Show a scatter plot of market cap vs trailing P/E for all companies that have both values">
+                        <span class="chip-icon" aria-hidden="true">&#x2B50;</span>
+                        Scatter: Market cap vs P/E
+                    </button>
+                    <button class="suggestion-chip" data-query="Visualize the distribution of dividend yields across all companies that pay dividends">
+                        <span class="chip-icon" aria-hidden="true">&#x1F4B0;</span>
+                        Histogram: Dividend yield distribution
+                    </button>
+                    <button class="suggestion-chip" data-query="Which 5 sectors have the most companies and what is their average market cap? Show as a chart">
+                        <span class="chip-icon" aria-hidden="true">&#x1F3E2;</span>
+                        Chart: Sectors by company count
+                    </button>
+                    <button class="suggestion-chip" data-query="Show a heatmap of total debt, total assets, and current ratio for the 10 largest banks">
+                        <span class="chip-icon" aria-hidden="true">&#x1F3E6;</span>
+                        Heatmap: Bank balance sheets
+                    </button>
+                </div>
+            </section>
+
+            <!-- Chat Component -->
+            <div class="chat-container">
+                <vanna-chat
+                    api-base=""
+                    sse-endpoint="/api/vanna/v2/chat_sse"
+                    ws-endpoint="/api/vanna/v2/chat_websocket"
+                    poll-endpoint="/api/vanna/v2/chat_poll"
+                    theme="dark"
+                    placeholder="Ask about Saudi stocks...">
+                </vanna-chat>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ================================================================
+         FOOTER
+         ================================================================ -->
+    <footer class="app-footer">
+        <p class="footer-text">
+            Ra'd AI
+            <span class="footer-divider">|</span>
+            Saudi Stock Market Intelligence
+            <span class="footer-divider">|</span>
+            Data sourced from Tadawul (TASI)
+        </p>
+    </footer>
+
+    <!-- ================================================================
+         JAVASCRIPT
+         ================================================================ -->
+    <script>
+        /**
+         * Find the input element inside the vanna-chat shadow DOM.
+         * Tries multiple selectors since the component structure may vary.
+         */
+        function findChatInput() {
+            var chat = document.querySelector('vanna-chat');
+            if (!chat || !chat.shadowRoot) return null;
+            // Try common selectors
+            var selectors = [
+                'textarea',
+                'input[type="text"]',
+                'input:not([type="hidden"])',
+                '[contenteditable="true"]',
+                '.chat-input textarea',
+                '.chat-input input',
+                '.message-input textarea',
+                '.message-input input'
+            ];
+            for (var i = 0; i < selectors.length; i++) {
+                var el = chat.shadowRoot.querySelector(selectors[i]);
+                if (el) return el;
+            }
+            return null;
+        }
+
+        /**
+         * Find the send/submit button inside the vanna-chat shadow DOM.
+         */
+        function findSendButton() {
+            var chat = document.querySelector('vanna-chat');
+            if (!chat || !chat.shadowRoot) return null;
+            var selectors = [
+                'button[type="submit"]',
+                'form button',
+                'button.send',
+                'button[aria-label*="send" i]',
+                'button[aria-label*="submit" i]'
+            ];
+            for (var i = 0; i < selectors.length; i++) {
+                var el = chat.shadowRoot.querySelector(selectors[i]);
+                if (el) return el;
+            }
+            // Fallback: find any button near the input
+            var allButtons = chat.shadowRoot.querySelectorAll('button');
+            if (allButtons.length > 0) return allButtons[allButtons.length - 1];
+            return null;
+        }
+
+        /**
+         * Inject a question into the vanna-chat input and submit it.
+         */
+        function askQuestion(query) {
+            var input = findChatInput();
+            if (!input) {
+                // Component might not be ready yet, scroll to chat area
+                var container = document.querySelector('.chat-container');
+                if (container) container.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            // Set value using native setter to bypass framework interception
+            var proto = input.tagName === 'TEXTAREA'
+                ? window.HTMLTextAreaElement.prototype
+                : window.HTMLInputElement.prototype;
+            var setter = Object.getOwnPropertyDescriptor(proto, 'value');
+            if (setter && setter.set) {
+                setter.set.call(input, query);
+            } else {
+                input.value = query;
+            }
+
+            // Dispatch events so the component recognizes the change
+            input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+            input.focus();
+
+            // Try to auto-submit after a short delay
+            setTimeout(function() {
+                // Try submitting the form if there is one
+                var chat = document.querySelector('vanna-chat');
+                if (chat && chat.shadowRoot) {
+                    var form = chat.shadowRoot.querySelector('form');
+                    if (form) {
+                        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                        return;
+                    }
+                }
+                // Fallback: simulate Enter key
+                input.dispatchEvent(new KeyboardEvent('keydown', {
+                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+                    bubbles: true, composed: true
+                }));
+                input.dispatchEvent(new KeyboardEvent('keypress', {
+                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+                    bubbles: true, composed: true
+                }));
+                input.dispatchEvent(new KeyboardEvent('keyup', {
+                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+                    bubbles: true, composed: true
+                }));
+            }, 150);
+
+            // Collapse suggestions
+            var section = document.querySelector('.suggestions-section');
+            if (section) {
+                section.style.transition = 'opacity 0.3s ease, max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease';
+                section.style.opacity = '0';
+                section.style.maxHeight = '0';
+                section.style.overflow = 'hidden';
+                section.style.margin = '0';
+                section.style.padding = '0';
+            }
+        }
+
+        /**
+         * Set up chip click handlers and entrance animations.
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            // Bind chip clicks via data-query attribute
+            document.querySelectorAll('.suggestion-chip[data-query]').forEach(function(chip) {
+                chip.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var query = this.getAttribute('data-query');
+                    if (query) askQuestion(query);
+                });
+            });
+
+            // Staggered entrance animation
+            var chips = document.querySelectorAll('.suggestion-chip');
+            chips.forEach(function(chip, index) {
+                chip.style.opacity = '0';
+                chip.style.transform = 'translateY(8px)';
+                chip.style.transitionDelay = (0.03 * index) + 's';
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        chip.style.opacity = '1';
+                        chip.style.transform = 'translateY(0)';
+                    });
+                });
+            });
+        });
+    </script>
+
+    <!-- Fallback if web component doesn't load -->
+    <script>
+        setTimeout(function() {
+            if (!customElements.get('vanna-chat')) {
+                var chatEl = document.querySelector('vanna-chat');
+                if (chatEl) {
+                    chatEl.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-family:Tajawal,sans-serif;padding:40px;text-align:center;">' +
+                        '<p style="font-size:18px;font-weight:700;color:var(--gold-primary);margin-bottom:12px;">Vanna Chat Component</p>' +
+                        '<p style="margin-bottom:8px;">Web component failed to load. Please check your connection.</p>' +
+                        '<p style="font-size:13px;color:var(--text-muted);">Loading from: https://img.vanna.ai/vanna-components.js</p>' +
+                        '</div>';
+                }
+            }
+        }, 5000);
+    </script>
+
+</body>
+</html>

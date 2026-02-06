@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B8860B"/>
+      <stop offset="50%" stop-color="#D4A84B"/>
+      <stop offset="100%" stop-color="#E8C872"/>
+    </linearGradient>
+    <linearGradient id="goldGradVert" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E8C872"/>
+      <stop offset="50%" stop-color="#D4A84B"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+    <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8C872"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Octagonal frame inspired by Islamic geometric patterns -->
+  <polygon points="30,4 42,4 52,14 52,26 52,36 52,46 42,56 30,56 20,56 8,46 8,36 8,26 8,14 20,4"
+           fill="none" stroke="url(#goldGrad)" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Inner octagonal accent -->
+  <polygon points="30,10 38,10 46,18 46,30 46,42 38,50 30,50 22,50 14,42 14,30 14,18 22,10"
+           fill="none" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- Lightning bolt icon centered in octagon -->
+  <path d="M34,14 L24,32 L30,32 L26,46 L38,26 L32,26 L36,14 Z"
+        fill="url(#boltGrad)" opacity="0.95"/>
+
+  <!-- Small chart bars at bottom-right of icon area -->
+  <rect x="40" y="40" width="3" height="8" rx="0.5" fill="url(#goldGrad)" opacity="0.5"/>
+  <rect x="44.5" y="36" width="3" height="12" rx="0.5" fill="url(#goldGrad)" opacity="0.6"/>
+  <rect x="49" y="32" width="3" height="16" rx="0.5" fill="url(#goldGrad)" opacity="0.7"/>
+
+  <!-- "Ra'd" text in stylized lettering -->
+  <text x="68" y="38" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="28" font-weight="700" fill="url(#goldGrad)" letter-spacing="1">
+    Ra'd
+  </text>
+
+  <!-- Subtitle -->
+  <text x="68" y="52" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="8.5" font-weight="400" fill="#D4A84B" letter-spacing="3" opacity="0.7">
+    SAUDI STOCKS AI
+  </text>
+
+  <!-- Thin decorative line under main text -->
+  <line x1="68" y1="42" x2="130" y2="42" stroke="url(#goldGrad)" stroke-width="0.5" opacity="0.4"/>
+</svg>

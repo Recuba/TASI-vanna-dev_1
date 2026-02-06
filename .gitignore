@@ -1,0 +1,7 @@
+__pycache__/
+.pytest_cache/
+.benchmarks/
+*.pyc
+nul
+f8c88490871f6169/
+.env
