@@ -2,6 +2,16 @@
 
 This file provides guidance for AI coding agents working on this codebase.
 
+## CRITICAL: First Steps for Every Session
+
+Before making ANY changes to this codebase, you MUST:
+
+1. **Read `AGENTS.md`** (this file) in full and follow all instructions.
+2. **Read `CLAUDE.md`** if it exists in the project root or any relevant subdirectory. Its instructions are equally binding.
+3. **Load the `/vanna` skill** (invoke it via the Skill tool) and read the Vanna 2.0 documentation and best practices it provides. All Vanna-related code must conform to the patterns, APIs, and conventions described in that skill.
+
+These are non-negotiable prerequisites. Do not skip them, even for "small" changes.
+
 ## Project Overview
 
 **Ra'd AI** is a Saudi Stock Market AI Analyst. It exposes a FastAPI chat interface powered by [Vanna 2.0](https://vanna.ai/) that lets users query a normalized SQLite database of ~500 TASI-listed Saudi companies using natural language. The LLM (Claude Sonnet 4.5 via Anthropic API) generates SQL, executes it, and optionally visualizes results with Plotly charts.
@@ -84,6 +94,8 @@ All tests must pass before merging changes.
 
 ## Vanna 2.0 Patterns
 
+ALWAYS invoke the `/vanna` skill before writing or modifying any Vanna-related code. The skill contains the authoritative Vanna 2.0 API documentation, best practices, integration patterns, and known pitfalls. Treat its guidance as the source of truth for all Vanna work in this project. If anything in this section conflicts with the skill's documentation, the skill takes precedence.
+
 These are critical patterns specific to Vanna 2.0. Getting them wrong causes runtime errors:
 
 - **Tool registration:** Use `tools.register_local_tool(tool, access_groups=[...])`. Do NOT use `tools.register()` (does not exist).
@@ -101,3 +113,5 @@ These are critical patterns specific to Vanna 2.0. Getting them wrong causes run
 - ALWAYS replace NaN with `None` before writing to SQLite (use `df.where(pd.notnull(df), None)`).
 - The system prompt in `app.py` must document ALL database columns. If you add or remove columns, update `SYSTEM_PROMPT` to match.
 - When modifying `csv_to_sqlite.py` column mappings, verify against the actual CSV headers.
+- ALWAYS read `AGENTS.md` and `CLAUDE.md` at the start of every session before making changes.
+- ALWAYS invoke the `/vanna` skill and follow its best practices before writing or modifying any Vanna 2.0 code.
