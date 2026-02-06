@@ -6,14 +6,19 @@ and exposes a FastAPI chat interface powered by Claude Sonnet 4.5
 via the Anthropic API.
 """
 
+import base64
+import json
 import os
+import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 from dotenv import load_dotenv
 
 load_dotenv()
 
 from vanna import Agent, AgentConfig, ToolRegistry
+from vanna.core.audit import AuditLogger
 from vanna.core.system_prompt.base import SystemPromptBuilder
 from vanna.core.user.resolver import UserResolver, RequestContext, User
 from vanna.integrations.local.agent_memory.in_memory import DemoAgentMemory
@@ -46,15 +51,141 @@ tools.register_local_tool(RunSqlTool(sql_runner=sql_runner), access_groups=["adm
 tools.register_local_tool(VisualizeDataTool(), access_groups=["admin", "user"])
 
 # ---------------------------------------------------------------------------
-# 4. User resolver (returns a single default user)
+# 4. User resolver (JWT or header-based auth, with default fallback)
 # ---------------------------------------------------------------------------
-class DefaultUserResolver(UserResolver):
+def _base64url_decode(value: str) -> bytes:
+    padding_needed = 4 - (len(value) % 4)
+    if padding_needed and padding_needed != 4:
+        value += "=" * padding_needed
+    return base64.urlsafe_b64decode(value.encode("utf-8"))
+
+
+def _decode_jwt_payload(token: str) -> Optional[dict]:
+    try:
+        parts = token.split(".")
+        if len(parts) < 2:
+            return None
+        payload = _base64url_decode(parts[1])
+        return json.loads(payload.decode("utf-8"))
+    except (ValueError, json.JSONDecodeError):
+        return None
+
+
+class HeaderOrJwtUserResolver(UserResolver):
     async def resolve_user(self, request_context: RequestContext) -> User:
+        default_user_id = os.environ.get("DEFAULT_USER_ID", "default_user")
+        default_email = os.environ.get("DEFAULT_USER_EMAIL", "user@localhost")
+        default_groups = os.environ.get("DEFAULT_USER_GROUPS", "admin,user")
+        auth_mode = os.environ.get("AUTH_MODE", "optional").lower()
+
+        auth_header = request_context.get_header("Authorization")
+        bearer_token = None
+        if auth_header and auth_header.lower().startswith("bearer "):
+            bearer_token = auth_header.split(" ", 1)[1].strip()
+
+        payload = _decode_jwt_payload(bearer_token) if bearer_token else None
+        header_user_id = request_context.get_header("X-User-Id")
+        header_email = request_context.get_header("X-User-Email")
+        header_groups = request_context.get_header("X-User-Groups")
+
+        if payload or header_user_id or header_email or header_groups:
+            user_id = (
+                (payload or {}).get("id")
+                or (payload or {}).get("user_id")
+                or header_user_id
+                or default_user_id
+            )
+            email = (payload or {}).get("email") or header_email or default_email
+            groups = (
+                (payload or {}).get("groups")
+                or (payload or {}).get("group_memberships")
+                or (header_groups.split(",") if header_groups else None)
+                or default_groups.split(",")
+            )
+            if isinstance(groups, str):
+                groups = groups.split(",")
+            return User(
+                id=str(user_id),
+                email=str(email),
+                group_memberships=[group.strip() for group in groups if group],
+                metadata=(payload or {}).get("metadata", {}) if payload else {},
+            )
+
+        if auth_mode == "required":
+            raise ValueError("Authentication required but no credentials provided.")
+
         return User(
-            id="default_user",
-            email="user@localhost",
-            group_memberships=["admin", "user"],
+            id=default_user_id,
+            email=default_email,
+            group_memberships=[group.strip() for group in default_groups.split(",") if group],
         )
+
+
+class SqliteAuditLogger(AuditLogger):
+    def __init__(self, db_path: Path) -> None:
+        self._db_path = db_path
+        self._init_db()
+
+    def _init_db(self) -> None:
+        conn = sqlite3.connect(self._db_path)
+        try:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS audit_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT,
+                    query TEXT,
+                    sql TEXT,
+                    row_count INTEGER,
+                    execution_time_ms REAL,
+                    created_at TEXT
+                );
+                """
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    async def log_query(
+        self,
+        user_id: str,
+        query: str,
+        sql: str,
+        result: Any,
+        execution_time: float,
+    ) -> None:
+        row_count = None
+        if result is not None and hasattr(result, "__len__"):
+            try:
+                row_count = len(result)
+            except TypeError:
+                row_count = None
+
+        conn = sqlite3.connect(self._db_path)
+        try:
+            conn.execute(
+                """
+                INSERT INTO audit_logs (
+                    user_id,
+                    query,
+                    sql,
+                    row_count,
+                    execution_time_ms,
+                    created_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    query,
+                    sql,
+                    row_count,
+                    execution_time * 1000.0,
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
 
 # ---------------------------------------------------------------------------
 # 5. System prompt builder -- comprehensive schema documentation
@@ -264,9 +395,10 @@ config = AgentConfig(
 agent = Agent(
     llm_service=llm,
     tool_registry=tools,
-    user_resolver=DefaultUserResolver(),
+    user_resolver=HeaderOrJwtUserResolver(),
     agent_memory=DemoAgentMemory(max_items=10000),
     system_prompt_builder=SaudiStocksSystemPromptBuilder(),
+    audit_logger=SqliteAuditLogger(_HERE / "audit_logs.db"),
     config=config,
 )
 
