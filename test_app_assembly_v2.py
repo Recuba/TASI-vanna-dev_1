@@ -2,14 +2,19 @@
 Comprehensive Import and Assembly Tests for Vanna 2.0 App - Version 2
 ======================================================================
 Tests all imports, constructions, and configurations without starting the server.
-Enhanced with better attribute inspection.
+Supports dual SQLite/PostgreSQL backend. PostgresRunner tests are skipped
+when PostgreSQL is not reachable.
 """
 
 import sys
 import os
+from pathlib import Path
 from typing import List, Optional
 import traceback
 import inspect
+
+_HERE = Path(__file__).resolve().parent
+_SQLITE_PATH = str(_HERE / "saudi_stocks.db")
 
 # Test results tracker
 test_results = []
@@ -21,6 +26,29 @@ def test_result(test_name: str, passed: bool, message: str = ""):
     print(f"[{status}] {test_name}")
     if message:
         print(f"      {message}")
+
+
+def _pg_available() -> bool:
+    """Check if PostgreSQL is reachable."""
+    if not os.environ.get("POSTGRES_HOST"):
+        return False
+    try:
+        import psycopg2
+        conn = psycopg2.connect(
+            host=os.environ.get("POSTGRES_HOST", "localhost"),
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
+            dbname=os.environ.get("POSTGRES_DB", "tasi_platform"),
+            user=os.environ.get("POSTGRES_USER", "tasi_user"),
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+            connect_timeout=3,
+        )
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+PG_AVAILABLE = _pg_available()
 
 
 # ===========================================================================
@@ -86,6 +114,20 @@ try:
 except Exception as e:
     test_result("1.8 RunSqlTool import", False, str(e))
 
+# Test 1.9: AnthropicLlmService import
+try:
+    from vanna.integrations.anthropic import AnthropicLlmService
+    test_result("1.9 AnthropicLlmService import", True)
+except Exception as e:
+    test_result("1.9 AnthropicLlmService import", False, str(e))
+
+# Test 1.10: PostgresRunner import
+try:
+    from vanna.integrations.postgres import PostgresRunner
+    test_result("1.10 PostgresRunner import", True)
+except Exception as e:
+    test_result("1.10 PostgresRunner import", False, str(e))
+
 
 # ===========================================================================
 # TEST SUITE 2: LLM SERVICE CONSTRUCTION
@@ -144,29 +186,61 @@ try:
 except Exception as e:
     test_result("2.1 OpenAILlmService accepts base_url and default_headers params", False, str(e))
 
+# Test 2.2: AnthropicLlmService construction (primary LLM for production)
+try:
+    from vanna.integrations.anthropic import AnthropicLlmService
+
+    anthropic_llm = AnthropicLlmService(
+        model="claude-sonnet-4-5-20250929",
+        api_key="test-key-for-construction",
+    )
+    test_result("2.2 AnthropicLlmService construction", True,
+               "Constructed with claude-sonnet-4-5-20250929 model")
+except Exception as e:
+    test_result("2.2 AnthropicLlmService construction", False, str(e))
+
 
 # ===========================================================================
-# TEST SUITE 3: SQLITE RUNNER CONSTRUCTION
+# TEST SUITE 3: SQL RUNNER CONSTRUCTION
 # ===========================================================================
 print("\n" + "="*70)
-print("TEST SUITE 3: SQLITE RUNNER CONSTRUCTION")
+print("TEST SUITE 3: SQL RUNNER CONSTRUCTION")
 print("="*70 + "\n")
 
 # Test 3.1: SqliteRunner connection to existing database
 try:
     from vanna.integrations.sqlite import SqliteRunner
-    db_path = "./saudi_stocks.db"
 
-    # Check if database file exists
-    if not os.path.exists(db_path):
+    # Check if database file exists (use script-relative path)
+    if not os.path.exists(_SQLITE_PATH):
         test_result("3.1 SqliteRunner connection to saudi_stocks.db", False,
-                   f"Database file not found at {db_path}")
+                   f"Database file not found at {_SQLITE_PATH}")
     else:
-        sql_runner = SqliteRunner(db_path)
+        sql_runner = SqliteRunner(_SQLITE_PATH)
         test_result("3.1 SqliteRunner connection to saudi_stocks.db", True,
-                   f"Connected to database at {db_path}")
+                   f"Connected to database at {_SQLITE_PATH}")
 except Exception as e:
     test_result("3.1 SqliteRunner connection to saudi_stocks.db", False, str(e))
+
+# Test 3.2: PostgresRunner construction (skipped if PG not available)
+if PG_AVAILABLE:
+    try:
+        from vanna.integrations.postgres import PostgresRunner
+
+        pg_runner = PostgresRunner(
+            host=os.environ.get("POSTGRES_HOST", "localhost"),
+            dbname=os.environ.get("POSTGRES_DB", "tasi_platform"),
+            user=os.environ.get("POSTGRES_USER", "tasi_user"),
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
+        )
+        test_result("3.2 PostgresRunner construction", True,
+                   f"Connected to PostgreSQL at {os.environ.get('POSTGRES_HOST')}")
+    except Exception as e:
+        test_result("3.2 PostgresRunner construction", False, str(e))
+else:
+    test_result("3.2 PostgresRunner construction", True,
+               "SKIPPED - PostgreSQL not available (set POSTGRES_HOST)")
 
 
 # ===========================================================================
@@ -204,6 +278,23 @@ try:
 
 except Exception as e:
     test_result("4.1 ToolRegistry.register_local_tool method exists and works", False, str(e))
+
+# Test 4.3: ToolRegistry with VisualizeDataTool
+try:
+    from vanna import ToolRegistry
+    from vanna.tools import RunSqlTool, VisualizeDataTool
+    from vanna.integrations.sqlite import SqliteRunner
+
+    tools_with_viz = ToolRegistry()
+    tools_with_viz.register_local_tool(
+        RunSqlTool(sql_runner=SqliteRunner(":memory:")), access_groups=["admin", "user"]
+    )
+    tools_with_viz.register_local_tool(
+        VisualizeDataTool(), access_groups=["admin", "user"]
+    )
+    test_result("4.3 ToolRegistry registers both RunSqlTool and VisualizeDataTool", True)
+except Exception as e:
+    test_result("4.3 ToolRegistry registers both RunSqlTool and VisualizeDataTool", False, str(e))
 
 
 # ===========================================================================
@@ -302,7 +393,7 @@ print("\n" + "="*70)
 print("TEST SUITE 7: AGENT ASSEMBLY")
 print("="*70 + "\n")
 
-# Test 7.1: Agent can be constructed with all required parameters
+# Test 7.1: Agent can be constructed with all required parameters (SQLite backend)
 try:
     from vanna import Agent, AgentConfig, ToolRegistry
     from vanna.integrations.openai import OpenAILlmService
@@ -355,6 +446,98 @@ try:
 except Exception as e:
     test_result("7.1 Agent construction with all required parameters", False, str(e))
     traceback.print_exc()
+
+# Test 7.3: Agent with AnthropicLlmService (production-like assembly)
+try:
+    from vanna import Agent, AgentConfig, ToolRegistry
+    from vanna.integrations.anthropic import AnthropicLlmService
+    from vanna.integrations.sqlite import SqliteRunner
+    from vanna.integrations.local.agent_memory.in_memory import DemoAgentMemory
+    from vanna.tools import RunSqlTool, VisualizeDataTool
+    from vanna.core.system_prompt.base import SystemPromptBuilder
+    from vanna.core.user.resolver import UserResolver, RequestContext, User
+
+    prod_llm = AnthropicLlmService(
+        model="claude-sonnet-4-5-20250929",
+        api_key="test-key-for-assembly",
+    )
+
+    prod_tools = ToolRegistry()
+    prod_runner = SqliteRunner(":memory:")
+    prod_tools.register_local_tool(RunSqlTool(sql_runner=prod_runner), access_groups=["admin", "user"])
+    prod_tools.register_local_tool(VisualizeDataTool(), access_groups=["admin", "user"])
+
+    class ProdUserResolver(UserResolver):
+        async def resolve_user(self, request_context: RequestContext) -> User:
+            return User(id="default_user", email="user@localhost", group_memberships=["admin", "user"])
+
+    class ProdPromptBuilder(SystemPromptBuilder):
+        async def build_system_prompt(self, user: User, tools: List["ToolSchema"]) -> Optional[str]:
+            return "Production-like system prompt"
+
+    prod_agent = Agent(
+        llm_service=prod_llm,
+        tool_registry=prod_tools,
+        user_resolver=ProdUserResolver(),
+        agent_memory=DemoAgentMemory(max_items=10000),
+        system_prompt_builder=ProdPromptBuilder(),
+        config=AgentConfig(stream_responses=True, max_tool_iterations=10),
+    )
+    test_result("7.3 Agent with AnthropicLlmService (production-like)", True)
+
+except Exception as e:
+    test_result("7.3 Agent with AnthropicLlmService (production-like)", False, str(e))
+    traceback.print_exc()
+
+# Test 7.4: Agent assembly with PostgresRunner (skipped if PG not available)
+if PG_AVAILABLE:
+    try:
+        from vanna import Agent, AgentConfig, ToolRegistry
+        from vanna.integrations.anthropic import AnthropicLlmService
+        from vanna.integrations.postgres import PostgresRunner
+        from vanna.integrations.local.agent_memory.in_memory import DemoAgentMemory
+        from vanna.tools import RunSqlTool, VisualizeDataTool
+        from vanna.core.system_prompt.base import SystemPromptBuilder
+        from vanna.core.user.resolver import UserResolver, RequestContext, User
+
+        pg_llm = AnthropicLlmService(
+            model="claude-sonnet-4-5-20250929",
+            api_key="test-key-for-pg-assembly",
+        )
+        pg_tools = ToolRegistry()
+        pg_sql_runner = PostgresRunner(
+            host=os.environ.get("POSTGRES_HOST", "localhost"),
+            dbname=os.environ.get("POSTGRES_DB", "tasi_platform"),
+            user=os.environ.get("POSTGRES_USER", "tasi_user"),
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
+        )
+        pg_tools.register_local_tool(RunSqlTool(sql_runner=pg_sql_runner), access_groups=["admin", "user"])
+        pg_tools.register_local_tool(VisualizeDataTool(), access_groups=["admin", "user"])
+
+        class PGUserResolver(UserResolver):
+            async def resolve_user(self, request_context: RequestContext) -> User:
+                return User(id="pg_user", email="user@localhost", group_memberships=["admin", "user"])
+
+        class PGPromptBuilder(SystemPromptBuilder):
+            async def build_system_prompt(self, user: User, tools: List["ToolSchema"]) -> Optional[str]:
+                return "PostgreSQL system prompt"
+
+        pg_agent = Agent(
+            llm_service=pg_llm,
+            tool_registry=pg_tools,
+            user_resolver=PGUserResolver(),
+            agent_memory=DemoAgentMemory(max_items=10000),
+            system_prompt_builder=PGPromptBuilder(),
+            config=AgentConfig(stream_responses=True, max_tool_iterations=10),
+        )
+        test_result("7.4 Agent assembly with PostgresRunner", True)
+    except Exception as e:
+        test_result("7.4 Agent assembly with PostgresRunner", False, str(e))
+        traceback.print_exc()
+else:
+    test_result("7.4 Agent assembly with PostgresRunner", True,
+               "SKIPPED - PostgreSQL not available (set POSTGRES_HOST)")
 
 
 # ===========================================================================
@@ -480,6 +663,40 @@ except Exception as e:
 
 
 # ===========================================================================
+# TEST SUITE 11: DUAL BACKEND CONFIGURATION
+# ===========================================================================
+print("\n" + "="*70)
+print("TEST SUITE 11: DUAL BACKEND CONFIGURATION")
+print("="*70 + "\n")
+
+# Test 11.1: DB_BACKEND env var controls backend selection
+try:
+    backend = os.environ.get("DB_BACKEND", "sqlite").lower()
+    if backend in ("sqlite", "postgres"):
+        test_result("11.1 DB_BACKEND env var is valid", True,
+                   f"DB_BACKEND={backend}")
+    else:
+        test_result("11.1 DB_BACKEND env var is valid", False,
+                   f"Unexpected DB_BACKEND={backend}, expected 'sqlite' or 'postgres'")
+except Exception as e:
+    test_result("11.1 DB_BACKEND env var is valid", False, str(e))
+
+# Test 11.2: PostgreSQL env vars present when PG backend active
+if os.environ.get("DB_BACKEND", "sqlite").lower() == "postgres":
+    pg_vars = ["POSTGRES_HOST", "POSTGRES_DB", "POSTGRES_USER"]
+    missing = [v for v in pg_vars if not os.environ.get(v)]
+    if not missing:
+        test_result("11.2 PostgreSQL env vars present for PG backend", True,
+                   f"POSTGRES_HOST={os.environ.get('POSTGRES_HOST')}")
+    else:
+        test_result("11.2 PostgreSQL env vars present for PG backend", False,
+                   f"Missing: {missing}")
+else:
+    test_result("11.2 PostgreSQL env vars present for PG backend", True,
+               "SKIPPED - DB_BACKEND=sqlite (PG env vars not required)")
+
+
+# ===========================================================================
 # SUMMARY
 # ===========================================================================
 print("\n" + "="*70)
@@ -494,6 +711,7 @@ print(f"Total Tests: {total_tests}")
 print(f"Passed: {passed_tests}")
 print(f"Failed: {failed_tests}")
 print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+print(f"PostgreSQL: {'available' if PG_AVAILABLE else 'not available (PG tests skipped)'}")
 
 if failed_tests > 0:
     print("\n" + "="*70)

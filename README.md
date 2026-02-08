@@ -1,0 +1,146 @@
+# Ra'd AI - TASI Saudi Stock Market Platform
+
+AI-powered financial analyst for the Saudi stock market (TASI - Tadawul All Share Index). Ask questions in natural language, get SQL-backed answers with interactive Plotly charts.
+
+Built on [Vanna 2.0](https://vanna.ai/) with Claude Sonnet 4.5, supporting dual SQLite/PostgreSQL backends.
+
+## Features
+
+- Natural language to SQL query generation via Claude Sonnet 4.5
+- Interactive Plotly chart visualization (bar, line, scatter, heatmap)
+- Comprehensive data for ~500 Saudi-listed companies
+- Financial statements (balance sheet, income statement, cash flow) with multi-period history
+- Market data, valuation metrics, analyst consensus, dividends
+- News aggregation, announcement tracking, technical reports (PostgreSQL)
+- Dual database backend: SQLite for development, PostgreSQL for production
+
+## Quick Start
+
+### Local Development (SQLite)
+
+```bash
+# Clone and install
+git clone <repo-url>
+cd vanna-ai-testing
+pip install -r requirements.txt
+
+# Configure
+cp .env.example .env
+# Edit .env and set ANTHROPIC_API_KEY
+
+# Build database and start
+python csv_to_sqlite.py
+python app.py
+```
+
+Open http://localhost:8084
+
+### Docker (PostgreSQL)
+
+```bash
+cp .env.example .env
+# Edit .env: set ANTHROPIC_API_KEY and POSTGRES_PASSWORD
+
+docker compose up -d
+```
+
+Services:
+- App: http://localhost:8084
+- pgAdmin (optional): `docker compose --profile tools up -d` then http://localhost:5050
+
+## Architecture
+
+```
+                    +------------------+
+                    |   Browser/User   |
+                    +--------+---------+
+                             |
+                    +--------v---------+
+                    |  FastAPI (8084)   |
+                    |  - Chat SSE      |
+                    |  - Static files  |
+                    +--------+---------+
+                             |
+                    +--------v---------+
+                    |  Vanna 2.0 Agent |
+                    |  - Claude LLM    |
+                    |  - RunSqlTool    |
+                    |  - VisualizeTool |
+                    +--------+---------+
+                             |
+              +--------------+--------------+
+              |                             |
+     +--------v--------+          +--------v--------+
+     |     SQLite       |          |   PostgreSQL    |
+     | (saudi_stocks.db)|          |  (tasi_platform)|
+     |  10 core tables  |          |  10 core + 14   |
+     +-----------------+          |  extended tables |
+                                  +-----------------+
+```
+
+## Database
+
+### Core Tables (10 tables, both backends)
+
+| Table | Description | Rows |
+|---|---|---|
+| `companies` | Company info, sector, industry | 500 |
+| `market_data` | Price, volume, market cap, beta | 500 |
+| `valuation_metrics` | PE, PB, EV ratios, EPS | 500 |
+| `profitability_metrics` | Margins, ROA, ROE, growth | 500 |
+| `dividend_data` | Yields, payout ratio, dates | 500 |
+| `financial_summary` | Revenue, debt, cash flow summary | 500 |
+| `analyst_data` | Target prices, recommendations | 500 |
+| `balance_sheet` | Assets, liabilities, equity (multi-period) | ~2,527 |
+| `income_statement` | Revenue, expenses, net income (multi-period) | ~2,632 |
+| `cash_flow` | Operating, investing, financing (multi-period) | ~2,604 |
+
+### PostgreSQL Extended Tables
+
+The PostgreSQL schema (`database/schema.sql`) adds tables for XBRL data, price history, news/announcements, user management, and audit logging.
+
+## Configuration
+
+All settings via environment variables. See `.env.example` for the complete reference.
+
+| Variable | Default | Description |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | (required) | Claude API key |
+| `DB_BACKEND` | `sqlite` | Database backend (`sqlite` or `postgres`) |
+| `DB_SQLITE_PATH` | `saudi_stocks.db` | SQLite file path |
+| `POSTGRES_HOST` | `localhost` | PostgreSQL host |
+| `POSTGRES_PORT` | `5432` | PostgreSQL port |
+| `POSTGRES_DB` | `tasi_platform` | PostgreSQL database name |
+| `POSTGRES_USER` | `tasi_user` | PostgreSQL user |
+| `POSTGRES_PASSWORD` | (required for PG) | PostgreSQL password |
+| `SERVER_PORT` | `8084` | FastAPI server port |
+| `LOG_LEVEL` | `INFO` | Logging level |
+
+## Testing
+
+```bash
+# All tests
+python -m unittest discover -s . -p "test_*.py"
+
+# Database integrity (20 tests)
+python test_database.py
+
+# Vanna assembly (24 tests)
+python test_app_assembly_v2.py
+```
+
+## Project Structure
+
+See `CLAUDE.md` for the full directory tree and detailed architecture documentation.
+
+## Contributing
+
+1. Read `AGENTS.md` and `CLAUDE.md` before making changes
+2. For Vanna 2.0 code, consult `vanna-skill/references/` first
+3. All tests must pass before merging
+4. Never commit `.env` or API keys
+5. Update the system prompt in `app.py` if you change the database schema
+
+## License
+
+Proprietary. All rights reserved.

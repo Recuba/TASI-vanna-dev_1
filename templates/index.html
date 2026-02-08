@@ -38,7 +38,7 @@
             /* Text */
             --text-primary: #FFFFFF;
             --text-secondary: #B0B0B0;
-            --text-muted: #707070;
+            --text-muted: #999999;
 
             /* Accent Colors */
             --accent-green: #4CAF50;
@@ -154,6 +154,23 @@
         @keyframes subtleFloat {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-4px); }
+        }
+
+        /* Chart loading shimmer effect */
+        @keyframes chartShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .chart-loading {
+            background: linear-gradient(90deg,
+                var(--bg-card) 0%,
+                rgba(212, 168, 75, 0.05) 50%,
+                var(--bg-card) 100%);
+            background-size: 200% 100%;
+            animation: chartShimmer 1.5s ease-in-out infinite;
+            border-radius: var(--radius-sm);
+            min-height: 200px;
         }
 
         /* ===================================================================
@@ -286,7 +303,7 @@
         .hero-subtitle {
             font-size: 14px;
             font-weight: 400;
-            color: var(--text-secondary);
+            color: #C8C8C8;
             margin-bottom: var(--space-md);
         }
 
@@ -338,10 +355,10 @@
 
         .suggestions-label {
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 1.2px;
+            letter-spacing: 1.5px;
             margin-bottom: var(--space-md);
             text-align: center;
         }
@@ -362,7 +379,7 @@
             border-radius: var(--radius-pill);
             padding: 8px 16px;
             font-family: 'Tajawal', sans-serif;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 500;
             color: var(--text-secondary);
             cursor: pointer;
@@ -396,13 +413,15 @@
            CHAT AREA
            =================================================================== */
         .chat-container {
-            height: calc(100vh - 200px);
+            height: calc(100vh - 180px);
             min-height: 500px;
+            max-height: 800px;
             background: var(--bg-card);
             border: 1px solid var(--gold-border);
             border-radius: var(--radius-md);
             overflow: hidden;
             animation: fadeInUp 0.6s ease-out 0.3s both;
+            position: relative;
         }
 
         vanna-chat {
@@ -412,28 +431,105 @@
         }
 
         /* ===================================================================
-           PLOTLY CHART DARK THEME OVERRIDES
+           PLOTLY DARK THEME - Comprehensive Overrides
            =================================================================== */
+
+        /* Background transparency */
         .js-plotly-plot,
         .plotly,
         .plot-container {
-            background: var(--bg-card) !important;
+            background: transparent !important;
         }
 
         .js-plotly-plot .plotly .main-svg {
             background: transparent !important;
         }
 
+        /* Chart title - gold */
+        .js-plotly-plot .plotly .g-gtitle text {
+            fill: #D4A84B !important;
+            font-family: 'Tajawal', sans-serif !important;
+        }
+
+        /* Axis titles */
+        .js-plotly-plot .plotly .g-xtitle text,
+        .js-plotly-plot .plotly .g-ytitle text {
+            fill: #E0E0E0 !important;
+            font-family: 'Tajawal', sans-serif !important;
+        }
+
+        /* Axis tick labels */
+        .js-plotly-plot .plotly .xtick text,
+        .js-plotly-plot .plotly .ytick text,
+        .js-plotly-plot .plotly .ztick text {
+            fill: #B0B0B0 !important;
+        }
+
+        /* Grid lines */
+        .js-plotly-plot .plotly .gridlayer line {
+            stroke: rgba(212, 168, 75, 0.08) !important;
+        }
+
+        .js-plotly-plot .plotly .zerolinelayer line {
+            stroke: rgba(212, 168, 75, 0.15) !important;
+        }
+
+        /* Legend */
+        .js-plotly-plot .plotly .legend {
+            background: rgba(26, 26, 26, 0.9) !important;
+        }
+
+        .js-plotly-plot .plotly .legend text {
+            fill: #B0B0B0 !important;
+        }
+
+        .js-plotly-plot .plotly .legend .bg {
+            fill: rgba(26, 26, 26, 0.9) !important;
+            stroke: rgba(212, 168, 75, 0.2) !important;
+        }
+
+        /* Modebar (toolbar) */
         .js-plotly-plot .plotly .modebar {
-            background: rgba(26, 26, 26, 0.8) !important;
+            background: rgba(26, 26, 26, 0.9) !important;
+            border-radius: 6px;
         }
 
         .js-plotly-plot .plotly .modebar-btn path {
-            fill: var(--text-muted) !important;
+            fill: #707070 !important;
         }
 
         .js-plotly-plot .plotly .modebar-btn:hover path {
-            fill: var(--gold-primary) !important;
+            fill: #D4A84B !important;
+        }
+
+        /* Hover labels */
+        .js-plotly-plot .plotly .hoverlayer .hovertext rect {
+            fill: rgba(26, 26, 26, 0.95) !important;
+            stroke: rgba(212, 168, 75, 0.4) !important;
+        }
+
+        .js-plotly-plot .plotly .hoverlayer .hovertext text {
+            fill: #E0E0E0 !important;
+        }
+
+        /* Plotly table styling */
+        .js-plotly-plot .plotly .table .cell > text {
+            fill: #E0E0E0 !important;
+        }
+
+        .js-plotly-plot .plotly .table .header > text {
+            fill: #D4A84B !important;
+        }
+
+        /* Colorbar (for heatmaps) */
+        .js-plotly-plot .plotly .cbtitle text,
+        .js-plotly-plot .plotly .colorbar text {
+            fill: #B0B0B0 !important;
+        }
+
+        /* Annotation text (for heatmap cell values) */
+        .js-plotly-plot .plotly .annotation text {
+            fill: #E0E0E0 !important;
         }
 
         /* ===================================================================
@@ -469,7 +565,7 @@
 
         .footer-text {
             font-size: 12px;
-            color: var(--text-muted);
+            color: #8A8A8A;
             line-height: 1.6;
         }
 
@@ -496,7 +592,7 @@
         /* Tablets and below */
         @media (max-width: 768px) {
             .hero-title {
-                font-size: 22px;
+                font-size: 20px;
             }
 
             .hero-subtitle {
@@ -517,12 +613,22 @@
             }
 
             .hero-section {
-                padding: var(--space-sm) 0 var(--space-xs);
+                padding: var(--space-xs) 0;
+            }
+
+            .chat-container {
+                height: calc(100vh - 160px);
+                min-height: 450px;
+                border-radius: var(--radius-sm);
             }
 
             .suggestion-chip {
                 font-size: 11px;
                 padding: 6px 12px;
+            }
+
+            .suggestions-label {
+                margin-bottom: var(--space-sm);
             }
         }
 
@@ -564,24 +670,55 @@
             }
         }
 
+        /* Very small phones */
+        @media (max-width: 360px) {
+            .suggestions-grid {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .suggestion-chip {
+                white-space: normal;
+                text-align: center;
+                justify-content: center;
+            }
+        }
+
         /* Large screens */
         @media (min-width: 1200px) {
             :root {
-                --content-max-width: 1040px;
+                --content-max-width: 1080px;
+            }
+
+            .chat-container {
+                min-height: 600px;
             }
 
             .hero-title {
-                font-size: 32px;
+                font-size: 34px;
+            }
+
+            .suggestion-chip {
+                font-size: 13px;
+                padding: 10px 18px;
+            }
+        }
+
+        @media (min-width: 1600px) {
+            :root {
+                --content-max-width: 1200px;
             }
         }
     </style>
+    <link rel="stylesheet" href="/static/raid-enhancements.css">
 </head>
 <body>
+    <a href="#main-content" class="skip-to-content">Skip to content</a>
 
     <!-- ================================================================
          HEADER
          ================================================================ -->
-    <header class="app-header">
+    <header class="app-header" role="banner">
         <div class="header-inner">
             <div class="brand-mark" aria-hidden="true">RA</div>
             <div class="header-text">
@@ -598,7 +735,7 @@
     <!-- ================================================================
          MAIN CONTENT
          ================================================================ -->
-    <main class="app-main">
+    <main class="app-main" role="main" id="main-content">
         <div class="content-column">
 
             <!-- Hero / Brand Title -->
@@ -609,7 +746,7 @@
                 </p>
 
                 <!-- Quick Stats Bar -->
-                <div class="stats-bar">
+                <div class="stats-bar" id="stats-bar">
                     <div class="stat-pill">
                         <span class="stat-icon" aria-hidden="true">&#xe001;</span>
                         <span class="stat-value">~500</span> Companies
@@ -630,7 +767,7 @@
             </section>
 
             <!-- Example Question Chips -->
-            <section class="suggestions-section" aria-label="Example questions">
+            <section class="suggestions-section" id="suggestions-section" aria-label="Example questions">
                 <p class="suggestions-label">Try asking</p>
                 <div class="suggestions-grid">
                     <button class="suggestion-chip" data-query="Chart the top 10 companies by market cap">
@@ -661,12 +798,14 @@
                         <span class="chip-icon" aria-hidden="true">&#x1F3E2;</span>
                         Chart: Sectors by company count
                     </button>
-                    <button class="suggestion-chip" data-query="Show a heatmap of total debt, total assets, and current ratio for the 10 largest banks">
+                    <button class="suggestion-chip" data-query="Show a heatmap of total debt, total assets, and stockholders equity for the 10 largest Financial Services companies">
                         <span class="chip-icon" aria-hidden="true">&#x1F3E6;</span>
                         Heatmap: Bank balance sheets
                     </button>
                 </div>
             </section>
+
+            <div id="raid-status" aria-live="polite" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);"></div>
 
             <!-- Chat Component -->
             <div class="chat-container">
@@ -680,19 +819,23 @@
                 </vanna-chat>
             </div>
 
+            <div id="raid-onboarding-overlay"></div>
+
         </div>
     </main>
 
     <!-- ================================================================
          FOOTER
          ================================================================ -->
-    <footer class="app-footer">
+    <footer class="app-footer" role="contentinfo">
         <p class="footer-text">
             Ra'd AI
             <span class="footer-divider">|</span>
             Saudi Stock Market Intelligence
             <span class="footer-divider">|</span>
             Data sourced from Tadawul (TASI)
+            <span class="footer-divider">|</span>
+            <span id="data-freshness-display"></span>
         </p>
     </footer>
 
@@ -811,6 +954,11 @@
                 section.style.overflow = 'hidden';
                 section.style.margin = '0';
                 section.style.padding = '0';
+                // Fix keyboard trap: make collapsed chips non-focusable
+                section.setAttribute('aria-hidden', 'true');
+                document.querySelectorAll('.suggestion-chip').forEach(function(chip) {
+                    chip.setAttribute('tabindex', '-1');
+                });
             }
         }
 
@@ -859,6 +1007,8 @@
             }
         }, 5000);
     </script>
+
+    <script src="/static/raid-features.js" defer></script>
 
 </body>
 </html>

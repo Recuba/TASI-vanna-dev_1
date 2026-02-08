@@ -1,0 +1,15 @@
+.env
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.db
+*.csv
+*.md
+vanna_docs/
+vanna-skill/
+test_*.py
+.github/
+nul
+f8c88490871f6169

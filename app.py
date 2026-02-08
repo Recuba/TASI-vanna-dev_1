@@ -1,11 +1,15 @@
 """
 Vanna 2.0 Saudi Stock Market Analyst
 =====================================
-Connects to a local SQLite database of ~500 Saudi-listed companies
+Connects to a SQLite or PostgreSQL database of ~500 Saudi-listed companies
 and exposes a FastAPI chat interface powered by Claude Sonnet 4.5
 via the Anthropic API.
+
+Set DB_BACKEND=postgres (with POSTGRES_* env vars) to use PostgreSQL.
+Default is SQLite.
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import List, Optional
@@ -19,10 +23,23 @@ from vanna.core.user.resolver import UserResolver, RequestContext, User
 from vanna.integrations.local.agent_memory.in_memory import DemoAgentMemory
 from vanna.integrations.anthropic import AnthropicLlmService
 from vanna.integrations.sqlite import SqliteRunner
+from vanna.integrations.postgres import PostgresRunner
 from vanna.servers.fastapi import VannaFastAPIServer
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from vanna.tools import RunSqlTool, VisualizeDataTool
+from chart_engine import RaidChartGenerator
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# 0. Configuration (use config module if available, fall back to env)
+# ---------------------------------------------------------------------------
+try:
+    from config import get_settings
+    _settings = get_settings()
+except Exception:
+    _settings = None
 
 # ---------------------------------------------------------------------------
 # 1. LLM -- Claude Sonnet 4.5 via Anthropic API
@@ -33,17 +50,33 @@ llm = AnthropicLlmService(
 )
 
 # ---------------------------------------------------------------------------
-# 2. SQL runner -- local SQLite database
+# 2. SQL runner -- SQLite (default) or PostgreSQL
 # ---------------------------------------------------------------------------
 _HERE = Path(__file__).resolve().parent
-sql_runner = SqliteRunner(str(_HERE / "saudi_stocks.db"))
+DB_BACKEND = os.environ.get("DB_BACKEND", "sqlite").lower()
+
+
+def _create_sql_runner():
+    """Create the SQL runner based on DB_BACKEND env var."""
+    if DB_BACKEND == "postgres":
+        return PostgresRunner(
+            host=os.environ.get("POSTGRES_HOST", "localhost"),
+            dbname=os.environ.get("POSTGRES_DB", "saudi_stocks"),
+            user=os.environ.get("POSTGRES_USER", "postgres"),
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
+        )
+    return SqliteRunner(str(_HERE / "saudi_stocks.db"))
+
+
+sql_runner = _create_sql_runner()
 
 # ---------------------------------------------------------------------------
 # 3. Tool registry
 # ---------------------------------------------------------------------------
 tools = ToolRegistry()
 tools.register_local_tool(RunSqlTool(sql_runner=sql_runner), access_groups=["admin", "user"])
-tools.register_local_tool(VisualizeDataTool(), access_groups=["admin", "user"])
+tools.register_local_tool(VisualizeDataTool(plotly_generator=RaidChartGenerator()), access_groups=["admin", "user"])
 
 # ---------------------------------------------------------------------------
 # 4. User resolver (returns a single default user)
@@ -53,7 +86,7 @@ class DefaultUserResolver(UserResolver):
         return User(
             id="default_user",
             email="user@localhost",
-            group_memberships=["admin", "user"],
+            group_memberships=["user"],
         )
 
 # ---------------------------------------------------------------------------
@@ -234,11 +267,62 @@ VISUALIZATION
 After running a SQL query, you can visualize the results using the visualize_data tool.
 - The run_sql tool saves results to a CSV file (shown in the response as the filename).
 - Pass that filename to visualize_data to create an interactive Plotly chart.
-- Chart type is auto-selected based on data shape: bar, scatter, line, heatmap, histogram.
+- Chart type is AUTO-SELECTED based on the number and types of columns in the result.
 - Always visualize results when the user asks for charts, graphs, comparisons, or trends.
-- For heatmaps: query multiple numeric columns (3+) for the same set of entities.
-- For time series: include a date column and numeric columns.
-- For comparisons: include a categorical column (e.g., sector, short_name) and numeric values.
+
+CHART TYPE RULES (the chart engine selects automatically based on column types):
+
+1. **Bar chart** (1 text + 1 numeric = 2 columns):
+   Query EXACTLY 1 text column and 1 numeric column.
+   Example: SELECT short_name, market_cap FROM companies JOIN market_data USING(ticker) ORDER BY market_cap DESC LIMIT 10
+
+2. **Value heatmap** (1 text + 3-6 numeric = 4-7 columns):
+   Query 1 text column (entity labels) + 3 or more numeric columns (metrics).
+   Each row = one entity. Each numeric column = one metric. Colors show relative magnitude.
+   Example: SELECT c.short_name, p.roe, p.roa, p.profit_margin
+   FROM companies c JOIN profitability_metrics p USING(ticker)
+   JOIN market_data m USING(ticker)
+   WHERE p.roe IS NOT NULL ORDER BY m.market_cap DESC LIMIT 15
+
+3. **Scatter plot** (2 numeric columns, no text):
+   Query EXACTLY 2 numeric columns.
+   Example: SELECT market_cap, trailing_pe FROM market_data JOIN valuation_metrics USING(ticker) WHERE trailing_pe IS NOT NULL
+
+4. **Histogram** (1 numeric column, no text):
+   Query EXACTLY 1 numeric column to show its distribution.
+   Example: SELECT dividend_yield FROM dividend_data WHERE dividend_yield IS NOT NULL AND dividend_yield > 0
+
+5. **Line chart / time series** (1 date + 1-5 numeric):
+   Query a date column (YYYY-MM-DD format) + numeric columns. Date strings are auto-detected.
+   Example: SELECT period_date, total_revenue FROM income_statement WHERE ticker='2222.SR' AND period_type='annual' ORDER BY period_date
+
+6. **Correlation heatmap** (3+ numeric columns, NO text column):
+   Query only numeric columns to see correlations between metrics.
+   Example: SELECT roe, roa, profit_margin, operating_margin FROM profitability_metrics WHERE roe IS NOT NULL
+
+7. **Table** (8+ columns): Very wide queries render as formatted tables.
+
+IMPORTANT GUIDELINES:
+- For heatmaps: ALWAYS include a text column as the first column for entity labels (e.g., company name, sector).
+- For bar charts: Use EXACTLY 2 columns. Do NOT add extra columns like sector - this changes the chart type.
+- For scatter plots: Use EXACTLY 2 numeric columns with no text columns.
+- If a user asks to "compare" multiple metrics for entities, use a value heatmap (1 text + 3+ numeric).
+- If a user asks for a "chart" of a single metric across entities, use a bar chart (1 text + 1 numeric).
+- NULL values are automatically handled - use WHERE ... IS NOT NULL for cleaner results.
+- Prefer LIMIT to keep charts readable (10-20 entities is ideal).
+"""
+
+
+_PG_NOTES = """
+
+POSTGRESQL NOTES
+================
+- This database uses PostgreSQL. Use ILIKE for case-insensitive text matching (not LIKE).
+- Use single quotes for string literals: WHERE sector ILIKE '%energy%'
+- Use || for string concatenation (not +).
+- LIMIT syntax is standard: SELECT ... LIMIT 10
+- Use CAST(x AS NUMERIC) or x::numeric for type casting.
+- Use TRUE/FALSE for boolean literals.
 """
 
 
@@ -248,6 +332,8 @@ class SaudiStocksSystemPromptBuilder(SystemPromptBuilder):
     async def build_system_prompt(
         self, user: User, tools: List["ToolSchema"]
     ) -> Optional[str]:
+        if DB_BACKEND == "postgres":
+            return SYSTEM_PROMPT + _PG_NOTES
         return SYSTEM_PROMPT
 
 # ---------------------------------------------------------------------------
@@ -279,6 +365,98 @@ app = server.create_app()
 # Remove Vanna's default "/" route so our custom template takes precedence
 app.routes[:] = [r for r in app.routes if not (hasattr(r, "path") and r.path == "/" and hasattr(r, "methods") and "GET" in r.methods)]
 
+# Remove Vanna's default CORSMiddleware (allow_origins=["*"]) so our
+# configured CORS settings (from MiddlewareSettings) take effect.
+from fastapi.middleware.cors import CORSMiddleware as _CORSMiddleware
+app.user_middleware[:] = [
+    m for m in app.user_middleware
+    if not (m.cls is _CORSMiddleware)
+]
+
+# ---------------------------------------------------------------------------
+# 8a. Middleware (outermost first: error_handler -> request_logging -> rate_limit -> CORS)
+# ---------------------------------------------------------------------------
+try:
+    from middleware.error_handler import ErrorHandlerMiddleware
+    from middleware.request_logging import RequestLoggingMiddleware
+    from middleware.rate_limit import RateLimitMiddleware
+    from middleware.cors import setup_cors
+
+    _mw_settings = _settings.middleware if _settings else None
+
+    _cors_origins = (
+        _mw_settings.cors_origins_list if _mw_settings
+        else ["http://localhost:3000", "http://localhost:8084"]
+    )
+    _rate_limit = (
+        _mw_settings.rate_limit_per_minute if _mw_settings
+        else 60
+    )
+    _skip_paths = (
+        _mw_settings.log_skip_paths_list if _mw_settings
+        else ["/health", "/favicon.ico"]
+    )
+    _debug_mode = (
+        _settings.server.debug if _settings
+        else os.environ.get("SERVER_DEBUG", "false").lower() in ("true", "1")
+    )
+
+    # CORS is applied via FastAPI's add_middleware (innermost)
+    setup_cors(app, _cors_origins)
+
+    # Rate limiter (skip in debug mode)
+    if not _debug_mode:
+        app.add_middleware(
+            RateLimitMiddleware,
+            requests_per_minute=_rate_limit,
+            skip_paths=["/health"],
+        )
+
+    # Request logging
+    app.add_middleware(
+        RequestLoggingMiddleware,
+        skip_paths=_skip_paths,
+    )
+
+    # Error handler (outermost -- catches everything)
+    app.add_middleware(ErrorHandlerMiddleware)
+
+    logger.info("Middleware stack initialized (CORS, rate_limit, logging, error_handler)")
+except ImportError as exc:
+    logger.warning("Middleware modules not available, skipping: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 9. API routers (PostgreSQL-backed services)
+# ---------------------------------------------------------------------------
+if DB_BACKEND == "postgres":
+    from api.routes.health import router as health_router
+    from api.routes.news import router as news_router
+    from api.routes.reports import router as reports_router
+    from api.routes.announcements import router as announcements_router
+    from api.routes.entities import router as entities_router
+    from api.routes.watchlists import router as watchlists_router
+    from api.routes.charts import router as charts_router
+
+    app.include_router(health_router)
+    app.include_router(news_router)
+    app.include_router(reports_router)
+    app.include_router(announcements_router)
+    app.include_router(entities_router)
+    app.include_router(watchlists_router)
+    app.include_router(charts_router)
+
+# Auth routes (PostgreSQL-only, since users table is PG-only)
+if DB_BACKEND == "postgres":
+    try:
+        from api.routes.auth import router as auth_router
+        app.include_router(auth_router)
+        logger.info("Auth routes registered at /api/auth")
+    except ImportError as exc:
+        logger.warning("Auth routes not available: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 10. Custom routes and static files
+# ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def custom_index():
     template_path = _HERE / "templates" / "index.html"
@@ -294,6 +472,78 @@ async def favicon():
     if favicon_path.exists():
         return FileResponse(str(favicon_path), media_type="image/svg+xml")
     return HTMLResponse("")
+
+# ---------------------------------------------------------------------------
+# 11. Startup / Shutdown events
+# ---------------------------------------------------------------------------
+@app.on_event("startup")
+async def on_startup():
+    """Initialize connection pool and Redis on startup."""
+    # Setup logging
+    try:
+        from config.logging import setup_logging
+        setup_logging()
+    except ImportError:
+        pass
+
+    # Initialize PostgreSQL connection pool
+    if DB_BACKEND == "postgres":
+        try:
+            from database.pool import init_pool
+            _pool_min = _settings.pool.min if _settings else 2
+            _pool_max = _settings.pool.max if _settings else 10
+            _db_settings = _settings.db if _settings else None
+            if _db_settings:
+                init_pool(_db_settings, min_connections=_pool_min, max_connections=_pool_max)
+                logger.info("PostgreSQL connection pool initialized")
+        except ImportError:
+            logger.warning("database.pool not available -- using direct connections")
+        except Exception as exc:
+            logger.error("Failed to initialize connection pool: %s", exc)
+
+    # Initialize Redis (if enabled)
+    _cache_enabled = (
+        _settings.cache.enabled if _settings
+        else os.environ.get("CACHE_ENABLED", "false").lower() in ("true", "1")
+    )
+    if _cache_enabled:
+        try:
+            from cache import init_redis
+            _redis_url = (
+                _settings.cache.redis_url if _settings
+                else os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+            )
+            init_redis(_redis_url)
+            logger.info("Redis cache initialized")
+        except ImportError:
+            logger.warning("cache module not available -- running without cache")
+        except Exception as exc:
+            logger.warning("Failed to initialize Redis: %s", exc)
+
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    """Close connection pool and Redis on shutdown."""
+    # Close PostgreSQL pool
+    if DB_BACKEND == "postgres":
+        try:
+            from database.pool import close_pool
+            close_pool()
+            logger.info("PostgreSQL connection pool closed")
+        except ImportError:
+            pass
+        except Exception as exc:
+            logger.warning("Error closing connection pool: %s", exc)
+
+    # Close Redis
+    try:
+        from cache import close_redis
+        close_redis()
+    except ImportError:
+        pass
+    except Exception as exc:
+        logger.warning("Error closing Redis: %s", exc)
+
 
 if __name__ == "__main__":
     import uvicorn

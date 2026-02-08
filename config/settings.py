@@ -1,0 +1,174 @@
+"""
+Configuration module for TASI AI Platform.
+Uses pydantic-settings for typed, validated configuration loaded from environment variables and .env files.
+"""
+
+import secrets
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class DatabaseSettings(BaseSettings):
+    """
+    Database connection settings.
+
+    Env vars use the DB_ prefix for app-level settings.
+    PostgreSQL connection vars also accept POSTGRES_* names for Docker compatibility.
+    """
+
+    model_config = SettingsConfigDict(env_prefix="DB_")
+
+    backend: Literal["sqlite", "postgres"] = "sqlite"
+    # SQLite settings
+    sqlite_path: str = "saudi_stocks.db"
+    # PostgreSQL settings — accept both DB_PG_* and POSTGRES_* env vars
+    pg_host: str = Field(
+        default="localhost",
+        validation_alias="POSTGRES_HOST",
+    )
+    pg_port: int = Field(
+        default=5432,
+        validation_alias="POSTGRES_PORT",
+    )
+    pg_database: str = Field(
+        default="tasi_platform",
+        validation_alias="POSTGRES_DB",
+    )
+    pg_user: str = Field(
+        default="tasi_user",
+        validation_alias="POSTGRES_USER",
+    )
+    pg_password: str = Field(
+        default="",
+        validation_alias="POSTGRES_PASSWORD",
+    )
+
+    @property
+    def pg_connection_string(self) -> str:
+        return (
+            f"postgresql://{self.pg_user}:{self.pg_password}"
+            f"@{self.pg_host}:{self.pg_port}/{self.pg_database}"
+        )
+
+    @property
+    def resolved_sqlite_path(self) -> Path:
+        """Return absolute path to SQLite DB, resolved relative to project root."""
+        p = Path(self.sqlite_path)
+        if p.is_absolute():
+            return p
+        return Path(__file__).resolve().parent.parent / p
+
+
+class LLMSettings(BaseSettings):
+    """LLM settings (Anthropic only). All env vars prefixed with LLM_."""
+
+    model_config = SettingsConfigDict(env_prefix="LLM_")
+
+    model: str = "claude-sonnet-4-5-20250929"
+    api_key: str = ""
+    max_tool_iterations: int = 10
+
+
+class PoolSettings(BaseSettings):
+    """PostgreSQL connection pool settings. All env vars prefixed with PG_POOL_."""
+
+    model_config = SettingsConfigDict(env_prefix="PG_POOL_")
+
+    min: int = 2
+    max: int = 10
+
+
+class CacheSettings(BaseSettings):
+    """Redis cache settings. All env vars use explicit field names."""
+
+    model_config = SettingsConfigDict(env_prefix="CACHE_")
+
+    redis_url: str = Field(
+        default="redis://localhost:6379/0",
+        validation_alias="REDIS_URL",
+    )
+    enabled: bool = False
+    default_ttl: int = 300
+
+
+class AuthSettings(BaseSettings):
+    """JWT authentication settings. All env vars prefixed with AUTH_."""
+
+    model_config = SettingsConfigDict(env_prefix="AUTH_")
+
+    # In production, set AUTH_JWT_SECRET to a stable value.
+    # The default generates a random secret on each startup (fine for dev).
+    jwt_secret: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
+
+
+class MiddlewareSettings(BaseSettings):
+    """Middleware settings. All env vars prefixed with MW_."""
+
+    model_config = SettingsConfigDict(env_prefix="MW_")
+
+    cors_origins: str = "http://localhost:3000,http://localhost:8084"
+    rate_limit_per_minute: int = 60
+    log_skip_paths: str = "/health,/favicon.ico"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse comma-separated CORS origins into a list."""
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def log_skip_paths_list(self) -> list[str]:
+        """Parse comma-separated skip paths into a list."""
+        return [p.strip() for p in self.log_skip_paths.split(",") if p.strip()]
+
+
+class ServerSettings(BaseSettings):
+    """FastAPI server settings. All env vars prefixed with SERVER_."""
+
+    model_config = SettingsConfigDict(env_prefix="SERVER_")
+
+    host: str = "0.0.0.0"
+    port: int = 8084
+    debug: bool = False
+
+
+class Settings(BaseSettings):
+    """
+    Top-level application settings.
+    Loads from .env file and environment variables.
+    Nested settings use their own env prefixes (DB_, LLM_, SERVER_).
+    """
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    # Backward compatibility: existing .env uses ANTHROPIC_API_KEY
+    anthropic_api_key: str = ""
+
+    # Nested settings
+    db: DatabaseSettings = DatabaseSettings()
+    llm: LLMSettings = LLMSettings()
+    server: ServerSettings = ServerSettings()
+    pool: PoolSettings = PoolSettings()
+    cache: CacheSettings = CacheSettings()
+    auth: AuthSettings = AuthSettings()
+    middleware: MiddlewareSettings = MiddlewareSettings()
+
+    def get_llm_api_key(self) -> str:
+        """Return the effective LLM API key, falling back to ANTHROPIC_API_KEY."""
+        return self.llm.api_key or self.anthropic_api_key
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Return a cached singleton Settings instance."""
+    return Settings()

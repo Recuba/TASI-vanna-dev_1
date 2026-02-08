@@ -14,35 +14,70 @@ These are non-negotiable prerequisites. Do not skip them, even for "small" chang
 
 ## Project Overview
 
-**Ra'd AI** is a Saudi Stock Market AI Analyst. It exposes a FastAPI chat interface powered by [Vanna 2.0](https://vanna.ai/) that lets users query a normalized SQLite database of ~500 TASI-listed Saudi companies using natural language. The LLM (Claude Sonnet 4.5 via Anthropic API) generates SQL, executes it, and optionally visualizes results with Plotly charts.
+**Ra'd AI** is a TASI Saudi Stock Market AI Platform. It exposes a FastAPI chat interface powered by [Vanna 2.0](https://vanna.ai/) that lets users query a normalized database of ~500 TASI-listed Saudi companies using natural language. The LLM (Claude Sonnet 4.5 via Anthropic API) generates SQL, executes it, and optionally visualizes results with Plotly charts. The platform supports dual database backends (SQLite for development, PostgreSQL for production) and includes news, announcement, and technical report services.
 
 ## Tech Stack
 
-- **Language:** Python 3.10+
+- **Language:** Python 3.11+
 - **Framework:** Vanna 2.0 (agent framework) + FastAPI (HTTP server)
 - **LLM:** Claude Sonnet 4.5 via `AnthropicLlmService`
-- **Database:** SQLite (`saudi_stocks.db`)
-- **Frontend:** Single-page HTML (`templates/index.html`) using the `<vanna-chat>` web component
+- **Database:** SQLite (dev) / PostgreSQL 16 (prod), controlled by `DB_BACKEND` env var
+- **Configuration:** `pydantic-settings` (`config/settings.py`)
+- **Frontend (legacy):** Single-page HTML (`templates/index.html`) using `<vanna-chat>` web component
+- **Frontend (new):** Next.js 14 + TypeScript + Tailwind CSS (`frontend/`)
 - **Server:** Uvicorn on port 8084
-- **Data Pipeline:** pandas + numpy for CSV-to-SQLite normalization
+- **Container:** Docker Compose (PostgreSQL + app + optional pgAdmin)
+- **Data Pipeline:** pandas + numpy for CSV normalization
+
+## File Ownership
+
+When working in a team, respect file ownership boundaries:
+
+| Owner | Files |
+|---|---|
+| **database-architect** | `database/`, `csv_to_sqlite.py`, `ingestion/` |
+| **backend-services** | `app.py`, `services/` (except `health_service.py`) |
+| **frontend-dev** | `frontend/`, `templates/` |
+| **infra-testing** | `config/`, `tests/`, `.github/`, `docker-compose.yml`, `Dockerfile`, `requirements.txt`, `services/health_service.py`, `CLAUDE.md`, `AGENTS.md`, `README.md` |
+
+Do NOT modify files owned by other agents unless coordinating with them.
 
 ## File Structure
 
 ```
 .
-├── app.py                    # Vanna 2.0 FastAPI server (main entry point)
-├── csv_to_sqlite.py          # CSV-to-normalized-SQLite converter
-├── saudi_stocks.db           # SQLite database (generated, not committed)
-├── saudi_stocks_yahoo_data.csv  # Source data (500 stocks, 1062 columns)
-├── templates/
-│   └── index.html            # Frontend UI (Ra'd AI branded)
-├── test_database.py          # Database integrity tests (unittest, 20 tests)
-├── test_app_assembly_v2.py   # Vanna assembly/import tests (24 tests)
-├── .env                      # API keys (NEVER commit)
-└── AGENTS.md                 # This file
+├── app.py                          # Vanna 2.0 FastAPI server (dual backend)
+├── csv_to_sqlite.py                # CSV -> normalized SQLite
+├── config/
+│   ├── __init__.py                 # get_settings() singleton
+│   ├── settings.py                 # Pydantic Settings classes
+│   └── logging.py                  # JSON/pretty log formatters
+├── database/
+│   ├── schema.sql                  # PostgreSQL DDL (all tables + indexes + views)
+│   ├── migrate_sqlite_to_pg.py     # SQLite -> PostgreSQL migration
+│   └── csv_to_postgres.py          # CSV -> PostgreSQL pipeline
+├── services/
+│   ├── health_service.py           # Health checks (DB, LLM)
+│   ├── news_service.py             # News article CRUD
+│   ├── reports_service.py          # Technical reports CRUD
+│   └── announcement_service.py     # Announcement CRUD
+├── frontend/                       # Next.js 14 app (in progress)
+├── templates/index.html            # Legacy vanna-chat UI
+├── docker-compose.yml              # PostgreSQL + app + pgAdmin
+├── Dockerfile                      # Python 3.11 container
+├── requirements.txt                # Python deps
+├── .env.example                    # All env vars documented
+├── test_database.py                # 20 DB integrity tests
+├── test_app_assembly_v2.py         # 24 Vanna assembly tests
+├── vanna-skill/                    # Vanna 2.0 reference (read-only)
+├── vanna_docs/                     # Scraped Vanna docs (read-only)
+├── saudi_stocks.db                 # SQLite DB (generated)
+└── saudi_stocks_yahoo_data.csv     # Source data
 ```
 
 ## Database Schema
+
+### Core Tables (SQLite + PostgreSQL)
 
 10 normalized tables derived from a 1062-column flat CSV:
 
@@ -59,38 +94,68 @@ These are non-negotiable prerequisites. Do not skip them, even for "small" chang
 | `income_statement` | ~2,632 | `id` (PK), `ticker` (FK) |
 | `cash_flow` | ~2,604 | `id` (PK), `ticker` (FK) |
 
-- Simple tables have one row per ticker (500 rows each).
-- Financial statement tables are **unpivoted** with multiple rows per ticker (one per reporting period).
-- Financial statement rows use `period_type` (`annual`, `quarterly`, `ttm`) and `period_index` (0 = most recent).
-- All tables join on `ticker` (e.g., `'1020.SR'`, `'2222.SR'`).
+### PostgreSQL-Only Tables (see `database/schema.sql`)
+
+- `sectors`, `entities` - Reference/enrichment tables
+- `filings`, `xbrl_facts`, `computed_metrics` - XBRL financial data
+- `price_history` - Daily price/volume history
+- `announcements`, `news_articles`, `technical_reports` - Content tables
+- `users`, `user_watchlists`, `user_alerts` - User management
+- `query_audit_log` - Query tracking
 
 ## Setup & Run
 
+### Local Development (SQLite)
+
 ```bash
-# Install dependencies
-pip install vanna fastapi uvicorn python-dotenv
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env: set ANTHROPIC_API_KEY
 
-# Regenerate the database from CSV (destructive - replaces saudi_stocks.db)
-python csv_to_sqlite.py
-
-# Start the server
-python app.py
-# Server runs at http://localhost:8084
+python csv_to_sqlite.py   # Build SQLite DB from CSV
+python app.py             # Server at http://localhost:8084
 ```
 
-Requires `ANTHROPIC_API_KEY` in `.env` or environment.
+### Docker (PostgreSQL)
+
+```bash
+cp .env.example .env
+# Edit .env: set ANTHROPIC_API_KEY and POSTGRES_PASSWORD
+
+docker compose up -d                          # PostgreSQL + app
+docker compose --profile tools up -d          # Also start pgAdmin on :5050
+```
+
+### Data Migration
+
+```bash
+python database/migrate_sqlite_to_pg.py       # SQLite -> PostgreSQL
+python database/csv_to_postgres.py            # CSV -> PostgreSQL directly
+```
 
 ## Testing
 
 ```bash
-# Database integrity tests (20 tests)
-python -m unittest test_database.py -v
-
-# Vanna assembly tests (24 tests)
-python test_app_assembly_v2.py
+python -m unittest test_database.py -v        # 20 DB integrity tests
+python test_app_assembly_v2.py                # 24 Vanna assembly tests
 ```
 
 All tests must pass before merging changes.
+
+## Configuration
+
+All settings are managed via environment variables and `.env` file. See `.env.example` for the full list.
+
+| Prefix | Class | Purpose |
+|---|---|---|
+| `DB_` | `DatabaseSettings` | Backend selection, SQLite path, PG connection |
+| `POSTGRES_*` | (alias) | Docker-compatible PG connection vars |
+| `LLM_` | `LLMSettings` | Model, API key, max tool iterations (Anthropic only) |
+| `SERVER_` | `ServerSettings` | Host, port, debug mode |
+| `LOG_LEVEL` | logging | DEBUG, INFO, WARNING, ERROR |
+| (none) | `ANTHROPIC_API_KEY` | Backward-compatible API key |
+
+Usage: `from config import get_settings; s = get_settings()`
 
 ## Vanna 2.0 Patterns
 
@@ -109,9 +174,11 @@ These are critical patterns specific to Vanna 2.0. Getting them wrong causes run
 - NEVER commit `.env` or API keys.
 - NEVER modify the database schema without updating the system prompt in `app.py` (the `SYSTEM_PROMPT` string documents every column).
 - ALWAYS use script-relative paths via `Path(__file__).resolve().parent` for file references (not `./relative`).
-- ALWAYS use `try/finally` for SQLite connections to ensure cleanup.
+- ALWAYS use `try/finally` for database connections to ensure cleanup.
 - ALWAYS replace NaN with `None` before writing to SQLite (use `df.where(pd.notnull(df), None)`).
 - The system prompt in `app.py` must document ALL database columns. If you add or remove columns, update `SYSTEM_PROMPT` to match.
 - When modifying `csv_to_sqlite.py` column mappings, verify against the actual CSV headers.
 - ALWAYS read `AGENTS.md` and `CLAUDE.md` at the start of every session before making changes.
 - ALWAYS invoke the `/vanna` skill and follow its best practices before writing or modifying any Vanna 2.0 code.
+- Services in `services/` use `psycopg2` and require PostgreSQL. They do not work with SQLite.
+- Configuration changes should go through `config/settings.py`, not raw `os.environ.get()` calls.
