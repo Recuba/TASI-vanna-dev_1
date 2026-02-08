@@ -24,7 +24,7 @@ COPY auth/ auth/
 COPY cache/ cache/
 COPY middleware/ middleware/
 COPY ingestion/ ingestion/
-COPY saudi_stocks.db .
+COPY saudi_stocks_yahoo_data.csv .
 
 EXPOSE 8084
 

@@ -6,6 +6,8 @@ __pycache__
 *.pyo
 *.db
 *.csv
+!saudi_stocks.db
+!saudi_stocks_yahoo_data.csv
 *.md
 vanna_docs/
 vanna-skill/
