@@ -2,9 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for psycopg2
+# Install system dependencies for psycopg2 and psql client
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libpq-dev gcc && \
+    apt-get install -y --no-install-recommends libpq-dev gcc postgresql-client && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -25,7 +25,9 @@ COPY cache/ cache/
 COPY middleware/ middleware/
 COPY ingestion/ ingestion/
 COPY saudi_stocks_yahoo_data.csv .
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8084
 
-CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8084}
+CMD ["./entrypoint.sh"]
