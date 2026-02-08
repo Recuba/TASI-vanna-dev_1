@@ -262,7 +262,7 @@ if PG_AVAILABLE:
 
         pg_runner = PostgresRunner(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
-            dbname=os.environ.get("POSTGRES_DB", "tasi_platform"),
+            database=os.environ.get("POSTGRES_DB", "tasi_platform"),
             user=os.environ.get("POSTGRES_USER", "tasi_user"),
             password=os.environ.get("POSTGRES_PASSWORD", ""),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
@@ -611,7 +611,7 @@ if PG_AVAILABLE:
         pg_tools = ToolRegistry()
         pg_sql_runner = PostgresRunner(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
-            dbname=os.environ.get("POSTGRES_DB", "tasi_platform"),
+            database=os.environ.get("POSTGRES_DB", "tasi_platform"),
             user=os.environ.get("POSTGRES_USER", "tasi_user"),
             password=os.environ.get("POSTGRES_PASSWORD", ""),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),

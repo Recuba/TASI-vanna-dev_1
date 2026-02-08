@@ -65,7 +65,7 @@ def _create_sql_runner():
     if DB_BACKEND == "postgres":
         return PostgresRunner(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
-            dbname=os.environ.get("POSTGRES_DB", "saudi_stocks"),
+            database=os.environ.get("POSTGRES_DB", "saudi_stocks"),
             user=os.environ.get("POSTGRES_USER", "postgres"),
             password=os.environ.get("POSTGRES_PASSWORD", ""),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
