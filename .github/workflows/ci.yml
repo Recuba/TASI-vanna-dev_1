@@ -101,8 +101,13 @@ jobs:
           PGPASSWORD: tasi_pass
 
       - name: Migrate SQLite data to PostgreSQL
-        run: python database/migrate_sqlite_to_pg.py
-        continue-on-error: true
+        run: >
+          python database/migrate_sqlite_to_pg.py
+          --skip-schema
+          --pg-host localhost
+          --pg-dbname tasi_platform
+          --pg-user tasi_user
+          --pg-password tasi_pass
 
       - name: Run database integrity tests (PostgreSQL)
         run: python -m pytest test_database.py -v
