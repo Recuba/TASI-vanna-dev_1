@@ -9,9 +9,7 @@ Uses FastAPI TestClient for integration-style testing of middleware behavior.
 import logging
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -23,6 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # ===========================================================================
 # Helper: create a minimal FastAPI app with a test endpoint
 # ===========================================================================
+
 
 def _create_test_app():
     """Create a minimal FastAPI app for middleware testing."""
@@ -46,6 +45,7 @@ def _create_test_app():
 # ===========================================================================
 # CORS middleware tests
 # ===========================================================================
+
 
 class TestCORSMiddleware:
     """Tests for middleware.cors.setup_cors."""
@@ -92,6 +92,7 @@ class TestCORSMiddleware:
 # ===========================================================================
 # Rate limiting middleware tests
 # ===========================================================================
+
 
 class TestRateLimitMiddleware:
     """Tests for middleware.rate_limit.RateLimitMiddleware."""
@@ -160,6 +161,7 @@ class TestRateLimitMiddleware:
 # Request logging middleware tests
 # ===========================================================================
 
+
 class TestRequestLoggingMiddleware:
     """Tests for middleware.request_logging.RequestLoggingMiddleware."""
 
@@ -173,8 +175,9 @@ class TestRequestLoggingMiddleware:
         with caplog.at_level(logging.INFO, logger="tasi.access"):
             client.get("/test")
 
-        assert any("/test" in record.message for record in caplog.records), \
+        assert any("/test" in record.message for record in caplog.records), (
             "Request to /test should be logged"
+        )
 
     def test_log_contains_method_and_status(self, caplog):
         from middleware.request_logging import RequestLoggingMiddleware
@@ -221,6 +224,7 @@ class TestRequestLoggingMiddleware:
 # ===========================================================================
 # Error handler middleware tests
 # ===========================================================================
+
 
 class TestErrorHandlerMiddleware:
     """Tests for middleware.error_handler.ErrorHandlerMiddleware."""

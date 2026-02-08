@@ -7,7 +7,6 @@ All tests run without a database or external services.
 """
 
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -25,45 +24,53 @@ if str(PROJECT_ROOT) not in sys.path:
 # Password hashing tests
 # ===========================================================================
 
+
 class TestPasswordHashing:
     """Tests for auth.password module."""
 
     def test_hash_password_returns_string(self):
         from auth.password import hash_password
+
         result = hash_password("mysecretpassword")
         assert isinstance(result, str)
 
     def test_hash_password_not_plaintext(self):
         from auth.password import hash_password
+
         password = "mysecretpassword"
         hashed = hash_password(password)
         assert hashed != password
 
     def test_hash_password_unique_salts(self):
         from auth.password import hash_password
+
         h1 = hash_password("samepassword")
         h2 = hash_password("samepassword")
         assert h1 != h2, "Each hash should have a unique salt"
 
     def test_verify_password_correct(self):
         from auth.password import hash_password, verify_password
+
         password = "correcthorsebatterystaple"
         hashed = hash_password(password)
         assert verify_password(password, hashed) is True
 
     def test_verify_password_wrong(self):
         from auth.password import hash_password, verify_password
+
         hashed = hash_password("realpassword")
         assert verify_password("wrongpassword", hashed) is False
 
     def test_verify_password_empty_string(self):
         from auth.password import hash_password, verify_password
+
         hashed = hash_password("")
         assert verify_password("", hashed) is True
         assert verify_password("notempty", hashed) is False
 
     def test_hash_password_unicode(self):
         from auth.password import hash_password, verify_password
+
         password = "كلمة_سر_عربية"
         hashed = hash_password(password)
         assert verify_password(password, hashed) is True
@@ -72,6 +79,7 @@ class TestPasswordHashing:
 # ===========================================================================
 # JWT token tests
 # ===========================================================================
+
 
 class TestJWTTokenCreation:
     """Tests for auth.jwt_handler token creation and verification."""
@@ -85,15 +93,18 @@ class TestJWTTokenCreation:
 
     def test_create_access_token_returns_string(self):
         from auth.jwt_handler import create_access_token
+
         token = create_access_token({"sub": "user-1", "email": "user@test.com"})
         assert isinstance(token, str)
         assert len(token) > 0
 
     def test_create_access_token_contains_claims(self):
         from auth.jwt_handler import create_access_token
+
         token = create_access_token({"sub": "user-1", "email": "user@test.com"})
         payload = jwt.decode(
-            token, self.auth_settings.jwt_secret,
+            token,
+            self.auth_settings.jwt_secret,
             algorithms=[self.auth_settings.jwt_algorithm],
         )
         assert payload["sub"] == "user-1"
@@ -102,29 +113,35 @@ class TestJWTTokenCreation:
 
     def test_create_access_token_has_expiration(self):
         from auth.jwt_handler import create_access_token
+
         token = create_access_token({"sub": "user-1"})
         payload = jwt.decode(
-            token, self.auth_settings.jwt_secret,
+            token,
+            self.auth_settings.jwt_secret,
             algorithms=[self.auth_settings.jwt_algorithm],
         )
         assert "exp" in payload
 
     def test_create_refresh_token_returns_string(self):
         from auth.jwt_handler import create_refresh_token
+
         token = create_refresh_token({"sub": "user-1"})
         assert isinstance(token, str)
 
     def test_create_refresh_token_type_is_refresh(self):
         from auth.jwt_handler import create_refresh_token
+
         token = create_refresh_token({"sub": "user-1"})
         payload = jwt.decode(
-            token, self.auth_settings.jwt_secret,
+            token,
+            self.auth_settings.jwt_secret,
             algorithms=[self.auth_settings.jwt_algorithm],
         )
         assert payload["type"] == "refresh"
 
     def test_access_and_refresh_tokens_differ(self):
         from auth.jwt_handler import create_access_token, create_refresh_token
+
         data = {"sub": "user-1"}
         access = create_access_token(data)
         refresh = create_refresh_token(data)
@@ -132,6 +149,7 @@ class TestJWTTokenCreation:
 
     def test_decode_valid_access_token(self):
         from auth.jwt_handler import create_access_token, decode_token
+
         token = create_access_token({"sub": "user-1", "email": "a@b.com"})
         payload = decode_token(token, expected_type="access")
         assert payload["sub"] == "user-1"
@@ -139,6 +157,7 @@ class TestJWTTokenCreation:
 
     def test_decode_valid_refresh_token(self):
         from auth.jwt_handler import create_refresh_token, decode_token
+
         token = create_refresh_token({"sub": "user-1"})
         payload = decode_token(token, expected_type="refresh")
         assert payload["sub"] == "user-1"
@@ -146,18 +165,21 @@ class TestJWTTokenCreation:
 
     def test_decode_token_wrong_type_raises_value_error(self):
         from auth.jwt_handler import create_access_token, decode_token
+
         token = create_access_token({"sub": "user-1"})
         with pytest.raises(ValueError, match="Expected token type 'refresh'"):
             decode_token(token, expected_type="refresh")
 
     def test_decode_token_no_type_check(self):
         from auth.jwt_handler import create_access_token, decode_token
+
         token = create_access_token({"sub": "user-1"})
         payload = decode_token(token)  # no expected_type
         assert payload["sub"] == "user-1"
 
     def test_decode_expired_token_raises(self):
         from auth.jwt_handler import decode_token
+
         expired_payload = {
             "sub": "user-1",
             "type": "access",
@@ -173,6 +195,7 @@ class TestJWTTokenCreation:
 
     def test_decode_token_with_invalid_secret_raises(self):
         from auth.jwt_handler import decode_token
+
         payload = {
             "sub": "user-1",
             "type": "access",
@@ -184,12 +207,16 @@ class TestJWTTokenCreation:
 
     def test_decode_malformed_token_raises(self):
         from auth.jwt_handler import decode_token
+
         with pytest.raises(jwt.DecodeError):
             decode_token("not.a.valid.token.at.all")
 
     def test_token_preserves_custom_claims(self):
         from auth.jwt_handler import create_access_token, decode_token
-        token = create_access_token({"sub": "user-1", "role": "admin", "tier": "enterprise"})
+
+        token = create_access_token(
+            {"sub": "user-1", "role": "admin", "tier": "enterprise"}
+        )
         payload = decode_token(token)
         assert payload["role"] == "admin"
         assert payload["tier"] == "enterprise"
@@ -199,11 +226,13 @@ class TestJWTTokenCreation:
 # Auth models tests
 # ===========================================================================
 
+
 class TestAuthModels:
     """Tests for auth.models Pydantic models."""
 
     def test_user_create_valid(self):
         from auth.models import UserCreate
+
         user = UserCreate(email="test@example.com", password="securepass123")
         assert user.email == "test@example.com"
         assert user.password == "securepass123"
@@ -211,6 +240,7 @@ class TestAuthModels:
 
     def test_user_create_with_display_name(self):
         from auth.models import UserCreate
+
         user = UserCreate(
             email="test@example.com",
             password="securepass123",
@@ -220,41 +250,49 @@ class TestAuthModels:
 
     def test_user_create_invalid_email(self):
         from auth.models import UserCreate
+
         with pytest.raises(Exception):  # ValidationError
             UserCreate(email="not-an-email", password="securepass123")
 
     def test_user_create_password_too_short(self):
         from auth.models import UserCreate
+
         with pytest.raises(Exception):  # ValidationError
             UserCreate(email="test@example.com", password="short")
 
     def test_user_create_password_too_long(self):
         from auth.models import UserCreate
+
         with pytest.raises(Exception):  # ValidationError
             UserCreate(email="test@example.com", password="x" * 129)
 
     def test_user_create_password_max_length(self):
         from auth.models import UserCreate
+
         user = UserCreate(email="test@example.com", password="x" * 128)
         assert len(user.password) == 128
 
     def test_user_login_valid(self):
         from auth.models import UserLogin
+
         login = UserLogin(email="test@example.com", password="anypass")
         assert login.email == "test@example.com"
 
     def test_token_response_default_type(self):
         from auth.models import TokenResponse
+
         resp = TokenResponse(access_token="abc", refresh_token="def")
         assert resp.token_type == "bearer"
 
     def test_token_refresh_request(self):
         from auth.models import TokenRefreshRequest
+
         req = TokenRefreshRequest(refresh_token="some-refresh-token")
         assert req.refresh_token == "some-refresh-token"
 
     def test_user_profile(self):
         from auth.models import UserProfile
+
         profile = UserProfile(
             id="user-1",
             email="test@example.com",
@@ -268,6 +306,7 @@ class TestAuthModels:
 
     def test_user_profile_with_all_fields(self):
         from auth.models import UserProfile
+
         profile = UserProfile(
             id="user-1",
             email="test@example.com",
@@ -284,6 +323,7 @@ class TestAuthModels:
 # ===========================================================================
 # Auth dependencies tests
 # ===========================================================================
+
 
 class TestAuthDependencies:
     """Tests for auth.dependencies (get_current_user, require_admin)."""
@@ -309,7 +349,13 @@ class TestAuthDependencies:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchone.return_value = (
-            "user-42", "u@t.com", "Test User", "free", 5, True, datetime.now()
+            "user-42",
+            "u@t.com",
+            "Test User",
+            "free",
+            5,
+            True,
+            datetime.now(),
         )
         mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
         mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
@@ -361,7 +407,8 @@ class TestAuthDependencies:
             "exp": datetime.now(timezone.utc) + timedelta(hours=1),
         }
         token = jwt.encode(
-            payload, self.auth_settings.jwt_secret,
+            payload,
+            self.auth_settings.jwt_secret,
             algorithm=self.auth_settings.jwt_algorithm,
         )
         creds = self._make_credentials(token)
@@ -381,7 +428,13 @@ class TestAuthDependencies:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchone.return_value = (
-            "user-99", "user@t.com", None, "free", 0, False, None
+            "user-99",
+            "user@t.com",
+            None,
+            "free",
+            0,
+            False,
+            None,
         )
         mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
         mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
@@ -413,6 +466,7 @@ class TestAuthDependencies:
 
     def test_require_admin_with_enterprise_user(self):
         from auth.dependencies import require_admin
+
         user = {"subscription_tier": "enterprise", "id": "admin-1"}
         result = require_admin(user)
         assert result == user

@@ -165,9 +165,7 @@ class AnnouncementService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [self._row_to_announcement(r) for r in cur.fetchall()]
         finally:
@@ -204,9 +202,7 @@ class AnnouncementService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [self._row_to_announcement(r) for r in cur.fetchall()]
         finally:
@@ -244,25 +240,19 @@ class AnnouncementService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [self._row_to_announcement(r) for r in cur.fetchall()]
         finally:
             conn.close()
 
-    def get_announcement_by_id(
-        self, announcement_id: str
-    ) -> Optional[Announcement]:
+    def get_announcement_by_id(self, announcement_id: str) -> Optional[Announcement]:
         """Return a single announcement by its UUID, or None if not found."""
         sql = "SELECT * FROM announcements WHERE id = %(id)s"
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, {"id": announcement_id})
                 row = cur.fetchone()
                 if row is None:

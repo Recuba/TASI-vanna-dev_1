@@ -101,7 +101,9 @@ class RaidChartGenerator(PlotlyChartGenerator):
 
         # Step 2: Classify columns
         numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
-        categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+        categorical_cols = df.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
         datetime_cols = df.select_dtypes(include=["datetime64"]).columns.tolist()
 
         # Step 3: Table fallback only for very wide results (8+ columns)
@@ -115,11 +117,15 @@ class RaidChartGenerator(PlotlyChartGenerator):
 
         # Time series (date + numeric)
         if len(datetime_cols) > 0 and len(numeric_cols) > 0:
-            fig = self._create_time_series_chart(df, datetime_cols[0], numeric_cols, title)
+            fig = self._create_time_series_chart(
+                df, datetime_cols[0], numeric_cols, title
+            )
 
         # Value heatmap: 1 text label + 3+ numeric columns
         elif len(categorical_cols) == 1 and len(numeric_cols) >= 3:
-            fig = self._create_value_heatmap(df, categorical_cols[0], numeric_cols, title)
+            fig = self._create_value_heatmap(
+                df, categorical_cols[0], numeric_cols, title
+            )
 
         # Single numeric: histogram
         elif len(numeric_cols) == 1 and len(categorical_cols) == 0:
@@ -127,7 +133,9 @@ class RaidChartGenerator(PlotlyChartGenerator):
 
         # 1 categorical + 1 numeric: bar chart
         elif len(numeric_cols) == 1 and len(categorical_cols) == 1:
-            fig = self._create_bar_chart(df, categorical_cols[0], numeric_cols[0], title)
+            fig = self._create_bar_chart(
+                df, categorical_cols[0], numeric_cols[0], title
+            )
 
         # 2 numeric: scatter
         elif len(numeric_cols) == 2 and len(categorical_cols) == 0:
@@ -135,7 +143,9 @@ class RaidChartGenerator(PlotlyChartGenerator):
 
         # 1 categorical + 2 numeric: bar chart with first numeric
         elif len(numeric_cols) == 2 and len(categorical_cols) == 1:
-            fig = self._create_bar_chart(df, categorical_cols[0], numeric_cols[0], title)
+            fig = self._create_bar_chart(
+                df, categorical_cols[0], numeric_cols[0], title
+            )
 
         # Only numeric (3+): correlation heatmap
         elif len(numeric_cols) >= 3 and len(categorical_cols) == 0:
@@ -265,15 +275,13 @@ class RaidChartGenerator(PlotlyChartGenerator):
         if len(categorical_cols) >= 2 and len(numeric_cols) > 0:
             # Use actual numeric values instead of counting
             value_col = numeric_cols[0]
-            grouped = (
-                df.groupby(categorical_cols[:2])[value_col]
-                .sum()
-                .reset_index()
-            )
+            grouped = df.groupby(categorical_cols[:2])[value_col].sum().reset_index()
             fig = go.Figure()
             for name, group in grouped.groupby(categorical_cols[1]):
                 fig.add_trace(
-                    go.Bar(x=group[categorical_cols[0]], y=group[value_col], name=str(name))
+                    go.Bar(
+                        x=group[categorical_cols[0]], y=group[value_col], name=str(name)
+                    )
                 )
             fig.update_layout(title=title, barmode="group", yaxis_title=value_col)
             self._apply_standard_layout(fig)
@@ -294,9 +302,7 @@ class RaidChartGenerator(PlotlyChartGenerator):
         cell_values = []
         fill_colors = []
         font_colors = []
-        base_stripe = [
-            "#141414" if i % 2 == 0 else "#1a1a1a" for i in range(len(df))
-        ]
+        base_stripe = ["#141414" if i % 2 == 0 else "#1a1a1a" for i in range(len(df))]
         base_font = ["#E0E0E0"] * len(df)
 
         for col in df.columns:
@@ -316,7 +322,9 @@ class RaidChartGenerator(PlotlyChartGenerator):
                         formatted.append(self._format_number(v))
                     else:
                         s = str(v)
-                        formatted.append("\u2014" if s in ("None", "nan", "NaN", "") else s)
+                        formatted.append(
+                            "\u2014" if s in ("None", "nan", "NaN", "") else s
+                        )
                 cell_values.append(formatted)
 
             if is_change:
@@ -350,14 +358,18 @@ class RaidChartGenerator(PlotlyChartGenerator):
                     header=dict(
                         values=header_values,
                         fill_color="#1a1a1a",
-                        font=dict(color="#D4A84B", size=14, family="Tajawal, sans-serif"),
+                        font=dict(
+                            color="#D4A84B", size=14, family="Tajawal, sans-serif"
+                        ),
                         align="left",
                         line_color="rgba(212,168,75,0.2)",
                     ),
                     cells=dict(
                         values=cell_values,
                         fill_color=fill_colors,
-                        font=dict(color=font_colors, size=13, family="Tajawal, sans-serif"),
+                        font=dict(
+                            color=font_colors, size=13, family="Tajawal, sans-serif"
+                        ),
                         align="left",
                         line_color="rgba(212,168,75,0.1)",
                     ),
@@ -385,14 +397,16 @@ class RaidChartGenerator(PlotlyChartGenerator):
 
         if len(df) >= 8:
             # Horizontal bar chart for ranked lists - prevents label overlap
-            fig = go.Figure(data=[
-                go.Bar(
-                    y=labels,
-                    x=df[y_col],
-                    orientation='h',
-                    marker_color='#D4A84B',
-                )
-            ])
+            fig = go.Figure(
+                data=[
+                    go.Bar(
+                        y=labels,
+                        x=df[y_col],
+                        orientation="h",
+                        marker_color="#D4A84B",
+                    )
+                ]
+            )
             fig.update_layout(
                 title=title,
                 xaxis_title=self._humanize_header(y_col),
@@ -404,7 +418,7 @@ class RaidChartGenerator(PlotlyChartGenerator):
 
         # For smaller datasets, use vertical bar with rotation if needed
         fig = super()._create_bar_chart(df, x_col, y_col, title)
-        avg_len = sum(len(l) for l in labels) / max(len(labels), 1)
+        avg_len = sum(len(lbl) for lbl in labels) / max(len(labels), 1)
         if avg_len > 10:
             fig.update_layout(xaxis_tickangle=-45)
         fig.update_layout(
@@ -422,7 +436,16 @@ class RaidChartGenerator(PlotlyChartGenerator):
     _ACRONYMS = {"roe", "roa", "pe", "eps", "ebitda", "ebit", "ppe", "cfo", "cfi"}
 
     # Keywords that indicate a percentage column
-    _PCT_KEYWORDS = {"margin", "yield", "ratio", "roe", "roa", "growth", "pct", "return"}
+    _PCT_KEYWORDS = {
+        "margin",
+        "yield",
+        "ratio",
+        "roe",
+        "roa",
+        "growth",
+        "pct",
+        "return",
+    }
 
     # Keywords that indicate a value-change column (for conditional coloring)
     _CHANGE_KEYWORDS = {"growth", "change", "return"}

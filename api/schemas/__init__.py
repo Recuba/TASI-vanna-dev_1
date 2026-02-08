@@ -4,7 +4,12 @@ from api.schemas.common import ErrorResponse, PaginatedResponse, PaginationParam
 from api.schemas.news import NewsCreate, NewsResponse, NewsUpdate
 from api.schemas.reports import ReportCreate, ReportResponse, ReportUpdate
 from api.schemas.announcements import AnnouncementCreate, AnnouncementResponse
-from api.schemas.entities import CompanyDetail, CompanySummary, EntityListResponse, SectorInfo
+from api.schemas.entities import (
+    CompanyDetail,
+    CompanySummary,
+    EntityListResponse,
+    SectorInfo,
+)
 from api.schemas.watchlists import (
     AlertCreateRequest,
     AlertResponse,

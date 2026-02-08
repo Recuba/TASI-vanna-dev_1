@@ -6,7 +6,6 @@ Tests for cache.redis_client and cache.decorators modules.
 All tests use mocked Redis -- no running Redis server required.
 """
 
-import json
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -22,6 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 def reset_redis_client():
     """Reset the redis_client module's global state before each test."""
     import cache.redis_client as rc
+
     rc._redis_client = None
     yield
     rc._redis_client = None
@@ -30,6 +30,7 @@ def reset_redis_client():
 # ===========================================================================
 # redis_client tests
 # ===========================================================================
+
 
 class TestRedisClientInit:
     """Tests for init_redis, close_redis, is_redis_available."""
@@ -76,15 +77,18 @@ class TestRedisClientInit:
 
     def test_is_redis_available_when_not_initialized(self):
         from cache.redis_client import is_redis_available
+
         assert is_redis_available() is False
 
     def test_close_redis_when_not_initialized(self):
         from cache.redis_client import close_redis, is_redis_available
+
         close_redis()  # Should not raise
         assert is_redis_available() is False
 
     def test_close_redis_when_initialized(self):
         import cache.redis_client as rc
+
         mock_client = MagicMock()
         rc._redis_client = mock_client
 
@@ -98,21 +102,25 @@ class TestRedisClientInit:
 # Cache operation tests (cache_get, cache_set, cache_delete)
 # ===========================================================================
 
+
 class TestCacheOperations:
     """Tests for cache_get, cache_set, cache_delete."""
 
     def test_cache_get_returns_none_when_not_initialized(self):
         from cache.redis_client import cache_get
+
         result = cache_get("some-key")
         assert result is None
 
     def test_cache_set_returns_false_when_not_initialized(self):
         from cache.redis_client import cache_set
+
         result = cache_set("key", "value")
         assert result is False
 
     def test_cache_delete_returns_false_when_not_initialized(self):
         from cache.redis_client import cache_delete
+
         result = cache_delete("key")
         assert result is False
 
@@ -180,6 +188,7 @@ class TestCacheOperations:
 
     def test_cache_invalidate_pattern_when_not_initialized(self):
         from cache.redis_client import cache_invalidate_pattern
+
         result = cache_invalidate_pattern("news:*")
         assert result == 0
 
@@ -198,6 +207,7 @@ class TestCacheOperations:
 # ===========================================================================
 # Cache decorator tests
 # ===========================================================================
+
 
 class TestCachedDecorator:
     """Tests for the @cached decorator."""
@@ -310,24 +320,28 @@ class TestBuildKey:
 
     def test_build_key_deterministic(self):
         from cache.decorators import _build_key
+
         key1 = _build_key("prefix", "func", (1, 2), {"k": "v"})
         key2 = _build_key("prefix", "func", (1, 2), {"k": "v"})
         assert key1 == key2
 
     def test_build_key_different_for_different_args(self):
         from cache.decorators import _build_key
+
         key1 = _build_key("prefix", "func", (1,), {})
         key2 = _build_key("prefix", "func", (2,), {})
         assert key1 != key2
 
     def test_build_key_format(self):
         from cache.decorators import _build_key
+
         key = _build_key("news", "get_latest", (10,), {})
         assert key.startswith("news:get_latest:")
         assert len(key.split(":")) == 3
 
     def test_build_key_different_prefix(self):
         from cache.decorators import _build_key
+
         key1 = _build_key("news", "func", (1,), {})
         key2 = _build_key("reports", "func", (1,), {})
         assert key1 != key2

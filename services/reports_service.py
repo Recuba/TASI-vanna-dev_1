@@ -189,9 +189,7 @@ class TechnicalReportsService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [self._row_to_report(r) for r in cur.fetchall()]
         finally:
@@ -233,9 +231,7 @@ class TechnicalReportsService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [self._row_to_report(r) for r in cur.fetchall()]
         finally:
@@ -247,9 +243,7 @@ class TechnicalReportsService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, {"id": report_id})
                 row = cur.fetchone()
                 if row is None:

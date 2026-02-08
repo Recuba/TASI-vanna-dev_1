@@ -25,8 +25,6 @@ import sys
 import time
 import sqlite3
 import pandas as pd
-import numpy as np
-import re
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -154,85 +152,158 @@ ANALYST_COLS = {
 # ---------------------------------------------------------------------------
 
 BS_FIELDS = [
-    "Total_Assets", "Current_Assets", "Cash_And_Cash_Equivalents",
+    "Total_Assets",
+    "Current_Assets",
+    "Cash_And_Cash_Equivalents",
     "Cash_Cash_Equivalents_And_Short_Term_Investments",
-    "Accounts_Receivable", "Inventory", "Other_Current_Assets",
-    "Total_Non_Current_Assets", "Net_PPE",
-    "Goodwill_And_Other_Intangible_Assets", "Goodwill", "Other_Intangible_Assets",
-    "Long_Term_Equity_Investment", "Other_Non_Current_Assets",
+    "Accounts_Receivable",
+    "Inventory",
+    "Other_Current_Assets",
+    "Total_Non_Current_Assets",
+    "Net_PPE",
+    "Goodwill_And_Other_Intangible_Assets",
+    "Goodwill",
+    "Other_Intangible_Assets",
+    "Long_Term_Equity_Investment",
+    "Other_Non_Current_Assets",
     "Total_Liabilities_Net_Minority_Interest",
-    "Current_Liabilities", "Current_Debt", "Accounts_Payable", "Other_Current_Liabilities",
+    "Current_Liabilities",
+    "Current_Debt",
+    "Accounts_Payable",
+    "Other_Current_Liabilities",
     "Total_Non_Current_Liabilities_Net_Minority_Interest",
-    "Long_Term_Debt", "Long_Term_Capital_Lease_Obligation", "Capital_Lease_Obligations",
+    "Long_Term_Debt",
+    "Long_Term_Capital_Lease_Obligation",
+    "Capital_Lease_Obligations",
     "Other_Non_Current_Liabilities",
-    "Total_Equity_Gross_Minority_Interest", "Stockholders_Equity", "Common_Stock_Equity",
-    "Retained_Earnings", "Common_Stock", "Additional_Paid_In_Capital",
-    "Treasury_Stock", "Minority_Interest",
-    "Total_Capitalization", "Net_Tangible_Assets", "Working_Capital",
-    "Invested_Capital", "Tangible_Book_Value",
-    "Total_Debt", "Net_Debt",
-    "Share_Issued", "Ordinary_Shares_Number", "Treasury_Shares_Number",
+    "Total_Equity_Gross_Minority_Interest",
+    "Stockholders_Equity",
+    "Common_Stock_Equity",
+    "Retained_Earnings",
+    "Common_Stock",
+    "Additional_Paid_In_Capital",
+    "Treasury_Stock",
+    "Minority_Interest",
+    "Total_Capitalization",
+    "Net_Tangible_Assets",
+    "Working_Capital",
+    "Invested_Capital",
+    "Tangible_Book_Value",
+    "Total_Debt",
+    "Net_Debt",
+    "Share_Issued",
+    "Ordinary_Shares_Number",
+    "Treasury_Shares_Number",
 ]
 
 IS_FIELDS = [
-    "Total_Revenue", "Operating_Revenue", "Cost_Of_Revenue", "Gross_Profit",
-    "Operating_Expense", "Selling_General_And_Administration",
-    "General_And_Administrative_Expense", "Research_And_Development",
+    "Total_Revenue",
+    "Operating_Revenue",
+    "Cost_Of_Revenue",
+    "Gross_Profit",
+    "Operating_Expense",
+    "Selling_General_And_Administration",
+    "General_And_Administrative_Expense",
+    "Research_And_Development",
     "Operating_Income",
-    "Net_Non_Operating_Interest_Income_Expense", "Interest_Income", "Interest_Expense",
+    "Net_Non_Operating_Interest_Income_Expense",
+    "Interest_Income",
+    "Interest_Expense",
     "Other_Non_Operating_Income_Expenses",
-    "Pretax_Income", "Tax_Provision", "Tax_Rate_For_Calcs",
-    "Net_Income", "Net_Income_Common_Stockholders",
-    "Net_Income_Continuous_Operations", "Net_Income_Including_Noncontrolling_Interests",
-    "Diluted_EPS", "Basic_EPS",
-    "Diluted_Average_Shares", "Basic_Average_Shares",
-    "EBITDA", "EBIT", "Reconciled_Depreciation",
-    "Total_Operating_Income_As_Reported", "Normalized_EBITDA", "Normalized_Income",
-    "Net_Interest_Income", "Total_Expenses", "Minority_Interests",
+    "Pretax_Income",
+    "Tax_Provision",
+    "Tax_Rate_For_Calcs",
+    "Net_Income",
+    "Net_Income_Common_Stockholders",
+    "Net_Income_Continuous_Operations",
+    "Net_Income_Including_Noncontrolling_Interests",
+    "Diluted_EPS",
+    "Basic_EPS",
+    "Diluted_Average_Shares",
+    "Basic_Average_Shares",
+    "EBITDA",
+    "EBIT",
+    "Reconciled_Depreciation",
+    "Total_Operating_Income_As_Reported",
+    "Normalized_EBITDA",
+    "Normalized_Income",
+    "Net_Interest_Income",
+    "Total_Expenses",
+    "Minority_Interests",
 ]
 
 CF_FIELDS = [
-    "Operating_Cash_Flow", "Investing_Cash_Flow", "Financing_Cash_Flow",
-    "Free_Cash_Flow", "Capital_Expenditure",
+    "Operating_Cash_Flow",
+    "Investing_Cash_Flow",
+    "Financing_Cash_Flow",
+    "Free_Cash_Flow",
+    "Capital_Expenditure",
     "Depreciation_And_Amortization",
-    "Change_In_Working_Capital", "Change_In_Receivables", "Change_In_Inventory",
-    "Change_In_Payable", "Change_In_Prepaid_Assets",
+    "Change_In_Working_Capital",
+    "Change_In_Receivables",
+    "Change_In_Inventory",
+    "Change_In_Payable",
+    "Change_In_Prepaid_Assets",
     "Stock_Based_Compensation",
     "Net_Income_From_Continuing_Operations",
     "Dividends_Received_Cfi",
-    "Interest_Paid_Cfo", "Interest_Received_Cfo", "Taxes_Refund_Paid",
+    "Interest_Paid_Cfo",
+    "Interest_Received_Cfo",
+    "Taxes_Refund_Paid",
     "Purchase_Of_Business",
-    "Purchase_Of_Investment", "Sale_Of_Investment", "Net_Investment_Purchase_And_Sale",
-    "Purchase_Of_PPE", "Sale_Of_PPE", "Net_PPE_Purchase_And_Sale",
-    "Issuance_Of_Debt", "Long_Term_Debt_Issuance", "Long_Term_Debt_Payments",
+    "Purchase_Of_Investment",
+    "Sale_Of_Investment",
+    "Net_Investment_Purchase_And_Sale",
+    "Purchase_Of_PPE",
+    "Sale_Of_PPE",
+    "Net_PPE_Purchase_And_Sale",
+    "Issuance_Of_Debt",
+    "Long_Term_Debt_Issuance",
+    "Long_Term_Debt_Payments",
     "Repayment_Of_Debt",
-    "Issuance_Of_Capital_Stock", "Common_Stock_Issuance",
-    "Net_Other_Financing_Charges", "Net_Other_Investing_Changes",
-    "Beginning_Cash_Position", "End_Cash_Position", "Changes_In_Cash",
+    "Issuance_Of_Capital_Stock",
+    "Common_Stock_Issuance",
+    "Net_Other_Financing_Charges",
+    "Net_Other_Investing_Changes",
+    "Beginning_Cash_Position",
+    "End_Cash_Position",
+    "Changes_In_Cash",
     "Other_Non_Cash_Items",
 ]
 
 # Period prefix -> (period_type, period_index)
 BS_PERIODS = {
-    "bs_y0": ("annual", 0), "bs_y1": ("annual", 1),
-    "bs_y2": ("annual", 2), "bs_y3": ("annual", 3),
-    "bs_q0": ("quarterly", 0), "bs_q1": ("quarterly", 1),
-    "bs_q2": ("quarterly", 2), "bs_q3": ("quarterly", 3),
+    "bs_y0": ("annual", 0),
+    "bs_y1": ("annual", 1),
+    "bs_y2": ("annual", 2),
+    "bs_y3": ("annual", 3),
+    "bs_q0": ("quarterly", 0),
+    "bs_q1": ("quarterly", 1),
+    "bs_q2": ("quarterly", 2),
+    "bs_q3": ("quarterly", 3),
 }
 
 IS_PERIODS = {
-    "is_y0": ("annual", 0), "is_y1": ("annual", 1),
-    "is_y2": ("annual", 2), "is_y3": ("annual", 3),
-    "is_q0": ("quarterly", 0), "is_q1": ("quarterly", 1),
-    "is_q2": ("quarterly", 2), "is_q3": ("quarterly", 3),
+    "is_y0": ("annual", 0),
+    "is_y1": ("annual", 1),
+    "is_y2": ("annual", 2),
+    "is_y3": ("annual", 3),
+    "is_q0": ("quarterly", 0),
+    "is_q1": ("quarterly", 1),
+    "is_q2": ("quarterly", 2),
+    "is_q3": ("quarterly", 3),
     "is_ttm": ("ttm", 0),
 }
 
 CF_PERIODS = {
-    "cf_y0": ("annual", 0), "cf_y1": ("annual", 1),
-    "cf_y2": ("annual", 2), "cf_y3": ("annual", 3),
-    "cf_q0": ("quarterly", 0), "cf_q1": ("quarterly", 1),
-    "cf_q2": ("quarterly", 2), "cf_q3": ("quarterly", 3),
+    "cf_y0": ("annual", 0),
+    "cf_y1": ("annual", 1),
+    "cf_y2": ("annual", 2),
+    "cf_y3": ("annual", 3),
+    "cf_q0": ("quarterly", 0),
+    "cf_q1": ("quarterly", 1),
+    "cf_q2": ("quarterly", 2),
+    "cf_q3": ("quarterly", 3),
     "cf_ttm": ("ttm", 0),
 }
 
@@ -518,6 +589,7 @@ INDEX_DDL = [
 # Helper functions
 # ---------------------------------------------------------------------------
 
+
 def extract_simple_table(df: pd.DataFrame, col_map: dict) -> pd.DataFrame:
     """Extract a subset of columns from the master DataFrame, renaming as needed."""
     src_cols = list(col_map.values())
@@ -554,17 +626,19 @@ def unpivot_financial(
     for prefix, (period_type, period_index) in periods.items():
         date_col = f"{prefix}_date"
         if date_col not in df.columns:
-            print(f"  WARNING: date column '{date_col}' not found -- skipping prefix '{prefix}'")
+            print(
+                f"  WARNING: date column '{date_col}' not found -- skipping prefix '{prefix}'"
+            )
             continue
 
         # Build the list of source column names for this prefix
         src_cols = [f"{prefix}_{f}" for f in fields]
-        # Target column names (lowercase)
-        tgt_cols = [f.lower() for f in fields]
 
         # Check which source columns exist
         existing_src = [c for c in src_cols if c in df.columns]
-        existing_tgt = [fields[i].lower() for i, c in enumerate(src_cols) if c in df.columns]
+        existing_tgt = [
+            fields[i].lower() for i, c in enumerate(src_cols) if c in df.columns
+        ]
         missing_src = [c for c in src_cols if c not in df.columns]
 
         # Get date values
@@ -618,6 +692,7 @@ def safe_to_sql(df: pd.DataFrame, table_name: str, conn: sqlite3.Connection):
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main():
     t_start = time.time()
 
@@ -646,9 +721,16 @@ def main():
         # -- Create tables ---------------------------------------------------
         print("Creating tables...")
         for ddl in [
-            DDL_COMPANIES, DDL_MARKET_DATA, DDL_VALUATION, DDL_PROFITABILITY,
-            DDL_DIVIDEND, DDL_FINANCIAL_SUMMARY, DDL_ANALYST,
-            DDL_BALANCE_SHEET, DDL_INCOME_STATEMENT, DDL_CASH_FLOW,
+            DDL_COMPANIES,
+            DDL_MARKET_DATA,
+            DDL_VALUATION,
+            DDL_PROFITABILITY,
+            DDL_DIVIDEND,
+            DDL_FINANCIAL_SUMMARY,
+            DDL_ANALYST,
+            DDL_BALANCE_SHEET,
+            DDL_INCOME_STATEMENT,
+            DDL_CASH_FLOW,
         ]:
             cur.executescript(ddl)
         conn.commit()
@@ -712,9 +794,16 @@ def main():
         print("-" * 60)
 
         all_tables = [
-            "companies", "market_data", "valuation_metrics", "profitability_metrics",
-            "dividend_data", "financial_summary", "analyst_data",
-            "balance_sheet", "income_statement", "cash_flow",
+            "companies",
+            "market_data",
+            "valuation_metrics",
+            "profitability_metrics",
+            "dividend_data",
+            "financial_summary",
+            "analyst_data",
+            "balance_sheet",
+            "income_statement",
+            "cash_flow",
         ]
         total_rows = 0
         for tbl in all_tables:

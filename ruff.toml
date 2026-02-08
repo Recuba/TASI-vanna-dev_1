@@ -1,0 +1,5 @@
+[lint]
+# E402: Module-level imports not at top - we intentionally import after
+# load_dotenv() in app.py and after sys.path.insert() in test files.
+# F821: ToolSchema is a forward reference string used in type annotations.
+per-file-ignores = { "app.py" = ["E402"], "test_app_assembly*.py" = ["E402", "F821", "E712"], "tests/test_chart_engine.py" = ["E402"], "tests/test_ui_enhancements.py" = ["E402"], "api/routes/*.py" = ["E402"] }

@@ -74,7 +74,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             retry_after = int(timestamps[0] - cutoff) + 1
             logger.warning(
                 "Rate limit exceeded for %s on %s %s",
-                client_ip, request.method, path,
+                client_ip,
+                request.method,
+                path,
             )
             return JSONResponse(
                 status_code=429,
@@ -89,7 +91,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """Remove IPs with no recent requests."""
         cutoff = now - self.window_seconds
         stale_ips = [
-            ip for ip, timestamps in self._requests.items()
+            ip
+            for ip, timestamps in self._requests.items()
             if not timestamps or timestamps[-1] < cutoff
         ]
         for ip in stale_ips:

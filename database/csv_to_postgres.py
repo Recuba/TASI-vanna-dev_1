@@ -39,7 +39,6 @@ Environment variables:
 """
 
 import argparse
-import math
 import os
 import sys
 import time
@@ -180,84 +179,157 @@ ANALYST_COLS = {
 # ---------------------------------------------------------------------------
 
 BS_FIELDS = [
-    "Total_Assets", "Current_Assets", "Cash_And_Cash_Equivalents",
+    "Total_Assets",
+    "Current_Assets",
+    "Cash_And_Cash_Equivalents",
     "Cash_Cash_Equivalents_And_Short_Term_Investments",
-    "Accounts_Receivable", "Inventory", "Other_Current_Assets",
-    "Total_Non_Current_Assets", "Net_PPE",
-    "Goodwill_And_Other_Intangible_Assets", "Goodwill", "Other_Intangible_Assets",
-    "Long_Term_Equity_Investment", "Other_Non_Current_Assets",
+    "Accounts_Receivable",
+    "Inventory",
+    "Other_Current_Assets",
+    "Total_Non_Current_Assets",
+    "Net_PPE",
+    "Goodwill_And_Other_Intangible_Assets",
+    "Goodwill",
+    "Other_Intangible_Assets",
+    "Long_Term_Equity_Investment",
+    "Other_Non_Current_Assets",
     "Total_Liabilities_Net_Minority_Interest",
-    "Current_Liabilities", "Current_Debt", "Accounts_Payable", "Other_Current_Liabilities",
+    "Current_Liabilities",
+    "Current_Debt",
+    "Accounts_Payable",
+    "Other_Current_Liabilities",
     "Total_Non_Current_Liabilities_Net_Minority_Interest",
-    "Long_Term_Debt", "Long_Term_Capital_Lease_Obligation", "Capital_Lease_Obligations",
+    "Long_Term_Debt",
+    "Long_Term_Capital_Lease_Obligation",
+    "Capital_Lease_Obligations",
     "Other_Non_Current_Liabilities",
-    "Total_Equity_Gross_Minority_Interest", "Stockholders_Equity", "Common_Stock_Equity",
-    "Retained_Earnings", "Common_Stock", "Additional_Paid_In_Capital",
-    "Treasury_Stock", "Minority_Interest",
-    "Total_Capitalization", "Net_Tangible_Assets", "Working_Capital",
-    "Invested_Capital", "Tangible_Book_Value",
-    "Total_Debt", "Net_Debt",
-    "Share_Issued", "Ordinary_Shares_Number", "Treasury_Shares_Number",
+    "Total_Equity_Gross_Minority_Interest",
+    "Stockholders_Equity",
+    "Common_Stock_Equity",
+    "Retained_Earnings",
+    "Common_Stock",
+    "Additional_Paid_In_Capital",
+    "Treasury_Stock",
+    "Minority_Interest",
+    "Total_Capitalization",
+    "Net_Tangible_Assets",
+    "Working_Capital",
+    "Invested_Capital",
+    "Tangible_Book_Value",
+    "Total_Debt",
+    "Net_Debt",
+    "Share_Issued",
+    "Ordinary_Shares_Number",
+    "Treasury_Shares_Number",
 ]
 
 IS_FIELDS = [
-    "Total_Revenue", "Operating_Revenue", "Cost_Of_Revenue", "Gross_Profit",
-    "Operating_Expense", "Selling_General_And_Administration",
-    "General_And_Administrative_Expense", "Research_And_Development",
+    "Total_Revenue",
+    "Operating_Revenue",
+    "Cost_Of_Revenue",
+    "Gross_Profit",
+    "Operating_Expense",
+    "Selling_General_And_Administration",
+    "General_And_Administrative_Expense",
+    "Research_And_Development",
     "Operating_Income",
-    "Net_Non_Operating_Interest_Income_Expense", "Interest_Income", "Interest_Expense",
+    "Net_Non_Operating_Interest_Income_Expense",
+    "Interest_Income",
+    "Interest_Expense",
     "Other_Non_Operating_Income_Expenses",
-    "Pretax_Income", "Tax_Provision", "Tax_Rate_For_Calcs",
-    "Net_Income", "Net_Income_Common_Stockholders",
-    "Net_Income_Continuous_Operations", "Net_Income_Including_Noncontrolling_Interests",
-    "Diluted_EPS", "Basic_EPS",
-    "Diluted_Average_Shares", "Basic_Average_Shares",
-    "EBITDA", "EBIT", "Reconciled_Depreciation",
-    "Total_Operating_Income_As_Reported", "Normalized_EBITDA", "Normalized_Income",
-    "Net_Interest_Income", "Total_Expenses", "Minority_Interests",
+    "Pretax_Income",
+    "Tax_Provision",
+    "Tax_Rate_For_Calcs",
+    "Net_Income",
+    "Net_Income_Common_Stockholders",
+    "Net_Income_Continuous_Operations",
+    "Net_Income_Including_Noncontrolling_Interests",
+    "Diluted_EPS",
+    "Basic_EPS",
+    "Diluted_Average_Shares",
+    "Basic_Average_Shares",
+    "EBITDA",
+    "EBIT",
+    "Reconciled_Depreciation",
+    "Total_Operating_Income_As_Reported",
+    "Normalized_EBITDA",
+    "Normalized_Income",
+    "Net_Interest_Income",
+    "Total_Expenses",
+    "Minority_Interests",
 ]
 
 CF_FIELDS = [
-    "Operating_Cash_Flow", "Investing_Cash_Flow", "Financing_Cash_Flow",
-    "Free_Cash_Flow", "Capital_Expenditure",
+    "Operating_Cash_Flow",
+    "Investing_Cash_Flow",
+    "Financing_Cash_Flow",
+    "Free_Cash_Flow",
+    "Capital_Expenditure",
     "Depreciation_And_Amortization",
-    "Change_In_Working_Capital", "Change_In_Receivables", "Change_In_Inventory",
-    "Change_In_Payable", "Change_In_Prepaid_Assets",
+    "Change_In_Working_Capital",
+    "Change_In_Receivables",
+    "Change_In_Inventory",
+    "Change_In_Payable",
+    "Change_In_Prepaid_Assets",
     "Stock_Based_Compensation",
     "Net_Income_From_Continuing_Operations",
     "Dividends_Received_Cfi",
-    "Interest_Paid_Cfo", "Interest_Received_Cfo", "Taxes_Refund_Paid",
+    "Interest_Paid_Cfo",
+    "Interest_Received_Cfo",
+    "Taxes_Refund_Paid",
     "Purchase_Of_Business",
-    "Purchase_Of_Investment", "Sale_Of_Investment", "Net_Investment_Purchase_And_Sale",
-    "Purchase_Of_PPE", "Sale_Of_PPE", "Net_PPE_Purchase_And_Sale",
-    "Issuance_Of_Debt", "Long_Term_Debt_Issuance", "Long_Term_Debt_Payments",
+    "Purchase_Of_Investment",
+    "Sale_Of_Investment",
+    "Net_Investment_Purchase_And_Sale",
+    "Purchase_Of_PPE",
+    "Sale_Of_PPE",
+    "Net_PPE_Purchase_And_Sale",
+    "Issuance_Of_Debt",
+    "Long_Term_Debt_Issuance",
+    "Long_Term_Debt_Payments",
     "Repayment_Of_Debt",
-    "Issuance_Of_Capital_Stock", "Common_Stock_Issuance",
-    "Net_Other_Financing_Charges", "Net_Other_Investing_Changes",
-    "Beginning_Cash_Position", "End_Cash_Position", "Changes_In_Cash",
+    "Issuance_Of_Capital_Stock",
+    "Common_Stock_Issuance",
+    "Net_Other_Financing_Charges",
+    "Net_Other_Investing_Changes",
+    "Beginning_Cash_Position",
+    "End_Cash_Position",
+    "Changes_In_Cash",
     "Other_Non_Cash_Items",
 ]
 
 BS_PERIODS = {
-    "bs_y0": ("annual", 0), "bs_y1": ("annual", 1),
-    "bs_y2": ("annual", 2), "bs_y3": ("annual", 3),
-    "bs_q0": ("quarterly", 0), "bs_q1": ("quarterly", 1),
-    "bs_q2": ("quarterly", 2), "bs_q3": ("quarterly", 3),
+    "bs_y0": ("annual", 0),
+    "bs_y1": ("annual", 1),
+    "bs_y2": ("annual", 2),
+    "bs_y3": ("annual", 3),
+    "bs_q0": ("quarterly", 0),
+    "bs_q1": ("quarterly", 1),
+    "bs_q2": ("quarterly", 2),
+    "bs_q3": ("quarterly", 3),
 }
 
 IS_PERIODS = {
-    "is_y0": ("annual", 0), "is_y1": ("annual", 1),
-    "is_y2": ("annual", 2), "is_y3": ("annual", 3),
-    "is_q0": ("quarterly", 0), "is_q1": ("quarterly", 1),
-    "is_q2": ("quarterly", 2), "is_q3": ("quarterly", 3),
+    "is_y0": ("annual", 0),
+    "is_y1": ("annual", 1),
+    "is_y2": ("annual", 2),
+    "is_y3": ("annual", 3),
+    "is_q0": ("quarterly", 0),
+    "is_q1": ("quarterly", 1),
+    "is_q2": ("quarterly", 2),
+    "is_q3": ("quarterly", 3),
     "is_ttm": ("ttm", 0),
 }
 
 CF_PERIODS = {
-    "cf_y0": ("annual", 0), "cf_y1": ("annual", 1),
-    "cf_y2": ("annual", 2), "cf_y3": ("annual", 3),
-    "cf_q0": ("quarterly", 0), "cf_q1": ("quarterly", 1),
-    "cf_q2": ("quarterly", 2), "cf_q3": ("quarterly", 3),
+    "cf_y0": ("annual", 0),
+    "cf_y1": ("annual", 1),
+    "cf_y2": ("annual", 2),
+    "cf_y3": ("annual", 3),
+    "cf_q0": ("quarterly", 0),
+    "cf_q1": ("quarterly", 1),
+    "cf_q2": ("quarterly", 2),
+    "cf_q3": ("quarterly", 3),
     "cf_ttm": ("ttm", 0),
 }
 
@@ -265,6 +337,7 @@ CF_PERIODS = {
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
+
 
 def extract_simple_table(df: pd.DataFrame, col_map: dict) -> pd.DataFrame:
     """Extract a subset of columns from the master DataFrame, renaming as needed."""
@@ -297,14 +370,17 @@ def unpivot_financial(
     for prefix, (period_type, period_index) in periods.items():
         date_col = f"{prefix}_date"
         if date_col not in df.columns:
-            print(f"  WARNING: date column '{date_col}' not found -- skipping prefix '{prefix}'")
+            print(
+                f"  WARNING: date column '{date_col}' not found -- skipping prefix '{prefix}'"
+            )
             continue
 
         src_cols = [f"{prefix}_{f}" for f in fields]
-        tgt_cols = [f.lower() for f in fields]
 
         existing_src = [c for c in src_cols if c in df.columns]
-        existing_tgt = [fields[i].lower() for i, c in enumerate(src_cols) if c in df.columns]
+        existing_tgt = [
+            fields[i].lower() for i, c in enumerate(src_cols) if c in df.columns
+        ]
 
         dates = df[date_col].values
 
@@ -400,12 +476,13 @@ FIN_UPSERT_KEY = ["ticker", "period_type", "period_index", "period_date"]
 # Insert/Upsert logic
 # ---------------------------------------------------------------------------
 
+
 def insert_batch(pg_conn, sql: str, rows: list, batch_size: int) -> int:
     """Insert rows in batches. Returns total rows inserted."""
     cur = pg_conn.cursor()
     total = 0
     for i in range(0, len(rows), batch_size):
-        batch = rows[i:i + batch_size]
+        batch = rows[i : i + batch_size]
         psycopg2.extras.execute_batch(cur, sql, batch)
         total += len(batch)
     pg_conn.commit()
@@ -500,7 +577,9 @@ def populate_sectors(df: pd.DataFrame, pg_conn, dry_run: bool) -> dict:
     return sector_map
 
 
-def populate_entities(df: pd.DataFrame, sector_map: dict, pg_conn, dry_run: bool) -> int:
+def populate_entities(
+    df: pd.DataFrame, sector_map: dict, pg_conn, dry_run: bool
+) -> int:
     """Populate entities table from companies data."""
     rows = []
     for _, row in df.iterrows():
@@ -528,17 +607,34 @@ def populate_entities(df: pd.DataFrame, sector_map: dict, pg_conn, dry_run: bool
 # Main
 # ---------------------------------------------------------------------------
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Load CSV data into PostgreSQL (adapted from csv_to_sqlite.py)"
     )
-    parser.add_argument("--dry-run", action="store_true", help="Print plan without writing")
-    parser.add_argument("--upsert", action="store_true", help="Use ON CONFLICT DO UPDATE instead of plain INSERT")
-    parser.add_argument("--skip-schema", action="store_true", help="Skip applying schema.sql")
-    parser.add_argument("--skip-truncate", action="store_true", help="Skip truncating tables before insert")
-    parser.add_argument("--csv-path", type=str, default=str(CSV_PATH), help="Path to source CSV")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print plan without writing"
+    )
+    parser.add_argument(
+        "--upsert",
+        action="store_true",
+        help="Use ON CONFLICT DO UPDATE instead of plain INSERT",
+    )
+    parser.add_argument(
+        "--skip-schema", action="store_true", help="Skip applying schema.sql"
+    )
+    parser.add_argument(
+        "--skip-truncate",
+        action="store_true",
+        help="Skip truncating tables before insert",
+    )
+    parser.add_argument(
+        "--csv-path", type=str, default=str(CSV_PATH), help="Path to source CSV"
+    )
     parser.add_argument("--pg-host", default=os.environ.get("PG_HOST", "localhost"))
-    parser.add_argument("--pg-port", type=int, default=int(os.environ.get("PG_PORT", "5432")))
+    parser.add_argument(
+        "--pg-port", type=int, default=int(os.environ.get("PG_PORT", "5432"))
+    )
     parser.add_argument("--pg-dbname", default=os.environ.get("PG_DBNAME", "radai"))
     parser.add_argument("--pg-user", default=os.environ.get("PG_USER", "radai"))
     parser.add_argument("--pg-password", default=os.environ.get("PG_PASSWORD", ""))
@@ -574,7 +670,9 @@ def main():
     pg_conn = None
     if not args.dry_run:
         if psycopg2 is None:
-            print("ERROR: psycopg2 is not installed. Install with: pip install psycopg2-binary")
+            print(
+                "ERROR: psycopg2 is not installed. Install with: pip install psycopg2-binary"
+            )
             sys.exit(1)
         try:
             pg_conn = psycopg2.connect(
@@ -595,7 +693,9 @@ def main():
             print("Step 1: Applying schema...")
             if args.dry_run:
                 schema_sql = SCHEMA_SQL_PATH.read_text(encoding="utf-8")
-                print(f"  Schema: {len(schema_sql)} chars from {SCHEMA_SQL_PATH.name} (dry run)")
+                print(
+                    f"  Schema: {len(schema_sql)} chars from {SCHEMA_SQL_PATH.name} (dry run)"
+                )
             else:
                 schema_sql = SCHEMA_SQL_PATH.read_text(encoding="utf-8")
                 pg_conn.cursor().execute(schema_sql)
@@ -607,10 +707,18 @@ def main():
 
         # Step 2: Truncate tables (unless upsert or skip-truncate)
         tables_to_truncate = [
-            "cash_flow", "income_statement", "balance_sheet",
-            "analyst_data", "financial_summary", "dividend_data",
-            "profitability_metrics", "valuation_metrics", "market_data",
-            "entities", "sectors", "companies",
+            "cash_flow",
+            "income_statement",
+            "balance_sheet",
+            "analyst_data",
+            "financial_summary",
+            "dividend_data",
+            "profitability_metrics",
+            "valuation_metrics",
+            "market_data",
+            "entities",
+            "sectors",
+            "companies",
         ]
         if not args.upsert and not args.skip_truncate and not args.dry_run:
             print("Step 2: Truncating existing data...")
@@ -620,7 +728,11 @@ def main():
             pg_conn.commit()
             print(f"  Truncated {len(tables_to_truncate)} tables")
         else:
-            reason = "upsert mode" if args.upsert else ("--skip-truncate" if args.skip_truncate else "dry run")
+            reason = (
+                "upsert mode"
+                if args.upsert
+                else ("--skip-truncate" if args.skip_truncate else "dry run")
+            )
             print(f"Step 2: Truncation skipped ({reason})")
         print()
 
@@ -639,7 +751,9 @@ def main():
         total_rows = 0
         table_counts = {}
         for table, col_map in simple_tables:
-            count = load_simple_table(df, col_map, table, pg_conn, args.upsert, args.dry_run)
+            count = load_simple_table(
+                df, col_map, table, pg_conn, args.upsert, args.dry_run
+            )
             table_counts[table] = count
             total_rows += count
         print()
@@ -653,7 +767,9 @@ def main():
         ]
 
         for table, periods, fields in fin_tables:
-            count = load_financial_table(df, periods, fields, table, pg_conn, args.upsert, args.dry_run)
+            count = load_financial_table(
+                df, periods, fields, table, pg_conn, args.upsert, args.dry_run
+            )
             table_counts[table] = count
             total_rows += count
         print()
@@ -675,7 +791,11 @@ def main():
         print("=" * 60)
         print(f"{'Table':<30} {'Rows':>10}")
         print("-" * 42)
-        for table in [t for t, _ in simple_tables] + [t for t, _, _ in fin_tables] + ["sectors", "entities"]:
+        for table in (
+            [t for t, _ in simple_tables]
+            + [t for t, _, _ in fin_tables]
+            + ["sectors", "entities"]
+        ):
             print(f"  {table:<28} {table_counts.get(table, 0):>10,}")
         print("-" * 42)
         print(f"  {'TOTAL':<28} {total_rows:>10,}")

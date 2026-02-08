@@ -45,10 +45,7 @@ async def sector_market_cap() -> ChartResponse:
     return ChartResponse(
         chart_type="bar",
         title="Market Cap by Sector (SAR)",
-        data=[
-            ChartDataPoint(label=r["label"], value=float(r["value"]))
-            for r in rows
-        ],
+        data=[ChartDataPoint(label=r["label"], value=float(r["value"])) for r in rows],
     )
 
 

@@ -21,8 +21,11 @@ from auth.dependencies import get_current_user
 # Backward-compatible alias used by tests/test_api_routes.py
 class AnnouncementListResponse(BaseModel):
     """Legacy response model kept for backward compatibility."""
+
     items: List[AnnouncementResponse]
     count: int
+
+
 from services.announcement_service import AnnouncementService, Announcement
 
 router = APIRouter(prefix="/api/announcements", tags=["announcements"])

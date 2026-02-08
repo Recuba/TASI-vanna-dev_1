@@ -8,7 +8,6 @@ import sqlite3
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Optional
 
 from config import get_settings
@@ -40,7 +39,9 @@ class HealthReport:
                 {
                     "name": c.name,
                     "status": c.status.value,
-                    "latency_ms": round(c.latency_ms, 2) if c.latency_ms is not None else None,
+                    "latency_ms": round(c.latency_ms, 2)
+                    if c.latency_ms is not None
+                    else None,
                     "message": c.message,
                 }
                 for c in self.components

@@ -9,12 +9,17 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 
 import psycopg2.extras
 
 from api.dependencies import get_db_connection
-from api.schemas.entities import CompanyDetail, CompanySummary, EntityListResponse, SectorInfo
+from api.schemas.entities import (
+    CompanyDetail,
+    CompanySummary,
+    EntityListResponse,
+    SectorInfo,
+)
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
 
@@ -38,9 +43,7 @@ async def list_entities(
         params["sector"] = f"%{sector}%"
 
     if search:
-        clauses.append(
-            "(c.ticker ILIKE %(search)s OR c.short_name ILIKE %(search)s)"
-        )
+        clauses.append("(c.ticker ILIKE %(search)s OR c.short_name ILIKE %(search)s)")
         params["search"] = f"%{search}%"
 
     where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
@@ -74,9 +77,15 @@ async def list_entities(
             short_name=r.get("short_name"),
             sector=r.get("sector"),
             industry=r.get("industry"),
-            current_price=float(r["current_price"]) if r.get("current_price") is not None else None,
-            market_cap=float(r["market_cap"]) if r.get("market_cap") is not None else None,
-            change_pct=round(float(r["change_pct"]), 2) if r.get("change_pct") is not None else None,
+            current_price=float(r["current_price"])
+            if r.get("current_price") is not None
+            else None,
+            market_cap=float(r["market_cap"])
+            if r.get("market_cap") is not None
+            else None,
+            change_pct=round(float(r["change_pct"]), 2)
+            if r.get("change_pct") is not None
+            else None,
         )
         for r in rows
     ]
@@ -102,8 +111,7 @@ async def list_sectors() -> List[SectorInfo]:
         conn.close()
 
     return [
-        SectorInfo(sector=r["sector"], company_count=r["company_count"])
-        for r in rows
+        SectorInfo(sector=r["sector"], company_count=r["company_count"]) for r in rows
     ]
 
 

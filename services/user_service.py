@@ -10,7 +10,7 @@ Requires a psycopg2 connection factory passed at init.
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -157,16 +157,17 @@ class UserService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
-                cur.execute(sql_insert, {
-                    "id": user_id,
-                    "auth_provider": auth_provider,
-                    "auth_provider_id": auth_provider_id,
-                    "email": email,
-                    "display_name": display_name,
-                })
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    sql_insert,
+                    {
+                        "id": user_id,
+                        "auth_provider": auth_provider,
+                        "auth_provider_id": auth_provider_id,
+                        "email": email,
+                        "display_name": display_name,
+                    },
+                )
                 conn.commit()
                 cur.execute(sql_select, {"email": email})
                 row = cur.fetchone()
@@ -180,9 +181,7 @@ class UserService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, {"id": user_id})
                 row = cur.fetchone()
                 if row is None:
@@ -197,9 +196,7 @@ class UserService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, {"email": email})
                 row = cur.fetchone()
                 if row is None:
@@ -240,9 +237,7 @@ class UserService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, {"user_id": user_id})
                 return [self._row_to_watchlist(r) for r in cur.fetchall()]
         finally:
@@ -269,15 +264,16 @@ class UserService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
-                cur.execute(sql, {
-                    "id": wl_id,
-                    "user_id": user_id,
-                    "name": name,
-                    "tickers": tickers,
-                })
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    sql,
+                    {
+                        "id": wl_id,
+                        "user_id": user_id,
+                        "name": name,
+                        "tickers": tickers,
+                    },
+                )
                 row = cur.fetchone()
             conn.commit()
             return self._row_to_watchlist(row)
@@ -305,16 +301,14 @@ class UserService:
 
         sql = f"""
             UPDATE user_watchlists
-            SET {', '.join(sets)}
+            SET {", ".join(sets)}
             WHERE id = %(id)s AND user_id = %(user_id)s
             RETURNING *
         """
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 row = cur.fetchone()
             conn.commit()
@@ -366,16 +360,17 @@ class UserService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
-                cur.execute(sql, {
-                    "id": alert_id,
-                    "user_id": user_id,
-                    "ticker": ticker,
-                    "alert_type": alert_type,
-                    "threshold_value": threshold_value,
-                })
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    sql,
+                    {
+                        "id": alert_id,
+                        "user_id": user_id,
+                        "ticker": ticker,
+                        "alert_type": alert_type,
+                        "threshold_value": threshold_value,
+                    },
+                )
                 row = cur.fetchone()
             conn.commit()
             return self._row_to_alert(row)
@@ -406,9 +401,7 @@ class UserService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [self._row_to_alert(r) for r in cur.fetchall()]
         finally:

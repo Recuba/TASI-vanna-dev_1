@@ -110,24 +110,26 @@ def _format_prompt(schema: dict[str, list[tuple[str, str]]]) -> str:
             lines.append(f"- {col_name} ({col_type})")
         lines.append("")
 
-    lines.extend([
-        "QUERY TIPS",
-        "==========",
-        "- Join companies with other tables using ticker.",
-        "- For financial statements, filter by period_type ('annual', 'quarterly', 'ttm')",
-        "  and use period_index=0 for the latest period.",
-        "- Market cap is in SAR (Saudi Riyal).",
-        "- Use sector/industry from the companies table for sector analysis.",
-        "- Common joins: companies JOIN market_data, companies JOIN balance_sheet, etc.",
-        "",
-        "VISUALIZATION",
-        "=============",
-        "After running a SQL query, you can visualize the results using the visualize_data tool.",
-        "- The run_sql tool saves results to a CSV file (shown in the response as the filename).",
-        "- Pass that filename to visualize_data to create an interactive Plotly chart.",
-        "- Chart type is auto-selected based on data shape: bar, scatter, line, heatmap, histogram.",
-        "- Always visualize results when the user asks for charts, graphs, comparisons, or trends.",
-    ])
+    lines.extend(
+        [
+            "QUERY TIPS",
+            "==========",
+            "- Join companies with other tables using ticker.",
+            "- For financial statements, filter by period_type ('annual', 'quarterly', 'ttm')",
+            "  and use period_index=0 for the latest period.",
+            "- Market cap is in SAR (Saudi Riyal).",
+            "- Use sector/industry from the companies table for sector analysis.",
+            "- Common joins: companies JOIN market_data, companies JOIN balance_sheet, etc.",
+            "",
+            "VISUALIZATION",
+            "=============",
+            "After running a SQL query, you can visualize the results using the visualize_data tool.",
+            "- The run_sql tool saves results to a CSV file (shown in the response as the filename).",
+            "- Pass that filename to visualize_data to create an interactive Plotly chart.",
+            "- Chart type is auto-selected based on data shape: bar, scatter, line, heatmap, histogram.",
+            "- Always visualize results when the user asks for charts, graphs, comparisons, or trends.",
+        ]
+    )
 
     return "\n".join(lines)
 

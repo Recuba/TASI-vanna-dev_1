@@ -86,7 +86,10 @@ async def add_ticker_to_watchlist(
     if updated is None:
         raise HTTPException(status_code=404, detail="Watchlist not found")
     return WatchlistResponse(
-        id=updated.id, user_id=updated.user_id, name=updated.name, tickers=updated.tickers
+        id=updated.id,
+        user_id=updated.user_id,
+        name=updated.name,
+        tickers=updated.tickers,
     )
 
 
@@ -182,8 +185,6 @@ async def deactivate_alert(
     svc: UserService = Depends(get_user_service),
 ):
     """Deactivate an alert (soft-delete). Requires authentication."""
-    updated = svc.deactivate_alert(
-        alert_id=alert_id, user_id=current_user["id"]
-    )
+    updated = svc.deactivate_alert(alert_id=alert_id, user_id=current_user["id"])
     if not updated:
         raise HTTPException(status_code=404, detail="Alert not found")

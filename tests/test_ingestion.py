@@ -9,7 +9,7 @@ All tests use mocked database and yfinance -- no real services required.
 import sys
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -24,49 +24,59 @@ if str(PROJECT_ROOT) not in sys.path:
 # Validator tests
 # ===========================================================================
 
+
 class TestTickerValidation:
     """Tests for ingestion.validators.validate_ticker_format."""
 
     def test_valid_ticker_format(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format("2222.SR") is True
         assert validate_ticker_format("1010.SR") is True
         assert validate_ticker_format("4321.SR") is True
 
     def test_invalid_ticker_no_sr_suffix(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format("2222") is False
         assert validate_ticker_format("AAPL") is False
 
     def test_invalid_ticker_wrong_suffix(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format("2222.US") is False
         assert validate_ticker_format("2222.sr") is False  # case-sensitive
 
     def test_invalid_ticker_too_few_digits(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format("222.SR") is False
         assert validate_ticker_format("22.SR") is False
 
     def test_invalid_ticker_too_many_digits(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format("22222.SR") is False
 
     def test_invalid_ticker_non_numeric(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format("ABCD.SR") is False
         assert validate_ticker_format("2A22.SR") is False
 
     def test_invalid_ticker_none(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format(None) is False
 
     def test_invalid_ticker_number(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format(2222) is False
 
     def test_invalid_ticker_empty_string(self):
         from ingestion.validators import validate_ticker_format
+
         assert validate_ticker_format("") is False
 
 
@@ -74,22 +84,26 @@ class TestPriceDataValidation:
     """Tests for ingestion.validators.validate_price_data."""
 
     def _valid_df(self):
-        return pd.DataFrame({
-            "trade_date": ["2024-01-15", "2024-01-16"],
-            "open_price": [32.0, 32.5],
-            "high_price": [33.0, 33.5],
-            "low_price": [31.5, 32.0],
-            "close_price": [32.5, 33.0],
-            "volume": [1000000, 1500000],
-        })
+        return pd.DataFrame(
+            {
+                "trade_date": ["2024-01-15", "2024-01-16"],
+                "open_price": [32.0, 32.5],
+                "high_price": [33.0, 33.5],
+                "low_price": [31.5, 32.0],
+                "close_price": [32.5, 33.0],
+                "volume": [1000000, 1500000],
+            }
+        )
 
     def test_valid_data_returns_no_errors(self):
         from ingestion.validators import validate_price_data
+
         errors = validate_price_data(self._valid_df())
         assert errors == []
 
     def test_missing_required_columns(self):
         from ingestion.validators import validate_price_data
+
         df = pd.DataFrame({"trade_date": ["2024-01-15"], "close_price": [32.5]})
         errors = validate_price_data(df)
         assert len(errors) > 0
@@ -97,6 +111,7 @@ class TestPriceDataValidation:
 
     def test_negative_prices(self):
         from ingestion.validators import validate_price_data
+
         df = self._valid_df()
         df.loc[0, "close_price"] = -10.0
         errors = validate_price_data(df)
@@ -104,6 +119,7 @@ class TestPriceDataValidation:
 
     def test_negative_volume(self):
         from ingestion.validators import validate_price_data
+
         df = self._valid_df()
         df.loc[0, "volume"] = -500
         errors = validate_price_data(df)
@@ -111,6 +127,7 @@ class TestPriceDataValidation:
 
     def test_high_less_than_low(self):
         from ingestion.validators import validate_price_data
+
         df = self._valid_df()
         df.loc[0, "high_price"] = 30.0
         df.loc[0, "low_price"] = 33.0
@@ -119,6 +136,7 @@ class TestPriceDataValidation:
 
     def test_future_dates(self):
         from ingestion.validators import validate_price_data
+
         df = self._valid_df()
         df.loc[0, "trade_date"] = "2099-12-31"
         errors = validate_price_data(df)
@@ -130,6 +148,7 @@ class TestXBRLFactValidation:
 
     def test_valid_fact(self):
         from ingestion.validators import validate_xbrl_fact
+
         fact = {
             "ticker": "2222.SR",
             "concept": "ifrs-full:Revenue",
@@ -140,18 +159,21 @@ class TestXBRLFactValidation:
 
     def test_missing_ticker(self):
         from ingestion.validators import validate_xbrl_fact
+
         fact = {"concept": "ifrs-full:Revenue", "value_numeric": 100.0}
         errors = validate_xbrl_fact(fact)
         assert any("ticker" in e for e in errors)
 
     def test_missing_concept(self):
         from ingestion.validators import validate_xbrl_fact
+
         fact = {"ticker": "2222.SR", "value_numeric": 100.0}
         errors = validate_xbrl_fact(fact)
         assert any("concept" in e for e in errors)
 
     def test_invalid_ticker_format(self):
         from ingestion.validators import validate_xbrl_fact
+
         fact = {
             "ticker": "INVALID",
             "concept": "ifrs-full:Revenue",
@@ -162,12 +184,14 @@ class TestXBRLFactValidation:
 
     def test_no_value_field(self):
         from ingestion.validators import validate_xbrl_fact
+
         fact = {"ticker": "2222.SR", "concept": "ifrs-full:Revenue"}
         errors = validate_xbrl_fact(fact)
         assert any("No value field" in e for e in errors)
 
     def test_text_value_is_valid(self):
         from ingestion.validators import validate_xbrl_fact
+
         fact = {
             "ticker": "2222.SR",
             "concept": "ifrs-full:EntityName",
@@ -178,6 +202,7 @@ class TestXBRLFactValidation:
 
     def test_boolean_value_is_valid(self):
         from ingestion.validators import validate_xbrl_fact
+
         fact = {
             "ticker": "2222.SR",
             "concept": "ifrs-full:IsConsolidated",
@@ -188,6 +213,7 @@ class TestXBRLFactValidation:
 
     def test_empty_text_value_not_valid(self):
         from ingestion.validators import validate_xbrl_fact
+
         fact = {
             "ticker": "2222.SR",
             "concept": "ifrs-full:EntityName",
@@ -201,19 +227,23 @@ class TestXBRLFactValidation:
 # Price loader utility tests
 # ===========================================================================
 
+
 class TestPriceLoaderUtilities:
     """Tests for price_loader utility functions."""
 
     def test_normalize_columns(self):
         from ingestion.price_loader import normalize_columns
-        df = pd.DataFrame({
-            "Date": ["2024-01-15"],
-            "Open": [32.0],
-            "High": [33.0],
-            "Low": [31.5],
-            "Close": [32.5],
-            "Volume": [1000000],
-        })
+
+        df = pd.DataFrame(
+            {
+                "Date": ["2024-01-15"],
+                "Open": [32.0],
+                "High": [33.0],
+                "Low": [31.5],
+                "Close": [32.5],
+                "Volume": [1000000],
+            }
+        )
         result = normalize_columns(df)
         assert "trade_date" in result.columns
         assert "open_price" in result.columns
@@ -221,11 +251,14 @@ class TestPriceLoaderUtilities:
 
     def test_compute_changes(self):
         from ingestion.price_loader import compute_changes
-        df = pd.DataFrame({
-            "ticker": ["2222.SR", "2222.SR", "2222.SR"],
-            "trade_date": [date(2024, 1, 15), date(2024, 1, 16), date(2024, 1, 17)],
-            "close_price": [32.0, 33.0, 32.5],
-        })
+
+        df = pd.DataFrame(
+            {
+                "ticker": ["2222.SR", "2222.SR", "2222.SR"],
+                "trade_date": [date(2024, 1, 15), date(2024, 1, 16), date(2024, 1, 17)],
+                "close_price": [32.0, 33.0, 32.5],
+            }
+        )
         result = compute_changes(df)
         assert "change_amount" in result.columns
         assert "change_pct" in result.columns
@@ -238,27 +271,33 @@ class TestPriceLoaderUtilities:
 
     def test_compute_changes_percentage(self):
         from ingestion.price_loader import compute_changes
-        df = pd.DataFrame({
-            "ticker": ["2222.SR", "2222.SR"],
-            "trade_date": [date(2024, 1, 15), date(2024, 1, 16)],
-            "close_price": [100.0, 110.0],
-        })
+
+        df = pd.DataFrame(
+            {
+                "ticker": ["2222.SR", "2222.SR"],
+                "trade_date": [date(2024, 1, 15), date(2024, 1, 16)],
+                "close_price": [100.0, 110.0],
+            }
+        )
         result = compute_changes(df)
         assert result.iloc[1]["change_pct"] == pytest.approx(10.0)
 
     def test_df_to_insert_tuples(self):
         from ingestion.price_loader import df_to_insert_tuples
-        df = pd.DataFrame({
-            "ticker": ["2222.SR"],
-            "trade_date": [date(2024, 1, 15)],
-            "open_price": [32.0],
-            "high_price": [33.0],
-            "low_price": [31.5],
-            "close_price": [32.5],
-            "volume": [1000000],
-            "change_amount": [0.5],
-            "change_pct": [1.56],
-        })
+
+        df = pd.DataFrame(
+            {
+                "ticker": ["2222.SR"],
+                "trade_date": [date(2024, 1, 15)],
+                "open_price": [32.0],
+                "high_price": [33.0],
+                "low_price": [31.5],
+                "close_price": [32.5],
+                "volume": [1000000],
+                "change_amount": [0.5],
+                "change_pct": [1.56],
+            }
+        )
         tuples = df_to_insert_tuples(df)
         assert len(tuples) == 1
         assert tuples[0][0] == "2222.SR"
@@ -266,23 +305,27 @@ class TestPriceLoaderUtilities:
 
     def test_df_to_insert_tuples_handles_nan(self):
         from ingestion.price_loader import df_to_insert_tuples
-        df = pd.DataFrame({
-            "ticker": ["2222.SR"],
-            "trade_date": [date(2024, 1, 15)],
-            "open_price": [np.nan],
-            "high_price": [33.0],
-            "low_price": [31.5],
-            "close_price": [32.5],
-            "volume": [1000000],
-            "change_amount": [np.nan],
-            "change_pct": [np.nan],
-        })
+
+        df = pd.DataFrame(
+            {
+                "ticker": ["2222.SR"],
+                "trade_date": [date(2024, 1, 15)],
+                "open_price": [np.nan],
+                "high_price": [33.0],
+                "low_price": [31.5],
+                "close_price": [32.5],
+                "volume": [1000000],
+                "change_amount": [np.nan],
+                "change_pct": [np.nan],
+            }
+        )
         tuples = df_to_insert_tuples(df)
         assert tuples[0][2] is None  # open_price NaN -> None
         assert tuples[0][7] is None  # change_amount NaN -> None
 
     def test_insert_prices_dry_run(self):
         from ingestion.price_loader import insert_prices
+
         rows = [
             ("2222.SR", date(2024, 1, 15), 32.0, 33.0, 31.5, 32.5, 1000000, 0.5, 1.56),
             ("2222.SR", date(2024, 1, 16), 32.5, 33.5, 32.0, 33.0, 1500000, 0.5, 1.54),
@@ -292,6 +335,7 @@ class TestPriceLoaderUtilities:
 
     def test_insert_prices_empty_rows(self):
         from ingestion.price_loader import insert_prices
+
         count = insert_prices(None, [], dry_run=False)
         assert count == 0
 
@@ -312,12 +356,14 @@ class TestPriceLoaderClass:
 
     def test_price_loader_load_all_requires_connection(self):
         from ingestion.price_loader import PriceLoader
+
         loader = PriceLoader(pg_conn=None, dry_run=True)
         with pytest.raises(RuntimeError, match="Database connection required"):
             loader.load_all_prices(from_date=date(2024, 1, 1))
 
     def test_price_loader_load_prices_requires_yfinance(self):
         from ingestion.price_loader import PriceLoader
+
         loader = PriceLoader(pg_conn=None, dry_run=True)
         with patch("ingestion.price_loader.yf", None):
             with pytest.raises(ImportError, match="yfinance"):
@@ -327,14 +373,16 @@ class TestPriceLoaderClass:
         from ingestion.price_loader import PriceLoader
 
         # Simulate yfinance output
-        df = pd.DataFrame({
-            "Date": pd.to_datetime(["2024-01-15", "2024-01-16"]),
-            "Open": [32.0, 32.5],
-            "High": [33.0, 33.5],
-            "Low": [31.5, 32.0],
-            "Close": [32.5, 33.0],
-            "Volume": [1000000, 1500000],
-        })
+        df = pd.DataFrame(
+            {
+                "Date": pd.to_datetime(["2024-01-15", "2024-01-16"]),
+                "Open": [32.0, 32.5],
+                "High": [33.0, 33.5],
+                "Low": [31.5, 32.0],
+                "Close": [32.5, 33.0],
+                "Volume": [1000000, 1500000],
+            }
+        )
 
         result = PriceLoader._normalize_yfinance_df(df, "2222.SR")
         assert "ticker" in result.columns
@@ -344,6 +392,7 @@ class TestPriceLoaderClass:
 
     def test_price_loader_normalize_empty_df(self):
         from ingestion.price_loader import PriceLoader
+
         df = pd.DataFrame()
         result = PriceLoader._normalize_yfinance_df(df, "2222.SR")
         assert result.empty
@@ -353,11 +402,13 @@ class TestPriceLoaderClass:
 # XBRL processor tests
 # ===========================================================================
 
+
 class TestXBRLFact:
     """Tests for ingestion.xbrl_processor.XBRLFact dataclass."""
 
     def test_xbrl_fact_creation(self):
         from ingestion.xbrl_processor import XBRLFact
+
         fact = XBRLFact(
             ticker="2222.SR",
             concept="ifrs-full:Revenue",
@@ -370,23 +421,37 @@ class TestXBRLFact:
 
     def test_xbrl_fact_content_hash_generated(self):
         from ingestion.xbrl_processor import XBRLFact
-        fact = XBRLFact(ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0)
+
+        fact = XBRLFact(
+            ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0
+        )
         assert len(fact.content_hash) == 64  # SHA-256 hex
 
     def test_xbrl_fact_different_values_different_hashes(self):
         from ingestion.xbrl_processor import XBRLFact
-        f1 = XBRLFact(ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0)
-        f2 = XBRLFact(ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=200.0)
+
+        f1 = XBRLFact(
+            ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0
+        )
+        f2 = XBRLFact(
+            ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=200.0
+        )
         assert f1.content_hash != f2.content_hash
 
     def test_xbrl_fact_same_values_same_hash(self):
         from ingestion.xbrl_processor import XBRLFact
-        f1 = XBRLFact(ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0)
-        f2 = XBRLFact(ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0)
+
+        f1 = XBRLFact(
+            ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0
+        )
+        f2 = XBRLFact(
+            ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0
+        )
         assert f1.content_hash == f2.content_hash
 
     def test_xbrl_fact_to_insert_tuple(self):
         from ingestion.xbrl_processor import XBRLFact
+
         fact = XBRLFact(
             ticker="2222.SR",
             concept="ifrs-full:Revenue",
@@ -402,6 +467,7 @@ class TestXBRLFact:
 
     def test_xbrl_fact_with_period_dates(self):
         from ingestion.xbrl_processor import XBRLFact
+
         fact = XBRLFact(
             ticker="2222.SR",
             concept="ifrs-full:Revenue",
@@ -419,6 +485,7 @@ class TestXBRLProcessor:
 
     def test_processor_initialization(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(
             ticker="2222.SR",
             filing_id="f-1",
@@ -431,6 +498,7 @@ class TestXBRLProcessor:
 
     def test_process_filing_nonexistent_file(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         facts = proc.process_filing(Path("/nonexistent/file.xml"))
         assert facts == []
@@ -439,6 +507,7 @@ class TestXBRLProcessor:
 
     def test_process_filing_unsupported_extension(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         # Create a temp file with unsupported extension
         facts = proc.process_filing(Path("test.pdf"))
@@ -447,24 +516,28 @@ class TestXBRLProcessor:
 
     def test_label_to_concept_known_label(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         concept = proc._label_to_concept("total assets", "Balance Sheet")
         assert concept == "ifrs-full:Assets"
 
     def test_label_to_concept_revenue(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         concept = proc._label_to_concept("revenue", "Income Statement")
         assert concept == "ifrs-full:Revenue"
 
     def test_label_to_concept_unknown_label(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         concept = proc._label_to_concept("some custom metric", "Balance Sheet")
         assert ":" in concept  # Should still have prefix:PascalCase format
 
     def test_is_arabic_detection(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         assert XBRLProcessor._is_arabic("مرحبا") is True
         assert XBRLProcessor._is_arabic("Hello") is False
         assert XBRLProcessor._is_arabic("Revenue مبيعات") is True
@@ -472,26 +545,31 @@ class TestXBRLProcessor:
 
     def test_safe_parse_date_iso(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         d = XBRLProcessor._safe_parse_date("2024-12-31")
         assert d == date(2024, 12, 31)
 
     def test_safe_parse_date_slash(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         d = XBRLProcessor._safe_parse_date("31/12/2024")
         assert d == date(2024, 12, 31)
 
     def test_safe_parse_date_with_time(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         d = XBRLProcessor._safe_parse_date("2024-12-31T00:00:00")
         assert d == date(2024, 12, 31)
 
     def test_safe_parse_date_invalid(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         d = XBRLProcessor._safe_parse_date("not-a-date")
         assert d is None
 
     def test_parse_date_string_iso(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         result = proc._parse_date_string("2024-12-31")
         assert result is not None
@@ -499,6 +577,7 @@ class TestXBRLProcessor:
 
     def test_parse_date_string_fiscal_year(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         result = proc._parse_date_string("FY 2024")
         assert result is not None
@@ -507,6 +586,7 @@ class TestXBRLProcessor:
 
     def test_parse_date_string_quarter(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         result = proc._parse_date_string("Q1 2024")
         assert result is not None
@@ -514,6 +594,7 @@ class TestXBRLProcessor:
 
     def test_parse_date_string_year_only(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         result = proc._parse_date_string("2024")
         assert result is not None
@@ -522,6 +603,7 @@ class TestXBRLProcessor:
 
     def test_parse_date_string_invalid(self):
         from ingestion.xbrl_processor import XBRLProcessor
+
         proc = XBRLProcessor(ticker="2222.SR")
         result = proc._parse_date_string("not-a-date")
         assert result is None
@@ -532,8 +614,11 @@ class TestXBRLInsertFacts:
 
     def test_insert_facts_dry_run(self):
         from ingestion.xbrl_processor import XBRLFact, insert_facts
+
         facts = [
-            XBRLFact(ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0),
+            XBRLFact(
+                ticker="2222.SR", concept="ifrs-full:Revenue", value_numeric=100.0
+            ),
             XBRLFact(ticker="2222.SR", concept="ifrs-full:Assets", value_numeric=200.0),
         ]
         count = insert_facts(None, facts, dry_run=True)
@@ -541,6 +626,7 @@ class TestXBRLInsertFacts:
 
     def test_insert_facts_empty(self):
         from ingestion.xbrl_processor import insert_facts
+
         count = insert_facts(None, [], dry_run=False)
         assert count == 0
 
@@ -550,6 +636,7 @@ class TestIngestionConfig:
 
     def test_default_config(self):
         from ingestion.config import IngestionConfig
+
         config = IngestionConfig()
         assert config.batch_size == 10
         assert config.rate_limit_seconds == 2.0
@@ -558,6 +645,7 @@ class TestIngestionConfig:
 
     def test_custom_config(self):
         from ingestion.config import IngestionConfig
+
         config = IngestionConfig(
             batch_size=5,
             rate_limit_seconds=1.0,
@@ -569,6 +657,7 @@ class TestIngestionConfig:
 
     def test_config_repr(self):
         from ingestion.config import IngestionConfig
+
         config = IngestionConfig(batch_size=5)
         repr_str = repr(config)
         assert "batch_size=5" in repr_str
@@ -576,5 +665,6 @@ class TestIngestionConfig:
     @patch.dict("os.environ", {"INGESTION_BATCH_SIZE": "25"})
     def test_config_from_env(self):
         from ingestion.config import IngestionConfig
+
         config = IngestionConfig()
         assert config.batch_size == 25

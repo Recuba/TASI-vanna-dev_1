@@ -16,8 +16,7 @@ Integration tests (require PostgreSQL):
 import os
 import unittest
 import uuid
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 
 # ---------------------------------------------------------------------------
@@ -28,6 +27,7 @@ def _pg_available() -> bool:
         return False
     try:
         import psycopg2
+
         conn = psycopg2.connect(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
@@ -53,6 +53,7 @@ class TestNewsDataClass(unittest.TestCase):
 
     def test_default_construction(self):
         from services.news_service import NewsArticle
+
         article = NewsArticle()
         self.assertIsNotNone(article.id)
         self.assertEqual(article.title, "")
@@ -61,6 +62,7 @@ class TestNewsDataClass(unittest.TestCase):
 
     def test_construction_with_values(self):
         from services.news_service import NewsArticle
+
         article = NewsArticle(
             ticker="2222.SR",
             title="Test Article",
@@ -74,6 +76,7 @@ class TestNewsDataClass(unittest.TestCase):
 
     def test_to_dict(self):
         from services.news_service import NewsArticle
+
         article = NewsArticle(ticker="1010.SR", title="Test")
         d = article.to_dict()
         self.assertIn("ticker", d)
@@ -83,6 +86,7 @@ class TestNewsDataClass(unittest.TestCase):
 
     def test_unique_ids(self):
         from services.news_service import NewsArticle
+
         a1 = NewsArticle()
         a2 = NewsArticle()
         self.assertNotEqual(a1.id, a2.id)
@@ -93,6 +97,7 @@ class TestTechnicalReportDataClass(unittest.TestCase):
 
     def test_default_construction(self):
         from services.reports_service import TechnicalReport
+
         report = TechnicalReport()
         self.assertIsNotNone(report.id)
         self.assertEqual(report.title, "")
@@ -100,6 +105,7 @@ class TestTechnicalReportDataClass(unittest.TestCase):
 
     def test_construction_with_values(self):
         from services.reports_service import TechnicalReport
+
         report = TechnicalReport(
             ticker="2222.SR",
             title="Aramco Analysis",
@@ -111,6 +117,7 @@ class TestTechnicalReportDataClass(unittest.TestCase):
 
     def test_to_dict(self):
         from services.reports_service import TechnicalReport
+
         report = TechnicalReport(title="Test Report")
         d = report.to_dict()
         self.assertIn("title", d)
@@ -122,6 +129,7 @@ class TestAnnouncementDataClass(unittest.TestCase):
 
     def test_default_construction(self):
         from services.announcement_service import Announcement
+
         ann = Announcement()
         self.assertIsNotNone(ann.id)
         self.assertFalse(ann.is_material)
@@ -129,6 +137,7 @@ class TestAnnouncementDataClass(unittest.TestCase):
 
     def test_construction_with_values(self):
         from services.announcement_service import Announcement
+
         ann = Announcement(
             ticker="1010.SR",
             title_ar="اعلان اختبار",
@@ -141,6 +150,7 @@ class TestAnnouncementDataClass(unittest.TestCase):
 
     def test_to_dict(self):
         from services.announcement_service import Announcement
+
         ann = Announcement(title_en="Test")
         d = ann.to_dict()
         self.assertIn("title_en", d)
@@ -152,6 +162,7 @@ class TestUserDataClasses(unittest.TestCase):
 
     def test_user_profile_defaults(self):
         from services.user_service import UserProfile
+
         user = UserProfile()
         self.assertIsNotNone(user.id)
         self.assertEqual(user.auth_provider, "local")
@@ -161,6 +172,7 @@ class TestUserDataClasses(unittest.TestCase):
 
     def test_watchlist_defaults(self):
         from services.user_service import Watchlist
+
         wl = Watchlist()
         self.assertIsNotNone(wl.id)
         self.assertEqual(wl.name, "Default")
@@ -168,11 +180,13 @@ class TestUserDataClasses(unittest.TestCase):
 
     def test_watchlist_with_tickers(self):
         from services.user_service import Watchlist
+
         wl = Watchlist(tickers=["2222.SR", "1010.SR"])
         self.assertEqual(len(wl.tickers), 2)
 
     def test_user_alert_defaults(self):
         from services.user_service import UserAlert
+
         alert = UserAlert()
         self.assertIsNotNone(alert.id)
         self.assertTrue(alert.is_active)
@@ -184,6 +198,7 @@ class TestAuditDataClasses(unittest.TestCase):
 
     def test_audit_entry_defaults(self):
         from services.audit_service import AuditEntry
+
         entry = AuditEntry()
         self.assertIsNotNone(entry.id)
         self.assertEqual(entry.natural_language_query, "")
@@ -191,6 +206,7 @@ class TestAuditDataClasses(unittest.TestCase):
 
     def test_usage_stats_defaults(self):
         from services.audit_service import UsageStats
+
         stats = UsageStats()
         self.assertEqual(stats.period, "")
         self.assertEqual(stats.query_count, 0)
@@ -208,27 +224,32 @@ class TestServiceConstruction(unittest.TestCase):
 
     def test_news_service_construction(self):
         from services.news_service import NewsAggregationService
+
         svc = NewsAggregationService(get_conn=self._mock_conn_factory)
         self.assertIsNotNone(svc)
         self.assertTrue(callable(svc._get_conn))
 
     def test_reports_service_construction(self):
         from services.reports_service import TechnicalReportsService
+
         svc = TechnicalReportsService(get_conn=self._mock_conn_factory)
         self.assertIsNotNone(svc)
 
     def test_announcement_service_construction(self):
         from services.announcement_service import AnnouncementService
+
         svc = AnnouncementService(get_conn=self._mock_conn_factory)
         self.assertIsNotNone(svc)
 
     def test_user_service_construction(self):
         from services.user_service import UserService
+
         svc = UserService(get_conn=self._mock_conn_factory)
         self.assertIsNotNone(svc)
 
     def test_audit_service_construction(self):
         from services.audit_service import AuditService
+
         svc = AuditService(get_conn=self._mock_conn_factory)
         self.assertIsNotNone(svc)
 
@@ -241,65 +262,87 @@ class TestServiceMethodSignatures(unittest.TestCase):
 
     def test_news_service_methods(self):
         from services.news_service import NewsAggregationService
+
         methods = [
-            "store_articles", "get_latest_news", "get_news_by_ticker",
-            "get_news_by_sector", "get_article_by_id", "count_articles",
+            "store_articles",
+            "get_latest_news",
+            "get_news_by_ticker",
+            "get_news_by_sector",
+            "get_article_by_id",
+            "count_articles",
         ]
         for m in methods:
             self.assertTrue(
                 hasattr(NewsAggregationService, m),
-                f"NewsAggregationService missing method: {m}"
+                f"NewsAggregationService missing method: {m}",
             )
 
     def test_reports_service_methods(self):
         from services.reports_service import TechnicalReportsService
+
         methods = [
-            "store_report", "store_reports", "get_reports",
-            "get_reports_by_ticker", "get_report_by_id", "count_reports",
+            "store_report",
+            "store_reports",
+            "get_reports",
+            "get_reports_by_ticker",
+            "get_report_by_id",
+            "count_reports",
         ]
         for m in methods:
             self.assertTrue(
                 hasattr(TechnicalReportsService, m),
-                f"TechnicalReportsService missing method: {m}"
+                f"TechnicalReportsService missing method: {m}",
             )
 
     def test_announcement_service_methods(self):
         from services.announcement_service import AnnouncementService
+
         methods = [
-            "store_announcements", "get_announcements", "get_material_events",
-            "get_announcements_by_sector", "get_announcement_by_id",
+            "store_announcements",
+            "get_announcements",
+            "get_material_events",
+            "get_announcements_by_sector",
+            "get_announcement_by_id",
             "count_announcements",
         ]
         for m in methods:
             self.assertTrue(
                 hasattr(AnnouncementService, m),
-                f"AnnouncementService missing method: {m}"
+                f"AnnouncementService missing method: {m}",
             )
 
     def test_user_service_methods(self):
         from services.user_service import UserService
+
         methods = [
-            "get_or_create_user", "get_user_by_id", "get_user_by_email",
-            "increment_usage", "get_watchlists", "create_watchlist",
-            "update_watchlist", "delete_watchlist", "create_alert",
-            "get_active_alerts", "deactivate_alert",
+            "get_or_create_user",
+            "get_user_by_id",
+            "get_user_by_email",
+            "increment_usage",
+            "get_watchlists",
+            "create_watchlist",
+            "update_watchlist",
+            "delete_watchlist",
+            "create_alert",
+            "get_active_alerts",
+            "deactivate_alert",
         ]
         for m in methods:
-            self.assertTrue(
-                hasattr(UserService, m),
-                f"UserService missing method: {m}"
-            )
+            self.assertTrue(hasattr(UserService, m), f"UserService missing method: {m}")
 
     def test_audit_service_methods(self):
         from services.audit_service import AuditService
+
         methods = [
-            "log_query", "get_user_query_history", "get_usage_stats_daily",
-            "get_usage_stats_monthly", "count_queries",
+            "log_query",
+            "get_user_query_history",
+            "get_usage_stats_daily",
+            "get_usage_stats_monthly",
+            "count_queries",
         ]
         for m in methods:
             self.assertTrue(
-                hasattr(AuditService, m),
-                f"AuditService missing method: {m}"
+                hasattr(AuditService, m), f"AuditService missing method: {m}"
             )
 
 
@@ -311,22 +354,27 @@ class TestHealthService(unittest.TestCase):
 
     def test_health_status_enum(self):
         from services.health_service import HealthStatus
+
         self.assertEqual(HealthStatus.HEALTHY.value, "healthy")
         self.assertEqual(HealthStatus.DEGRADED.value, "degraded")
         self.assertEqual(HealthStatus.UNHEALTHY.value, "unhealthy")
 
     def test_component_health_construction(self):
         from services.health_service import ComponentHealth, HealthStatus
+
         ch = ComponentHealth(name="test", status=HealthStatus.HEALTHY, message="ok")
         self.assertEqual(ch.name, "test")
         self.assertEqual(ch.status, HealthStatus.HEALTHY)
 
     def test_health_report_to_dict(self):
         from services.health_service import HealthReport, ComponentHealth, HealthStatus
+
         report = HealthReport(
             status=HealthStatus.HEALTHY,
             components=[
-                ComponentHealth(name="db", status=HealthStatus.HEALTHY, latency_ms=1.5, message="ok"),
+                ComponentHealth(
+                    name="db", status=HealthStatus.HEALTHY, latency_ms=1.5, message="ok"
+                ),
             ],
         )
         d = report.to_dict()
@@ -337,6 +385,7 @@ class TestHealthService(unittest.TestCase):
     def test_check_database_sqlite(self):
         """Verify SQLite health check works (DB_BACKEND defaults to sqlite)."""
         from services.health_service import check_database, HealthStatus
+
         result = check_database()
         self.assertEqual(result.name, "database")
         # Should be HEALTHY if saudi_stocks.db exists, UNHEALTHY otherwise
@@ -344,6 +393,7 @@ class TestHealthService(unittest.TestCase):
 
     def test_get_health(self):
         from services.health_service import get_health
+
         report = get_health()
         self.assertIsNotNone(report.status)
         self.assertGreaterEqual(len(report.components), 2)
@@ -359,6 +409,7 @@ class TestNewsServicePG(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import psycopg2
+
         cls._get_conn = lambda: psycopg2.connect(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
@@ -367,10 +418,12 @@ class TestNewsServicePG(unittest.TestCase):
             password=os.environ.get("POSTGRES_PASSWORD", ""),
         )
         from services.news_service import NewsAggregationService
+
         cls.svc = NewsAggregationService(get_conn=cls._get_conn)
 
     def test_store_and_retrieve_article(self):
         from services.news_service import NewsArticle
+
         article = NewsArticle(
             ticker="2222.SR",
             title=f"Test Article {uuid.uuid4().hex[:8]}",
@@ -401,6 +454,7 @@ class TestUserServicePG(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import psycopg2
+
         cls._get_conn = lambda: psycopg2.connect(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
@@ -409,6 +463,7 @@ class TestUserServicePG(unittest.TestCase):
             password=os.environ.get("POSTGRES_PASSWORD", ""),
         )
         from services.user_service import UserService
+
         cls.svc = UserService(get_conn=cls._get_conn)
 
     def test_get_or_create_user(self):
@@ -452,6 +507,7 @@ class TestAuditServicePG(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import psycopg2
+
         cls._get_conn = lambda: psycopg2.connect(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
@@ -460,6 +516,7 @@ class TestAuditServicePG(unittest.TestCase):
             password=os.environ.get("POSTGRES_PASSWORD", ""),
         )
         from services.audit_service import AuditService
+
         cls.svc = AuditService(get_conn=cls._get_conn)
 
     def test_log_query(self):

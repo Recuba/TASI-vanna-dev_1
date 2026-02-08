@@ -31,7 +31,5 @@ async def health_check() -> HealthResponse:
     )
 
     if status_code == 503:
-        return JSONResponse(
-            content=response.model_dump(), status_code=status_code
-        )
+        return JSONResponse(content=response.model_dump(), status_code=status_code)
     return response

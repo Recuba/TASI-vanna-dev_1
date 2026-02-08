@@ -21,6 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 def reset_pool():
     """Reset the pool module's global state before each test."""
     import database.pool as pool_mod
+
     pool_mod._pool = None
     yield
     pool_mod._pool = None
@@ -32,6 +33,7 @@ class TestInitPool:
     @patch("database.pool.ThreadedConnectionPool")
     def test_init_pool_creates_pool(self, mock_pool_cls):
         from database.pool import init_pool, is_pool_initialized
+
         mock_settings = MagicMock()
         mock_settings.pg_host = "localhost"
         mock_settings.pg_port = 5432
@@ -55,7 +57,6 @@ class TestInitPool:
     @patch("database.pool.ThreadedConnectionPool")
     def test_init_pool_skips_if_already_initialized(self, mock_pool_cls):
         from database.pool import init_pool
-        import database.pool as pool_mod
 
         mock_settings = MagicMock()
         mock_settings.pg_host = "localhost"
@@ -103,7 +104,6 @@ class TestGetConnection:
     @patch("database.pool.ThreadedConnectionPool")
     def test_get_connection_returns_and_commits(self, mock_pool_cls):
         from database.pool import init_pool, get_connection
-        import database.pool as pool_mod
 
         mock_pool_instance = MagicMock()
         mock_conn = MagicMock()
@@ -146,7 +146,7 @@ class TestGetConnection:
         init_pool(mock_settings)
 
         with pytest.raises(ValueError):
-            with get_connection() as conn:
+            with get_connection() as _conn:
                 raise ValueError("Test error")
 
         # Verify rollback was called (not commit)
@@ -161,6 +161,7 @@ class TestGetPoolConnection:
 
     def test_get_pool_connection_raises_without_init(self):
         from database.pool import get_pool_connection
+
         with pytest.raises(RuntimeError, match="not initialized"):
             get_pool_connection()
 
@@ -170,7 +171,7 @@ class TestGetPoolConnection:
 
         mock_pool_instance = MagicMock()
         mock_conn = MagicMock()
-        original_close = mock_conn.close
+        _original_close = mock_conn.close
         mock_pool_instance.getconn.return_value = mock_conn
         mock_pool_cls.return_value = mock_pool_instance
 
@@ -217,6 +218,7 @@ class TestClosePool:
 
     def test_close_pool_when_not_initialized(self):
         from database.pool import close_pool, is_pool_initialized
+
         # Should not raise
         close_pool()
         assert is_pool_initialized() is False

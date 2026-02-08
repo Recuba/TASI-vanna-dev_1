@@ -38,6 +38,7 @@ def get_db_connection():
 # Service singletons (each holds a reference to get_db_connection)
 # ---------------------------------------------------------------------------
 
+
 @lru_cache(maxsize=1)
 def get_news_service() -> NewsAggregationService:
     return NewsAggregationService(get_conn=get_db_connection)

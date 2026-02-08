@@ -29,13 +29,13 @@ class TestQueryRouterPlaceholder(unittest.TestCase):
         """Validate expected intent types are defined."""
         # These represent the future intent categories the router will support
         expected_intents = [
-            "sql_query",       # "What is the market cap of Aramco?"
+            "sql_query",  # "What is the market cap of Aramco?"
             "company_lookup",  # "Show me details for 2222.SR"
-            "sector_analysis", # "Compare energy sector companies"
-            "news_search",     # "Latest news for Aramco"
-            "report_search",   # "Analyst reports for banking sector"
-            "chart_request",   # "Show me a chart of sector P/E ratios"
-            "general_chat",    # "Hello", "What can you do?"
+            "sector_analysis",  # "Compare energy sector companies"
+            "news_search",  # "Latest news for Aramco"
+            "report_search",  # "Analyst reports for banking sector"
+            "chart_request",  # "Show me a chart of sector P/E ratios"
+            "general_chat",  # "Hello", "What can you do?"
         ]
         # Verify we have a reasonable set of intents planned
         self.assertGreaterEqual(len(expected_intents), 5)

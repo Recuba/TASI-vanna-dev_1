@@ -78,7 +78,9 @@ def job_load_prices():
         total = loader.load_all_prices(from_date, to_date)
         logger.info(
             "Price load complete: %d rows inserted, %d tickers processed, %d failed",
-            total, loader.stats["tickers_processed"], loader.stats["tickers_failed"],
+            total,
+            loader.stats["tickers_processed"],
+            loader.stats["tickers_failed"],
         )
     except Exception as e:
         logger.error("Price load job failed: %s", e)
@@ -91,7 +93,12 @@ def job_process_xbrl():
     """Scheduled job: process any new XBRL filings in the ingestion directory."""
     logger.info("=== Scheduled XBRL processing starting ===")
 
-    from ingestion.xbrl_processor import XBRLProcessor, insert_facts, create_filing, mark_filing_complete
+    from ingestion.xbrl_processor import (
+        XBRLProcessor,
+        insert_facts,
+        create_filing,
+        mark_filing_complete,
+    )
 
     filings_dir = PROJECT_DIR / "data" / "filings"
     if not filings_dir.exists():
@@ -104,7 +111,9 @@ def job_process_xbrl():
         pg_conn.autocommit = False
 
         supported = {".xml", ".xbrl", ".xlsx", ".xls"}
-        files = [f for f in sorted(filings_dir.iterdir()) if f.suffix.lower() in supported]
+        files = [
+            f for f in sorted(filings_dir.iterdir()) if f.suffix.lower() in supported
+        ]
 
         if not files:
             logger.info("No filing files found in %s", filings_dir)
@@ -118,12 +127,18 @@ def job_process_xbrl():
             if parts and ".SR" in parts[0]:
                 ticker = parts[0]
             else:
-                logger.warning("Skipping %s: cannot determine ticker from filename", file_path.name)
+                logger.warning(
+                    "Skipping %s: cannot determine ticker from filename", file_path.name
+                )
                 continue
 
             filing_id = create_filing(
-                pg_conn, ticker, "annual", date.today(),
-                "Tadawul", str(file_path),
+                pg_conn,
+                ticker,
+                "annual",
+                date.today(),
+                "Tadawul",
+                str(file_path),
             )
 
             processor = XBRLProcessor(

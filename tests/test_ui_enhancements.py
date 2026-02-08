@@ -4,14 +4,11 @@ Run with:
     python -m pytest tests/test_ui_enhancements.py -v
 """
 
-import math
 import sys
-import os
 from pathlib import Path
 
 import pytest
 import pandas as pd
-import numpy as np
 
 # Ensure project root is on the path so we can import chart_engine
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -58,6 +55,7 @@ def js_content():
 # WCAG Helpers
 # ---------------------------------------------------------------------------
 
+
 def _relative_luminance(hex_color: str) -> float:
     """Calculate relative luminance per WCAG 2.0."""
     r = int(hex_color[1:3], 16) / 255
@@ -83,6 +81,7 @@ def _contrast_ratio(fg: str, bg: str) -> float:
 # 1. Chart Engine Tests
 # ===================================================================
 
+
 class TestHumanizeHeader:
     def test_humanize_header_basic(self):
         assert RaidChartGenerator._humanize_header("market_cap") == "Market Cap (SAR)"
@@ -93,15 +92,30 @@ class TestHumanizeHeader:
         assert "P/E" in result
 
     def test_humanize_header_multi_word(self):
-        assert RaidChartGenerator._humanize_header("total_revenue") == "Total Revenue (SAR)"
+        assert (
+            RaidChartGenerator._humanize_header("total_revenue")
+            == "Total Revenue (SAR)"
+        )
 
 
 class TestIsPercentageColumn:
-    @pytest.mark.parametrize("col", ["profit_margin", "dividend_yield", "roe", "roa", "revenue_growth", "change_pct"])
+    @pytest.mark.parametrize(
+        "col",
+        [
+            "profit_margin",
+            "dividend_yield",
+            "roe",
+            "roa",
+            "revenue_growth",
+            "change_pct",
+        ],
+    )
     def test_percentage_columns_detected(self, col):
         assert RaidChartGenerator._is_percentage_column(col) is True
 
-    @pytest.mark.parametrize("col", ["market_cap", "total_revenue", "ticker", "company_name"])
+    @pytest.mark.parametrize(
+        "col", ["market_cap", "total_revenue", "ticker", "company_name"]
+    )
     def test_non_percentage_columns_rejected(self, col):
         assert RaidChartGenerator._is_percentage_column(col) is False
 
@@ -125,17 +139,19 @@ class TestFormatPercentage:
 
 class TestTableCreation:
     def test_table_uses_humanized_headers(self, generator):
-        df = pd.DataFrame({
-            "company_name": ["ACME Corp", "Beta Inc"],
-            "market_cap": [1e9, 2e9],
-            "trailing_pe": [15.0, 20.0],
-            "dividend_yield": [0.03, 0.05],
-            "roe": [0.12, 0.18],
-            "roa": [0.08, 0.10],
-            "profit_margin": [0.15, 0.22],
-            "total_revenue": [5e8, 8e8],
-            "total_assets": [3e9, 5e9],
-        })
+        df = pd.DataFrame(
+            {
+                "company_name": ["ACME Corp", "Beta Inc"],
+                "market_cap": [1e9, 2e9],
+                "trailing_pe": [15.0, 20.0],
+                "dividend_yield": [0.03, 0.05],
+                "roe": [0.12, 0.18],
+                "roa": [0.08, 0.10],
+                "profit_margin": [0.15, 0.22],
+                "total_revenue": [5e8, 8e8],
+                "total_assets": [3e9, 5e9],
+            }
+        )
         # 9 columns >= 8, so generate_chart should create a table
         result = generator.generate_chart(df, "Test Table")
         # Result should be valid plotly JSON with data
@@ -152,16 +168,18 @@ class TestTableCreation:
 
 class TestBarChartLabelRotation:
     def test_long_labels_get_rotation(self, generator):
-        df = pd.DataFrame({
-            "company_name": [
-                "Saudi Arabian Oil Co",
-                "Al Rajhi Banking Corp",
-                "Saudi National Bank",
-                "Saudi Telecom Company",
-                "Saudi Basic Industries",
-            ],
-            "market_cap": [1e12, 5e10, 4e10, 3e10, 2e10],
-        })
+        df = pd.DataFrame(
+            {
+                "company_name": [
+                    "Saudi Arabian Oil Co",
+                    "Al Rajhi Banking Corp",
+                    "Saudi National Bank",
+                    "Saudi Telecom Company",
+                    "Saudi Basic Industries",
+                ],
+                "market_cap": [1e12, 5e10, 4e10, 3e10, 2e10],
+            }
+        )
         result = generator.generate_chart(df, "Market Cap Comparison")
         layout = result.get("layout", {})
         xaxis = layout.get("xaxis", {})
@@ -170,12 +188,14 @@ class TestBarChartLabelRotation:
 
 class TestValueHeatmap:
     def test_heatmap_uses_humanized_headers(self, generator):
-        df = pd.DataFrame({
-            "company_name": ["ACME", "Beta", "Gamma"],
-            "profit_margin": [0.15, 0.22, 0.10],
-            "roe": [0.12, 0.18, 0.08],
-            "roa": [0.08, 0.10, 0.06],
-        })
+        df = pd.DataFrame(
+            {
+                "company_name": ["ACME", "Beta", "Gamma"],
+                "profit_margin": [0.15, 0.22, 0.10],
+                "roe": [0.12, 0.18, 0.08],
+                "roa": [0.08, 0.10, 0.06],
+            }
+        )
         # 1 categorical + 3 numeric -> value heatmap
         result = generator.generate_chart(df, "Profitability Heatmap")
         assert "data" in result
@@ -190,6 +210,7 @@ class TestValueHeatmap:
 # ===================================================================
 # 2. File Existence and Content Tests
 # ===================================================================
+
 
 class TestFileExistence:
     def test_css_file_exists(self):
@@ -235,6 +256,7 @@ class TestJSKeyFunctions:
 # 3. WCAG Contrast Ratio Tests
 # ===================================================================
 
+
 class TestWCAGContrast:
     def test_text_muted_contrast_on_card(self):
         """#999999 on #1A1A1A should pass WCAG AA 4.5:1."""
@@ -268,6 +290,7 @@ class TestWCAGContrast:
 # ===================================================================
 # 4. HTML Integration Tests
 # ===================================================================
+
 
 class TestHTMLIntegration:
     def test_css_link_in_html(self, index_html_content):
@@ -317,6 +340,7 @@ class TestHTMLIntegration:
 # 5. Static File Serving Test
 # ===================================================================
 
+
 class TestStaticServing:
     def test_static_mount_serves_css(self):
         try:
@@ -329,7 +353,9 @@ class TestStaticServing:
 
         async def _test():
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 resp = await client.get("/static/raid-enhancements.css")
                 assert resp.status_code == 200
                 assert len(resp.text) > 0
@@ -347,7 +373,9 @@ class TestStaticServing:
 
         async def _test():
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 resp = await client.get("/static/raid-features.js")
                 assert resp.status_code == 200
                 assert len(resp.text) > 0
@@ -359,125 +387,146 @@ class TestStaticServing:
 # 6. Column Labels Tests
 # ===================================================================
 
+
 class TestColumnLabels:
     def test_column_labels_dict_exists(self):
         from chart_engine.raid_chart_generator import COLUMN_LABELS
+
         assert isinstance(COLUMN_LABELS, dict)
-        assert 'market_cap' in COLUMN_LABELS
+        assert "market_cap" in COLUMN_LABELS
 
     def test_humanize_uses_labels(self):
-        result = RaidChartGenerator._humanize_header('market_cap')
-        assert result == 'Market Cap (SAR)'
+        result = RaidChartGenerator._humanize_header("market_cap")
+        assert result == "Market Cap (SAR)"
 
     def test_humanize_roe_uses_label(self):
-        result = RaidChartGenerator._humanize_header('roe')
-        assert result == 'Return on Equity'
+        result = RaidChartGenerator._humanize_header("roe")
+        assert result == "Return on Equity"
 
     def test_humanize_fallback_for_unknown(self):
-        result = RaidChartGenerator._humanize_header('unknown_column')
-        assert result == 'Unknown Column'
+        result = RaidChartGenerator._humanize_header("unknown_column")
+        assert result == "Unknown Column"
 
 
 # ===================================================================
 # 7. Null Handling Tests
 # ===================================================================
 
+
 class TestNullHandling:
     def test_format_number_nan_returns_dash(self):
-        result = RaidChartGenerator._format_number(float('nan'))
-        assert result == '\u2014'
+        result = RaidChartGenerator._format_number(float("nan"))
+        assert result == "\u2014"
 
     def test_format_percentage_none_returns_dash(self):
         result = RaidChartGenerator._format_percentage(None)
-        assert result == '\u2014'
+        assert result == "\u2014"
 
     def test_format_percentage_nan_returns_dash(self):
-        result = RaidChartGenerator._format_percentage(float('nan'))
-        assert result == '\u2014'
+        result = RaidChartGenerator._format_percentage(float("nan"))
+        assert result == "\u2014"
 
 
 # ===================================================================
 # 8. Horizontal Bar Tests
 # ===================================================================
 
+
 class TestHorizontalBar:
     def test_many_items_uses_horizontal(self, generator):
-        df = pd.DataFrame({
-            'company': [f'Company {chr(65+i)}' for i in range(10)],
-            'market_cap': [i * 1e9 for i in range(10, 0, -1)],
-        })
-        result = generator.generate_chart(df, 'Top 10')
-        trace = result['data'][0]
-        assert trace.get('orientation') == 'h'
+        df = pd.DataFrame(
+            {
+                "company": [f"Company {chr(65 + i)}" for i in range(10)],
+                "market_cap": [i * 1e9 for i in range(10, 0, -1)],
+            }
+        )
+        result = generator.generate_chart(df, "Top 10")
+        trace = result["data"][0]
+        assert trace.get("orientation") == "h"
 
     def test_few_items_uses_vertical(self, generator):
-        df = pd.DataFrame({
-            'company': ['A', 'B', 'C'],
-            'value': [100, 200, 300],
-        })
-        result = generator.generate_chart(df, 'Small')
-        trace = result['data'][0]
+        df = pd.DataFrame(
+            {
+                "company": ["A", "B", "C"],
+                "value": [100, 200, 300],
+            }
+        )
+        result = generator.generate_chart(df, "Small")
+        trace = result["data"][0]
         # Should NOT be horizontal (no orientation or orientation='v')
-        assert trace.get('orientation') is None or trace.get('orientation') == 'v'
+        assert trace.get("orientation") is None or trace.get("orientation") == "v"
 
 
 # ===================================================================
 # 9. No Duplicate Title Tests
 # ===================================================================
 
+
 class TestNoDuplicateTitle:
     def test_bar_chart_title_empty(self, generator):
-        df = pd.DataFrame({
-            'company': ['A', 'B', 'C'],
-            'value': [100, 200, 300],
-        })
-        result = generator.generate_chart(df, 'Test')
-        layout = result.get('layout', {})
-        title = layout.get('title', '')
+        df = pd.DataFrame(
+            {
+                "company": ["A", "B", "C"],
+                "value": [100, 200, 300],
+            }
+        )
+        result = generator.generate_chart(df, "Test")
+        layout = result.get("layout", {})
+        title = layout.get("title", "")
         if isinstance(title, dict):
-            assert title.get('text', '') == ''
+            assert title.get("text", "") == ""
         else:
-            assert title == ''
+            assert title == ""
 
     def test_table_title_empty(self, generator):
-        df = pd.DataFrame({
-            'c1': ['A', 'B'], 'c2': [1, 2], 'c3': [3, 4], 'c4': [5, 6],
-            'c5': [7, 8], 'c6': [9, 10], 'c7': [11, 12], 'c8': [13, 14],
-        })
-        result = generator.generate_chart(df, 'Table Test')
-        layout = result.get('layout', {})
-        title = layout.get('title', '')
+        df = pd.DataFrame(
+            {
+                "c1": ["A", "B"],
+                "c2": [1, 2],
+                "c3": [3, 4],
+                "c4": [5, 6],
+                "c5": [7, 8],
+                "c6": [9, 10],
+                "c7": [11, 12],
+                "c8": [13, 14],
+            }
+        )
+        result = generator.generate_chart(df, "Table Test")
+        layout = result.get("layout", {})
+        title = layout.get("title", "")
         if isinstance(title, dict):
-            assert title.get('text', '') == ''
+            assert title.get("text", "") == ""
         else:
-            assert title == ''
+            assert title == ""
 
 
 # ===================================================================
 # 10. Shadow DOM Features Tests
 # ===================================================================
 
+
 class TestShadowDOMFeatures:
     def test_js_has_shadow_dom_polling(self, js_content):
-        assert 'shadowRoot' in js_content
+        assert "shadowRoot" in js_content
 
     def test_js_has_mutation_observer(self, js_content):
-        assert 'MutationObserver' in js_content
+        assert "MutationObserver" in js_content
 
     def test_js_hides_admin_messages(self, js_content):
-        assert 'Admin' in js_content
+        assert "Admin" in js_content
 
     def test_js_manages_tabindex(self, js_content):
-        assert 'tabindex' in js_content
+        assert "tabindex" in js_content
 
 
 # ===================================================================
 # 11. Keyboard Trap Fix Tests
 # ===================================================================
 
+
 class TestKeyboardTrapFix:
     def test_askquestion_sets_aria_hidden(self, index_html_content):
-        assert 'aria-hidden' in index_html_content
+        assert "aria-hidden" in index_html_content
 
     def test_askquestion_sets_tabindex(self, index_html_content):
         # The askQuestion function should set tabindex=-1 on collapsed chips
@@ -488,42 +537,44 @@ class TestKeyboardTrapFix:
 # 12. Responsive CSS Tests
 # ===================================================================
 
+
 class TestResponsiveCSS:
     def test_overflow_x_auto(self, css_content):
-        assert 'overflow-x' in css_content
+        assert "overflow-x" in css_content
 
     def test_word_wrap(self, css_content):
-        assert 'word-wrap' in css_content or 'overflow-wrap' in css_content
+        assert "word-wrap" in css_content or "overflow-wrap" in css_content
 
     def test_pre_wrap(self, css_content):
-        assert 'pre-wrap' in css_content
+        assert "pre-wrap" in css_content
 
     def test_plotly_max_width(self, css_content):
-        assert 'max-width: 100%' in css_content
+        assert "max-width: 100%" in css_content
 
     def test_sr_only_utility(self, css_content):
-        assert '.sr-only' in css_content
+        assert ".sr-only" in css_content
 
 
 # ===================================================================
 # 13. Format Number Tests
 # ===================================================================
 
+
 class TestFormatNumber:
     def test_format_billions(self):
-        assert RaidChartGenerator._format_number(1.5e9) == '1.5B'
+        assert RaidChartGenerator._format_number(1.5e9) == "1.5B"
 
     def test_format_millions(self):
-        assert RaidChartGenerator._format_number(2.3e6) == '2.3M'
+        assert RaidChartGenerator._format_number(2.3e6) == "2.3M"
 
     def test_format_thousands(self):
-        assert RaidChartGenerator._format_number(5.7e3) == '5.7K'
+        assert RaidChartGenerator._format_number(5.7e3) == "5.7K"
 
     def test_format_trillions(self):
-        assert RaidChartGenerator._format_number(1.2e12) == '1.2T'
+        assert RaidChartGenerator._format_number(1.2e12) == "1.2T"
 
     def test_format_small_decimal(self):
-        assert RaidChartGenerator._format_number(0.2171) == '0.2171'
+        assert RaidChartGenerator._format_number(0.2171) == "0.2171"
 
     def test_format_regular(self):
-        assert RaidChartGenerator._format_number(42.5) == '42.50'
+        assert RaidChartGenerator._format_number(42.5) == "42.50"

@@ -32,7 +32,9 @@ def _build_token_claims(user_id: str, email: str) -> Dict[str, Any]:
     return {"sub": user_id, "email": email}
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
+)
 async def register(body: UserCreate):
     """Register a new user account.
 

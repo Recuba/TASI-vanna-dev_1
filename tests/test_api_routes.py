@@ -15,7 +15,6 @@ Integration tests (require PostgreSQL):
 
 import os
 import unittest
-from datetime import datetime
 
 
 # ---------------------------------------------------------------------------
@@ -26,6 +25,7 @@ def _pg_available() -> bool:
         return False
     try:
         import psycopg2
+
         conn = psycopg2.connect(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
@@ -51,6 +51,7 @@ class TestNewsPydanticModels(unittest.TestCase):
 
     def test_news_article_response(self):
         from api.routes.news import NewsArticleResponse
+
         resp = NewsArticleResponse(
             id="test-id",
             title="Test Article",
@@ -62,6 +63,7 @@ class TestNewsPydanticModels(unittest.TestCase):
 
     def test_news_list_response(self):
         from api.routes.news import NewsListResponse, NewsArticleResponse
+
         resp = NewsListResponse(
             items=[
                 NewsArticleResponse(id="1", title="A"),
@@ -78,6 +80,7 @@ class TestReportsPydanticModels(unittest.TestCase):
 
     def test_report_response(self):
         from api.routes.reports import ReportResponse
+
         resp = ReportResponse(
             id="test-id",
             title="Aramco Analysis",
@@ -88,7 +91,8 @@ class TestReportsPydanticModels(unittest.TestCase):
         self.assertEqual(resp.target_price, 35.50)
 
     def test_report_list_response(self):
-        from api.routes.reports import ReportListResponse, ReportResponse
+        from api.routes.reports import ReportListResponse
+
         resp = ReportListResponse(items=[], count=0)
         self.assertEqual(resp.count, 0)
         self.assertEqual(len(resp.items), 0)
@@ -99,6 +103,7 @@ class TestAnnouncementsPydanticModels(unittest.TestCase):
 
     def test_announcement_response(self):
         from api.routes.announcements import AnnouncementResponse
+
         resp = AnnouncementResponse(
             id="test-id",
             title_en="Test Announcement",
@@ -110,6 +115,7 @@ class TestAnnouncementsPydanticModels(unittest.TestCase):
 
     def test_announcement_list_response(self):
         from api.routes.announcements import AnnouncementListResponse
+
         resp = AnnouncementListResponse(items=[], count=0)
         self.assertEqual(resp.count, 0)
 
@@ -119,6 +125,7 @@ class TestEntitiesPydanticModels(unittest.TestCase):
 
     def test_company_summary(self):
         from api.routes.entities import CompanySummary
+
         resp = CompanySummary(
             ticker="2222.SR",
             short_name="Saudi Aramco",
@@ -130,6 +137,7 @@ class TestEntitiesPydanticModels(unittest.TestCase):
 
     def test_company_detail(self):
         from api.routes.entities import CompanyDetail
+
         resp = CompanyDetail(
             ticker="2222.SR",
             short_name="Saudi Aramco",
@@ -140,6 +148,7 @@ class TestEntitiesPydanticModels(unittest.TestCase):
 
     def test_entity_list_response(self):
         from api.routes.entities import EntityListResponse, CompanySummary
+
         resp = EntityListResponse(
             items=[CompanySummary(ticker="2222.SR")],
             count=1,
@@ -148,6 +157,7 @@ class TestEntitiesPydanticModels(unittest.TestCase):
 
     def test_sector_info(self):
         from api.routes.entities import SectorInfo
+
         resp = SectorInfo(sector="Energy", company_count=15)
         self.assertEqual(resp.sector, "Energy")
         self.assertEqual(resp.company_count, 15)
@@ -158,6 +168,7 @@ class TestWatchlistPydanticModels(unittest.TestCase):
 
     def test_watchlist_response(self):
         from api.routes.watchlists import WatchlistResponse
+
         resp = WatchlistResponse(
             id="test-id",
             user_id="user-1",
@@ -169,12 +180,14 @@ class TestWatchlistPydanticModels(unittest.TestCase):
 
     def test_watchlist_create_request(self):
         from api.routes.watchlists import WatchlistCreateRequest
+
         req = WatchlistCreateRequest()
         self.assertEqual(req.name, "Default")
         self.assertEqual(req.tickers, [])
 
     def test_alert_response(self):
         from api.routes.watchlists import AlertResponse
+
         resp = AlertResponse(
             id="alert-1",
             user_id="user-1",
@@ -191,12 +204,14 @@ class TestChartsPydanticModels(unittest.TestCase):
 
     def test_chart_data_point(self):
         from api.routes.charts import ChartDataPoint
+
         dp = ChartDataPoint(label="Energy", value=5000000.0)
         self.assertEqual(dp.label, "Energy")
         self.assertEqual(dp.value, 5000000.0)
 
     def test_chart_response(self):
         from api.routes.charts import ChartResponse, ChartDataPoint
+
         resp = ChartResponse(
             chart_type="bar",
             title="Test Chart",
@@ -214,36 +229,43 @@ class TestRouterConfiguration(unittest.TestCase):
 
     def test_news_router(self):
         from api.routes.news import router
+
         self.assertEqual(router.prefix, "/api/news")
         self.assertIn("news", router.tags)
 
     def test_reports_router(self):
         from api.routes.reports import router
+
         self.assertEqual(router.prefix, "/api/reports")
         self.assertIn("reports", router.tags)
 
     def test_announcements_router(self):
         from api.routes.announcements import router
+
         self.assertEqual(router.prefix, "/api/announcements")
         self.assertIn("announcements", router.tags)
 
     def test_entities_router(self):
         from api.routes.entities import router
+
         self.assertEqual(router.prefix, "/api/entities")
         self.assertIn("entities", router.tags)
 
     def test_watchlists_router(self):
         from api.routes.watchlists import router
+
         self.assertEqual(router.prefix, "/api/watchlists")
         self.assertIn("watchlists", router.tags)
 
     def test_charts_router(self):
         from api.routes.charts import router
+
         self.assertEqual(router.prefix, "/api/charts")
         self.assertIn("charts", router.tags)
 
     def test_health_router(self):
         from api.routes.health import router
+
         self.assertIn("health", router.tags)
 
 
@@ -256,6 +278,7 @@ class TestRouteEndpoints(unittest.TestCase):
 
     def test_news_routes(self):
         from api.routes.news import router
+
         paths = self._route_paths(router)
         self.assertIn("/api/news", paths)
         self.assertIn("/api/news/ticker/{ticker}", paths)
@@ -264,6 +287,7 @@ class TestRouteEndpoints(unittest.TestCase):
 
     def test_reports_routes(self):
         from api.routes.reports import router
+
         paths = self._route_paths(router)
         self.assertIn("/api/reports", paths)
         self.assertIn("/api/reports/ticker/{ticker}", paths)
@@ -271,6 +295,7 @@ class TestRouteEndpoints(unittest.TestCase):
 
     def test_announcements_routes(self):
         from api.routes.announcements import router
+
         paths = self._route_paths(router)
         self.assertIn("/api/announcements", paths)
         self.assertIn("/api/announcements/material", paths)
@@ -279,6 +304,7 @@ class TestRouteEndpoints(unittest.TestCase):
 
     def test_entities_routes(self):
         from api.routes.entities import router
+
         paths = self._route_paths(router)
         self.assertIn("/api/entities", paths)
         self.assertIn("/api/entities/sectors", paths)
@@ -286,6 +312,7 @@ class TestRouteEndpoints(unittest.TestCase):
 
     def test_watchlists_routes(self):
         from api.routes.watchlists import router
+
         paths = self._route_paths(router)
         self.assertIn("/api/watchlists", paths)
         self.assertIn("/api/watchlists/{watchlist_id}", paths)
@@ -294,6 +321,7 @@ class TestRouteEndpoints(unittest.TestCase):
 
     def test_charts_routes(self):
         from api.routes.charts import router
+
         paths = self._route_paths(router)
         self.assertIn("/api/charts/sector-market-cap", paths)
         self.assertIn("/api/charts/top-companies", paths)
@@ -302,6 +330,7 @@ class TestRouteEndpoints(unittest.TestCase):
 
     def test_health_route(self):
         from api.routes.health import router
+
         paths = self._route_paths(router)
         self.assertIn("/health", paths)
 
@@ -324,6 +353,7 @@ class TestAPIRoutesWithTestClient(unittest.TestCase):
 
         from fastapi.testclient import TestClient
         from app import app
+
         cls.client = TestClient(app)
 
     def test_health_endpoint(self):

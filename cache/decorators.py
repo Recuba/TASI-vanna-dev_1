@@ -18,7 +18,6 @@ import functools
 import hashlib
 import json
 import logging
-from typing import Optional
 
 from cache.redis_client import cache_get, cache_set, is_redis_available
 
@@ -81,7 +80,11 @@ def _build_key(prefix: str, func_name: str, args: tuple, kwargs: dict) -> str:
     """Build a deterministic cache key from function arguments."""
     # Skip 'self' for bound methods
     key_args = args
-    if key_args and hasattr(key_args[0], "__class__") and hasattr(key_args[0], func_name):
+    if (
+        key_args
+        and hasattr(key_args[0], "__class__")
+        and hasattr(key_args[0], func_name)
+    ):
         key_args = key_args[1:]
 
     raw = json.dumps({"a": key_args, "k": kwargs}, sort_keys=True, default=str)

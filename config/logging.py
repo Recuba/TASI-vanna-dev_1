@@ -36,7 +36,9 @@ class PrettyFormatter(logging.Formatter):
         super().__init__(fmt=self.FORMAT, datefmt="%H:%M:%S")
 
 
-def setup_logging(level: Optional[str] = None, json_output: Optional[bool] = None) -> None:
+def setup_logging(
+    level: Optional[str] = None, json_output: Optional[bool] = None
+) -> None:
     """
     Configure the root logger.
 
@@ -49,7 +51,11 @@ def setup_logging(level: Optional[str] = None, json_output: Optional[bool] = Non
     log_level = (level or os.environ.get("LOG_LEVEL", "INFO")).upper()
 
     if json_output is None:
-        debug_mode = os.environ.get("SERVER_DEBUG", "false").lower() in ("true", "1", "yes")
+        debug_mode = os.environ.get("SERVER_DEBUG", "false").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
         json_output = not debug_mode
 
     root = logging.getLogger()

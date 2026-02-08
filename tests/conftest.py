@@ -12,7 +12,7 @@ Provides reusable fixtures for:
 import sqlite3
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -25,6 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # ---------------------------------------------------------------------------
 # SQLite test database
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def test_db(tmp_path):
@@ -175,6 +176,7 @@ def test_db(tmp_path):
 # Mock Redis
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def mock_redis():
     """Provide a mock Redis client with basic get/set/delete."""
@@ -200,6 +202,7 @@ def mock_redis():
 
     def mock_scan(cursor=0, match=None, count=100):
         import fnmatch
+
         matching = [k for k in _store if fnmatch.fnmatch(k, match or "*")]
         return (0, matching)
 
@@ -217,10 +220,12 @@ def mock_redis():
 # Auth token
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def auth_settings():
     """Return a fixed AuthSettings for deterministic JWT testing."""
     from config.settings import AuthSettings
+
     return AuthSettings(
         jwt_secret="test-secret-key-for-jwt-testing-only",
         jwt_algorithm="HS256",
@@ -241,7 +246,9 @@ def auth_token(auth_settings):
         "type": "access",
         "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
     }
-    token = jwt.encode(payload, auth_settings.jwt_secret, algorithm=auth_settings.jwt_algorithm)
+    token = jwt.encode(
+        payload, auth_settings.jwt_secret, algorithm=auth_settings.jwt_algorithm
+    )
     return token
 
 
@@ -257,13 +264,16 @@ def refresh_token(auth_settings):
         "type": "refresh",
         "exp": datetime.now(timezone.utc) + timedelta(days=7),
     }
-    token = jwt.encode(payload, auth_settings.jwt_secret, algorithm=auth_settings.jwt_algorithm)
+    token = jwt.encode(
+        payload, auth_settings.jwt_secret, algorithm=auth_settings.jwt_algorithm
+    )
     return token
 
 
 # ---------------------------------------------------------------------------
 # Mock connection pool
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_pool():
@@ -283,6 +293,7 @@ def mock_pool():
 # ---------------------------------------------------------------------------
 # Mock DB connection (for services/routes that need psycopg2)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_db_conn():

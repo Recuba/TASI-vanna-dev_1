@@ -6,15 +6,21 @@ used by the ingestion pipeline before database insertion.
 """
 
 import re
-from datetime import date, datetime
-from typing import Optional
+from datetime import date
 
 import pandas as pd
 
 # Saudi stock tickers: 4 digits + .SR (e.g., 2222.SR, 1010.SR)
 TICKER_PATTERN = re.compile(r"^\d{4}\.SR$")
 
-PRICE_REQUIRED_COLUMNS = {"trade_date", "open_price", "high_price", "low_price", "close_price", "volume"}
+PRICE_REQUIRED_COLUMNS = {
+    "trade_date",
+    "open_price",
+    "high_price",
+    "low_price",
+    "close_price",
+    "volume",
+}
 
 XBRL_REQUIRED_FIELDS = {"ticker", "concept"}
 
@@ -120,12 +126,17 @@ def validate_xbrl_fact(fact_dict: dict) -> list[str]:
         errors.append(f"Invalid ticker format: {ticker} (expected ####.SR)")
 
     # Check at least one value field
-    has_value = any([
-        fact_dict.get("value_numeric") is not None,
-        fact_dict.get("value_text") is not None and fact_dict.get("value_text") != "",
-        fact_dict.get("value_boolean") is not None,
-    ])
+    has_value = any(
+        [
+            fact_dict.get("value_numeric") is not None,
+            fact_dict.get("value_text") is not None
+            and fact_dict.get("value_text") != "",
+            fact_dict.get("value_boolean") is not None,
+        ]
+    )
     if not has_value:
-        errors.append("No value field set (need value_numeric, value_text, or value_boolean)")
+        errors.append(
+            "No value field set (need value_numeric, value_text, or value_boolean)"
+        )
 
     return errors

@@ -33,7 +33,9 @@ def create_access_token(data: Dict[str, Any]) -> str:
     """
     auth = _get_auth_settings()
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=auth.access_token_expire_minutes)
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=auth.access_token_expire_minutes
+    )
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, auth.jwt_secret, algorithm=auth.jwt_algorithm)
 
@@ -89,6 +91,8 @@ def decode_token(token: str, expected_type: Optional[str] = None) -> Dict[str, A
     if expected_type is not None:
         token_type = payload.get("type")
         if token_type != expected_type:
-            raise ValueError(f"Expected token type '{expected_type}', got '{token_type}'")
+            raise ValueError(
+                f"Expected token type '{expected_type}', got '{token_type}'"
+            )
 
     return payload

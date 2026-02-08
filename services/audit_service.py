@@ -119,18 +119,21 @@ class AuditService:
         conn = self._conn()
         try:
             with conn.cursor() as cur:
-                cur.execute(sql, {
-                    "id": entry_id,
-                    "user_id": user_id,
-                    "natural_language_query": natural_language_query,
-                    "generated_sql": generated_sql,
-                    "execution_time_ms": execution_time_ms,
-                    "row_count": row_count,
-                    "was_successful": was_successful,
-                    "error_message": error_message,
-                    "ip_address": ip_address,
-                    "user_agent": user_agent,
-                })
+                cur.execute(
+                    sql,
+                    {
+                        "id": entry_id,
+                        "user_id": user_id,
+                        "natural_language_query": natural_language_query,
+                        "generated_sql": generated_sql,
+                        "execution_time_ms": execution_time_ms,
+                        "row_count": row_count,
+                        "was_successful": was_successful,
+                        "error_message": error_message,
+                        "ip_address": ip_address,
+                        "user_agent": user_agent,
+                    },
+                )
             conn.commit()
             return entry_id
         finally:
@@ -167,9 +170,7 @@ class AuditService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [self._row_to_entry(r) for r in cur.fetchall()]
         finally:
@@ -206,9 +207,7 @@ class AuditService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [
                     UsageStats(
@@ -257,9 +256,7 @@ class AuditService:
 
         conn = self._conn()
         try:
-            with conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
-            ) as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(sql, params)
                 return [
                     UsageStats(

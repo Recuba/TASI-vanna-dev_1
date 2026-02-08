@@ -8,12 +8,13 @@ import sqlite3
 import sys
 from pathlib import Path
 
+import pandas as pd  # noqa: E402
+
 # Ensure project root on path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-import pandas as pd
-from chart_engine import RaidChartGenerator
+from chart_engine import RaidChartGenerator  # noqa: E402
 
 DB_PATH = PROJECT_ROOT / "saudi_stocks.db"
 

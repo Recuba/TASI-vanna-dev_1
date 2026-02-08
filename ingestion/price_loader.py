@@ -38,7 +38,7 @@ import logging
 import os
 import sys
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -68,7 +68,14 @@ PROJECT_DIR = SCRIPT_DIR.parent
 DB_BATCH_SIZE = 500
 
 # Columns expected in CSV imports
-REQUIRED_COLUMNS = {"trade_date", "open_price", "high_price", "low_price", "close_price", "volume"}
+REQUIRED_COLUMNS = {
+    "trade_date",
+    "open_price",
+    "high_price",
+    "low_price",
+    "close_price",
+    "volume",
+}
 
 # Alternate column name mappings (common variations)
 COLUMN_ALIASES = {
@@ -92,8 +99,15 @@ COLUMN_ALIASES = {
 
 # INSERT SQL with ON CONFLICT DO NOTHING for incremental loading
 INSERT_COLUMNS = [
-    "ticker", "trade_date", "open_price", "high_price", "low_price",
-    "close_price", "volume", "change_amount", "change_pct",
+    "ticker",
+    "trade_date",
+    "open_price",
+    "high_price",
+    "low_price",
+    "close_price",
+    "volume",
+    "change_amount",
+    "change_pct",
 ]
 
 INSERT_SQL = (
@@ -107,10 +121,16 @@ INSERT_SQL = (
 # PriceLoader class (yfinance-based)
 # ---------------------------------------------------------------------------
 
+
 class PriceLoader:
     """Fetches OHLCV price data from Yahoo Finance and loads into PostgreSQL."""
 
-    def __init__(self, pg_conn=None, config: Optional[IngestionConfig] = None, dry_run: bool = False):
+    def __init__(
+        self,
+        pg_conn=None,
+        config: Optional[IngestionConfig] = None,
+        dry_run: bool = False,
+    ):
         """Initialize PriceLoader.
 
         Args:
@@ -153,11 +173,14 @@ class PriceLoader:
 
         logger.info(
             "Loading prices for %d tickers (%s to %s) in %d batches",
-            len(tickers), from_date, to_date, total_batches,
+            len(tickers),
+            from_date,
+            to_date,
+            total_batches,
         )
 
         for batch_idx in range(0, len(tickers), batch_size):
-            batch = tickers[batch_idx:batch_idx + batch_size]
+            batch = tickers[batch_idx : batch_idx + batch_size]
             batch_num = (batch_idx // batch_size) + 1
 
             logger.info("Batch %d/%d: %s", batch_num, total_batches, ", ".join(batch))
@@ -205,7 +228,10 @@ class PriceLoader:
             raise RuntimeError("Database connection required for load_all_prices")
 
         cur = self.pg_conn.cursor()
-        cur.execute("SELECT ticker FROM companies WHERE ticker LIKE %s ORDER BY ticker", ("%.SR",))
+        cur.execute(
+            "SELECT ticker FROM companies WHERE ticker LIKE %s ORDER BY ticker",
+            ("%.SR",),
+        )
         tickers = [row[0] for row in cur.fetchall()]
         cur.close()
 
@@ -263,11 +289,14 @@ class PriceLoader:
                 )
                 return df
             except Exception as e:
-                wait = backoff ** attempt
+                wait = backoff**attempt
                 if attempt < max_retries - 1:
                     logger.warning(
                         "  %s attempt %d failed: %s (retrying in %.1fs)",
-                        ticker, attempt + 1, e, wait,
+                        ticker,
+                        attempt + 1,
+                        e,
+                        wait,
                     )
                     time.sleep(wait)
                 else:
@@ -303,7 +332,15 @@ class PriceLoader:
             df["trade_date"] = pd.to_datetime(df["trade_date"]).dt.date
 
         # Keep only relevant columns
-        keep_cols = ["ticker", "trade_date", "open_price", "high_price", "low_price", "close_price", "volume"]
+        keep_cols = [
+            "ticker",
+            "trade_date",
+            "open_price",
+            "high_price",
+            "low_price",
+            "close_price",
+            "volume",
+        ]
         available = [c for c in keep_cols if c in df.columns]
         df = df[available]
 
@@ -320,6 +357,7 @@ class PriceLoader:
 # ---------------------------------------------------------------------------
 # CSV data processing (shared utilities)
 # ---------------------------------------------------------------------------
+
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Rename columns to match expected names using aliases."""
@@ -420,6 +458,7 @@ def df_to_insert_tuples(df: pd.DataFrame) -> list:
 # Database operations
 # ---------------------------------------------------------------------------
 
+
 def insert_prices(pg_conn, rows: list, dry_run: bool = False) -> int:
     """Insert price rows into PostgreSQL. Returns count of rows inserted."""
     if not rows:
@@ -431,7 +470,7 @@ def insert_prices(pg_conn, rows: list, dry_run: bool = False) -> int:
     cur = pg_conn.cursor()
     inserted = 0
     for i in range(0, len(rows), DB_BATCH_SIZE):
-        batch = rows[i:i + DB_BATCH_SIZE]
+        batch = rows[i : i + DB_BATCH_SIZE]
         psycopg2.extras.execute_batch(cur, INSERT_SQL, batch)
         inserted += len(batch)
     pg_conn.commit()
@@ -442,25 +481,52 @@ def insert_prices(pg_conn, rows: list, dry_run: bool = False) -> int:
 # Main
 # ---------------------------------------------------------------------------
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Load daily OHLCV price data into price_history table"
     )
     source = parser.add_mutually_exclusive_group(required=True)
-    source.add_argument("--tickers", nargs="+", help="Ticker symbols to fetch (e.g., 2222.SR 1010.SR)")
-    source.add_argument("--all", action="store_true", help="Fetch all .SR tickers from companies table")
+    source.add_argument(
+        "--tickers", nargs="+", help="Ticker symbols to fetch (e.g., 2222.SR 1010.SR)"
+    )
+    source.add_argument(
+        "--all", action="store_true", help="Fetch all .SR tickers from companies table"
+    )
     source.add_argument("--file", type=str, help="Path to a single CSV file")
     source.add_argument("--dir", type=str, help="Directory of per-ticker CSV files")
 
-    parser.add_argument("--ticker", type=str, help="Ticker for single-file CSV without ticker column")
-    parser.add_argument("--from-date", type=str, default=None, help="Start date YYYY-MM-DD (default: 1 year ago)")
-    parser.add_argument("--to-date", type=str, default=None, help="End date YYYY-MM-DD (default: today)")
-    parser.add_argument("--pattern", type=str, default="*.csv", help="Glob pattern for --dir mode")
-    parser.add_argument("--batch-size", type=int, default=None, help="Tickers per batch (default: 10)")
-    parser.add_argument("--rate-limit", type=float, default=None, help="Seconds between batches (default: 2)")
-    parser.add_argument("--dry-run", action="store_true", help="Print plan without writing")
+    parser.add_argument(
+        "--ticker", type=str, help="Ticker for single-file CSV without ticker column"
+    )
+    parser.add_argument(
+        "--from-date",
+        type=str,
+        default=None,
+        help="Start date YYYY-MM-DD (default: 1 year ago)",
+    )
+    parser.add_argument(
+        "--to-date", type=str, default=None, help="End date YYYY-MM-DD (default: today)"
+    )
+    parser.add_argument(
+        "--pattern", type=str, default="*.csv", help="Glob pattern for --dir mode"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=None, help="Tickers per batch (default: 10)"
+    )
+    parser.add_argument(
+        "--rate-limit",
+        type=float,
+        default=None,
+        help="Seconds between batches (default: 2)",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print plan without writing"
+    )
     parser.add_argument("--pg-host", default=os.environ.get("PG_HOST", "localhost"))
-    parser.add_argument("--pg-port", type=int, default=int(os.environ.get("PG_PORT", "5432")))
+    parser.add_argument(
+        "--pg-port", type=int, default=int(os.environ.get("PG_PORT", "5432"))
+    )
     parser.add_argument("--pg-dbname", default=os.environ.get("PG_DBNAME", "radai"))
     parser.add_argument("--pg-user", default=os.environ.get("PG_USER", "radai"))
     parser.add_argument("--pg-password", default=os.environ.get("PG_PASSWORD", ""))
@@ -492,7 +558,11 @@ def load_single_csv(
     count = insert_prices(pg_conn, rows, dry_run)
 
     tickers = df["ticker"].nunique()
-    dates = f"{df['trade_date'].min()} to {df['trade_date'].max()}" if not df.empty else "N/A"
+    dates = (
+        f"{df['trade_date'].min()} to {df['trade_date'].max()}"
+        if not df.empty
+        else "N/A"
+    )
     suffix = " (dry run)" if dry_run else ""
     print(f"    {count} rows, {tickers} ticker(s), {dates}{suffix}")
 
@@ -520,7 +590,9 @@ def main():
     pg_conn = None
     if not args.dry_run:
         if psycopg2 is None:
-            print("ERROR: psycopg2 is not installed. Install with: pip install psycopg2-binary")
+            print(
+                "ERROR: psycopg2 is not installed. Install with: pip install psycopg2-binary"
+            )
             sys.exit(1)
         try:
             pg_conn = psycopg2.connect(
@@ -540,7 +612,9 @@ def main():
 
         if args.tickers or args.all:
             # yfinance mode
-            from_date_str = args.from_date or (date.today() - timedelta(days=365)).isoformat()
+            from_date_str = (
+                args.from_date or (date.today() - timedelta(days=365)).isoformat()
+            )
             from_date = date.fromisoformat(from_date_str)
             to_date = date.fromisoformat(args.to_date) if args.to_date else date.today()
 

@@ -84,17 +84,19 @@ XBRL_NAMESPACES = {
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class XBRLFact:
     """A single XBRL fact extracted from a financial filing."""
+
     ticker: str
-    concept: str                          # XBRL concept (e.g., 'ifrs-full:Revenue')
+    concept: str  # XBRL concept (e.g., 'ifrs-full:Revenue')
     label_en: Optional[str] = None
     label_ar: Optional[str] = None
     value_numeric: Optional[float] = None
     value_text: Optional[str] = None
     value_boolean: Optional[bool] = None
-    unit: Optional[str] = None            # e.g., 'SAR', 'shares', 'pure'
+    unit: Optional[str] = None  # e.g., 'SAR', 'shares', 'pure'
     decimals: Optional[int] = None
     period_start: Optional[date] = None
     period_end: Optional[date] = None
@@ -102,7 +104,7 @@ class XBRLFact:
     dimension_member: Optional[str] = None
     dimension_value: Optional[str] = None
     source_url: Optional[str] = None
-    filing_id: Optional[str] = None       # UUID string of the parent filing
+    filing_id: Optional[str] = None  # UUID string of the parent filing
     content_hash: str = field(default="", init=False)
 
     def __post_init__(self):
@@ -152,12 +154,23 @@ class XBRLFact:
 
 # Column order for INSERT
 XBRL_INSERT_COLUMNS = [
-    "ticker", "filing_id", "concept", "label_en", "label_ar",
-    "value_numeric", "value_text", "value_boolean",
-    "unit", "decimals",
-    "period_start", "period_end", "period_instant",
-    "dimension_member", "dimension_value",
-    "source_url", "content_hash",
+    "ticker",
+    "filing_id",
+    "concept",
+    "label_en",
+    "label_ar",
+    "value_numeric",
+    "value_text",
+    "value_boolean",
+    "unit",
+    "decimals",
+    "period_start",
+    "period_end",
+    "period_instant",
+    "dimension_member",
+    "dimension_value",
+    "source_url",
+    "content_hash",
 ]
 
 XBRL_INSERT_SQL = (
@@ -170,6 +183,7 @@ XBRL_INSERT_SQL = (
 # ---------------------------------------------------------------------------
 # XBRLProcessor
 # ---------------------------------------------------------------------------
+
 
 class XBRLProcessor:
     """Parses XBRL XML filings and Excel workbooks, extracting financial facts."""
@@ -215,10 +229,14 @@ class XBRLProcessor:
 
     # Common sheet names in Saudi XBRL Excel exports
     EXPECTED_SHEETS = [
-        "Balance Sheet", "Statement of Financial Position",
-        "Income Statement", "Statement of Profit or Loss",
-        "Cash Flow", "Statement of Cash Flows",
-        "Changes in Equity", "Notes",
+        "Balance Sheet",
+        "Statement of Financial Position",
+        "Income Statement",
+        "Statement of Profit or Loss",
+        "Cash Flow",
+        "Statement of Cash Flows",
+        "Changes in Equity",
+        "Notes",
     ]
 
     def __init__(
@@ -298,7 +316,9 @@ class XBRLProcessor:
 
         return all_facts
 
-    def process_url(self, url: str, download_dir: Optional[Path] = None) -> list[XBRLFact]:
+    def process_url(
+        self, url: str, download_dir: Optional[Path] = None
+    ) -> list[XBRLFact]:
         """Download a filing from a URL and process it.
 
         Args:
@@ -310,7 +330,9 @@ class XBRLProcessor:
             List of XBRLFact objects extracted from the filing.
         """
         if requests is None:
-            self.errors.append("requests library required for URL processing: pip install requests")
+            self.errors.append(
+                "requests library required for URL processing: pip install requests"
+            )
             return []
 
         self.source_url = url
@@ -457,7 +479,9 @@ class XBRLProcessor:
             )
             self.facts.append(fact)
 
-        logger.info("XML parsing complete: %d facts from %s", len(self.facts), file_path.name)
+        logger.info(
+            "XML parsing complete: %d facts from %s", len(self.facts), file_path.name
+        )
         return self.facts
 
     def _parse_contexts(self, root, nsmap: dict) -> dict:
@@ -469,13 +493,12 @@ class XBRLProcessor:
         contexts = {}
 
         # Try multiple namespace resolution approaches
-        context_elements = root.findall(
-            ".//{http://www.xbrl.org/2003/instance}context"
-        )
+        context_elements = root.findall(".//{http://www.xbrl.org/2003/instance}context")
         if not context_elements:
             # Fallback: search all elements with 'context' local name
             context_elements = [
-                el for el in root.iter()
+                el
+                for el in root.iter()
                 if isinstance(el.tag, str) and el.tag.endswith("}context")
             ]
 
@@ -528,12 +551,11 @@ class XBRLProcessor:
         """
         units = {}
 
-        unit_elements = root.findall(
-            ".//{http://www.xbrl.org/2003/instance}unit"
-        )
+        unit_elements = root.findall(".//{http://www.xbrl.org/2003/instance}unit")
         if not unit_elements:
             unit_elements = [
-                el for el in root.iter()
+                el
+                for el in root.iter()
                 if isinstance(el.tag, str) and el.tag.endswith("}unit")
             ]
 
@@ -592,7 +614,9 @@ class XBRLProcessor:
         text = text.strip()
         for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%d/%m/%Y", "%Y/%m/%d"):
             try:
-                return datetime.strptime(text.split("T")[0] if "T" in text else text, fmt.split("T")[0]).date()
+                return datetime.strptime(
+                    text.split("T")[0] if "T" in text else text, fmt.split("T")[0]
+                ).date()
             except ValueError:
                 continue
         return None
@@ -770,12 +794,15 @@ class XBRLProcessor:
 
         # Quarter: Q1 2024, Q2 2024, etc.
         quarter_ends = {
-            "Q1": (3, 31), "Q2": (6, 30), "Q3": (9, 30), "Q4": (12, 31),
+            "Q1": (3, 31),
+            "Q2": (6, 30),
+            "Q3": (9, 30),
+            "Q4": (12, 31),
         }
         for q, (month, day) in quarter_ends.items():
             if s_upper.startswith(q) and len(s_upper) >= len(q) + 4:
                 try:
-                    year = int(s_upper[len(q):len(q) + 4])
+                    year = int(s_upper[len(q) : len(q) + 4])
                     quarter_start_month = month - 2
                     return {
                         "period_end": date(year, month, day),
@@ -825,7 +852,7 @@ class XBRLProcessor:
     def _is_arabic(text: str) -> bool:
         """Check if text contains Arabic characters."""
         for char in text:
-            if "\u0600" <= char <= "\u06FF" or "\u0750" <= char <= "\u077F":
+            if "\u0600" <= char <= "\u06ff" or "\u0750" <= char <= "\u077f":
                 return True
         return False
 
@@ -833,6 +860,7 @@ class XBRLProcessor:
 # ---------------------------------------------------------------------------
 # Database operations
 # ---------------------------------------------------------------------------
+
 
 def _get_connection(pg_conn_or_pool):
     """Get a connection, supporting both direct connections and pool context managers."""
@@ -853,7 +881,7 @@ def insert_facts(pg_conn, facts: list[XBRLFact], dry_run: bool = False) -> int:
     inserted = 0
 
     for i in range(0, len(rows), BATCH_SIZE):
-        batch = rows[i:i + BATCH_SIZE]
+        batch = rows[i : i + BATCH_SIZE]
         psycopg2.extras.execute_batch(cur, XBRL_INSERT_SQL, batch)
         inserted += len(batch)
 
@@ -861,8 +889,15 @@ def insert_facts(pg_conn, facts: list[XBRLFact], dry_run: bool = False) -> int:
     return inserted
 
 
-def create_filing(pg_conn, ticker: str, filing_type: str, filing_date: date,
-                  source: str, source_url: str, dry_run: bool = False) -> Optional[str]:
+def create_filing(
+    pg_conn,
+    ticker: str,
+    filing_type: str,
+    filing_date: date,
+    source: str,
+    source_url: str,
+    dry_run: bool = False,
+) -> Optional[str]:
     """Create a filing record and return its UUID."""
     if dry_run:
         logger.info("Would create filing: %s %s %s", ticker, filing_type, filing_date)
@@ -917,26 +952,48 @@ def mark_filing_failed(pg_conn, filing_id: str, dry_run: bool = False) -> None:
 # Main
 # ---------------------------------------------------------------------------
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Process XBRL filings (XML or Excel) into PostgreSQL xbrl_facts table"
     )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--file", type=str, help="Path to a single filing (XML or Excel)")
+    group.add_argument(
+        "--file", type=str, help="Path to a single filing (XML or Excel)"
+    )
     group.add_argument("--dir", type=str, help="Directory of filings to process")
-    group.add_argument("--url", type=str, help="URL of a filing to download and process")
+    group.add_argument(
+        "--url", type=str, help="URL of a filing to download and process"
+    )
 
-    parser.add_argument("--ticker", type=str, help="Ticker for single file mode (required with --file/--url)")
-    parser.add_argument("--ticker-pattern", type=str, default="*",
-                        help="Glob pattern for finding files in --dir mode")
-    parser.add_argument("--filing-type", type=str, default="annual",
-                        choices=["annual", "quarterly", "interim"],
-                        help="Filing type (default: annual)")
-    parser.add_argument("--source", type=str, default="Tadawul",
-                        help="Data source (default: Tadawul)")
-    parser.add_argument("--dry-run", action="store_true", help="Print plan without writing")
+    parser.add_argument(
+        "--ticker",
+        type=str,
+        help="Ticker for single file mode (required with --file/--url)",
+    )
+    parser.add_argument(
+        "--ticker-pattern",
+        type=str,
+        default="*",
+        help="Glob pattern for finding files in --dir mode",
+    )
+    parser.add_argument(
+        "--filing-type",
+        type=str,
+        default="annual",
+        choices=["annual", "quarterly", "interim"],
+        help="Filing type (default: annual)",
+    )
+    parser.add_argument(
+        "--source", type=str, default="Tadawul", help="Data source (default: Tadawul)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print plan without writing"
+    )
     parser.add_argument("--pg-host", default=os.environ.get("PG_HOST", "localhost"))
-    parser.add_argument("--pg-port", type=int, default=int(os.environ.get("PG_PORT", "5432")))
+    parser.add_argument(
+        "--pg-port", type=int, default=int(os.environ.get("PG_PORT", "5432"))
+    )
     parser.add_argument("--pg-dbname", default=os.environ.get("PG_DBNAME", "radai"))
     parser.add_argument("--pg-user", default=os.environ.get("PG_USER", "radai"))
     parser.add_argument("--pg-password", default=os.environ.get("PG_PASSWORD", ""))
@@ -957,14 +1014,19 @@ def process_single_file(
     # Skip already-processed filings
     if pg_conn and not dry_run:
         if check_filing_exists(pg_conn, ticker, str(file_path)):
-            print(f"  Skipped: already processed")
+            print("  Skipped: already processed")
             return 0, []
 
     # Create filing record
     filing_date = date.today()
     filing_id = create_filing(
-        pg_conn, ticker, filing_type, filing_date,
-        source, str(file_path), dry_run,
+        pg_conn,
+        ticker,
+        filing_type,
+        filing_date,
+        source,
+        str(file_path),
+        dry_run,
     )
 
     # Parse filing
@@ -1009,7 +1071,9 @@ def main():
     pg_conn = None
     if not args.dry_run:
         if psycopg2 is None:
-            print("ERROR: psycopg2 is not installed. Install with: pip install psycopg2-binary")
+            print(
+                "ERROR: psycopg2 is not installed. Install with: pip install psycopg2-binary"
+            )
             sys.exit(1)
         try:
             pg_conn = psycopg2.connect(
@@ -1035,8 +1099,12 @@ def main():
 
             file_path = Path(args.file)
             count, errors = process_single_file(
-                file_path, args.ticker, args.filing_type,
-                args.source, pg_conn, args.dry_run,
+                file_path,
+                args.ticker,
+                args.filing_type,
+                args.source,
+                pg_conn,
+                args.dry_run,
             )
             total_facts += count
             total_errors.extend(errors)
@@ -1053,8 +1121,13 @@ def main():
             if pg_conn and not args.dry_run:
                 filing_date = date.today()
                 filing_id = create_filing(
-                    pg_conn, args.ticker, args.filing_type, filing_date,
-                    args.source, args.url, args.dry_run,
+                    pg_conn,
+                    args.ticker,
+                    args.filing_type,
+                    filing_date,
+                    args.source,
+                    args.url,
+                    args.dry_run,
                 )
                 for f in facts:
                     f.filing_id = filing_id
@@ -1091,8 +1164,12 @@ def main():
                         continue
 
                 count, errors = process_single_file(
-                    file_path, ticker, args.filing_type,
-                    args.source, pg_conn, args.dry_run,
+                    file_path,
+                    ticker,
+                    args.filing_type,
+                    args.source,
+                    pg_conn,
+                    args.dry_run,
                 )
                 total_facts += count
                 total_errors.extend(errors)

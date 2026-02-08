@@ -12,7 +12,10 @@ Default is SQLite.
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
+
+if TYPE_CHECKING:
+    from vanna.core.tool import ToolSchema
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -37,6 +40,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 try:
     from config import get_settings
+
     _settings = get_settings()
 except Exception:
     _settings = None
@@ -75,8 +79,14 @@ sql_runner = _create_sql_runner()
 # 3. Tool registry
 # ---------------------------------------------------------------------------
 tools = ToolRegistry()
-tools.register_local_tool(RunSqlTool(sql_runner=sql_runner), access_groups=["admin", "user"])
-tools.register_local_tool(VisualizeDataTool(plotly_generator=RaidChartGenerator()), access_groups=["admin", "user"])
+tools.register_local_tool(
+    RunSqlTool(sql_runner=sql_runner), access_groups=["admin", "user"]
+)
+tools.register_local_tool(
+    VisualizeDataTool(plotly_generator=RaidChartGenerator()),
+    access_groups=["admin", "user"],
+)
+
 
 # ---------------------------------------------------------------------------
 # 4. User resolver (returns a single default user)
@@ -88,6 +98,7 @@ class DefaultUserResolver(UserResolver):
             email="user@localhost",
             group_memberships=["user"],
         )
+
 
 # ---------------------------------------------------------------------------
 # 5. System prompt builder -- comprehensive schema documentation
@@ -336,6 +347,7 @@ class SaudiStocksSystemPromptBuilder(SystemPromptBuilder):
             return SYSTEM_PROMPT + _PG_NOTES
         return SYSTEM_PROMPT
 
+
 # ---------------------------------------------------------------------------
 # 6. Agent configuration
 # ---------------------------------------------------------------------------
@@ -363,14 +375,23 @@ server = VannaFastAPIServer(agent)
 app = server.create_app()
 
 # Remove Vanna's default "/" route so our custom template takes precedence
-app.routes[:] = [r for r in app.routes if not (hasattr(r, "path") and r.path == "/" and hasattr(r, "methods") and "GET" in r.methods)]
+app.routes[:] = [
+    r
+    for r in app.routes
+    if not (
+        hasattr(r, "path")
+        and r.path == "/"
+        and hasattr(r, "methods")
+        and "GET" in r.methods
+    )
+]
 
 # Remove Vanna's default CORSMiddleware (allow_origins=["*"]) so our
 # configured CORS settings (from MiddlewareSettings) take effect.
 from fastapi.middleware.cors import CORSMiddleware as _CORSMiddleware
+
 app.user_middleware[:] = [
-    m for m in app.user_middleware
-    if not (m.cls is _CORSMiddleware)
+    m for m in app.user_middleware if m.cls is not _CORSMiddleware
 ]
 
 # ---------------------------------------------------------------------------
@@ -385,19 +406,19 @@ try:
     _mw_settings = _settings.middleware if _settings else None
 
     _cors_origins = (
-        _mw_settings.cors_origins_list if _mw_settings
+        _mw_settings.cors_origins_list
+        if _mw_settings
         else ["http://localhost:3000", "http://localhost:8084"]
     )
-    _rate_limit = (
-        _mw_settings.rate_limit_per_minute if _mw_settings
-        else 60
-    )
+    _rate_limit = _mw_settings.rate_limit_per_minute if _mw_settings else 60
     _skip_paths = (
-        _mw_settings.log_skip_paths_list if _mw_settings
+        _mw_settings.log_skip_paths_list
+        if _mw_settings
         else ["/health", "/favicon.ico"]
     )
     _debug_mode = (
-        _settings.server.debug if _settings
+        _settings.server.debug
+        if _settings
         else os.environ.get("SERVER_DEBUG", "false").lower() in ("true", "1")
     )
 
@@ -421,7 +442,9 @@ try:
     # Error handler (outermost -- catches everything)
     app.add_middleware(ErrorHandlerMiddleware)
 
-    logger.info("Middleware stack initialized (CORS, rate_limit, logging, error_handler)")
+    logger.info(
+        "Middleware stack initialized (CORS, rate_limit, logging, error_handler)"
+    )
 except ImportError as exc:
     logger.warning("Middleware modules not available, skipping: %s", exc)
 
@@ -449,10 +472,12 @@ if DB_BACKEND == "postgres":
 if DB_BACKEND == "postgres":
     try:
         from api.routes.auth import router as auth_router
+
         app.include_router(auth_router)
         logger.info("Auth routes registered at /api/auth")
     except ImportError as exc:
         logger.warning("Auth routes not available: %s", exc)
+
 
 # ---------------------------------------------------------------------------
 # 10. Custom routes and static files
@@ -462,9 +487,11 @@ async def custom_index():
     template_path = _HERE / "templates" / "index.html"
     return template_path.read_text(encoding="utf-8")
 
+
 # Serve static assets (logo, favicon, etc.)
 _TEMPLATES_DIR = _HERE / "templates"
 app.mount("/static", StaticFiles(directory=str(_TEMPLATES_DIR)), name="static")
+
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -472,6 +499,7 @@ async def favicon():
     if favicon_path.exists():
         return FileResponse(str(favicon_path), media_type="image/svg+xml")
     return HTMLResponse("")
+
 
 # ---------------------------------------------------------------------------
 # 11. Startup / Shutdown events
@@ -482,6 +510,7 @@ async def on_startup():
     # Setup logging
     try:
         from config.logging import setup_logging
+
         setup_logging()
     except ImportError:
         pass
@@ -490,11 +519,14 @@ async def on_startup():
     if DB_BACKEND == "postgres":
         try:
             from database.pool import init_pool
+
             _pool_min = _settings.pool.min if _settings else 2
             _pool_max = _settings.pool.max if _settings else 10
             _db_settings = _settings.db if _settings else None
             if _db_settings:
-                init_pool(_db_settings, min_connections=_pool_min, max_connections=_pool_max)
+                init_pool(
+                    _db_settings, min_connections=_pool_min, max_connections=_pool_max
+                )
                 logger.info("PostgreSQL connection pool initialized")
         except ImportError:
             logger.warning("database.pool not available -- using direct connections")
@@ -503,14 +535,17 @@ async def on_startup():
 
     # Initialize Redis (if enabled)
     _cache_enabled = (
-        _settings.cache.enabled if _settings
+        _settings.cache.enabled
+        if _settings
         else os.environ.get("CACHE_ENABLED", "false").lower() in ("true", "1")
     )
     if _cache_enabled:
         try:
             from cache import init_redis
+
             _redis_url = (
-                _settings.cache.redis_url if _settings
+                _settings.cache.redis_url
+                if _settings
                 else os.environ.get("REDIS_URL", "redis://localhost:6379/0")
             )
             init_redis(_redis_url)
@@ -528,6 +563,7 @@ async def on_shutdown():
     if DB_BACKEND == "postgres":
         try:
             from database.pool import close_pool
+
             close_pool()
             logger.info("PostgreSQL connection pool closed")
         except ImportError:
@@ -538,6 +574,7 @@ async def on_shutdown():
     # Close Redis
     try:
         from cache import close_redis
+
         close_redis()
     except ImportError:
         pass
@@ -547,4 +584,5 @@ async def on_shutdown():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8084)

@@ -21,12 +21,14 @@ from typing import List
 _HERE = Path(__file__).resolve().parent
 _SQLITE_PATH = str(_HERE / "saudi_stocks.db")
 
+
 def _pg_available() -> bool:
     """Check if PostgreSQL is reachable."""
     if not os.environ.get("POSTGRES_HOST"):
         return False
     try:
         import psycopg2
+
         conn = psycopg2.connect(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
@@ -47,6 +49,7 @@ def _get_sqlite_conn():
 
 def _get_pg_conn():
     import psycopg2
+
     return psycopg2.connect(
         host=os.environ.get("POSTGRES_HOST", "localhost"),
         port=int(os.environ.get("POSTGRES_PORT", "5432")),
@@ -63,20 +66,33 @@ class _DatabaseTestMixin:
     """
 
     expected_tables = [
-        'companies', 'market_data', 'valuation_metrics',
-        'profitability_metrics', 'dividend_data', 'financial_summary',
-        'analyst_data', 'balance_sheet', 'income_statement', 'cash_flow'
+        "companies",
+        "market_data",
+        "valuation_metrics",
+        "profitability_metrics",
+        "dividend_data",
+        "financial_summary",
+        "analyst_data",
+        "balance_sheet",
+        "income_statement",
+        "cash_flow",
     ]
     simple_tables = [
-        'companies', 'market_data', 'valuation_metrics',
-        'profitability_metrics', 'dividend_data', 'financial_summary',
-        'analyst_data'
+        "companies",
+        "market_data",
+        "valuation_metrics",
+        "profitability_metrics",
+        "dividend_data",
+        "financial_summary",
+        "analyst_data",
     ]
-    financial_tables = ['balance_sheet', 'income_statement', 'cash_flow']
+    financial_tables = ["balance_sheet", "income_statement", "cash_flow"]
 
     def _list_tables(self) -> List[str]:
         if self.backend == "sqlite":
-            self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+            self.cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+            )
         else:
             self.cursor.execute("""
                 SELECT table_name FROM information_schema.tables
@@ -89,11 +105,14 @@ class _DatabaseTestMixin:
             self.cursor.execute(f"PRAGMA table_info({table})")
             return [row[1] for row in self.cursor.fetchall()]
         else:
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT column_name FROM information_schema.columns
                 WHERE table_schema = 'public' AND table_name = %s
                 ORDER BY ordinal_position
-            """, (table,))
+            """,
+                (table,),
+            )
             return [row[0] for row in self.cursor.fetchall()]
 
     def test_01_table_existence(self):
@@ -114,49 +133,82 @@ class _DatabaseTestMixin:
         for table in self.financial_tables:
             self.cursor.execute(f"SELECT COUNT(*) FROM {table}")
             count = self.cursor.fetchone()[0]
-            self.assertGreaterEqual(count, 2500, f"{table} should have at least 2500 rows")
+            self.assertGreaterEqual(
+                count, 2500, f"{table} should have at least 2500 rows"
+            )
 
     def test_04_schema_validation_companies(self):
         """Validate companies table schema"""
-        self._validate_columns('companies', ['ticker', 'short_name', 'sector', 'industry'])
+        self._validate_columns(
+            "companies", ["ticker", "short_name", "sector", "industry"]
+        )
 
     def test_05_schema_validation_market_data(self):
         """Validate market_data table schema"""
-        self._validate_columns('market_data', ['ticker', 'current_price', 'market_cap', 'volume'])
+        self._validate_columns(
+            "market_data", ["ticker", "current_price", "market_cap", "volume"]
+        )
 
     def test_06_schema_validation_balance_sheet(self):
         """Validate balance_sheet table schema"""
-        self._validate_columns('balance_sheet', [
-            'ticker', 'period_type', 'period_index', 'period_date',
-            'total_assets', 'total_liabilities_net_minority_interest', 'stockholders_equity'
-        ])
+        self._validate_columns(
+            "balance_sheet",
+            [
+                "ticker",
+                "period_type",
+                "period_index",
+                "period_date",
+                "total_assets",
+                "total_liabilities_net_minority_interest",
+                "stockholders_equity",
+            ],
+        )
 
     def test_07_schema_validation_income_statement(self):
         """Validate income_statement table schema"""
-        self._validate_columns('income_statement', [
-            'ticker', 'period_type', 'period_index', 'period_date',
-            'total_revenue', 'gross_profit', 'net_income'
-        ])
+        self._validate_columns(
+            "income_statement",
+            [
+                "ticker",
+                "period_type",
+                "period_index",
+                "period_date",
+                "total_revenue",
+                "gross_profit",
+                "net_income",
+            ],
+        )
 
     def test_08_schema_validation_cash_flow(self):
         """Validate cash_flow table schema"""
-        self._validate_columns('cash_flow', [
-            'ticker', 'period_type', 'period_index', 'period_date',
-            'operating_cash_flow', 'investing_cash_flow', 'financing_cash_flow'
-        ])
+        self._validate_columns(
+            "cash_flow",
+            [
+                "ticker",
+                "period_type",
+                "period_index",
+                "period_date",
+                "operating_cash_flow",
+                "investing_cash_flow",
+                "financing_cash_flow",
+            ],
+        )
 
     def test_09_foreign_key_integrity(self):
         """Verify foreign key integrity across all tables"""
         self.cursor.execute("SELECT ticker FROM companies")
         valid_tickers = set(row[0] for row in self.cursor.fetchall())
 
-        child_tables = [t for t in self.expected_tables if t != 'companies']
+        child_tables = [t for t in self.expected_tables if t != "companies"]
         for table in child_tables:
             self.cursor.execute(f"SELECT DISTINCT ticker FROM {table}")
             table_tickers = set(row[0] for row in self.cursor.fetchall())
             invalid_tickers = table_tickers - valid_tickers
-            self.assertEqual(len(invalid_tickers), 0,
-                             f"{table} has invalid tickers: {invalid_tickers}")
+            self.assertEqual(
+                len(invalid_tickers),
+                0,
+                f"{table} has invalid tickers: {invalid_tickers}",
+            )
 
     def test_10_no_duplicate_tickers_simple_tables(self):
         """Verify no duplicate tickers in simple tables"""
@@ -168,8 +220,9 @@ class _DatabaseTestMixin:
                 HAVING COUNT(*) > 1
             """)
             duplicates = self.cursor.fetchall()
-            self.assertEqual(len(duplicates), 0,
-                             f"{table} has duplicate tickers: {duplicates}")
+            self.assertEqual(
+                len(duplicates), 0, f"{table} has duplicate tickers: {duplicates}"
+            )
 
     def test_11_no_duplicate_period_combos(self):
         """Verify no duplicate period combinations in financial tables"""
@@ -181,38 +234,51 @@ class _DatabaseTestMixin:
                 HAVING COUNT(*) > 1
             """)
             duplicates = self.cursor.fetchall()
-            self.assertEqual(len(duplicates), 0,
-                             f"{table} has duplicate period combinations")
+            self.assertEqual(
+                len(duplicates), 0, f"{table} has duplicate period combinations"
+            )
 
     def test_12_valid_period_types(self):
         """Verify period_type values are valid"""
-        valid_types = {'annual', 'quarterly', 'ttm'}
+        valid_types = {"annual", "quarterly", "ttm"}
         for table in self.financial_tables:
             self.cursor.execute(f"SELECT DISTINCT period_type FROM {table}")
-            actual_types = set(row[0] for row in self.cursor.fetchall() if row[0] is not None)
+            actual_types = set(
+                row[0] for row in self.cursor.fetchall() if row[0] is not None
+            )
             invalid_types = actual_types - valid_types
-            self.assertEqual(len(invalid_types), 0,
-                             f"{table} has invalid period_types: {invalid_types}")
+            self.assertEqual(
+                len(invalid_types),
+                0,
+                f"{table} has invalid period_types: {invalid_types}",
+            )
 
     def test_13_period_date_not_null(self):
         """Verify period_date is not null in financial statements"""
         for table in self.financial_tables:
-            self.cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE period_date IS NULL")
+            self.cursor.execute(
+                f"SELECT COUNT(*) FROM {table} WHERE period_date IS NULL"
+            )
             null_count = self.cursor.fetchone()[0]
-            self.assertEqual(null_count, 0, f"{table} has {null_count} null period_dates")
+            self.assertEqual(
+                null_count, 0, f"{table} has {null_count} null period_dates"
+            )
 
     def test_14_non_null_financial_data(self):
         """Verify some non-null values for key financial columns"""
         checks = [
-            ('balance_sheet', 'total_assets'),
-            ('income_statement', 'total_revenue'),
-            ('cash_flow', 'operating_cash_flow')
+            ("balance_sheet", "total_assets"),
+            ("income_statement", "total_revenue"),
+            ("cash_flow", "operating_cash_flow"),
         ]
         for table, column in checks:
-            self.cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE {column} IS NOT NULL")
+            self.cursor.execute(
+                f"SELECT COUNT(*) FROM {table} WHERE {column} IS NOT NULL"
+            )
             non_null_count = self.cursor.fetchone()[0]
-            self.assertGreater(non_null_count, 0,
-                               f"{table}.{column} has no non-null values")
+            self.assertGreater(
+                non_null_count, 0, f"{table}.{column} has no non-null values"
+            )
 
     def test_15_index_existence(self):
         """Verify indexes exist on financial statement tables"""
@@ -223,47 +289,63 @@ class _DatabaseTestMixin:
                     WHERE type='index' AND tbl_name='{table}'
                 """)
                 indexes = [row[0] for row in self.cursor.fetchall()]
-                custom_indexes = [idx for idx in indexes if not idx.startswith('sqlite_autoindex_')]
+                custom_indexes = [
+                    idx for idx in indexes if not idx.startswith("sqlite_autoindex_")
+                ]
             else:
-                self.cursor.execute("""
+                self.cursor.execute(
+                    """
                     SELECT indexname FROM pg_indexes
                     WHERE tablename = %s AND schemaname = 'public'
-                """, (table,))
+                """,
+                    (table,),
+                )
                 custom_indexes = [row[0] for row in self.cursor.fetchall()]
             # Just verify at least one index exists (not a hard failure for SQLite)
             self.assertGreaterEqual(len(custom_indexes), 0)
 
     def test_16_saudi_aramco_exists(self):
         """Verify Saudi Aramco (2222.SR) exists"""
-        self.cursor.execute("SELECT ticker, short_name, sector FROM companies WHERE ticker = '2222.SR'")
+        self.cursor.execute(
+            "SELECT ticker, short_name, sector FROM companies WHERE ticker = '2222.SR'"
+        )
         result = self.cursor.fetchone()
         self.assertIsNotNone(result, "Saudi Aramco (2222.SR) should exist")
 
     def test_17_positive_market_caps(self):
         """Verify market cap values are positive where present"""
-        self.cursor.execute("SELECT COUNT(*) FROM market_data WHERE market_cap IS NOT NULL AND market_cap <= 0")
+        self.cursor.execute(
+            "SELECT COUNT(*) FROM market_data WHERE market_cap IS NOT NULL AND market_cap <= 0"
+        )
         negative_count = self.cursor.fetchone()[0]
         self.assertEqual(negative_count, 0, "All market caps should be positive")
 
     def test_18_valid_date_formats(self):
         """Verify dates are in valid format (YYYY-MM-DD)"""
         for table in self.financial_tables:
-            self.cursor.execute(f"SELECT period_date FROM {table} WHERE period_date IS NOT NULL LIMIT 100")
+            self.cursor.execute(
+                f"SELECT period_date FROM {table} WHERE period_date IS NOT NULL LIMIT 100"
+            )
             dates = [row[0] for row in self.cursor.fetchall()]
             invalid_dates = []
             for date_val in dates:
                 date_str = str(date_val) if not isinstance(date_val, str) else date_val
                 try:
-                    datetime.strptime(date_str[:10], '%Y-%m-%d')
+                    datetime.strptime(date_str[:10], "%Y-%m-%d")
                 except ValueError:
                     invalid_dates.append(date_str)
-            self.assertEqual(len(invalid_dates), 0,
-                             f"{table} has invalid date formats: {invalid_dates[:5]}")
+            self.assertEqual(
+                len(invalid_dates),
+                0,
+                f"{table} has invalid date formats: {invalid_dates[:5]}",
+            )
 
     def test_19_cross_table_consistency(self):
         """Companies with market_data should have financial statements"""
-        self.cursor.execute("SELECT COUNT(DISTINCT ticker) FROM market_data WHERE market_cap IS NOT NULL")
-        companies_with_market_data = self.cursor.fetchone()[0]
+        self.cursor.execute(
+            "SELECT COUNT(DISTINCT ticker) FROM market_data WHERE market_cap IS NOT NULL"
+        )
+        _companies_with_market_data = self.cursor.fetchone()[0]
 
         self.cursor.execute("""
             SELECT COUNT(DISTINCT m.ticker)
@@ -272,7 +354,9 @@ class _DatabaseTestMixin:
             AND EXISTS (SELECT 1 FROM balance_sheet b WHERE b.ticker = m.ticker)
         """)
         with_financials = self.cursor.fetchone()[0]
-        self.assertGreater(with_financials, 0, "Some companies should have financial statements")
+        self.assertGreater(
+            with_financials, 0, "Some companies should have financial statements"
+        )
 
     def test_20_sector_distribution(self):
         """Verify sector distribution shows known Saudi sectors"""
@@ -332,7 +416,9 @@ def run_tests():
     print("\n" + "=" * 80)
     print("COMPREHENSIVE DATABASE INTEGRITY TEST SUITE")
     print(f"SQLite: {_SQLITE_PATH}")
-    print(f"PostgreSQL: {'available' if _pg_available() else 'not available (skipped)'}")
+    print(
+        f"PostgreSQL: {'available' if _pg_available() else 'not available (skipped)'}"
+    )
     print("=" * 80)
 
     loader = unittest.TestLoader()
@@ -355,5 +441,5 @@ def run_tests():
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_tests()

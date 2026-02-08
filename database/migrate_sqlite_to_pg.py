@@ -79,6 +79,7 @@ DEFAULT_BATCH_SIZE = 250
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def get_sqlite_connection(db_path: Path) -> sqlite3.Connection:
     """Open a read-only SQLite connection."""
     if not db_path.exists():
@@ -136,6 +137,7 @@ def extract_entities(sqlite_conn: sqlite3.Connection) -> list:
 # ---------------------------------------------------------------------------
 # Migration logic
 # ---------------------------------------------------------------------------
+
 
 def migrate_table(
     sqlite_conn: sqlite3.Connection,
@@ -278,7 +280,9 @@ def apply_schema(pg_conn, dry_run: bool) -> None:
     schema_sql = SCHEMA_SQL_PATH.read_text(encoding="utf-8")
 
     if dry_run:
-        print(f"  Schema: {len(schema_sql)} characters from {SCHEMA_SQL_PATH.name} (dry run)")
+        print(
+            f"  Schema: {len(schema_sql)} characters from {SCHEMA_SQL_PATH.name} (dry run)"
+        )
         return
 
     pg_cur = pg_conn.cursor()
@@ -290,6 +294,7 @@ def apply_schema(pg_conn, dry_run: bool) -> None:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -318,7 +323,9 @@ def parse_args():
         help=f"Path to SQLite database (default: {SQLITE_DB_PATH})",
     )
     parser.add_argument("--pg-host", default=os.environ.get("PG_HOST", "localhost"))
-    parser.add_argument("--pg-port", type=int, default=int(os.environ.get("PG_PORT", "5432")))
+    parser.add_argument(
+        "--pg-port", type=int, default=int(os.environ.get("PG_PORT", "5432"))
+    )
     parser.add_argument("--pg-dbname", default=os.environ.get("PG_DBNAME", "radai"))
     parser.add_argument("--pg-user", default=os.environ.get("PG_USER", "radai"))
     parser.add_argument("--pg-password", default=os.environ.get("PG_PASSWORD", ""))
@@ -335,7 +342,9 @@ def main():
     if args.dry_run:
         print("MODE: DRY RUN (no changes will be made)")
     print(f"SQLite source: {args.sqlite_path}")
-    print(f"PostgreSQL target: {args.pg_user}@{args.pg_host}:{args.pg_port}/{args.pg_dbname}")
+    print(
+        f"PostgreSQL target: {args.pg_user}@{args.pg_host}:{args.pg_port}/{args.pg_dbname}"
+    )
     print(f"Batch size: {args.batch_size}")
     print()
 
@@ -346,7 +355,9 @@ def main():
     pg_conn = None
     if not args.dry_run:
         if psycopg2 is None:
-            print("ERROR: psycopg2 is not installed. Install with: pip install psycopg2-binary")
+            print(
+                "ERROR: psycopg2 is not installed. Install with: pip install psycopg2-binary"
+            )
             sys.exit(1)
         try:
             pg_conn = psycopg2.connect(
@@ -375,7 +386,9 @@ def main():
         total_rows = 0
         table_counts = {}
         for table in TABLES_ORDERED:
-            count = migrate_table(sqlite_conn, pg_conn, table, args.batch_size, args.dry_run)
+            count = migrate_table(
+                sqlite_conn, pg_conn, table, args.batch_size, args.dry_run
+            )
             table_counts[table] = count
             total_rows += count
         print()
@@ -385,7 +398,9 @@ def main():
         sector_map = populate_sectors(sqlite_conn, pg_conn, args.dry_run)
 
         # Step 4: Populate entities from companies
-        entities_count = populate_entities(sqlite_conn, pg_conn, sector_map, args.dry_run)
+        entities_count = populate_entities(
+            sqlite_conn, pg_conn, sector_map, args.dry_run
+        )
         print()
 
         # Summary

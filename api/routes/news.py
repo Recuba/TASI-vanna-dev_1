@@ -22,8 +22,11 @@ NewsArticleResponse = NewsResponse
 
 class NewsListResponse(BaseModel):
     """Legacy response model kept for backward compatibility."""
+
     items: List[NewsResponse]
     count: int
+
+
 from auth.dependencies import get_current_user
 from services.news_service import NewsAggregationService, NewsArticle
 
