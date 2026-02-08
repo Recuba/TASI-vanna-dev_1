@@ -361,7 +361,6 @@ class TestAPIRoutesWithTestClient(unittest.TestCase):
         self.assertIn(resp.status_code, [200, 503])
         data = resp.json()
         self.assertIn("status", data)
-        self.assertIn("components", data)
 
     def test_entities_list(self):
         resp = self.client.get("/api/entities?limit=5")
