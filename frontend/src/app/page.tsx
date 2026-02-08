@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useSectors, useMarketData } from '@/lib/hooks/use-api';
+import { MiniSparkline } from '@/components/charts';
+import { useMiniChartData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 
@@ -43,6 +45,16 @@ const sectorColors = [
   'bg-accent-red', 'bg-gold-dark', 'bg-accent-blue', 'bg-accent-green',
   'bg-accent-warning', 'bg-accent-red', 'bg-gold',
 ];
+
+// ---------------------------------------------------------------------------
+// Mini sparkline wrapper -- hooks cannot be called inside a map callback
+// ---------------------------------------------------------------------------
+
+function StockSparkline({ ticker }: { ticker: string }) {
+  const { data } = useMiniChartData(ticker);
+  if (!data || data.length === 0) return null;
+  return <MiniSparkline data={data} width={60} height={28} />;
+}
 
 // ---------------------------------------------------------------------------
 // Page
@@ -166,6 +178,9 @@ export default function Home() {
                         {stock.short_name || stock.ticker}
                       </p>
                       <p className="text-xs text-[var(--text-muted)]">{stock.ticker}</p>
+                    </div>
+                    <div className="flex-shrink-0 mx-2">
+                      <StockSparkline ticker={stock.ticker} />
                     </div>
                     <div className="text-end flex-shrink-0">
                       <p className="text-sm font-bold text-[var(--text-primary)]">

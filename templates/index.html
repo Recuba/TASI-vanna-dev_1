@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <!-- Vanna Chat Web Component (must be type="module" for ES module imports) -->
-    <script type="module" src="https://img.vanna.ai/vanna-components.js"></script>
+    <!-- Marked.js for markdown rendering in chat responses -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js" async></script>
 
     <style>
         /* ===================================================================
@@ -422,13 +422,233 @@
             overflow: hidden;
             animation: fadeInUp 0.6s ease-out 0.3s both;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
-        vanna-chat {
-            display: block;
-            width: 100%;
-            height: 100%;
+        /* ===================================================================
+           NATIVE CHAT UI
+           =================================================================== */
+        .raid-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
         }
+
+        .raid-message {
+            display: flex;
+            gap: 10px;
+            max-width: 90%;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .raid-message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .raid-message.assistant {
+            align-self: flex-start;
+        }
+
+        .raid-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .raid-message.assistant .raid-avatar {
+            background: var(--gold-gradient);
+            color: var(--bg-dark);
+        }
+
+        .raid-message.user .raid-avatar {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+        }
+
+        .raid-bubble {
+            border-radius: var(--radius-md);
+            padding: 10px var(--space-md);
+            line-height: 1.6;
+            font-size: 14px;
+            color: var(--text-primary);
+            overflow-wrap: break-word;
+            word-break: break-word;
+            min-width: 0;
+        }
+
+        .raid-message.assistant .raid-bubble {
+            background: var(--bg-card-hover);
+        }
+
+        .raid-message.user .raid-bubble {
+            background: rgba(212, 168, 75, 0.12);
+            border: 1px solid rgba(212, 168, 75, 0.25);
+        }
+
+        /* Markdown content inside bubbles */
+        .raid-bubble p { margin: 0 0 8px; }
+        .raid-bubble p:last-child { margin-bottom: 0; }
+        .raid-bubble h1, .raid-bubble h2, .raid-bubble h3, .raid-bubble h4 {
+            color: var(--gold-primary);
+            margin: 12px 0 6px;
+            font-weight: 700;
+        }
+        .raid-bubble h4 { font-size: 15px; }
+        .raid-bubble h3 { font-size: 16px; }
+        .raid-bubble h2 { font-size: 18px; }
+        .raid-bubble h1 { font-size: 20px; }
+        .raid-bubble ul, .raid-bubble ol {
+            padding-left: 20px;
+            margin: 6px 0;
+        }
+        .raid-bubble li { margin: 3px 0; }
+        .raid-bubble strong { color: var(--text-primary); }
+        .raid-bubble a {
+            color: var(--gold-primary);
+            text-decoration: underline;
+        }
+
+        .raid-bubble pre {
+            background: #111111;
+            border: 1px solid rgba(212, 168, 75, 0.12);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            overflow-x: auto;
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .raid-bubble code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .raid-bubble :not(pre) > code {
+            background: rgba(212, 168, 75, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--gold-light);
+            font-size: 0.9em;
+        }
+
+        .raid-bubble table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+
+        .raid-bubble th {
+            background: rgba(212, 168, 75, 0.15);
+            color: var(--gold-primary);
+            font-weight: 600;
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 2px solid rgba(212, 168, 75, 0.3);
+        }
+
+        .raid-bubble td {
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .raid-bubble tr:hover td {
+            background: rgba(212, 168, 75, 0.04);
+        }
+
+        .raid-chart-wrap {
+            margin: 12px 0;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            min-height: 350px;
+        }
+
+        .raid-typing {
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .raid-typing span {
+            width: 8px;
+            height: 8px;
+            background: var(--gold-primary);
+            border-radius: 50%;
+            animation: dotBounce 1.4s ease-in-out infinite both;
+        }
+        .raid-typing span:nth-child(1) { animation-delay: -0.32s; }
+        .raid-typing span:nth-child(2) { animation-delay: -0.16s; }
+        .raid-typing span:nth-child(3) { animation-delay: 0s; }
+
+        .raid-input-area {
+            display: flex;
+            align-items: flex-end;
+            gap: var(--space-sm);
+            padding: 10px var(--space-md);
+            border-top: 1px solid var(--gold-border);
+            background: var(--bg-card);
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+        }
+
+        #raid-input {
+            flex: 1;
+            background: var(--bg-input);
+            border: 1px solid var(--gold-border);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            color: var(--text-primary);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            min-height: 42px;
+            max-height: 120px;
+            outline: none;
+            transition: border-color var(--transition-base);
+        }
+
+        #raid-input:focus {
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 0 2px rgba(212, 168, 75, 0.15);
+        }
+
+        #raid-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .raid-send-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            background: var(--gold-gradient);
+            border: none;
+            color: var(--bg-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: opacity var(--transition-base), transform 0.1s;
+        }
+
+        .raid-send-btn:hover { opacity: 0.9; }
+        .raid-send-btn:active { transform: scale(0.95); }
+        .raid-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .raid-send-btn svg { width: 18px; height: 18px; }
 
         /* ===================================================================
            PLOTLY DARK THEME - Comprehensive Overrides
@@ -807,16 +1027,26 @@
 
             <div id="raid-status" aria-live="polite" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);"></div>
 
-            <!-- Chat Component -->
-            <div class="chat-container">
-                <vanna-chat
-                    api-base=""
-                    sse-endpoint="/api/vanna/v2/chat_sse"
-                    ws-endpoint="/api/vanna/v2/chat_websocket"
-                    poll-endpoint="/api/vanna/v2/chat_poll"
-                    theme="dark"
-                    placeholder="Ask about Saudi stocks...">
-                </vanna-chat>
+            <!-- Chat Component (native, no CDN dependency) -->
+            <div class="chat-container" id="raid-chat">
+                <div class="raid-messages" id="raid-messages">
+                    <div class="raid-message assistant">
+                        <div class="raid-avatar" aria-hidden="true">RA</div>
+                        <div class="raid-bubble">
+                            <p>Welcome to <strong>Ra'd AI</strong>. I can help you analyze Saudi stock market data.</p>
+                            <p style="font-size:13px;color:var(--text-muted);margin-top:4px;">Click a suggestion above or type your question below.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="raid-input-area">
+                    <textarea id="raid-input" placeholder="Ask about Saudi stocks..." rows="1" aria-label="Chat message input"></textarea>
+                    <button id="raid-send" class="raid-send-btn" aria-label="Send message">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <div id="raid-onboarding-overlay"></div>
@@ -840,112 +1070,416 @@
     </footer>
 
     <!-- ================================================================
-         JAVASCRIPT
+         JAVASCRIPT - Plotly for charts
+         ================================================================ -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" async></script>
+
+    <!-- ================================================================
+         JAVASCRIPT - Native Chat Engine
          ================================================================ -->
     <script>
-        /**
-         * Find the input element inside the vanna-chat shadow DOM.
-         * Tries multiple selectors since the component structure may vary.
-         */
-        function findChatInput() {
-            var chat = document.querySelector('vanna-chat');
-            if (!chat || !chat.shadowRoot) return null;
-            // Try common selectors
-            var selectors = [
-                'textarea',
-                'input[type="text"]',
-                'input:not([type="hidden"])',
-                '[contenteditable="true"]',
-                '.chat-input textarea',
-                '.chat-input input',
-                '.message-input textarea',
-                '.message-input input'
-            ];
-            for (var i = 0; i < selectors.length; i++) {
-                var el = chat.shadowRoot.querySelector(selectors[i]);
-                if (el) return el;
+    (function() {
+        'use strict';
+
+        var SSE_URL = '/api/vanna/v2/chat_sse';
+        var conversationId = null;
+        var isStreaming = false;
+        var componentElements = {};
+
+        // DOM refs
+        var messagesEl = document.getElementById('raid-messages');
+        var inputEl = document.getElementById('raid-input');
+        var sendBtn = document.getElementById('raid-send');
+
+        // Configure marked.js when available
+        function setupMarked() {
+            if (window.marked) {
+                marked.setOptions({ breaks: true, gfm: true });
             }
-            return null;
+        }
+        setupMarked();
+
+        // ---- Utility ----
+        function esc(text) {
+            var d = document.createElement('div');
+            d.appendChild(document.createTextNode(text));
+            return d.innerHTML;
         }
 
-        /**
-         * Find the send/submit button inside the vanna-chat shadow DOM.
-         */
-        function findSendButton() {
-            var chat = document.querySelector('vanna-chat');
-            if (!chat || !chat.shadowRoot) return null;
-            var selectors = [
-                'button[type="submit"]',
-                'form button',
-                'button.send',
-                'button[aria-label*="send" i]',
-                'button[aria-label*="submit" i]'
-            ];
-            for (var i = 0; i < selectors.length; i++) {
-                var el = chat.shadowRoot.querySelector(selectors[i]);
-                if (el) return el;
+        function renderMd(text) {
+            if (window.marked) {
+                setupMarked();
+                return marked.parse(text);
             }
-            // Fallback: find any button near the input
-            var allButtons = chat.shadowRoot.querySelectorAll('button');
-            if (allButtons.length > 0) return allButtons[allButtons.length - 1];
-            return null;
+            // Minimal fallback: escape and convert line breaks
+            return esc(text).replace(/\n/g, '<br>');
         }
 
-        /**
-         * Inject a question into the vanna-chat input and submit it.
-         */
-        function askQuestion(query) {
-            var input = findChatInput();
-            if (!input) {
-                // Component might not be ready yet, scroll to chat area
-                var container = document.querySelector('.chat-container');
-                if (container) container.scrollIntoView({ behavior: 'smooth' });
-                return;
-            }
+        function scrollBottom() {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
 
-            // Set value using native setter to bypass framework interception
-            var proto = input.tagName === 'TEXTAREA'
-                ? window.HTMLTextAreaElement.prototype
-                : window.HTMLInputElement.prototype;
-            var setter = Object.getOwnPropertyDescriptor(proto, 'value');
-            if (setter && setter.set) {
-                setter.set.call(input, query);
+        // ---- Auto-resize textarea ----
+        inputEl.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // ---- Send ----
+        function sendMessage(text) {
+            if (!text || isStreaming) return;
+            inputEl.value = '';
+            inputEl.style.height = 'auto';
+            addUserMsg(text);
+            streamSSE(text);
+        }
+
+        sendBtn.addEventListener('click', function() {
+            sendMessage(inputEl.value.trim());
+        });
+
+        inputEl.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(this.value.trim());
+            }
+        });
+
+        // ---- User message ----
+        function addUserMsg(text) {
+            var el = document.createElement('div');
+            el.className = 'raid-message user';
+            el.innerHTML =
+                '<div class="raid-avatar" aria-hidden="true">' +
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                        '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' +
+                    '</svg>' +
+                '</div>' +
+                '<div class="raid-bubble">' + esc(text) + '</div>';
+            messagesEl.appendChild(el);
+            scrollBottom();
+        }
+
+        // ---- Assistant message container ----
+        function createAssistantMsg() {
+            var el = document.createElement('div');
+            el.className = 'raid-message assistant';
+            el.innerHTML =
+                '<div class="raid-avatar" aria-hidden="true">RA</div>' +
+                '<div class="raid-bubble">' +
+                    '<div class="raid-typing"><span></span><span></span><span></span></div>' +
+                '</div>';
+            messagesEl.appendChild(el);
+            scrollBottom();
+            return el;
+        }
+
+        // ---- SSE streaming ----
+        function streamSSE(message) {
+            isStreaming = true;
+            sendBtn.disabled = true;
+
+            var msgEl = createAssistantMsg();
+            var bubbleEl = msgEl.querySelector('.raid-bubble');
+            var typingEl = bubbleEl.querySelector('.raid-typing');
+            var gotContent = false;
+
+            var body = { message: message };
+            if (conversationId) body.conversation_id = conversationId;
+
+            fetch(SSE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(function(response) {
+                if (!response.ok) throw new Error('Server returned ' + response.status);
+
+                var reader = response.body.getReader();
+                var decoder = new TextDecoder();
+                var buffer = '';
+
+                function pump() {
+                    return reader.read().then(function(result) {
+                        if (result.done) {
+                            // Flush remaining buffer
+                            if (buffer.trim()) processLine(buffer);
+                            finish();
+                            return;
+                        }
+
+                        buffer += decoder.decode(result.value, { stream: true });
+                        var lines = buffer.split('\n');
+                        buffer = lines.pop();
+
+                        for (var i = 0; i < lines.length; i++) {
+                            processLine(lines[i]);
+                        }
+
+                        return pump();
+                    });
+                }
+
+                function processLine(line) {
+                    line = line.trim();
+                    if (!line.startsWith('data: ')) return;
+                    var payload = line.substring(6);
+                    if (payload === '[DONE]') return;
+
+                    try {
+                        var chunk = JSON.parse(payload);
+                        if (chunk.conversation_id) conversationId = chunk.conversation_id;
+
+                        if (!gotContent && typingEl && typingEl.parentNode) {
+                            typingEl.parentNode.removeChild(typingEl);
+                            gotContent = true;
+                        }
+
+                        handleChunk(chunk, bubbleEl);
+                    } catch (e) { /* skip unparseable */ }
+                }
+
+                function finish() {
+                    if (!gotContent && typingEl && typingEl.parentNode) {
+                        typingEl.parentNode.removeChild(typingEl);
+                        bubbleEl.innerHTML = '<p style="color:var(--text-muted);">No response received.</p>';
+                    }
+                    isStreaming = false;
+                    sendBtn.disabled = false;
+                    inputEl.focus();
+                    scrollBottom();
+                }
+
+                return pump();
+
+            }).catch(function(err) {
+                if (typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
+                bubbleEl.innerHTML =
+                    '<p style="color:var(--accent-red);">Error: ' + esc(err.message) + '</p>' +
+                    '<p style="font-size:12px;color:var(--text-muted);">Please check the server connection and try again.</p>';
+                isStreaming = false;
+                sendBtn.disabled = false;
+                inputEl.focus();
+            });
+        }
+
+        // ---- Chunk handler ----
+        function handleChunk(chunk, bubbleEl) {
+            var rich = chunk.rich;
+            if (!rich || rich.visible === false) return;
+
+            var type = rich.type;
+            var data = rich.data || {};
+
+            switch (type) {
+                case 'text':
+                    renderText(rich, data, bubbleEl);
+                    break;
+                case 'chart':
+                    renderChart(rich, data, bubbleEl);
+                    break;
+                case 'artifact':
+                    renderArtifact(rich, data, bubbleEl);
+                    break;
+                case 'dataframe':
+                    renderDataframe(rich, data, bubbleEl);
+                    break;
+                case 'notification':
+                    renderNotification(rich, data, bubbleEl);
+                    break;
+                case 'status_indicator':
+                case 'progress_display':
+                    renderStatus(rich, data, bubbleEl);
+                    break;
+                default:
+                    // Try to show any text content
+                    if (data.content) renderText(rich, data, bubbleEl);
+                    else if (data.message) { data.content = data.message; renderText(rich, data, bubbleEl); }
+                    break;
+            }
+            scrollBottom();
+        }
+
+        // ---- Text component ----
+        function renderText(rich, data, bubbleEl) {
+            var content = data.content || '';
+            if (!content) return;
+
+            var existing = componentElements[rich.id];
+            var html;
+
+            if (data.code_language) {
+                html = '<pre><code class="language-' + esc(data.code_language) + '">' + esc(content) + '</code></pre>';
             } else {
-                input.value = query;
+                html = renderMd(content);
             }
 
-            // Dispatch events so the component recognizes the change
-            input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-            input.focus();
+            if (existing && (rich.lifecycle === 'update' || rich.lifecycle === 'replace')) {
+                existing.innerHTML = html;
+            } else {
+                var el = document.createElement('div');
+                el.className = 'raid-text-block';
+                el.innerHTML = html;
+                bubbleEl.appendChild(el);
+                componentElements[rich.id] = el;
+            }
+        }
 
-            // Try to auto-submit after a short delay
-            setTimeout(function() {
-                // Try submitting the form if there is one
-                var chat = document.querySelector('vanna-chat');
-                if (chat && chat.shadowRoot) {
-                    var form = chat.shadowRoot.querySelector('form');
-                    if (form) {
-                        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                        return;
+        // ---- Chart component (Plotly) ----
+        function renderChart(rich, data, bubbleEl) {
+            var wrap = document.createElement('div');
+            wrap.className = 'raid-chart-wrap';
+            var plotId = 'chart_' + rich.id.replace(/[^a-zA-Z0-9_-]/g, '');
+            wrap.id = plotId;
+            bubbleEl.appendChild(wrap);
+
+            function drawChart() {
+                if (!window.Plotly || !data.data) return false;
+                var traces = data.data;
+                var layout = Object.assign({
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    font: { family: 'Tajawal, sans-serif', color: '#E0E0E0' },
+                    margin: { t: 40, b: 60, l: 60, r: 20 }
+                }, data.layout || {});
+                Plotly.newPlot(plotId, traces, layout, {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false
+                });
+                return true;
+            }
+
+            if (!drawChart()) {
+                wrap.innerHTML = '<p style="color:var(--text-muted);padding:20px;text-align:center;">Loading chart...</p>';
+                var tries = 0;
+                var iv = setInterval(function() {
+                    if (drawChart() || ++tries > 40) {
+                        clearInterval(iv);
+                        if (tries > 40) wrap.innerHTML = '<p style="color:var(--accent-red);padding:20px;text-align:center;">Chart library failed to load.</p>';
+                    }
+                }, 500);
+            }
+        }
+
+        // ---- Artifact component (HTML/SVG) ----
+        function renderArtifact(rich, data, bubbleEl) {
+            var el = document.createElement('div');
+            el.className = 'raid-artifact';
+
+            if (data.title) {
+                var t = document.createElement('p');
+                t.style.cssText = 'font-size:12px;color:var(--text-muted);margin-bottom:4px;';
+                t.textContent = data.title;
+                el.appendChild(t);
+            }
+
+            if (data.artifact_type === 'html' || data.artifact_type === 'svg' || data.artifact_type === 'visualization') {
+                var iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width:100%;min-height:400px;border:1px solid var(--gold-border);border-radius:8px;background:#fff;';
+                iframe.sandbox = 'allow-scripts';
+                iframe.srcdoc = data.content || '';
+                el.appendChild(iframe);
+            } else {
+                el.innerHTML += '<pre><code>' + esc(data.content || '') + '</code></pre>';
+            }
+
+            bubbleEl.appendChild(el);
+            componentElements[rich.id] = el;
+        }
+
+        // ---- DataFrame component ----
+        function renderDataframe(rich, data, bubbleEl) {
+            var columns = data.columns || [];
+            var rows = data.data || data.rows || [];
+            if (!columns.length && !rows.length) return;
+
+            var html = '<div style="overflow-x:auto;"><table>';
+            if (columns.length) {
+                html += '<thead><tr>';
+                for (var c = 0; c < columns.length; c++) html += '<th>' + esc(String(columns[c])) + '</th>';
+                html += '</tr></thead>';
+            }
+            html += '<tbody>';
+            for (var r = 0; r < rows.length; r++) {
+                html += '<tr>';
+                var row = rows[r];
+                if (Array.isArray(row)) {
+                    for (var j = 0; j < row.length; j++) html += '<td>' + esc(String(row[j] != null ? row[j] : '')) + '</td>';
+                } else if (typeof row === 'object') {
+                    for (var k = 0; k < columns.length; k++) {
+                        var val = row[columns[k]];
+                        html += '<td>' + esc(String(val != null ? val : '')) + '</td>';
                     }
                 }
-                // Fallback: simulate Enter key
-                input.dispatchEvent(new KeyboardEvent('keydown', {
-                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
-                    bubbles: true, composed: true
-                }));
-                input.dispatchEvent(new KeyboardEvent('keypress', {
-                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
-                    bubbles: true, composed: true
-                }));
-                input.dispatchEvent(new KeyboardEvent('keyup', {
-                    key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
-                    bubbles: true, composed: true
-                }));
-            }, 150);
+                html += '</tr>';
+            }
+            html += '</tbody></table></div>';
 
-            // Collapse suggestions
+            var el = document.createElement('div');
+            el.className = 'raid-dataframe';
+            el.innerHTML = html;
+            bubbleEl.appendChild(el);
+            componentElements[rich.id] = el;
+        }
+
+        // ---- Notification component ----
+        function renderNotification(rich, data, bubbleEl) {
+            var colors = { error: '#FF6B6B', warning: '#FFA726', success: '#4CAF50', info: '#4A9FFF' };
+            var level = data.level || 'info';
+            var color = colors[level] || colors.info;
+            var el = document.createElement('div');
+            el.style.cssText = 'padding:8px 12px;border-radius:8px;border-left:3px solid ' + color + ';background:rgba(0,0,0,0.2);margin:8px 0;font-size:13px;';
+            el.innerHTML = '<span style="color:' + color + ';font-weight:600;">' + esc(level.charAt(0).toUpperCase() + level.slice(1)) + ':</span> ' + esc(data.message || '');
+            bubbleEl.appendChild(el);
+            componentElements[rich.id] = el;
+        }
+
+        // ---- Status indicator ----
+        function renderStatus(rich, data, bubbleEl) {
+            var text = data.label || data.status || data.message || '';
+            if (!text) return;
+            var sid = 'st_' + rich.id;
+            var existing = document.getElementById(sid);
+            if (existing) {
+                existing.textContent = text;
+            } else {
+                var el = document.createElement('div');
+                el.id = sid;
+                el.style.cssText = 'font-size:12px;color:var(--text-muted);font-style:italic;padding:2px 0;';
+                el.textContent = text;
+                bubbleEl.appendChild(el);
+            }
+        }
+
+        // ---- Public API (used by suggestion chips and raid-features.js) ----
+
+        /** Send a question from suggestion chips or external callers */
+        window.raidAskQuestion = function(query) {
+            if (!query || isStreaming) return;
+            sendMessage(query);
+            collapseSuggestions();
+        };
+
+        /** Focus the chat input (for keyboard shortcuts) */
+        window.raidFocusInput = function() {
+            if (inputEl) inputEl.focus();
+        };
+
+        /** Reset the chat (for "New Chat" button) */
+        window.raidResetChat = function() {
+            conversationId = null;
+            componentElements = {};
+            messagesEl.innerHTML =
+                '<div class="raid-message assistant">' +
+                    '<div class="raid-avatar" aria-hidden="true">RA</div>' +
+                    '<div class="raid-bubble">' +
+                        '<p>Welcome to <strong>Ra\'d AI</strong>. I can help you analyze Saudi stock market data.</p>' +
+                        '<p style="font-size:13px;color:var(--text-muted);margin-top:4px;">Click a suggestion above or type your question below.</p>' +
+                    '</div>' +
+                '</div>';
+        };
+
+        function collapseSuggestions() {
             var section = document.querySelector('.suggestions-section');
             if (section) {
                 section.style.transition = 'opacity 0.3s ease, max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease';
@@ -954,7 +1488,6 @@
                 section.style.overflow = 'hidden';
                 section.style.margin = '0';
                 section.style.padding = '0';
-                // Fix keyboard trap: make collapsed chips non-focusable
                 section.setAttribute('aria-hidden', 'true');
                 document.querySelectorAll('.suggestion-chip').forEach(function(chip) {
                     chip.setAttribute('tabindex', '-1');
@@ -962,50 +1495,34 @@
             }
         }
 
-        /**
-         * Set up chip click handlers and entrance animations.
-         */
-        document.addEventListener('DOMContentLoaded', function() {
-            // Bind chip clicks via data-query attribute
-            document.querySelectorAll('.suggestion-chip[data-query]').forEach(function(chip) {
-                chip.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var query = this.getAttribute('data-query');
-                    if (query) askQuestion(query);
-                });
+        // ---- Suggestion chip handlers ----
+        document.querySelectorAll('.suggestion-chip[data-query]').forEach(function(chip) {
+            chip.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var query = this.getAttribute('data-query');
+                if (query) window.raidAskQuestion(query);
             });
+        });
 
-            // Staggered entrance animation
-            var chips = document.querySelectorAll('.suggestion-chip');
-            chips.forEach(function(chip, index) {
-                chip.style.opacity = '0';
-                chip.style.transform = 'translateY(8px)';
-                chip.style.transitionDelay = (0.03 * index) + 's';
+        // Staggered entrance animation for chips
+        document.querySelectorAll('.suggestion-chip').forEach(function(chip, index) {
+            chip.style.opacity = '0';
+            chip.style.transform = 'translateY(8px)';
+            chip.style.transitionDelay = (0.03 * index) + 's';
+            requestAnimationFrame(function() {
                 requestAnimationFrame(function() {
-                    requestAnimationFrame(function() {
-                        chip.style.opacity = '1';
-                        chip.style.transform = 'translateY(0)';
-                    });
+                    chip.style.opacity = '1';
+                    chip.style.transform = 'translateY(0)';
                 });
             });
         });
-    </script>
 
-    <!-- Fallback if web component doesn't load -->
-    <script>
-        setTimeout(function() {
-            if (!customElements.get('vanna-chat')) {
-                var chatEl = document.querySelector('vanna-chat');
-                if (chatEl) {
-                    chatEl.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-family:Tajawal,sans-serif;padding:40px;text-align:center;">' +
-                        '<p style="font-size:18px;font-weight:700;color:var(--gold-primary);margin-bottom:12px;">Vanna Chat Component</p>' +
-                        '<p style="margin-bottom:8px;">Web component failed to load. Please check your connection.</p>' +
-                        '<p style="font-size:13px;color:var(--text-muted);">Loading from: https://img.vanna.ai/vanna-components.js</p>' +
-                        '</div>';
-                }
-            }
-        }, 5000);
+        // Announce to ARIA live region
+        var ariaStatus = document.getElementById('raid-status');
+        if (ariaStatus) ariaStatus.textContent = 'Chat ready. Type a question or click a suggestion.';
+
+    })();
     </script>
 
     <script src="/static/raid-features.js" defer></script>

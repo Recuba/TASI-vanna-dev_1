@@ -132,7 +132,30 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     newChatBtn.addEventListener('click', function () {
-        window.location.reload();
+        if (typeof window.raidResetChat === 'function') {
+            window.raidResetChat();
+            // Re-show suggestions if they were hidden
+            if (suggestionsSection) {
+                suggestionsSection.style.transition = 'opacity 0.3s ease, max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease';
+                suggestionsSection.style.opacity = '1';
+                suggestionsSection.style.maxHeight = '500px';
+                suggestionsSection.style.overflow = 'visible';
+                suggestionsSection.style.margin = '';
+                suggestionsSection.style.padding = '';
+                suggestionsSection.removeAttribute('aria-hidden');
+                document.querySelectorAll('.suggestion-chip').forEach(function(chip) {
+                    chip.removeAttribute('tabindex');
+                });
+            }
+            // Remove "Show Suggestions" button if it exists
+            if (showSuggestionsBtn && showSuggestionsBtn.parentNode) {
+                showSuggestionsBtn.parentNode.removeChild(showSuggestionsBtn);
+                showSuggestionsBtn = null;
+            }
+            try { sessionStorage.removeItem('raid-suggestions-visible'); } catch (e) { /* ignored */ }
+        } else {
+            window.location.reload();
+        }
     });
 
     // Insert buttons into .header-status (before status dot)
@@ -246,25 +269,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (modifier && e.key === 'k') {
             e.preventDefault();
             e.stopPropagation();
-            // Use the same findChatInput() defined in index.html
-            if (typeof findChatInput === 'function') {
-                var input = findChatInput();
-                if (input) {
-                    input.focus();
-                    return;
-                }
-            }
-            // Fallback: try to find input ourselves via Shadow DOM
-            var chat = document.querySelector('vanna-chat');
-            if (chat && chat.shadowRoot) {
-                var selectors = ['textarea', 'input[type="text"]', 'input:not([type="hidden"])'];
-                for (var i = 0; i < selectors.length; i++) {
-                    var el = chat.shadowRoot.querySelector(selectors[i]);
-                    if (el) {
-                        el.focus();
-                        return;
-                    }
-                }
+            // Focus the native chat input
+            if (typeof window.raidFocusInput === 'function') {
+                window.raidFocusInput();
+            } else {
+                var input = document.getElementById('raid-input');
+                if (input) input.focus();
             }
         }
     });
@@ -404,108 +414,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // =====================================================================
-    // 6. ENHANCED CDN FALLBACK
+    // 6. (REMOVED - CDN fallback no longer needed; native chat UI is used)
     // =====================================================================
-
-    // Show a loading spinner in the chat container while the component loads
-    var chatContainer = document.querySelector('.chat-container');
-    var vannaChat = document.querySelector('vanna-chat');
-    var cdnLoaded = customElements.get('vanna-chat') !== undefined;
-
-    if (!cdnLoaded && chatContainer) {
-        // Create spinner overlay (sits behind the vanna-chat element until it loads)
-        var spinner = document.createElement('div');
-        spinner.id = 'raid-cdn-spinner';
-        spinner.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;pointer-events:none;';
-        spinner.innerHTML =
-            '<div style="width:36px;height:36px;border:3px solid rgba(212,168,75,0.2);border-top-color:#D4A84B;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
-            '<p style="margin-top:12px;font-size:13px;color:var(--text-muted);font-family:Tajawal,sans-serif;">Loading chat component...</p>';
-
-        // Add spin keyframes if not present
-        if (!document.getElementById('raid-spin-keyframes')) {
-            var styleEl = document.createElement('style');
-            styleEl.id = 'raid-spin-keyframes';
-            styleEl.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
-            document.head.appendChild(styleEl);
-        }
-
-        // Ensure chat container is relatively positioned for the absolute spinner
-        chatContainer.style.position = 'relative';
-        chatContainer.appendChild(spinner);
-    }
-
-    // Progressive retry at 3s, 6s, 10s
-    var retryDelays = [3000, 6000, 10000];
-    var retryIndex = 0;
-
-    function checkCdnLoaded() {
-        if (customElements.get('vanna-chat')) {
-            // Component loaded successfully - remove spinner
-            var spinnerEl = document.getElementById('raid-cdn-spinner');
-            if (spinnerEl && spinnerEl.parentNode) spinnerEl.parentNode.removeChild(spinnerEl);
-            return;
-        }
-
-        if (retryIndex >= retryDelays.length) {
-            // Final failure - show error card
-            showCdnError();
-            return;
-        }
-
-        var delay = retryDelays[retryIndex];
-        retryIndex++;
-        setTimeout(checkCdnLoaded, delay - (retryIndex > 1 ? retryDelays[retryIndex - 2] : 0));
-    }
-
-    function showCdnError() {
-        var spinnerEl = document.getElementById('raid-cdn-spinner');
-        if (spinnerEl && spinnerEl.parentNode) spinnerEl.parentNode.removeChild(spinnerEl);
-
-        if (vannaChat) {
-            vannaChat.innerHTML =
-                '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center;font-family:Tajawal,sans-serif;">' +
-                    '<div style="background:#1A1A1A;border:2px solid #D4A84B;border-radius:16px;padding:32px;max-width:400px;width:100%;">' +
-                        '<p style="font-size:20px;font-weight:700;color:#D4A84B;margin-bottom:12px;">Connection Issue</p>' +
-                        '<p style="font-size:14px;color:#B0B0B0;margin-bottom:8px;">The chat component failed to load after multiple attempts.</p>' +
-                        '<p style="font-size:12px;color:#707070;margin-bottom:20px;">Source: https://img.vanna.ai/vanna-components.js</p>' +
-                        '<button id="raid-cdn-retry" style="' +
-                            'background:linear-gradient(135deg,#D4A84B,#B8860B);border:none;border-radius:8px;color:#0E0E0E;' +
-                            'padding:10px 28px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:14px;font-weight:700;transition:all 0.2s;' +
-                        '">Retry</button>' +
-                    '</div>' +
-                '</div>';
-
-            var retryBtn = document.getElementById('raid-cdn-retry');
-            if (retryBtn) {
-                retryBtn.addEventListener('click', function () {
-                    // Reload the script
-                    vannaChat.innerHTML = '';
-                    retryIndex = 0;
-                    var script = document.createElement('script');
-                    script.type = 'module';
-                    script.src = 'https://img.vanna.ai/vanna-components.js?t=' + Date.now();
-                    document.head.appendChild(script);
-
-                    // Re-show spinner
-                    var newSpinner = document.createElement('div');
-                    newSpinner.id = 'raid-cdn-spinner';
-                    newSpinner.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;pointer-events:none;';
-                    newSpinner.innerHTML =
-                        '<div style="width:36px;height:36px;border:3px solid rgba(212,168,75,0.2);border-top-color:#D4A84B;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
-                        '<p style="margin-top:12px;font-size:13px;color:var(--text-muted);font-family:Tajawal,sans-serif;">Retrying...</p>';
-                    chatContainer.appendChild(newSpinner);
-
-                    // Check again with progressive delays
-                    setTimeout(checkCdnLoaded, retryDelays[0]);
-                });
-            }
-        }
-    }
-
-    // Start the progressive check (first check at 3s from page load)
-    if (!cdnLoaded) {
-        setTimeout(checkCdnLoaded, retryDelays[0]);
-    }
 
     // =====================================================================
     // 7. DATA FRESHNESS INDICATOR
@@ -630,164 +540,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // =====================================================================
-    // 9. SHADOW DOM OVERRIDES (Branding, Admin Messages, Duplicate Inputs)
+    // 9. (REMOVED - Shadow DOM overrides no longer needed; native chat UI)
     // =====================================================================
-
-    /**
-     * Wait for vanna-chat Shadow DOM to be available, then apply overrides.
-     * Uses polling since MutationObserver can't detect shadowRoot attachment.
-     */
-    function waitForShadowRoot(callback) {
-        var chat = document.querySelector('vanna-chat');
-        if (!chat) return;
-        if (chat.shadowRoot) {
-            callback(chat.shadowRoot);
-            return;
-        }
-        var attempts = 0;
-        var maxAttempts = 50; // 10 seconds
-        var interval = setInterval(function() {
-            attempts++;
-            if (chat.shadowRoot) {
-                clearInterval(interval);
-                callback(chat.shadowRoot);
-            } else if (attempts >= maxAttempts) {
-                clearInterval(interval);
-            }
-        }, 200);
-    }
-
-    function applyShadowDomOverrides(shadowRoot) {
-        // 1. Inject CSS overrides for branding
-        var styleEl = document.createElement('style');
-        styleEl.textContent = [
-            // HIDE the entire inner header bar (VC avatar, title, window controls)
-            // We already have our own app header outside the Shadow DOM
-            '[class*="chat-header"], [class*="ChatHeader"], [class*="header-bar"], .chat-header, header {',
-            '  display: none !important;',
-            '  height: 0 !important;',
-            '  overflow: hidden !important;',
-            '}',
-            // Override avatar colors to gold (for bot messages)
-            '[class*="avatar"], [class*="Avatar"] {',
-            '  background: linear-gradient(135deg, #D4A84B 0%, #E8C872 50%, #B8860B 100%) !important;',
-            '  color: #0E0E0E !important;',
-            '  font-weight: 700 !important;',
-            '}',
-            // Override any teal/blue colors
-            '[style*="teal"], [style*="#00897B"], [style*="#009688"], [style*="#26A69A"] {',
-            '  color: #D4A84B !important;',
-            '  border-color: rgba(212, 168, 75, 0.2) !important;',
-            '}',
-            // Dark theme for message area
-            '[class*="message-list"], [class*="MessageList"], [class*="chat-body"], main, .messages {',
-            '  background: #1A1A1A !important;',
-            '}',
-            // Style inputs to match Ra'd theme
-            'input, textarea {',
-            '  background: #2A2A2A !important;',
-            '  color: #FFFFFF !important;',
-            '  border-color: rgba(212, 168, 75, 0.2) !important;',
-            '  font-family: Tajawal, sans-serif !important;',
-            '}',
-            'input:focus, textarea:focus {',
-            '  border-color: #D4A84B !important;',
-            '  outline: none !important;',
-            '  box-shadow: 0 0 0 2px rgba(212, 168, 75, 0.2) !important;',
-            '}',
-            // Send button gold styling
-            'button[type="submit"], [class*="send"], [class*="Send"] {',
-            '  background: linear-gradient(135deg, #D4A84B, #B8860B) !important;',
-            '  color: #0E0E0E !important;',
-            '  border: none !important;',
-            '}',
-            // Status indicators
-            '[class*="status"], [class*="Status"] {',
-            '  color: #D4A84B !important;',
-            '}',
-            // Tool completion messages: compact, no overlap
-            '[class*="tool"], [class*="Tool"], [class*="execution"], [class*="Execution"] {',
-            '  background: rgba(26, 26, 26, 0.95) !important;',
-            '  border: 1px solid rgba(212, 168, 75, 0.15) !important;',
-            '  border-radius: 8px !important;',
-            '  padding: 6px 12px !important;',
-            '  margin: 2px 0 !important;',
-            '  font-size: 12px !important;',
-            '  color: #888 !important;',
-            '  max-height: 36px !important;',
-            '  overflow: hidden !important;',
-            '}',
-        ].join('\n');
-        shadowRoot.appendChild(styleEl);
-
-        // 2. MutationObserver to hide admin messages as they appear
-        var adminObserver = new MutationObserver(function(mutations) {
-            hideAdminMessages(shadowRoot);
-        });
-        adminObserver.observe(shadowRoot, { childList: true, subtree: true });
-
-        // Initial pass
-        hideAdminMessages(shadowRoot);
-
-        // 3. Mirror chat responses to aria-live region
-        var raidStatus = document.getElementById('raid-status');
-        if (raidStatus) {
-            var responseObserver = new MutationObserver(function() {
-                // Find the latest response text in shadow DOM
-                var messages = shadowRoot.querySelectorAll('[class*="message"], [class*="Message"], .message, p');
-                if (messages.length > 0) {
-                    var lastMsg = messages[messages.length - 1];
-                    var text = lastMsg.textContent || '';
-                    if (text.length > 10 && text.length < 200) {
-                        raidStatus.textContent = text;
-                    }
-                }
-            });
-            responseObserver.observe(shadowRoot, { childList: true, subtree: true, characterData: true });
-        }
-    }
-
-    function hideAdminMessages(shadowRoot) {
-        // Find and hide elements containing admin/system diagnostic text.
-        // Walk all elements - check text at every level to catch wrappers too.
-        var patterns = [
-            'Admin: System Ready',
-            'Admin View',
-            'Setup: SQL',
-            'Memory ✗',
-            'admin privileges',
-            'WARNING',
-            'System Ready',
-            'Vanna AI is ready',
-        ];
-        var allElements = shadowRoot.querySelectorAll('*');
-        for (var i = 0; i < allElements.length; i++) {
-            var el = allElements[i];
-            var text = el.textContent || '';
-            // Skip very large containers (body/main) to avoid hiding everything
-            if (text.length > 500) continue;
-            for (var p = 0; p < patterns.length; p++) {
-                if (text.indexOf(patterns[p]) !== -1) {
-                    // Walk up to find the message-level container (with class containing "message")
-                    var target = el;
-                    var parent = el.parentElement;
-                    while (parent && parent !== shadowRoot) {
-                        var cls = parent.className || '';
-                        if (typeof cls === 'string' && (cls.indexOf('message') !== -1 || cls.indexOf('Message') !== -1)) {
-                            target = parent;
-                            break;
-                        }
-                        parent = parent.parentElement;
-                    }
-                    target.style.display = 'none';
-                    break;
-                }
-            }
-        }
-    }
-
-    // Initialize Shadow DOM overrides
-    waitForShadowRoot(applyShadowDomOverrides);
 
     // =====================================================================
     // 10. SUGGESTION KEYBOARD ACCESSIBILITY

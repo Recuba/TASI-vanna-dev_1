@@ -4,8 +4,20 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useSectors, useEntities } from '@/lib/hooks/use-api';
+import { AreaChart, MiniSparkline } from '@/components/charts';
+import { useMarketIndex, useMiniChartData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
+
+// ---------------------------------------------------------------------------
+// Mini sparkline wrapper -- hooks cannot be called inside a map callback
+// ---------------------------------------------------------------------------
+
+function StockSparkline({ ticker }: { ticker: string }) {
+  const { data } = useMiniChartData(ticker);
+  if (!data || data.length === 0) return null;
+  return <MiniSparkline data={data} width={60} height={28} />;
+}
 
 // ---------------------------------------------------------------------------
 // Market overview page - fetches real data from /api/entities and /api/entities/sectors
@@ -14,6 +26,7 @@ import { ErrorDisplay } from '@/components/common/error-display';
 export default function MarketPage() {
   const [selectedSector, setSelectedSector] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState('');
+  const { data: indexData, loading: indexLoading } = useMarketIndex();
 
   const { data: sectors, loading: sectorsLoading, error: sectorsError, refetch: refetchSectors } = useSectors();
   const { data: entities, loading: entitiesLoading, error: entitiesError, refetch: refetchEntities } = useEntities({
@@ -31,6 +44,12 @@ export default function MarketPage() {
           <h1 className="text-xl font-bold text-[var(--text-primary)]">Market Overview</h1>
           <p className="text-sm text-[var(--text-muted)]">Browse TASI sectors and companies</p>
         </div>
+
+        {/* TASI Index Chart */}
+        <section className="bg-[var(--bg-card)] border gold-border rounded-md p-4">
+          <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">TASI Index</h2>
+          <AreaChart data={indexData || []} height={250} loading={indexLoading} title="" />
+        </section>
 
         {/* Search */}
         <div>
@@ -120,6 +139,9 @@ export default function MarketPage() {
                   </div>
                   <p className="text-sm font-bold text-[var(--text-primary)] truncate">{stock.short_name || stock.ticker}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-1">{stock.sector || '-'}</p>
+                  <div className="my-1.5">
+                    <StockSparkline ticker={stock.ticker} />
+                  </div>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-[var(--text-secondary)]">
                       {stock.current_price !== null ? stock.current_price.toFixed(2) : '-'}

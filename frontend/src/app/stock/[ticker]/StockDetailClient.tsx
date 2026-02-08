@@ -2,7 +2,8 @@
 
 import { cn } from '@/lib/utils';
 import { useStockDetail } from '@/lib/hooks/use-api';
-import { TASIChart } from '@/components/charts/TASIChart';
+import { CandlestickChart } from '@/components/charts';
+import { useOHLCVData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 
@@ -43,6 +44,7 @@ interface StockDetailClientProps {
 
 export function StockDetailClient({ ticker }: StockDetailClientProps) {
   const { data: detail, loading, error, refetch } = useStockDetail(ticker);
+  const { data: ohlcvData, loading: chartLoading } = useOHLCVData(ticker);
 
   if (loading) {
     return (
@@ -109,7 +111,7 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
         </div>
 
         {/* Chart */}
-        <TASIChart ticker={ticker} height={400} />
+        <CandlestickChart data={ohlcvData || []} height={400} ticker={ticker} loading={chartLoading} />
 
         {/* Key Metrics Grid */}
         <section>

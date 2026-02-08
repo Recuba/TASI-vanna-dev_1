@@ -329,11 +329,16 @@ class TestHTMLIntegration:
     def test_data_freshness_display(self, index_html_content):
         assert "data-freshness-display" in index_html_content
 
-    def test_vanna_chat_element(self, index_html_content):
-        assert "<vanna-chat" in index_html_content
+    def test_native_chat_ui(self, index_html_content):
+        """Native chat UI replaced CDN vanna-chat component."""
+        assert 'id="raid-messages"' in index_html_content
+        assert 'id="raid-input"' in index_html_content
+        assert 'id="raid-send"' in index_html_content
+        assert "raid-input-area" in index_html_content
 
-    def test_module_script_type(self, index_html_content):
-        assert 'type="module"' in index_html_content
+    def test_plotly_cdn_script(self, index_html_content):
+        """Plotly.js is loaded for chart rendering."""
+        assert "plotly" in index_html_content.lower()
 
 
 # ===================================================================
@@ -505,18 +510,20 @@ class TestNoDuplicateTitle:
 # ===================================================================
 
 
-class TestShadowDOMFeatures:
-    def test_js_has_shadow_dom_polling(self, js_content):
-        assert "shadowRoot" in js_content
+class TestNativeChatFeatures:
+    """Tests for native chat UI (replaced Shadow DOM CDN component)."""
 
-    def test_js_has_mutation_observer(self, js_content):
+    def test_js_has_suggestion_observer(self, js_content):
         assert "MutationObserver" in js_content
-
-    def test_js_hides_admin_messages(self, js_content):
-        assert "Admin" in js_content
 
     def test_js_manages_tabindex(self, js_content):
         assert "tabindex" in js_content
+
+    def test_js_has_theme_toggle(self, js_content):
+        assert "raid-theme-toggle" in js_content
+
+    def test_js_has_keyboard_shortcut(self, js_content):
+        assert "raidFocusInput" in js_content
 
 
 # ===================================================================

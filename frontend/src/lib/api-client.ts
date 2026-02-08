@@ -329,3 +329,20 @@ export function getChartDividendYieldTop(params?: {
 }): Promise<ChartResponse> {
   return request(`/api/charts/dividend-yield-top${qs(params ?? {})}`);
 }
+
+// -- OHLCV --
+export interface OHLCVData {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+}
+
+export function getOHLCVData(
+  ticker: string,
+  params?: { period?: string },
+): Promise<OHLCVData[]> {
+  return request(`/api/v1/charts/${encodeURIComponent(ticker)}/ohlcv${qs(params ?? {})}`);
+}
