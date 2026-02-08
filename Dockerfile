@@ -16,7 +16,16 @@ COPY app.py .
 COPY csv_to_sqlite.py .
 COPY config/ config/
 COPY templates/ templates/
+COPY chart_engine/ chart_engine/
+COPY services/ services/
+COPY database/ database/
+COPY api/ api/
+COPY auth/ auth/
+COPY cache/ cache/
+COPY middleware/ middleware/
+COPY ingestion/ ingestion/
+COPY saudi_stocks.db .
 
 EXPOSE 8084
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8084"]
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8084}
