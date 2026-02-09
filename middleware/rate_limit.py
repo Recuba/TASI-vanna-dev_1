@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import List
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -45,8 +45,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.requests_per_minute = requests_per_minute
         self.window_seconds = 60.0
         self.skip_paths: set[str] = set(skip_paths or [])
-        # IP -> list of request timestamps
-        self._requests: dict[str, list[float]] = defaultdict(list)
+        # IP -> deque of request timestamps (O(1) popleft vs O(n) list.pop(0))
+        self._requests: dict[str, deque[float]] = defaultdict(deque)
         self._request_count = 0
 
     async def dispatch(self, request: Request, call_next):
@@ -65,9 +65,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Sliding window: remove timestamps older than window
         timestamps = self._requests[client_ip]
         cutoff = now - self.window_seconds
-        # Remove expired entries from the front
+        # Remove expired entries from the front (O(1) with deque)
         while timestamps and timestamps[0] < cutoff:
-            timestamps.pop(0)
+            timestamps.popleft()
 
         if len(timestamps) >= self.requests_per_minute:
             # Calculate Retry-After: time until the oldest request expires

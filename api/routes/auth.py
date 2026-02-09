@@ -2,7 +2,7 @@
 Authentication API routes.
 
 Endpoints for user registration, login, token refresh, and profile retrieval.
-All endpoints interact with the PostgreSQL `users` table.
+Delegates database operations to AuthService for separation of concerns.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from api.dependencies import get_db_connection
 from auth.dependencies import get_current_user
-from auth.jwt_handler import create_access_token, create_refresh_token, decode_token
+from auth.jwt_handler import decode_token
 from auth.models import (
     TokenRefreshRequest,
     TokenResponse,
@@ -22,14 +22,13 @@ from auth.models import (
     UserLogin,
     UserProfile,
 )
-from auth.password import hash_password, verify_password
+from services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-def _build_token_claims(user_id: str, email: str) -> Dict[str, Any]:
-    """Build the JWT claims dict for a user."""
-    return {"sub": user_id, "email": email}
+def _get_auth_service() -> AuthService:
+    return AuthService(get_conn=get_db_connection)
 
 
 @router.post(
@@ -43,40 +42,18 @@ async def register(body: UserCreate):
 
     Raises 409 if the email is already registered.
     """
-    password_hash = hash_password(body.password)
+    service = _get_auth_service()
+    result = service.register(body.email, body.password, body.display_name)
 
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            # Check for existing user with same email
-            cur.execute("SELECT id FROM users WHERE email = %s", (body.email,))
-            if cur.fetchone() is not None:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Email already registered",
-                )
+    if not result.success:
+        raise HTTPException(
+            status_code=result.error_code,
+            detail=result.error,
+        )
 
-            # Insert new user
-            cur.execute(
-                "INSERT INTO users (auth_provider, auth_provider_id, email, display_name) "
-                "VALUES (%s, %s, %s, %s) RETURNING id",
-                ("local", password_hash, body.email, body.display_name),
-            )
-            user_id = str(cur.fetchone()[0])
-        conn.commit()
-    except HTTPException:
-        raise
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
-
-    claims = _build_token_claims(user_id, body.email)
-    return TokenResponse(
-        access_token=create_access_token(claims),
-        refresh_token=create_refresh_token(claims),
-    )
+    claims = AuthService.build_token_claims(result.user_id, result.email)
+    tokens = AuthService.create_tokens(claims)
+    return TokenResponse(**tokens)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -88,44 +65,18 @@ async def login(body: UserLogin):
 
     Raises 401 if credentials are invalid.
     """
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, auth_provider_id, is_active "
-                "FROM users "
-                "WHERE email = %s AND auth_provider = %s",
-                (body.email, "local"),
-            )
-            row = cur.fetchone()
-    finally:
-        conn.close()
+    service = _get_auth_service()
+    result = service.login(body.email, body.password)
 
-    if row is None:
+    if not result.success:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail=result.error,
         )
 
-    user_id, stored_hash, is_active = str(row[0]), row[1], row[2]
-
-    if not is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Account is deactivated",
-        )
-
-    if not verify_password(body.password, stored_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
-
-    claims = _build_token_claims(user_id, body.email)
-    return TokenResponse(
-        access_token=create_access_token(claims),
-        refresh_token=create_refresh_token(claims),
-    )
+    claims = AuthService.build_token_claims(result.user_id, result.email)
+    tokens = AuthService.create_tokens(claims)
+    return TokenResponse(**tokens)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -156,34 +107,18 @@ async def refresh_token(body: TokenRefreshRequest):
         )
 
     # Verify user still exists and is active
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT is_active FROM users WHERE id = %s",
-                (user_id,),
-            )
-            row = cur.fetchone()
-    finally:
-        conn.close()
+    service = _get_auth_service()
+    result = service.verify_user_active(user_id)
 
-    if row is None:
+    if not result.success:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail=result.error,
         )
 
-    if not row[0]:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Account is deactivated",
-        )
-
-    claims = _build_token_claims(user_id, email)
-    return TokenResponse(
-        access_token=create_access_token(claims),
-        refresh_token=create_refresh_token(claims),
-    )
+    claims = AuthService.build_token_claims(user_id, email)
+    tokens = AuthService.create_tokens(claims)
+    return TokenResponse(**tokens)
 
 
 @router.get("/me", response_model=UserProfile)

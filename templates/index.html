@@ -12,7 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 
     <!-- Marked.js for markdown rendering in chat responses -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js" async crossorigin="anonymous"></script>
+    <!-- DOMPurify for sanitizing rendered HTML -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js" async crossorigin="anonymous"></script>
 
     <style>
         /* ===================================================================
@@ -1072,7 +1074,7 @@
     <!-- ================================================================
          JAVASCRIPT - Plotly for charts
          ================================================================ -->
-    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" async></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" async crossorigin="anonymous"></script>
 
     <!-- ================================================================
          JAVASCRIPT - Native Chat Engine
@@ -1107,12 +1109,19 @@
         }
 
         function renderMd(text) {
+            var html;
             if (window.marked) {
                 setupMarked();
-                return marked.parse(text);
+                html = marked.parse(text);
+            } else {
+                // Minimal fallback: escape and convert line breaks
+                html = esc(text).replace(/\n/g, '<br>');
             }
-            // Minimal fallback: escape and convert line breaks
-            return esc(text).replace(/\n/g, '<br>');
+            // Sanitize rendered HTML to prevent XSS
+            if (window.DOMPurify) {
+                return DOMPurify.sanitize(html, { ADD_TAGS: ['iframe'], ADD_ATTR: ['target'] });
+            }
+            return html;
         }
 
         function scrollBottom() {
@@ -1376,7 +1385,7 @@
             if (data.artifact_type === 'html' || data.artifact_type === 'svg' || data.artifact_type === 'visualization') {
                 var iframe = document.createElement('iframe');
                 iframe.style.cssText = 'width:100%;min-height:400px;border:1px solid var(--gold-border);border-radius:8px;background:#fff;';
-                iframe.sandbox = 'allow-scripts';
+                iframe.sandbox = 'allow-same-origin';
                 iframe.srcdoc = data.content || '';
                 el.appendChild(iframe);
             } else {

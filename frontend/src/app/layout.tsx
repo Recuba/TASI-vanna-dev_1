@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Arabic, Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { AuthProvider } from '@/lib/hooks/use-auth';
+import { ErrorBoundary } from '@/components/common/error-boundary';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Footer } from '@/components/layout/Footer';
@@ -44,7 +45,9 @@ export default function RootLayout({
               <div className="flex flex-1">
                 <Sidebar />
                 <main className="flex-1 flex flex-col min-w-0">
-                  {children}
+                  <ErrorBoundary>
+                    {children}
+                  </ErrorBoundary>
                 </main>
               </div>
               <Footer />

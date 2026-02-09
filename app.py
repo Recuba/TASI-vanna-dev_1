@@ -10,7 +10,7 @@ Default is SQLite.
 """
 
 import logging
-import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
@@ -36,33 +36,48 @@ from chart_engine import RaidChartGenerator
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# 0. Configuration (use config module if available, fall back to env)
+# 0. Configuration (use config module, log failures instead of silencing)
 # ---------------------------------------------------------------------------
 try:
     from config import get_settings
 
     _settings = get_settings()
-except Exception:
+except Exception as _config_err:
+    logger.warning("Failed to load config module, using env var fallbacks: %s", _config_err)
     _settings = None
+
+_HERE = Path(__file__).resolve().parent
 
 # ---------------------------------------------------------------------------
 # 1. LLM -- Claude Sonnet 4.5 via Anthropic API
 # ---------------------------------------------------------------------------
+_llm_model = _settings.llm.model if _settings else "claude-sonnet-4-5-20250929"
+_llm_api_key = _settings.get_llm_api_key() if _settings else ""
+
 llm = AnthropicLlmService(
-    model="claude-sonnet-4-5-20250929",
-    api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+    model=_llm_model,
+    api_key=_llm_api_key,
 )
 
 # ---------------------------------------------------------------------------
 # 2. SQL runner -- SQLite (default) or PostgreSQL
 # ---------------------------------------------------------------------------
-_HERE = Path(__file__).resolve().parent
-DB_BACKEND = os.environ.get("DB_BACKEND", "sqlite").lower()
+DB_BACKEND = (_settings.db.backend if _settings else "sqlite").lower()
 
 
 def _create_sql_runner():
-    """Create the SQL runner based on DB_BACKEND env var."""
+    """Create the SQL runner based on configuration."""
     if DB_BACKEND == "postgres":
+        if _settings:
+            return PostgresRunner(
+                host=_settings.db.pg_host,
+                database=_settings.db.pg_database,
+                user=_settings.db.pg_user,
+                password=_settings.db.pg_password,
+                port=_settings.db.pg_port,
+            )
+        # Fallback for when settings module is unavailable
+        import os
         return PostgresRunner(
             host=os.environ.get("POSTGRES_HOST", "localhost"),
             database=os.environ.get("POSTGRES_DB", "saudi_stocks"),
@@ -70,6 +85,8 @@ def _create_sql_runner():
             password=os.environ.get("POSTGRES_PASSWORD", ""),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
         )
+    if _settings:
+        return SqliteRunner(str(_settings.db.resolved_sqlite_path))
     return SqliteRunner(str(_HERE / "saudi_stocks.db"))
 
 
@@ -502,11 +519,11 @@ async def favicon():
 
 
 # ---------------------------------------------------------------------------
-# 11. Startup / Shutdown events
+# 11. Lifespan (replaces deprecated on_event startup/shutdown)
 # ---------------------------------------------------------------------------
-@app.on_event("startup")
-async def on_startup():
-    """Initialize connection pool and Redis on startup."""
+@asynccontextmanager
+async def lifespan(app):
+    """Initialize resources on startup and clean up on shutdown."""
     # Setup logging
     try:
         from config.logging import setup_logging
@@ -534,6 +551,8 @@ async def on_startup():
             logger.error("Failed to initialize connection pool: %s", exc)
 
     # Initialize Redis (if enabled)
+    import os
+
     _cache_enabled = (
         _settings.cache.enabled
         if _settings
@@ -555,11 +574,9 @@ async def on_startup():
         except Exception as exc:
             logger.warning("Failed to initialize Redis: %s", exc)
 
+    yield
 
-@app.on_event("shutdown")
-async def on_shutdown():
-    """Close connection pool and Redis on shutdown."""
-    # Close PostgreSQL pool
+    # Shutdown: close connection pool and Redis
     if DB_BACKEND == "postgres":
         try:
             from database.pool import close_pool
@@ -571,7 +588,6 @@ async def on_shutdown():
         except Exception as exc:
             logger.warning("Error closing connection pool: %s", exc)
 
-    # Close Redis
     try:
         from cache import close_redis
 
@@ -582,8 +598,13 @@ async def on_shutdown():
         logger.warning("Error closing Redis: %s", exc)
 
 
+# Register the lifespan with the app
+app.router.lifespan_context = lifespan
+
+
 if __name__ == "__main__":
     import uvicorn
+    import os
 
     port = int(os.environ.get("PORT", "8084"))
     uvicorn.run(app, host="0.0.0.0", port=port)
