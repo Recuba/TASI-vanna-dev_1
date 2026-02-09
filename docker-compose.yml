@@ -11,9 +11,14 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-tasi_platform}
       POSTGRES_USER: ${POSTGRES_USER:-tasi_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required - set it in .env}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -44,6 +49,11 @@ services:
       CACHE_ENABLED: ${CACHE_ENABLED:-false}
     ports:
       - "${SERVER_PORT:-8084}:8084"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,10 +69,24 @@ services:
     image: redis:7-alpine
     container_name: tasi-redis
     restart: unless-stopped
+    command: >
+      sh -c '
+      if [ -n "$$REDIS_PASSWORD" ]; then
+        redis-server --requirepass "$$REDIS_PASSWORD" --appendonly yes
+      else
+        redis-server --appendonly yes
+      fi'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -82,7 +106,7 @@ services:
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@tasi.local}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD is required - set it in .env}
     ports:
       - "5050:80"
     depends_on:

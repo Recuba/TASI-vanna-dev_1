@@ -301,8 +301,11 @@ class _DatabaseTestMixin:
                     (table,),
                 )
                 custom_indexes = [row[0] for row in self.cursor.fetchall()]
-            # Just verify at least one index exists (not a hard failure for SQLite)
-            self.assertGreaterEqual(len(custom_indexes), 0)
+            # Verify at least one index exists for query performance
+            self.assertGreater(
+                len(custom_indexes), 0,
+                f"{table} should have at least one custom index for query performance"
+            )
 
     def test_16_saudi_aramco_exists(self):
         """Verify Saudi Aramco (2222.SR) exists"""
@@ -367,6 +370,46 @@ class _DatabaseTestMixin:
         """)
         sectors = self.cursor.fetchall()
         self.assertGreater(len(sectors), 0, "Should have at least one sector")
+
+    def test_21_no_null_period_types(self):
+        """Verify period_type is never null in financial tables"""
+        for table in self.financial_tables:
+            self.cursor.execute(
+                f"SELECT COUNT(*) FROM {table} WHERE period_type IS NULL"
+            )
+            null_count = self.cursor.fetchone()[0]
+            self.assertEqual(
+                null_count, 0,
+                f"{table} has {null_count} rows with null period_type"
+            )
+
+    def test_22_no_negative_prices(self):
+        """Verify price values are non-negative where present"""
+        price_columns = ["current_price", "previous_close", "open_price", "day_high", "day_low"]
+        for col in price_columns:
+            self.cursor.execute(
+                f"SELECT COUNT(*) FROM market_data WHERE {col} IS NOT NULL AND {col} < 0"
+            )
+            negative = self.cursor.fetchone()[0]
+            self.assertEqual(
+                negative, 0,
+                f"market_data.{col} has {negative} negative values"
+            )
+
+    def test_23_sequential_period_indexes(self):
+        """Verify period_index values start at 0 for each ticker/period_type"""
+        for table in self.financial_tables:
+            self.cursor.execute(f"""
+                SELECT ticker, period_type, MIN(period_index) as min_idx
+                FROM {table}
+                GROUP BY ticker, period_type
+                HAVING MIN(period_index) != 0
+            """)
+            bad = self.cursor.fetchall()
+            self.assertEqual(
+                len(bad), 0,
+                f"{table} has ticker/period_type combos not starting at index 0: {bad[:5]}"
+            )
 
     def _validate_columns(self, table: str, expected_columns: List[str]):
         actual_columns = self._get_columns(table)
