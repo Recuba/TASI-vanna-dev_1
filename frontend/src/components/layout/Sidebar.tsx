@@ -39,6 +39,15 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    label: 'Charts',
+    href: '/charts',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 20V14" /><path d="M10 20V10" /><path d="M14 20V4" /><path d="M18 20V8" />
+      </svg>
+    ),
+  },
+  {
     label: 'News',
     href: '/news',
     icon: (

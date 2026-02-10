@@ -7,6 +7,9 @@ interface ChartSkeletonProps {
 export function ChartSkeleton({ height = 400 }: ChartSkeletonProps) {
   return (
     <div
+      role="progressbar"
+      aria-label="Loading chart"
+      aria-busy="true"
       className="relative overflow-hidden rounded-xl"
       style={{
         height,
@@ -40,7 +43,7 @@ export function ChartSkeleton({ height = 400 }: ChartSkeletonProps) {
           }}
         />
       </div>
-      <style jsx>{`
+      <style>{`
         @keyframes chart-shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }

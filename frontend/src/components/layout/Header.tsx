@@ -43,8 +43,12 @@ export function Header() {
           </p>
         </div>
 
-        {/* Right side: theme toggle + status */}
+        {/* Right side: shortcut hint + theme toggle + status */}
         <div className="ms-auto flex items-center gap-3">
+          {/* Chat shortcut hint */}
+          <span className="hidden sm:inline text-xs text-[var(--text-muted)]">
+            Ctrl+K to chat
+          </span>
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}

@@ -12,6 +12,7 @@ import {
 import { RAID_CHART_OPTIONS, LINE_COLOR, AREA_TOP_COLOR, AREA_BOTTOM_COLOR } from './chart-config';
 import type { LineDataPoint, ChartTimeRange } from './chart-types';
 import { ChartSkeleton } from './ChartSkeleton';
+import { ChartError } from './ChartError';
 import { ChartEmpty } from './ChartEmpty';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,8 @@ interface AreaChartProps {
   title?: string;
   className?: string;
   loading?: boolean;
+  error?: string | null;
+  refetch?: () => void;
 }
 
 const TIME_RANGES: { label: string; value: ChartTimeRange }[] = [
@@ -76,6 +79,8 @@ export default function AreaChart({
   title,
   className,
   loading = false,
+  error = null,
+  refetch,
 }: AreaChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -146,7 +151,8 @@ export default function AreaChart({
     chartRef.current.timeScale().fitContent();
   }, [data, range, lineColor, topColor, bottomColor]);
 
-  if (loading) return <ChartSkeleton height={height} />;
+  if (loading && (!data || data.length === 0)) return <ChartSkeleton height={height} />;
+  if (error) return <ChartError height={height} message={error} onRetry={refetch} />;
   if (!data || data.length === 0) return <ChartEmpty height={height} />;
 
   return (

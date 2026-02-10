@@ -1,58 +1,52 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { getOHLCVData } from '@/lib/api-client';
+import { useCallback } from 'react';
+import { getOHLCVData, getTasiIndex } from '@/lib/api-client';
 import {
   generateMockOHLCV,
   generateMockPriceTrend,
 } from '@/lib/chart-utils';
 import type { OHLCVData, LineDataPoint } from '@/lib/chart-utils';
+import type { DataSource, ChartDataResult } from '@/components/charts/chart-types';
+import { useChartCache, chartKeys } from '@/lib/chart-cache';
+import { validateOHLCVData, validateTasiResponse } from '@/lib/validators';
 
 // ---------------------------------------------------------------------------
-// Generic async-data hook (same pattern as use-api.ts)
+// Internal type for fetched data with source tracking
 // ---------------------------------------------------------------------------
 
-interface UseAsyncResult<T> {
-  data: T | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => void;
+interface SourcedData<T> {
+  data: T;
+  source: DataSource;
 }
 
-function useAsync<T>(
-  fetcher: () => Promise<T>,
-  deps: unknown[] = [],
-): UseAsyncResult<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const mountedRef = useRef(true);
+// ---------------------------------------------------------------------------
+// Adapter: convert SWR result to ChartDataResult<T>
+// ---------------------------------------------------------------------------
 
-  const execute = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    fetcher()
-      .then((result) => {
-        if (mountedRef.current) setData(result);
-      })
-      .catch((err) => {
-        if (mountedRef.current) setError((err as Error).message);
-      })
-      .finally(() => {
-        if (mountedRef.current) setLoading(false);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+function toChartResult<T>(
+  swrData: SourcedData<T> | undefined,
+  isLoading: boolean,
+  error: Error | undefined,
+  mutate: () => void,
+): ChartDataResult<T> {
+  return {
+    data: swrData?.data ?? null,
+    loading: isLoading,
+    error: error?.message ?? null,
+    source: swrData?.source ?? null,
+    refetch: mutate,
+  };
+}
 
-  useEffect(() => {
-    mountedRef.current = true;
-    execute();
-    return () => {
-      mountedRef.current = false;
-    };
-  }, [execute]);
+// ---------------------------------------------------------------------------
+// Dev-only mock fallback warning
+// ---------------------------------------------------------------------------
 
-  return { data, loading, error, refetch: execute };
+function warnMockFallback(hook: string, detail: Record<string, unknown>) {
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(`[Ra'd Charts] Mock data fallback`, { hook, ...detail });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -63,19 +57,30 @@ function useAsync<T>(
  * Fetch OHLCV data for a ticker.
  * Tries the backend API first; falls back to mock data on error/404.
  */
-export function useOHLCVData(ticker: string): UseAsyncResult<OHLCVData[]> {
-  return useAsync<OHLCVData[]>(
-    async () => {
-      try {
-        const data = await getOHLCVData(ticker);
-        if (data && data.length > 0) return data;
-      } catch {
-        // API unavailable or 404 -- fall through to mock
+export function useOHLCVData(ticker: string): ChartDataResult<OHLCVData[]> {
+  const fetcher = useCallback(async (): Promise<SourcedData<OHLCVData[]>> => {
+    try {
+      const response = await getOHLCVData(ticker);
+      const items = response.data;
+      if (items && items.length > 0) {
+        if (!validateOHLCVData(items)) {
+          warnMockFallback('useOHLCVData', { ticker, reason: 'response failed OHLCV validation' });
+        } else {
+          return { data: items, source: (response.source as DataSource) ?? 'real' };
+        }
       }
-      return generateMockOHLCV(ticker, 365);
-    },
-    [ticker],
+    } catch (err) {
+      warnMockFallback('useOHLCVData', { ticker, reason: (err as Error).message ?? 'API fetch failed' });
+    }
+    return { data: generateMockOHLCV(ticker, 365), source: 'mock' };
+  }, [ticker]);
+
+  const { data, error, isLoading, mutate } = useChartCache(
+    chartKeys.ohlcv(ticker),
+    fetcher,
   );
+
+  return toChartResult(data, isLoading, error, () => mutate());
 }
 
 /**
@@ -84,62 +89,108 @@ export function useOHLCVData(ticker: string): UseAsyncResult<OHLCVData[]> {
 export function usePriceTrend(
   ticker: string,
   days: number = 365,
-): UseAsyncResult<LineDataPoint[]> {
-  return useAsync<LineDataPoint[]>(
-    async () => {
-      try {
-        const ohlcv = await getOHLCVData(ticker);
-        if (ohlcv && ohlcv.length > 0) {
-          const cutoff = new Date();
-          cutoff.setDate(cutoff.getDate() - days);
-          const cutoffStr = cutoff.toISOString().split('T')[0];
-          return ohlcv
-            .filter((d) => d.time >= cutoffStr)
-            .map((d) => ({ time: d.time, value: d.close }));
-        }
-      } catch {
-        // fall through to mock
+): ChartDataResult<LineDataPoint[]> {
+  const fetcher = useCallback(async (): Promise<SourcedData<LineDataPoint[]>> => {
+    try {
+      const response = await getOHLCVData(ticker);
+      const ohlcv = response.data;
+      if (ohlcv && ohlcv.length > 0 && validateOHLCVData(ohlcv)) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        const cutoffStr = cutoff.toISOString().split('T')[0];
+        const data = ohlcv
+          .filter((d) => d.time >= cutoffStr)
+          .map((d) => ({ time: d.time, value: d.close }));
+        return { data, source: (response.source as DataSource) ?? 'real' };
       }
-      const mock = generateMockOHLCV(ticker, days);
-      return mock.map((d) => ({ time: d.time, value: d.close }));
-    },
-    [ticker, days],
+      if (ohlcv && ohlcv.length > 0) {
+        warnMockFallback('usePriceTrend', { ticker, days, reason: 'response failed OHLCV validation' });
+      }
+    } catch (err) {
+      warnMockFallback('usePriceTrend', { ticker, days, reason: (err as Error).message ?? 'API fetch failed' });
+    }
+    const mock = generateMockOHLCV(ticker, days);
+    return {
+      data: mock.map((d) => ({ time: d.time, value: d.close })),
+      source: 'mock',
+    };
+  }, [ticker, days]);
+
+  const { data, error, isLoading, mutate } = useChartCache(
+    chartKeys.priceTrend(ticker, days),
+    fetcher,
   );
+
+  return toChartResult(data, isLoading, error, () => mutate());
 }
 
 /**
- * Returns mock TASI index data. Will fetch from a real API in the future.
+ * Fetch TASI index data from the real backend API.
+ * Falls back to mock data on error.
  */
-export function useMarketIndex(): UseAsyncResult<LineDataPoint[]> {
-  return useAsync<LineDataPoint[]>(
-    async () => generateMockPriceTrend(365),
-    [],
+export function useMarketIndex(period: string = '1y'): ChartDataResult<LineDataPoint[]> {
+  const fetcher = useCallback(async (): Promise<SourcedData<LineDataPoint[]>> => {
+    try {
+      const response = await getTasiIndex(period);
+      if (validateTasiResponse(response) && response.data.length > 0) {
+        const data = response.data.map((d) => ({
+          time: d.time,
+          value: d.close,
+        }));
+        return { data, source: response.source as DataSource };
+      }
+      if (response?.data && response.data.length > 0) {
+        warnMockFallback('useMarketIndex', { period, reason: 'response failed TASI validation' });
+      }
+    } catch (err) {
+      warnMockFallback('useMarketIndex', { period, reason: (err as Error).message ?? 'API fetch failed' });
+    }
+    return { data: generateMockPriceTrend(365), source: 'mock' };
+  }, [period]);
+
+  const { data, error, isLoading, mutate } = useChartCache(
+    chartKeys.marketIndex(period),
+    fetcher,
   );
+
+  return toChartResult(data, isLoading, error, () => mutate());
 }
 
 /**
  * Returns last 30 days of close prices as LineDataPoint[].
  * Optimized for sparklines (minimal data).
  */
-export function useMiniChartData(ticker: string): UseAsyncResult<LineDataPoint[]> {
-  return useAsync<LineDataPoint[]>(
-    async () => {
-      try {
-        const ohlcv = await getOHLCVData(ticker);
-        if (ohlcv && ohlcv.length > 0) {
-          const cutoff = new Date();
-          cutoff.setDate(cutoff.getDate() - 30);
-          const cutoffStr = cutoff.toISOString().split('T')[0];
-          return ohlcv
-            .filter((d) => d.time >= cutoffStr)
-            .map((d) => ({ time: d.time, value: d.close }));
-        }
-      } catch {
-        // fall through to mock
+export function useMiniChartData(ticker: string): ChartDataResult<LineDataPoint[]> {
+  const fetcher = useCallback(async (): Promise<SourcedData<LineDataPoint[]>> => {
+    try {
+      const response = await getOHLCVData(ticker);
+      const ohlcv = response.data;
+      if (ohlcv && ohlcv.length > 0 && validateOHLCVData(ohlcv)) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+        const cutoffStr = cutoff.toISOString().split('T')[0];
+        const data = ohlcv
+          .filter((d) => d.time >= cutoffStr)
+          .map((d) => ({ time: d.time, value: d.close }));
+        return { data, source: (response.source as DataSource) ?? 'real' };
       }
-      const mock = generateMockOHLCV(ticker, 30);
-      return mock.map((d) => ({ time: d.time, value: d.close }));
-    },
-    [ticker],
+      if (ohlcv && ohlcv.length > 0) {
+        warnMockFallback('useMiniChartData', { ticker, reason: 'response failed OHLCV validation' });
+      }
+    } catch (err) {
+      warnMockFallback('useMiniChartData', { ticker, reason: (err as Error).message ?? 'API fetch failed' });
+    }
+    const mock = generateMockOHLCV(ticker, 30);
+    return {
+      data: mock.map((d) => ({ time: d.time, value: d.close })),
+      source: 'mock',
+    };
+  }, [ticker]);
+
+  const { data, error, isLoading, mutate } = useChartCache(
+    chartKeys.miniChart(ticker),
+    fetcher,
   );
+
+  return toChartResult(data, isLoading, error, () => mutate());
 }

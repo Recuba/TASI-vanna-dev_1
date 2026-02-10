@@ -13,6 +13,7 @@ export function ChartError({
 }: ChartErrorProps) {
   return (
     <div
+      role="alert"
       className="flex flex-col items-center justify-center gap-4 rounded-xl"
       style={{
         height,
@@ -29,6 +30,7 @@ export function ChartError({
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <circle cx="12" cy="12" r="10" />
         <line x1="12" y1="8" x2="12" y2="12" />
@@ -38,6 +40,7 @@ export function ChartError({
       {onRetry && (
         <button
           onClick={onRetry}
+          aria-label="Retry loading chart data"
           style={{
             padding: '6px 16px',
             fontSize: 13,
@@ -46,8 +49,12 @@ export function ChartError({
             background: 'transparent',
             color: '#D4A84B',
             cursor: 'pointer',
-            transition: 'background 0.15s',
+            transition: 'background 0.15s, outline-color 0.15s',
+            outline: '2px solid transparent',
+            outlineOffset: '2px',
           }}
+          onFocus={(e) => (e.currentTarget.style.outlineColor = '#D4A84B')}
+          onBlur={(e) => (e.currentTarget.style.outlineColor = 'transparent')}
           onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(212, 168, 75, 0.1)')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >

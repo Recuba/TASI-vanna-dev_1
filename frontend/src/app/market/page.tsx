@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useSectors, useEntities } from '@/lib/hooks/use-api';
-import { AreaChart, MiniSparkline } from '@/components/charts';
+import { AreaChart, MiniSparkline, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
 import { useMarketIndex, useMiniChartData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
@@ -26,7 +26,7 @@ function StockSparkline({ ticker }: { ticker: string }) {
 export default function MarketPage() {
   const [selectedSector, setSelectedSector] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState('');
-  const { data: indexData, loading: indexLoading } = useMarketIndex();
+  const { data: indexData, loading: indexLoading, source: indexSource } = useMarketIndex();
 
   const { data: sectors, loading: sectorsLoading, error: sectorsError, refetch: refetchSectors } = useSectors();
   const { data: entities, loading: entitiesLoading, error: entitiesError, refetch: refetchEntities } = useEntities({
@@ -47,8 +47,14 @@ export default function MarketPage() {
 
         {/* TASI Index Chart */}
         <section className="bg-[var(--bg-card)] border gold-border rounded-md p-4">
-          <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">TASI Index</h2>
-          <AreaChart data={indexData || []} height={250} loading={indexLoading} title="" />
+          <ChartErrorBoundary fallbackHeight={250}>
+            <ChartWrapper title="TASI Index" source={indexSource}>
+              <AreaChart data={indexData || []} height={250} loading={indexLoading} title="" />
+            </ChartWrapper>
+          </ChartErrorBoundary>
+          <div className="mt-2 text-end">
+            <TradingViewAttribution />
+          </div>
         </section>
 
         {/* Search */}
@@ -117,6 +123,7 @@ export default function MarketPage() {
           ) : entitiesError ? (
             <ErrorDisplay message={entitiesError} onRetry={refetchEntities} />
           ) : entities && entities.items.length > 0 ? (
+            <ChartErrorBoundary fallbackHeight={200}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {entities.items.map((stock) => (
                 <Link
@@ -159,6 +166,7 @@ export default function MarketPage() {
                 </Link>
               ))}
             </div>
+            </ChartErrorBoundary>
           ) : (
             <p className="text-sm text-[var(--text-muted)]">No companies found.</p>
           )}

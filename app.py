@@ -497,6 +497,29 @@ if DB_BACKEND == "postgres":
 
 
 # ---------------------------------------------------------------------------
+# 9b. TASI index route (no database dependency -- works with any backend)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.tasi_index import router as tasi_index_router
+
+    app.include_router(tasi_index_router)
+    logger.info("TASI index route registered at /api/v1/charts/tasi/index")
+except ImportError as exc:
+    logger.warning("TASI index route not available: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 9c. Per-stock OHLCV route (no database dependency -- works with any backend)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.stock_ohlcv import router as stock_ohlcv_router
+
+    app.include_router(stock_ohlcv_router)
+    logger.info("Stock OHLCV route registered at /api/v1/charts/{ticker}/ohlcv")
+except ImportError as exc:
+    logger.warning("Stock OHLCV route not available: %s", exc)
+
+
+# ---------------------------------------------------------------------------
 # 10. Custom routes and static files
 # ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
@@ -558,6 +581,7 @@ async def lifespan(app):
         if _settings
         else os.environ.get("CACHE_ENABLED", "false").lower() in ("true", "1")
     )
+    _redis_status = "disabled"
     if _cache_enabled:
         try:
             from cache import init_redis
@@ -568,11 +592,53 @@ async def lifespan(app):
                 else os.environ.get("REDIS_URL", "redis://localhost:6379/0")
             )
             init_redis(_redis_url)
+            _redis_status = "connected"
             logger.info("Redis cache initialized")
         except ImportError:
+            _redis_status = "unavailable"
             logger.warning("cache module not available -- running without cache")
         except Exception as exc:
+            _redis_status = "error"
             logger.warning("Failed to initialize Redis: %s", exc)
+
+    # -----------------------------------------------------------------------
+    # Startup diagnostics
+    # -----------------------------------------------------------------------
+    logger.info("Database: %s", DB_BACKEND.upper())
+    logger.info("Routes registered: %d", len(app.routes))
+    logger.info("Redis: %s", _redis_status)
+
+    # SA-04: Warn if JWT secret is not explicitly configured in production
+    if DB_BACKEND == "postgres" and _settings:
+        _jwt_secret_env = os.environ.get("AUTH_JWT_SECRET", "")
+        if not _jwt_secret_env:
+            logger.warning(
+                "AUTH_JWT_SECRET not configured -- JWT tokens will not persist across restarts"
+            )
+
+    # SA-06: Warn if debug mode is enabled (rate limiting disabled)
+    _is_debug = globals().get("_debug_mode", False)
+    if _is_debug:
+        logger.warning("Debug mode is ON -- rate limiting is DISABLED")
+
+    # Non-blocking yfinance reachability check
+    import threading as _th
+
+    def _check_yfinance():
+        try:
+            import yfinance as yf
+            ticker = yf.Ticker("^TASI")
+            df = ticker.history(period="5d", auto_adjust=True, timeout=5)
+            if df is not None and not df.empty:
+                logger.info("yfinance: reachable (^TASI returned %d rows)", len(df))
+            else:
+                logger.warning("yfinance: reachable but returned empty data")
+        except ImportError:
+            logger.warning("yfinance: not installed")
+        except Exception as exc:
+            logger.warning("yfinance: unreachable (%s: %s)", type(exc).__name__, exc)
+
+    _th.Thread(target=_check_yfinance, daemon=True).start()
 
     yield
 

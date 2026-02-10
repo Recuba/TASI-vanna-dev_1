@@ -1,7 +1,8 @@
 """
 Watchlists and alerts API routes.
 
-Read endpoints (GET) use X-User-Id header for user scoping.
+Read endpoints (GET) require JWT authentication (same as write endpoints).
+Unauthenticated requests receive an empty list instead of 401.
 Write endpoints (POST, PATCH, DELETE) require JWT authentication.
 """
 
@@ -9,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.dependencies import get_user_service
 from api.schemas.watchlists import (
@@ -20,22 +21,24 @@ from api.schemas.watchlists import (
     WatchlistResponse,
     WatchlistUpdateRequest,
 )
-from auth.dependencies import get_current_user
+from auth.dependencies import get_current_user, get_optional_current_user
 from services.user_service import UserService
 
 router = APIRouter(prefix="/api/watchlists", tags=["watchlists"])
 
 
 # ---------------------------------------------------------------------------
-# Watchlist read endpoints (public with X-User-Id header)
+# Watchlist read endpoints (authenticated; unauthenticated returns empty list)
 # ---------------------------------------------------------------------------
 @router.get("", response_model=List[WatchlistResponse])
 async def list_watchlists(
-    x_user_id: str = Header(..., alias="X-User-Id"),
+    current_user: Dict[str, Any] | None = Depends(get_optional_current_user),
     svc: UserService = Depends(get_user_service),
 ) -> List[WatchlistResponse]:
-    """Return all watchlists for the specified user."""
-    wls = svc.get_watchlists(user_id=x_user_id)
+    """Return all watchlists for the authenticated user (empty list if unauthenticated)."""
+    if current_user is None:
+        return []
+    wls = svc.get_watchlists(user_id=current_user["id"])
     return [
         WatchlistResponse(id=w.id, user_id=w.user_id, name=w.name, tickers=w.tickers)
         for w in wls
@@ -129,16 +132,18 @@ async def delete_watchlist(
 
 
 # ---------------------------------------------------------------------------
-# Alert read endpoints (public with X-User-Id header)
+# Alert read endpoints (authenticated; unauthenticated returns empty list)
 # ---------------------------------------------------------------------------
 @router.get("/alerts", response_model=List[AlertResponse])
 async def list_alerts(
     ticker: Optional[str] = Query(None),
-    x_user_id: str = Header(..., alias="X-User-Id"),
+    current_user: Dict[str, Any] | None = Depends(get_optional_current_user),
     svc: UserService = Depends(get_user_service),
 ) -> List[AlertResponse]:
-    """Return active alerts for the specified user."""
-    alerts = svc.get_active_alerts(user_id=x_user_id, ticker=ticker)
+    """Return active alerts for the authenticated user (empty list if unauthenticated)."""
+    if current_user is None:
+        return []
+    alerts = svc.get_active_alerts(user_id=current_user["id"], ticker=ticker)
     return [
         AlertResponse(
             id=a.id,

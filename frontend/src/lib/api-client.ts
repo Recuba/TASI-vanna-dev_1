@@ -340,9 +340,32 @@ export interface OHLCVData {
   volume?: number;
 }
 
-export function getOHLCVData(
+export interface StockOHLCVResponse {
+  data: OHLCVData[];
+  source: 'real' | 'mock' | 'cached';
+  last_updated: string | null;
+  symbol: string;
+  period: string;
+  count: number;
+}
+
+export async function getOHLCVData(
   ticker: string,
   params?: { period?: string },
-): Promise<OHLCVData[]> {
+): Promise<StockOHLCVResponse> {
   return request(`/api/v1/charts/${encodeURIComponent(ticker)}/ohlcv${qs(params ?? {})}`);
+}
+
+// -- TASI Index --
+export interface TasiIndexResponse {
+  data: OHLCVData[];
+  source: 'real' | 'mock' | 'cached';
+  last_updated: string | null;
+  symbol: string;
+  period: string;
+  count: number;
+}
+
+export function getTasiIndex(period: string = '1y'): Promise<TasiIndexResponse> {
+  return request(`/api/v1/charts/tasi/index${qs({ period })}`);
 }

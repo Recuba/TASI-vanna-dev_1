@@ -24,3 +24,13 @@ export interface ChartContainerProps {
   className?: string;
   title?: string;
 }
+
+export type DataSource = 'real' | 'mock' | 'cached';
+
+export interface ChartDataResult<T> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+  source: DataSource | null;
+  refetch: () => void;
+}

@@ -125,3 +125,74 @@ body {
 [dir="rtl"] .flip-rtl {
   transform: scaleX(-1);
 }
+
+/* ===================================================================
+   Print Styles
+   =================================================================== */
+
+@media print {
+  /* Hide non-content elements */
+  header,
+  footer,
+  nav,
+  aside,
+  .sidebar,
+  button,
+  [role="navigation"],
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  /* Force readable colors */
+  body,
+  html {
+    background: white !important;
+    color: #000 !important;
+  }
+
+  * {
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Main content fills the page */
+  main {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0.5in !important;
+  }
+
+  /* Keep charts and tables visible */
+  table,
+  .js-plotly-plot,
+  svg,
+  canvas,
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Clean up card borders for print */
+  .gold-border {
+    border-color: #ccc !important;
+  }
+
+  /* Remove background gradients */
+  .gold-text {
+    -webkit-text-fill-color: #000 !important;
+    background: none !important;
+  }
+
+  /* Links: show URL */
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  a[href^="#"]:after,
+  a[href^="/"]:after {
+    content: "";
+  }
+}

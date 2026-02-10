@@ -22,6 +22,7 @@ import {
 import type { OHLCVData, ChartTimeRange } from './chart-types';
 import dynamic from 'next/dynamic';
 import { ChartSkeleton } from './ChartSkeleton';
+import { ChartError } from './ChartError';
 import { ChartEmpty } from './ChartEmpty';
 
 // ---------------------------------------------------------------------------
@@ -38,6 +39,8 @@ interface CandlestickChartProps {
   ticker?: string;
   className?: string;
   loading?: boolean;
+  error?: string | null;
+  refetch?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -120,6 +123,8 @@ export function CandlestickChart({
   ticker,
   className,
   loading = false,
+  error = null,
+  refetch,
 }: CandlestickChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -320,8 +325,13 @@ export function CandlestickChart({
   }, [data, range, showMA20, showMA50, showVolume, loading]);
 
   // Loading state
-  if (loading) {
+  if (loading && (!data || data.length === 0)) {
     return <ChartSkeleton height={chartHeight} />;
+  }
+
+  // Error state
+  if (error) {
+    return <ChartError height={chartHeight} message={error} onRetry={refetch} />;
   }
 
   // Empty state

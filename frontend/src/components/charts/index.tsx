@@ -24,3 +24,7 @@ export const MiniSparkline = dynamic(() => import('./MiniSparkline'), {
 export { ChartSkeleton } from './ChartSkeleton';
 export { ChartError } from './ChartError';
 export { ChartEmpty } from './ChartEmpty';
+export { ChartErrorBoundary } from './ChartErrorBoundary';
+export { DataSourceBadge } from './DataSourceBadge';
+export { ChartWrapper } from './ChartWrapper';
+export { TradingViewAttribution } from './TradingViewAttribution';

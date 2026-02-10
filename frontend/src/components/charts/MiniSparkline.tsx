@@ -18,6 +18,8 @@ interface MiniSparklineProps {
   width?: number;
   height?: number;
   className?: string;
+  loading?: boolean;
+  error?: string | null;
 }
 
 const SPARKLINE_GREEN = '#4CAF50';
@@ -28,6 +30,8 @@ export default function MiniSparkline({
   width = 80,
   height = 40,
   className,
+  loading = false,
+  error = null,
 }: MiniSparklineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -95,6 +99,47 @@ export default function MiniSparkline({
       seriesRef.current = null;
     };
   }, [data, width, height]);
+
+  // Simplified loading state for tiny sparkline
+  if (loading && (!data || data.length === 0)) {
+    return (
+      <div
+        className={cn('inline-flex items-center justify-center rounded', className)}
+        style={{
+          width,
+          height,
+          background: 'rgba(212, 168, 75, 0.05)',
+        }}
+      >
+        <div
+          style={{
+            width: '60%',
+            height: 2,
+            borderRadius: 1,
+            background: 'rgba(212, 168, 75, 0.15)',
+            animation: 'chart-shimmer 1.5s ease-in-out infinite',
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Simplified error state for tiny sparkline
+  if (error) {
+    return (
+      <div
+        className={cn('inline-flex items-center justify-center rounded', className)}
+        style={{ width, height }}
+        title={error}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+    );
+  }
 
   if (!data || data.length === 0) return null;
 

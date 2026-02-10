@@ -1,5 +1,8 @@
 # CLAUDE.md
 
+[![CI](https://github.com/Recuba/TASI-vanna-dev_1/actions/workflows/ci.yml/badge.svg)](https://github.com/Recuba/TASI-vanna-dev_1/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Recuba/TASI-vanna-dev_1/actions/workflows/deploy.yml/badge.svg)](https://github.com/Recuba/TASI-vanna-dev_1/actions/workflows/deploy.yml)
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Required Reading (Mandatory)

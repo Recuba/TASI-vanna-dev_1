@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useSectors, useMarketData } from '@/lib/hooks/use-api';
-import { MiniSparkline } from '@/components/charts';
+import { MiniSparkline, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
 import { useMiniChartData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
@@ -61,6 +62,19 @@ function StockSparkline({ ticker }: { ticker: string }) {
 // ---------------------------------------------------------------------------
 
 export default function Home() {
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('raid-onboarding-seen')) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  function dismissOnboarding() {
+    localStorage.setItem('raid-onboarding-seen', '1');
+    setShowOnboarding(false);
+  }
+
   const { data: sectors, loading: sectorsLoading, error: sectorsError, refetch: refetchSectors } = useSectors();
   const { data: topMovers, loading: moversLoading, error: moversError, refetch: refetchMovers } = useMarketData({ limit: 5 });
 
@@ -76,6 +90,33 @@ export default function Home() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       <div className="max-w-content-lg mx-auto space-y-6">
+
+        {/* Onboarding Banner */}
+        {showOnboarding && (
+          <div className={cn(
+            'flex items-start gap-3 p-4 rounded-md',
+            'bg-gold/5 border border-gold/20',
+            'animate-fade-in-up'
+          )}>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-gold mb-1">Welcome to Ra&apos;d AI</p>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Explore Saudi stock market data and ask questions in natural language.
+                Use Ctrl+K (or Cmd+K on Mac) to jump to AI Chat anytime.
+              </p>
+            </div>
+            <button
+              onClick={dismissOnboarding}
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1 flex-shrink-0"
+              aria-label="Dismiss welcome banner"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* Hero */}
         <section className="text-center py-6 animate-fade-in-up">
@@ -166,6 +207,7 @@ export default function Home() {
             ) : moversError ? (
               <ErrorDisplay message={moversError} onRetry={refetchMovers} />
             ) : topMovers && topMovers.items.length > 0 ? (
+              <ChartErrorBoundary fallbackHeight={200}>
               <div className="space-y-2">
                 {topMovers.items.map((stock) => (
                   <Link
@@ -195,11 +237,17 @@ export default function Home() {
                   </Link>
                 ))}
               </div>
+              </ChartErrorBoundary>
             ) : (
               <p className="text-sm text-[var(--text-muted)]">No market data available.</p>
             )}
           </section>
 
+        </div>
+
+        {/* TradingView Attribution */}
+        <div className="text-center">
+          <TradingViewAttribution />
         </div>
 
         {/* AI Chat Quick Access */}

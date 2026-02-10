@@ -18,6 +18,25 @@ from auth.jwt_handler import decode_token
 from api.dependencies import get_db_connection
 
 _bearer_scheme = HTTPBearer()
+_bearer_scheme_optional = HTTPBearer(auto_error=False)
+
+
+def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(
+        _bearer_scheme_optional
+    ),
+) -> Dict[str, Any] | None:
+    """Extract and validate the access token if present.
+
+    Returns the user dict if a valid token is provided, or None if no
+    Authorization header is present.  Used by read endpoints that should
+    degrade gracefully for unauthenticated callers.
+    """
+    if credentials is None:
+        return None
+    # Delegate to the strict version; let its HTTPExceptions propagate
+    # (expired / invalid tokens should still be rejected).
+    return get_current_user(credentials)
 
 
 def get_current_user(

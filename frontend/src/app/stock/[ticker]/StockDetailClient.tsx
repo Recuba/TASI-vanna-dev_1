@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { useStockDetail } from '@/lib/hooks/use-api';
-import { CandlestickChart } from '@/components/charts';
+import { CandlestickChart, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
 import { useOHLCVData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
@@ -44,7 +44,7 @@ interface StockDetailClientProps {
 
 export function StockDetailClient({ ticker }: StockDetailClientProps) {
   const { data: detail, loading, error, refetch } = useStockDetail(ticker);
-  const { data: ohlcvData, loading: chartLoading } = useOHLCVData(ticker);
+  const { data: ohlcvData, loading: chartLoading, source: chartSource } = useOHLCVData(ticker);
 
   if (loading) {
     return (
@@ -111,7 +111,14 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
         </div>
 
         {/* Chart */}
-        <CandlestickChart data={ohlcvData || []} height={400} ticker={ticker} loading={chartLoading} />
+        <ChartErrorBoundary fallbackHeight={400}>
+          <ChartWrapper title="Price Chart" source={chartSource}>
+            <CandlestickChart data={ohlcvData || []} height={400} ticker={ticker} loading={chartLoading} />
+          </ChartWrapper>
+        </ChartErrorBoundary>
+        <div className="text-end -mt-2">
+          <TradingViewAttribution />
+        </div>
 
         {/* Key Metrics Grid */}
         <section>
