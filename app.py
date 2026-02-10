@@ -2,8 +2,8 @@
 Vanna 2.0 Saudi Stock Market Analyst
 =====================================
 Connects to a SQLite or PostgreSQL database of ~500 Saudi-listed companies
-and exposes a FastAPI chat interface powered by Claude Sonnet 4.5
-via the Anthropic API.
+and exposes a FastAPI chat interface powered by Google Gemini 3 Flash
+via the Gemini API (OpenAI-compatible endpoint).
 
 Set DB_BACKEND=postgres (with POSTGRES_* env vars) to use PostgreSQL.
 Default is SQLite.
@@ -24,7 +24,7 @@ from vanna import Agent, AgentConfig, ToolRegistry
 from vanna.core.system_prompt.base import SystemPromptBuilder
 from vanna.core.user.resolver import UserResolver, RequestContext, User
 from vanna.integrations.local.agent_memory.in_memory import DemoAgentMemory
-from vanna.integrations.anthropic import AnthropicLlmService
+from vanna.integrations.openai import OpenAILlmService
 from vanna.integrations.sqlite import SqliteRunner
 from vanna.integrations.postgres import PostgresRunner
 from vanna.servers.fastapi import VannaFastAPIServer
@@ -49,14 +49,17 @@ except Exception as _config_err:
 _HERE = Path(__file__).resolve().parent
 
 # ---------------------------------------------------------------------------
-# 1. LLM -- Claude Sonnet 4.5 via Anthropic API
+# 1. LLM -- Google Gemini 3 Flash via Gemini API (OpenAI-compatible)
 # ---------------------------------------------------------------------------
-_llm_model = _settings.llm.model if _settings else "claude-sonnet-4-5-20250929"
-_llm_api_key = _settings.get_llm_api_key() if _settings else ""
+import os
 
-llm = AnthropicLlmService(
-    model=_llm_model,
-    api_key=_llm_api_key,
+_GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyCqSJ4L49W35Nqval5jQqdeafbJ82bgJDs")
+_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+
+llm = OpenAILlmService(
+    model=_GEMINI_MODEL,
+    api_key=_GEMINI_API_KEY,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
 
 # ---------------------------------------------------------------------------
