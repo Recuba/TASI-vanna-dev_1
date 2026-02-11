@@ -124,8 +124,10 @@ class TestGetConnection:
 
         # Verify commit was called on clean exit
         mock_conn.commit.assert_called_once()
-        # Verify connection was returned to pool
-        mock_pool_instance.putconn.assert_called_once_with(mock_conn)
+        # Verify connection was returned to pool (with unique key)
+        mock_pool_instance.putconn.assert_called_once()
+        call_args = mock_pool_instance.putconn.call_args
+        assert call_args[0][0] is mock_conn
 
     @patch("database.pool.ThreadedConnectionPool")
     def test_get_connection_rollback_on_exception(self, mock_pool_cls):
@@ -152,8 +154,10 @@ class TestGetConnection:
         # Verify rollback was called (not commit)
         mock_conn.rollback.assert_called_once()
         mock_conn.commit.assert_not_called()
-        # Connection should still be returned to pool
-        mock_pool_instance.putconn.assert_called_once_with(mock_conn)
+        # Connection should still be returned to pool (with unique key)
+        mock_pool_instance.putconn.assert_called_once()
+        call_args = mock_pool_instance.putconn.call_args
+        assert call_args[0][0] is mock_conn
 
 
 class TestGetPoolConnection:
@@ -185,11 +189,13 @@ class TestGetPoolConnection:
         init_pool(mock_settings)
         conn = get_pool_connection()
 
-        # close() should have been replaced
+        # close() on wrapper should return to pool
         conn.close()
 
-        # Should return to pool instead of truly closing
-        mock_pool_instance.putconn.assert_called_once_with(mock_conn)
+        # Should return to pool instead of truly closing (with unique key)
+        mock_pool_instance.putconn.assert_called_once()
+        call_args = mock_pool_instance.putconn.call_args
+        assert call_args[0][0] is mock_conn
 
 
 class TestClosePool:

@@ -4,6 +4,11 @@ PostgreSQL Connection Pool
 Singleton connection pool using psycopg2's ThreadedConnectionPool.
 Lazy-initialized via ``init_pool()`` -- never imports or connects at module level.
 
+Important: FastAPI async handlers share a single event-loop thread, so the
+default ThreadedConnectionPool key (thread ID) would cause all concurrent
+requests to share one connection.  We use unique keys per checkout to avoid
+this.
+
 Usage::
 
     from database.pool import init_pool, get_connection, close_pool
@@ -23,6 +28,7 @@ Usage::
 from __future__ import annotations
 
 import logging
+import uuid
 from contextlib import contextmanager
 from typing import Optional
 
@@ -81,6 +87,16 @@ def init_pool(
         raise
 
 
+def _unique_key() -> str:
+    """Generate a unique key for each pool checkout.
+
+    ThreadedConnectionPool uses thread ID as the default key, which causes
+    all async handlers (sharing one event-loop thread) to receive the same
+    connection.  A UUID key ensures every checkout gets its own connection.
+    """
+    return uuid.uuid4().hex
+
+
 @contextmanager
 def get_connection():
     """Context manager that checks out a connection and returns it on exit.
@@ -95,7 +111,8 @@ def get_connection():
             "Connection pool is not initialized. Call init_pool() first."
         )
 
-    conn = _pool.getconn()
+    key = _unique_key()
+    conn = _pool.getconn(key=key)
     try:
         yield conn
         conn.commit()
@@ -103,7 +120,7 @@ def get_connection():
         conn.rollback()
         raise
     finally:
-        _pool.putconn(conn)
+        _pool.putconn(conn, key=key)
 
 
 class _PooledConnection:
@@ -111,25 +128,27 @@ class _PooledConnection:
     on ``close()`` instead of destroying it.
 
     psycopg2 connections are C extension objects whose ``close`` attribute
-    is read-only, so we cannot monkey-patch it. Instead we delegate all
+    is read-only, so we cannot monkey-patch it.  Instead we delegate all
     attribute access to the underlying connection while overriding ``close``.
     """
 
-    __slots__ = ("_conn", "_pool")
+    __slots__ = ("_conn", "_pool", "_key")
 
-    def __init__(self, conn, pool):
+    def __init__(self, conn, pool, key: str):
         object.__setattr__(self, "_conn", conn)
         object.__setattr__(self, "_pool", pool)
+        object.__setattr__(self, "_key", key)
 
     def close(self):
         conn = object.__getattribute__(self, "_conn")
         pool = object.__getattribute__(self, "_pool")
+        key = object.__getattribute__(self, "_key")
         try:
             conn.rollback()
         except Exception:
             pass
         try:
-            pool.putconn(conn)
+            pool.putconn(conn, key=key)
         except Exception:
             try:
                 conn.close()
@@ -170,8 +189,9 @@ def get_pool_connection():
         raise RuntimeError(
             "Connection pool is not initialized. Call init_pool() first."
         )
-    conn = _pool.getconn()
-    return _PooledConnection(conn, _pool)
+    key = _unique_key()
+    conn = _pool.getconn(key=key)
+    return _PooledConnection(conn, _pool, key)
 
 
 def close_pool() -> None:
