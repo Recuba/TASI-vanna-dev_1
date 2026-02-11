@@ -106,42 +106,72 @@ def get_connection():
         _pool.putconn(conn)
 
 
-def get_pool_connection():
-    """Return a raw connection from the pool.
+class _PooledConnection:
+    """Thin wrapper around a psycopg2 connection that returns it to the pool
+    on ``close()`` instead of destroying it.
 
-    The caller is responsible for returning it via the pool's ``putconn()``.
-    Prefer :func:`get_connection` (context manager) instead.
+    psycopg2 connections are C extension objects whose ``close`` attribute
+    is read-only, so we cannot monkey-patch it. Instead we delegate all
+    attribute access to the underlying connection while overriding ``close``.
+    """
+
+    __slots__ = ("_conn", "_pool")
+
+    def __init__(self, conn, pool):
+        object.__setattr__(self, "_conn", conn)
+        object.__setattr__(self, "_pool", pool)
+
+    def close(self):
+        conn = object.__getattribute__(self, "_conn")
+        pool = object.__getattribute__(self, "_pool")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        try:
+            pool.putconn(conn)
+        except Exception:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    def cursor(self, *args, **kwargs):
+        return object.__getattribute__(self, "_conn").cursor(*args, **kwargs)
+
+    def commit(self):
+        return object.__getattribute__(self, "_conn").commit()
+
+    def rollback(self):
+        return object.__getattribute__(self, "_conn").rollback()
+
+    def __getattr__(self, name):
+        return getattr(object.__getattribute__(self, "_conn"), name)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+
+def get_pool_connection():
+    """Return a wrapped connection from the pool.
+
+    The caller should call ``conn.close()`` when done -- this returns the
+    connection to the pool instead of destroying it.
+
+    Prefer :func:`get_connection` (context manager) instead when possible.
 
     This function exists so services that use the ``get_conn`` callable pattern
     can be wired to the pool: ``Service(get_conn=get_pool_connection)``.
-    The service calls ``conn.close()`` which, for pool connections, is
-    intercepted -- but to be safe we wrap it so ``close()`` returns the
-    connection to the pool instead of truly closing it.
     """
     if _pool is None:
         raise RuntimeError(
             "Connection pool is not initialized. Call init_pool() first."
         )
     conn = _pool.getconn()
-    # Wrap close() so existing service code that calls conn.close()
-    # returns the connection to the pool instead of destroying it.
-    # Always rollback uncommitted work first to avoid returning an
-    # aborted transaction to the pool (transaction-safety fix).
-    _original_close = conn.close
-
-    def _pool_aware_close():
-        try:
-            conn.rollback()
-        except Exception:
-            pass
-        try:
-            _pool.putconn(conn)
-        except Exception:
-            # If the pool rejects it (e.g. already closed), fall back
-            _original_close()
-
-    conn.close = _pool_aware_close
-    return conn
+    return _PooledConnection(conn, _pool)
 
 
 def close_pool() -> None:
