@@ -1,14 +1,16 @@
 /** @type {import('next').NextConfig} */
+const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8084';
+
 const nextConfig = {
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8084/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
       },
       {
         source: '/health',
-        destination: 'http://localhost:8084/health',
+        destination: `${backendUrl}/health`,
       },
     ];
   },
