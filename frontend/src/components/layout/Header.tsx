@@ -88,7 +88,7 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
         </Link>
 
         {/* Desktop nav links */}
-        <nav className={cn('hidden md:flex items-center gap-1', language === 'ar' ? 'me-6' : 'ms-6')}>
+        <nav className={cn('hidden md:flex lg:hidden items-center gap-1', language === 'ar' ? 'me-6' : 'ms-6')}>
           {navLinks.map((link) => {
             const isActive =
               link.href === '/'

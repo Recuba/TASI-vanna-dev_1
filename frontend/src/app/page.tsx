@@ -8,15 +8,18 @@ import { MiniSparkline, TradingViewAttribution, ChartErrorBoundary } from '@/com
 import { useMiniChartData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
-// Quick action cards - Arabic
+// Quick action cards - bilingual
 // ---------------------------------------------------------------------------
 
 const quickActions = [
   {
-    title: '\u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629',
-    description: '\u0627\u0633\u0623\u0644 \u0639\u0646 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629',
+    titleAr: '\u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629',
+    titleEn: 'AI Chat',
+    descAr: '\u0627\u0633\u0623\u0644 \u0639\u0646 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629',
+    descEn: 'Ask about Saudi stocks in natural language',
     href: '/chat',
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -25,8 +28,10 @@ const quickActions = [
     ),
   },
   {
-    title: '\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0633\u0648\u0642',
-    description: '\u062A\u0635\u0641\u062D \u062C\u0645\u064A\u0639 \u0627\u0644\u0634\u0631\u0643\u0627\u062A \u0648\u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A \u0641\u064A \u062A\u0627\u0633\u064A',
+    titleAr: '\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0633\u0648\u0642',
+    titleEn: 'Market Data',
+    descAr: '\u062A\u0635\u0641\u062D \u062C\u0645\u064A\u0639 \u0627\u0644\u0634\u0631\u0643\u0627\u062A \u0648\u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A \u0641\u064A \u062A\u0627\u0633\u064A',
+    descEn: 'Browse all companies and sectors in TASI',
     href: '/market',
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -35,8 +40,10 @@ const quickActions = [
     ),
   },
   {
-    title: '\u0627\u0644\u0631\u0633\u0648\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A\u0629',
-    description: '\u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629 \u0644\u0644\u0645\u0624\u0634\u0631 \u0648\u0627\u0644\u0623\u0633\u0647\u0645',
+    titleAr: '\u0627\u0644\u0631\u0633\u0648\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A\u0629',
+    titleEn: 'Charts',
+    descAr: '\u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629 \u0644\u0644\u0645\u0624\u0634\u0631 \u0648\u0627\u0644\u0623\u0633\u0647\u0645',
+    descEn: 'Interactive charts for index and stocks',
     href: '/charts',
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -45,8 +52,10 @@ const quickActions = [
     ),
   },
   {
-    title: '\u0627\u0644\u0623\u062E\u0628\u0627\u0631',
-    description: '\u0622\u062E\u0631 \u0623\u062E\u0628\u0627\u0631 \u0627\u0644\u0633\u0648\u0642 \u0648\u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A',
+    titleAr: '\u0627\u0644\u0623\u062E\u0628\u0627\u0631',
+    titleEn: 'News',
+    descAr: '\u0622\u062E\u0631 \u0623\u062E\u0628\u0627\u0631 \u0627\u0644\u0633\u0648\u0642 \u0648\u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A',
+    descEn: 'Latest market news and announcements',
     href: '/news',
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -78,6 +87,7 @@ function StockSparkline({ ticker }: { ticker: string }) {
 // ---------------------------------------------------------------------------
 
 export default function Home() {
+  const { t, language, isRTL } = useLanguage();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -97,10 +107,10 @@ export default function Home() {
   const totalCompanies = sectors ? sectors.reduce((sum, s) => sum + s.company_count, 0) : null;
 
   const platformStats = [
-    { label: '\u0633\u0647\u0645', value: totalCompanies ? `${totalCompanies}+` : '500+' },
-    { label: '\u0645\u0635\u062F\u0631 \u0623\u062E\u0628\u0627\u0631', value: '5' },
-    { label: '\u062C\u062F\u0648\u0644 \u0628\u064A\u0627\u0646\u0627\u062A', value: '10' },
-    { label: '\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A', value: 'Gemini' },
+    { labelAr: '\u0633\u0647\u0645', labelEn: 'Stocks', value: totalCompanies ? `${totalCompanies}+` : '500+' },
+    { labelAr: '\u0645\u0635\u062F\u0631 \u0623\u062E\u0628\u0627\u0631', labelEn: 'News Sources', value: '5' },
+    { labelAr: '\u062C\u062F\u0648\u0644 \u0628\u064A\u0627\u0646\u0627\u062A', labelEn: 'Data Tables', value: '10' },
+    { labelAr: '\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A', labelEn: 'AI Engine', value: 'Gemini' },
   ];
 
   return (
@@ -115,11 +125,14 @@ export default function Home() {
             'animate-fade-in-up'
           )}>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gold mb-1" dir="rtl">
-                {'\u0645\u0631\u062D\u0628\u064B\u0627 \u0628\u0643 \u0641\u064A \u0631\u0627\u0626\u062F'}
+              <p className="text-sm font-bold text-gold mb-1">
+                {t('\u0645\u0631\u062D\u0628\u064B\u0627 \u0628\u0643 \u0641\u064A \u0631\u0627\u0626\u062F', 'Welcome to Ra\'d')}
               </p>
-              <p className="text-xs text-[var(--text-secondary)]" dir="rtl">
-                {'\u0627\u0633\u062A\u0643\u0634\u0641 \u0628\u064A\u0627\u0646\u0627\u062A \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0648\u0627\u0633\u0623\u0644 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629. \u0627\u0633\u062A\u062E\u062F\u0645 Ctrl+K \u0644\u0644\u0627\u0646\u062A\u0642\u0627\u0644 \u0644\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629.'}
+              <p className="text-xs text-[var(--text-secondary)]">
+                {t(
+                  '\u0627\u0633\u062A\u0643\u0634\u0641 \u0628\u064A\u0627\u0646\u0627\u062A \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0648\u0627\u0633\u0623\u0644 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629. \u0627\u0633\u062A\u062E\u062F\u0645 Ctrl+K \u0644\u0644\u0627\u0646\u062A\u0642\u0627\u0644 \u0644\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629.',
+                  'Explore Saudi stock market data and ask questions in natural language. Use Ctrl+K to jump to AI Chat.'
+                )}
               </p>
             </div>
             <button
@@ -144,16 +157,19 @@ export default function Home() {
               </svg>
             </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-3 gold-text" dir="rtl">
-            {'\u0631\u0627\u0626\u062F \u2014 \u0645\u062D\u0644\u0644 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A'}
+          <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-3 gold-text">
+            {t('\u0631\u0627\u0626\u062F \u2014 \u0645\u062D\u0644\u0644 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A', 'Ra\'d \u2014 Saudi Stock AI Analyst')}
           </h1>
-          <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto leading-relaxed" dir="rtl">
-            {'\u0645\u0646\u0635\u0629 \u0630\u0643\u064A\u0629 \u0644\u062A\u062D\u0644\u064A\u0644 \u0628\u064A\u0627\u0646\u0627\u062A \u0633\u0648\u0642 \u062A\u0627\u0633\u064A \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629\u060C \u0645\u0639 \u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629 \u0648\u0623\u062E\u0628\u0627\u0631 \u0644\u062D\u0638\u064A\u0629'}
+          <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto leading-relaxed">
+            {t(
+              '\u0645\u0646\u0635\u0629 \u0630\u0643\u064A\u0629 \u0644\u062A\u062D\u0644\u064A\u0644 \u0628\u064A\u0627\u0646\u0627\u062A \u0633\u0648\u0642 \u062A\u0627\u0633\u064A \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629\u060C \u0645\u0639 \u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629 \u0648\u0623\u062E\u0628\u0627\u0631 \u0644\u062D\u0638\u064A\u0629',
+              'Smart platform for TASI market analysis using natural language, with interactive charts and live news'
+            )}
           </p>
         </section>
 
         {/* Platform Stats */}
-        <div className="flex justify-center gap-4 flex-wrap animate-fade-in-up-delay-1" dir="rtl">
+        <div className="flex justify-center gap-4 flex-wrap animate-fade-in-up-delay-1">
           {platformStats.map((stat, i) => (
             <div
               key={i}
@@ -166,7 +182,7 @@ export default function Home() {
               )}
             >
               <span className="text-xl font-bold text-gold">{stat.value}</span>
-              <span className="text-xs text-[var(--text-muted)]">{stat.label}</span>
+              <span className="text-xs text-[var(--text-muted)]">{language === 'ar' ? stat.labelAr : stat.labelEn}</span>
             </div>
           ))}
         </div>
@@ -187,14 +203,16 @@ export default function Home() {
                 )}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative" dir="rtl">
+                <div className="relative">
                   <div className="text-[var(--text-muted)] group-hover:text-gold transition-colors duration-300 mb-3">
                     {action.icon}
                   </div>
                   <h3 className="text-sm font-bold text-[var(--text-primary)] group-hover:text-gold transition-colors mb-1">
-                    {action.title}
+                    {language === 'ar' ? action.titleAr : action.titleEn}
                   </h3>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">{action.description}</p>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    {language === 'ar' ? action.descAr : action.descEn}
+                  </p>
                 </div>
               </Link>
             ))}
@@ -207,14 +225,15 @@ export default function Home() {
           {/* Sector Cards */}
           <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gold uppercase tracking-wider"
-                dir="rtl">{'\u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A'}</h3>
+              <h3 className="text-sm font-bold text-gold uppercase tracking-wider">
+                {t('\u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A', 'Sectors')}
+              </h3>
               <Link href="/market" className="text-xs text-[var(--text-muted)] hover:text-gold transition-colors">
-                {'\u0639\u0631\u0636 \u0627\u0644\u0643\u0644'} &larr;
+                {t('\u0639\u0631\u0636 \u0627\u0644\u0643\u0644', 'View All')} {isRTL ? '\u2190' : '\u2192'}
               </Link>
             </div>
             {sectorsLoading ? (
-              <LoadingSpinner message={'\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...'} />
+              <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
             ) : sectorsError ? (
               <ErrorDisplay message={sectorsError} onRetry={refetchSectors} />
             ) : sectors && sectors.length > 0 ? (
@@ -234,21 +253,22 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[var(--text-muted)]" dir="rtl">{'\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A'}</p>
+              <p className="text-sm text-[var(--text-muted)]">{t('\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A', 'No data available')}</p>
             )}
           </section>
 
           {/* Top Movers */}
           <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gold uppercase tracking-wider"
-                dir="rtl">{'\u0623\u0639\u0644\u0649 \u0627\u0644\u0634\u0631\u0643\u0627\u062A \u0642\u064A\u0645\u0629'}</h3>
+              <h3 className="text-sm font-bold text-gold uppercase tracking-wider">
+                {t('\u0623\u0639\u0644\u0649 \u0627\u0644\u0634\u0631\u0643\u0627\u062A \u0642\u064A\u0645\u0629', 'Top Companies by Value')}
+              </h3>
               <Link href="/market" className="text-xs text-[var(--text-muted)] hover:text-gold transition-colors">
-                {'\u0639\u0631\u0636 \u0627\u0644\u0643\u0644'} &larr;
+                {t('\u0639\u0631\u0636 \u0627\u0644\u0643\u0644', 'View All')} {isRTL ? '\u2190' : '\u2192'}
               </Link>
             </div>
             {moversLoading ? (
-              <LoadingSpinner message={'\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...'} />
+              <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
             ) : moversError ? (
               <ErrorDisplay message={moversError} onRetry={refetchMovers} />
             ) : topMovers && topMovers.items.length > 0 ? (
@@ -284,19 +304,22 @@ export default function Home() {
               </div>
               </ChartErrorBoundary>
             ) : (
-              <p className="text-sm text-[var(--text-muted)]" dir="rtl">{'\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A'}</p>
+              <p className="text-sm text-[var(--text-muted)]">{t('\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A', 'No data available')}</p>
             )}
           </section>
 
         </div>
 
         {/* About Section */}
-        <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-6 animate-fade-in-up-delay-3" dir="rtl">
+        <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-6 animate-fade-in-up-delay-3">
           <h3 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">
-            {'\u0639\u0646 \u0631\u0627\u0626\u062F'}
+            {t('\u0639\u0646 \u0631\u0627\u0626\u062F', 'About Ra\'d')}
           </h3>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-            {'\u0631\u0627\u0626\u062F \u0647\u064A \u0645\u0646\u0635\u0629 \u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0645\u062A\u0642\u062F\u0645\u0629 \u0644\u062A\u062D\u0644\u064A\u0644 \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 (TASI). \u062A\u0648\u0641\u0631 \u0627\u0644\u0645\u0646\u0635\u0629 \u0625\u0645\u0643\u0627\u0646\u064A\u0629 \u0627\u0644\u0627\u0633\u062A\u0639\u0644\u0627\u0645 \u0639\u0646 \u0628\u064A\u0627\u0646\u0627\u062A \u0623\u0643\u062B\u0631 \u0645\u0646 500 \u0634\u0631\u0643\u0629 \u0645\u062F\u0631\u062C\u0629 \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0623\u0648 \u0627\u0644\u0625\u0646\u062C\u0644\u064A\u0632\u064A\u0629\u060C \u0645\u0639 \u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629\u060C \u0648\u0623\u062E\u0628\u0627\u0631 \u0645\u0646 5 \u0645\u0635\u0627\u062F\u0631 \u0639\u0631\u0628\u064A\u0629\u060C \u0648\u062A\u0642\u0627\u0631\u064A\u0631 \u0645\u0627\u0644\u064A\u0629 \u0645\u0641\u0635\u0644\u0629.'}
+            {t(
+              '\u0631\u0627\u0626\u062F \u0647\u064A \u0645\u0646\u0635\u0629 \u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0645\u062A\u0642\u062F\u0645\u0629 \u0644\u062A\u062D\u0644\u064A\u0644 \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 (TASI). \u062A\u0648\u0641\u0631 \u0627\u0644\u0645\u0646\u0635\u0629 \u0625\u0645\u0643\u0627\u0646\u064A\u0629 \u0627\u0644\u0627\u0633\u062A\u0639\u0644\u0627\u0645 \u0639\u0646 \u0628\u064A\u0627\u0646\u0627\u062A \u0623\u0643\u062B\u0631 \u0645\u0646 500 \u0634\u0631\u0643\u0629 \u0645\u062F\u0631\u062C\u0629 \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0623\u0648 \u0627\u0644\u0625\u0646\u062C\u0644\u064A\u0632\u064A\u0629\u060C \u0645\u0639 \u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629\u060C \u0648\u0623\u062E\u0628\u0627\u0631 \u0645\u0646 5 \u0645\u0635\u0627\u062F\u0631 \u0639\u0631\u0628\u064A\u0629\u060C \u0648\u062A\u0642\u0627\u0631\u064A\u0631 \u0645\u0627\u0644\u064A\u0629 \u0645\u0641\u0635\u0644\u0629.',
+              'Ra\'d is an advanced AI platform for analyzing the Saudi stock market (TASI). The platform enables querying data for over 500 listed companies using Arabic or English, with interactive charts, news from 5 Arabic sources, and detailed financial reports.'
+            )}
           </p>
         </section>
 
@@ -313,11 +336,11 @@ export default function Home() {
               'transition-all duration-300'
             )}
           >
-            <p className="text-lg font-bold gold-text mb-1" dir="rtl">
-              {'\u0627\u0628\u062F\u0623 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629'}
+            <p className="text-lg font-bold gold-text mb-1">
+              {t('\u0627\u0628\u062F\u0623 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629', 'Start AI Chat')}
             </p>
-            <p className="text-sm text-[var(--text-secondary)]" dir="rtl">
-              {'\u0627\u0633\u0623\u0644 \u0623\u064A \u0633\u0624\u0627\u0644 \u0639\u0646 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0648\u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0645\u0627\u0644\u064A\u0629'}
+            <p className="text-sm text-[var(--text-secondary)]">
+              {t('\u0627\u0633\u0623\u0644 \u0623\u064A \u0633\u0624\u0627\u0644 \u0639\u0646 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0648\u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0645\u0627\u0644\u064A\u0629', 'Ask any question about Saudi stocks and financial data')}
             </p>
           </Link>
         </section>

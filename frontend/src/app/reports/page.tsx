@@ -48,7 +48,7 @@ const typeColors: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 const PAGE_SIZE = 20;
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+const API_BASE = '';
 
 // ---------------------------------------------------------------------------
 // Paginated response from backend (matches PaginatedResponse[ReportResponse])

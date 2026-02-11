@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChatMessage, SSEEvent } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+const API_BASE = '';
 const SSE_ENDPOINT = '/api/vanna/v2/chat_sse';
 const STORAGE_KEY = 'raid-chat-messages';
 const MAX_STORED_MESSAGES = 100;

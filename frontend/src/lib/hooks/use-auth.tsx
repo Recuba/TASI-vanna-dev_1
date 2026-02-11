@@ -31,7 +31,7 @@ const TOKEN_KEY = 'rad-ai-token';
 const REFRESH_TOKEN_KEY = 'rad-ai-refresh-token';
 const USER_KEY = 'rad-ai-user';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+const API_BASE = '';
 
 // ---------------------------------------------------------------------------
 // Helpers

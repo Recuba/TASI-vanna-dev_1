@@ -150,7 +150,7 @@ class MiddlewareSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="MW_")
 
-    cors_origins: str = "http://localhost:3000,http://localhost:8084"
+    cors_origins: str = "http://localhost:3000,http://localhost:8084,https://frontend-two-nu-83.vercel.app,https://raid-ai-app-production.up.railway.app"
     rate_limit_per_minute: int = 60
     log_skip_paths: str = "/health,/favicon.ico"
 

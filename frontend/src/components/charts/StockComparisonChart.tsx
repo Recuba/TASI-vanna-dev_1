@@ -25,7 +25,7 @@ const PERIODS = [
   { label: '1Y', value: '1y' },
 ] as const;
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+const API_BASE = '';
 
 // ---------------------------------------------------------------------------
 // Types

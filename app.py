@@ -234,6 +234,20 @@ try:
         if _mw_settings
         else ["http://localhost:3000", "http://localhost:8084"]
     )
+
+    # Dynamically add origins from environment variables if not already present
+    import os as _os
+
+    _frontend_url = _os.environ.get("FRONTEND_URL", "").strip().rstrip("/")
+    if _frontend_url and _frontend_url not in _cors_origins:
+        _cors_origins.append(_frontend_url)
+
+    _railway_domain = _os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
+    if _railway_domain:
+        _railway_origin = f"https://{_railway_domain}" if not _railway_domain.startswith("http") else _railway_domain
+        if _railway_origin not in _cors_origins:
+            _cors_origins.append(_railway_origin)
+
     _rate_limit = _mw_settings.rate_limit_per_minute if _mw_settings else 60
     _skip_paths = (
         _mw_settings.log_skip_paths_list

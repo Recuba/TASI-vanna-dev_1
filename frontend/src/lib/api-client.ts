@@ -1,12 +1,11 @@
 /**
  * Typed API client for the Ra'd AI backend.
  *
- * Base URL comes from NEXT_PUBLIC_API_URL env var (default: "").
- * When running via the Next.js proxy (next.config.mjs rewrites), the
- * base can stay empty because /api/* is rewritten to the backend.
+ * All requests use relative paths (e.g. /api/v1/...) so they are proxied
+ * through Next.js rewrites (next.config.mjs) to the backend, avoiding CORS.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+const API_BASE = '';
 
 // ---------------------------------------------------------------------------
 // Shared types that mirror the Pydantic response models in api/routes/
@@ -527,19 +526,19 @@ export function getMarketMovers(
   type: 'gainers' | 'losers',
   limit?: number,
 ): Promise<MarketMover[]> {
-  return request(`/api/market/movers${qs({ type, limit })}`);
+  return request(`/api/v1/market/movers${qs({ type, limit })}`);
 }
 
 export function getMarketSummary(): Promise<MarketSummary> {
-  return request('/api/market/summary');
+  return request('/api/v1/market/summary');
 }
 
 export function getSectorPerformance(): Promise<SectorPerformance[]> {
-  return request('/api/market/sectors/performance');
+  return request('/api/v1/market/sectors');
 }
 
 export function getMarketHeatmap(): Promise<HeatmapItem[]> {
-  return request('/api/market/heatmap');
+  return request('/api/v1/market/heatmap');
 }
 
 // ---------------------------------------------------------------------------
@@ -547,11 +546,11 @@ export function getMarketHeatmap(): Promise<HeatmapItem[]> {
 // ---------------------------------------------------------------------------
 
 export function getStockDividends(ticker: string): Promise<StockDividends> {
-  return request(`/api/entities/${encodeURIComponent(ticker)}/dividends`);
+  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/dividends`);
 }
 
 export function getStockFinancialSummary(ticker: string): Promise<FinancialSummary> {
-  return request(`/api/entities/${encodeURIComponent(ticker)}/financial-summary`);
+  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/summary`);
 }
 
 export function getStockFinancials(
@@ -559,7 +558,7 @@ export function getStockFinancials(
   params?: { statement?: string; period_type?: string },
 ): Promise<FinancialStatement[]> {
   return request(
-    `/api/entities/${encodeURIComponent(ticker)}/financials${qs(params ?? {})}`,
+    `/api/v1/stocks/${encodeURIComponent(ticker)}/financials${qs(params ?? {})}`,
   );
 }
 
@@ -567,15 +566,9 @@ export function compareStocks(
   tickers: string[],
   metrics: string[],
 ): Promise<StockComparison> {
-  return request('/api/entities/compare', {
-    method: 'POST',
-    body: JSON.stringify({ tickers, metrics }),
-  });
+  return request(`/api/v1/stocks/compare${qs({ tickers: tickers.join(','), metrics: metrics.join(',') })}`);
 }
 
 export function getBatchQuotes(tickers: string[]): Promise<BatchQuote[]> {
-  return request('/api/entities/batch-quotes', {
-    method: 'POST',
-    body: JSON.stringify({ tickers }),
-  });
+  return request(`/api/v1/stocks/quotes${qs({ tickers: tickers.join(',') })}`);
 }
