@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import type { SSETableData } from '@/lib/types';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface DataTableProps {
   data: SSETableData;
@@ -35,6 +36,7 @@ function exportCSV(columns: string[], rows: (string | number | null)[][]) {
 
 export function DataTable({ data }: DataTableProps) {
   const { columns, rows } = data;
+  const { t } = useLanguage();
 
   if (!columns || columns.length === 0) return null;
 
@@ -68,8 +70,8 @@ export function DataTable({ data }: DataTableProps) {
                 <button
                   onClick={() => exportCSV(columns, rows)}
                   className="p-1 rounded text-[var(--text-muted)] hover:text-gold hover:bg-gold/10 transition-colors"
-                  title="تصدير CSV"
-                  aria-label="تصدير CSV"
+                  title={t('تصدير CSV', 'Export CSV')}
+                  aria-label={t('تصدير CSV', 'Export CSV')}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -108,8 +110,8 @@ export function DataTable({ data }: DataTableProps) {
         </table>
       </div>
       <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--bg-input)] text-xs text-[var(--text-muted)] border-t gold-border">
-        <span>{rows.length} {rows.length === 1 ? 'صف' : 'صفوف'}</span>
-        <span>{columns.length} {columns.length === 1 ? 'عمود' : 'أعمدة'}</span>
+        <span>{rows.length} {rows.length === 1 ? t('صف', 'row') : t('صفوف', 'rows')}</span>
+        <span>{columns.length} {columns.length === 1 ? t('عمود', 'column') : t('أعمدة', 'columns')}</span>
       </div>
     </div>
   );

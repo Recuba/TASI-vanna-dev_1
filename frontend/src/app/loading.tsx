@@ -1,4 +1,10 @@
+'use client';
+
+import { useLanguage } from '@/providers/LanguageProvider';
+
 export default function Loading() {
+  const { t } = useLanguage();
+
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-20">
       <div className="flex flex-col items-center gap-4 animate-fade-in-up">
@@ -10,7 +16,7 @@ export default function Loading() {
 
         {/* Loading text */}
         <span className="text-sm text-[var(--text-muted)]">
-          جاري التحميل...
+          {t('جاري التحميل...', 'Loading...')}
         </span>
       </div>
     </div>

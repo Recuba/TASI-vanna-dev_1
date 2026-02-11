@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,6 +86,8 @@ const typeIcons: Record<ToastType, ReactNode> = {
 // ---------------------------------------------------------------------------
 
 function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: number) => void }) {
+  const { t, language } = useLanguage();
+
   return (
     <div
       className={cn(
@@ -97,14 +100,14 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: numbe
         typeStyles[item.type],
       )}
       role="alert"
-      dir="rtl"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
     >
       <span className="flex-shrink-0">{typeIcons[item.type]}</span>
       <p className="text-sm font-medium flex-1">{item.message}</p>
       <button
         onClick={() => onDismiss(item.id)}
         className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
-        aria-label="إغلاق"
+        aria-label={t('إغلاق', 'Close')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="6" x2="6" y2="18" />

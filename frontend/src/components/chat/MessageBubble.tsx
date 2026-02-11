@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/lib/types';
 import { AssistantContent } from './AssistantContent';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -13,8 +14,9 @@ interface MessageBubbleProps {
 export function MessageBubble({ message, onRetry }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const [showTime, setShowTime] = useState(false);
+  const { t, language } = useLanguage();
 
-  const timeStr = message.timestamp.toLocaleTimeString('ar-SA', {
+  const timeStr = message.timestamp.toLocaleTimeString(language === 'ar' ? 'ar-SA' : 'en-US', {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -70,7 +72,7 @@ export function MessageBubble({ message, onRetry }: MessageBubbleProps) {
                 <polyline points="23 4 23 10 17 10" />
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
               </svg>
-              إعادة المحاولة
+              {t('إعادة المحاولة', 'Retry')}
             </button>
           </div>
         )}
@@ -90,7 +92,7 @@ export function MessageBubble({ message, onRetry }: MessageBubbleProps) {
       {/* User avatar */}
       {isUser && (
         <div className="w-8 h-8 flex-shrink-0 rounded-lg bg-gold/20 border border-gold/30 flex items-center justify-center text-xs font-medium text-gold">
-          أنت
+          {t('أنت', 'You')}
         </div>
       )}
     </div>

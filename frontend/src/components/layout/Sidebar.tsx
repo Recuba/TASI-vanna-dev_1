@@ -209,7 +209,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           'h-[calc(100vh-64px)]',
           'sticky top-[64px]',
           'border-e gold-border',
-          'bg-[#141414] dark:bg-[#141414] bg-white',
+          'dark:bg-[#141414] bg-white',
           'transition-all duration-300',
           collapsed ? 'w-sidebar-collapsed' : 'w-sidebar'
         )}
@@ -236,7 +236,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           'h-[calc(100vh-64px)] w-[260px]',
           'flex flex-col overflow-x-hidden',
           'border-s gold-border',
-          'bg-[#141414] dark:bg-[#141414] bg-white',
+          'dark:bg-[#141414] bg-white',
           'transition-transform duration-300 ease-in-out',
           'lg:hidden',
           mobileOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full'

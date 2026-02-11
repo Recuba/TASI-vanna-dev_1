@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import type { SSEChartData } from '@/lib/types';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // Plotly must be loaded client-side only (no SSR)
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -15,6 +16,7 @@ interface ChartBlockProps {
 export function ChartBlock({ data }: ChartBlockProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const { t } = useLanguage();
 
   const plotlyJson = data.plotly_json;
   if (!plotlyJson) return null;
@@ -83,8 +85,8 @@ export function ChartBlock({ data }: ChartBlockProps) {
           'transition-all duration-200',
           'disabled:opacity-50'
         )}
-        title="تحميل الرسم البياني"
-        aria-label="تحميل الرسم البياني"
+        title={t('تحميل الرسم البياني', 'Download chart')}
+        aria-label={t('تحميل الرسم البياني', 'Download chart')}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />

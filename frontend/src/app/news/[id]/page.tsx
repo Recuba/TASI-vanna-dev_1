@@ -35,11 +35,11 @@ function getSourceColor(name: string): string {
 // Arabic date formatter
 // ---------------------------------------------------------------------------
 
-function formatDate(dateStr: string | null): string {
+function formatDate(dateStr: string | null, language: string): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('ar-SA', {
+  return d.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -52,7 +52,7 @@ function formatDate(dateStr: string | null): string {
 // Arabic "time ago" formatter
 // ---------------------------------------------------------------------------
 
-function timeAgo(dateStr: string | null): string {
+function timeAgo(dateStr: string | null, t: (ar: string, en: string) => string, language: string): string {
   if (!dateStr) return '';
   const now = Date.now();
   const then = new Date(dateStr).getTime();
@@ -63,31 +63,31 @@ function timeAgo(dateStr: string | null): string {
   const hours = Math.floor(diffMs / 3_600_000);
   const days = Math.floor(diffMs / 86_400_000);
 
-  if (minutes < 1) return 'الآن';
-  if (minutes === 1) return 'منذ دقيقة';
-  if (minutes === 2) return 'منذ دقيقتين';
-  if (minutes < 11) return `منذ ${minutes} دقائق`;
-  if (minutes < 60) return `منذ ${minutes} دقيقة`;
-  if (hours === 1) return 'منذ ساعة';
-  if (hours === 2) return 'منذ ساعتين';
-  if (hours < 11) return `منذ ${hours} ساعات`;
-  if (hours < 24) return `منذ ${hours} ساعة`;
-  if (days === 1) return 'منذ يوم';
-  if (days < 7) return `منذ ${days} أيام`;
-  return new Date(dateStr).toLocaleDateString('ar-SA');
+  if (minutes < 1) return t('الآن', 'just now');
+  if (minutes === 1) return t('منذ دقيقة', '1 minute ago');
+  if (minutes === 2) return t('منذ دقيقتين', '2 minutes ago');
+  if (minutes < 11) return t(`منذ ${minutes} دقائق`, `${minutes} minutes ago`);
+  if (minutes < 60) return t(`منذ ${minutes} دقيقة`, `${minutes} minutes ago`);
+  if (hours === 1) return t('منذ ساعة', '1 hour ago');
+  if (hours === 2) return t('منذ ساعتين', '2 hours ago');
+  if (hours < 11) return t(`منذ ${hours} ساعات`, `${hours} hours ago`);
+  if (hours < 24) return t(`منذ ${hours} ساعة`, `${hours} hours ago`);
+  if (days === 1) return t('منذ يوم', 'yesterday');
+  if (days < 7) return t(`منذ ${days} أيام`, `${days} days ago`);
+  return new Date(dateStr).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US');
 }
 
 // ---------------------------------------------------------------------------
 // Reading time estimate
 // ---------------------------------------------------------------------------
 
-function readingTimeArabic(body: string | null): string | null {
+function readingTime(body: string | null, t: (ar: string, en: string) => string): string | null {
   if (!body || body.length < 50) return null;
   const words = body.split(/\s+/).length;
   const mins = Math.max(1, Math.ceil(words / 200));
-  if (mins === 1) return 'قراءة دقيقة واحدة';
-  if (mins === 2) return 'قراءة دقيقتين';
-  return `قراءة ${mins} دقائق`;
+  if (mins === 1) return t('قراءة دقيقة واحدة', '1 min read');
+  if (mins === 2) return t('قراءة دقيقتين', '2 min read');
+  return t(`قراءة ${mins} دقائق`, `${mins} min read`);
 }
 
 // ---------------------------------------------------------------------------
@@ -95,17 +95,18 @@ function readingTimeArabic(body: string | null): string | null {
 // ---------------------------------------------------------------------------
 
 function PriorityBadge({ priority }: { priority: number }) {
+  const { t } = useLanguage();
   if (priority >= 5) {
     return (
       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-accent-red/15 text-accent-red">
-        عاجل
+        {t('عاجل', 'Urgent')}
       </span>
     );
   }
   if (priority >= 4) {
     return (
       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-gold/15 text-gold">
-        مهم
+        {t('مهم', 'Important')}
       </span>
     );
   }
@@ -319,6 +320,7 @@ function RelatedArticleCard({
   publishedAt: string | null;
   sourceName: string;
 }) {
+  const { t, language } = useLanguage();
   const color = getSourceColor(sourceName);
   return (
     <Link
@@ -343,7 +345,7 @@ function RelatedArticleCard({
         </span>
         {publishedAt && (
           <span className="text-[10px] text-[var(--text-muted)]">
-            {timeAgo(publishedAt)}
+            {timeAgo(publishedAt, t, language)}
           </span>
         )}
       </div>
@@ -356,7 +358,7 @@ function RelatedArticleCard({
 // ---------------------------------------------------------------------------
 
 export default function ArticleDetailPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const params = useParams();
   const id = typeof params.id === 'string' ? params.id : '';
   const { data: article, loading, error, refetch } = useNewsArticle(id);
@@ -371,7 +373,7 @@ export default function ArticleDetailPage() {
   // Filter out current article from related
   const relatedArticles = (relatedData?.items ?? []).filter((a) => a.id !== id).slice(0, 4);
 
-  const readTime = article ? readingTimeArabic(article.body) : null;
+  const readTime = article ? readingTime(article.body, t) : null;
   const extras = article as (typeof article & ArticleExtras) | undefined;
 
   return (
@@ -458,10 +460,10 @@ export default function ArticleDetailPage() {
               {article.published_at && (
                 <div className="text-left">
                   <p className="text-sm text-[var(--text-secondary)]">
-                    {formatDate(article.published_at)}
+                    {formatDate(article.published_at, language)}
                   </p>
                   <p className="text-xs text-[var(--text-muted)]">
-                    {timeAgo(article.published_at)}
+                    {timeAgo(article.published_at, t, language)}
                   </p>
                 </div>
               )}

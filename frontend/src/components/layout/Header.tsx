@@ -214,9 +214,9 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
                 backendStatus === 'checking' && 'text-amber-400',
               )}
             >
-              {backendStatus === 'online' && t('\u0645\u062A\u0635\u0644', 'Online')}
-              {backendStatus === 'offline' && t('\u063A\u064A\u0631 \u0645\u062A\u0635\u0644', 'Offline')}
-              {backendStatus === 'checking' && t('\u062C\u0627\u0631\u064A \u0627\u0644\u0641\u062D\u0635...', 'Checking...')}
+              {backendStatus === 'online' && t('متصل', 'Online')}
+              {backendStatus === 'offline' && t('غير متصل', 'Offline')}
+              {backendStatus === 'checking' && t('جاري الفحص...', 'Checking...')}
             </span>
           </div>
         </div>

@@ -53,7 +53,7 @@ function getSourceColor(name: string): string {
 // Arabic "time ago" formatter (improved)
 // ---------------------------------------------------------------------------
 
-function timeAgo(dateStr: string | null): string {
+function timeAgo(dateStr: string | null, t: (ar: string, en: string) => string, language: string): string {
   if (!dateStr) return '';
   const now = Date.now();
   const then = new Date(dateStr).getTime();
@@ -65,33 +65,33 @@ function timeAgo(dateStr: string | null): string {
   const days = Math.floor(diffMs / 86_400_000);
   const weeks = Math.floor(days / 7);
 
-  if (minutes < 1) return 'الآن';
-  if (minutes === 1) return 'منذ دقيقة';
-  if (minutes === 2) return 'منذ دقيقتين';
-  if (minutes < 11) return `منذ ${minutes} دقائق`;
-  if (minutes < 60) return `منذ ${minutes} دقيقة`;
-  if (hours === 1) return 'منذ ساعة';
-  if (hours === 2) return 'منذ ساعتين';
-  if (hours < 11) return `منذ ${hours} ساعات`;
-  if (hours < 24) return `منذ ${hours} ساعة`;
-  if (days === 1) return 'منذ يوم';
-  if (days === 2) return 'منذ يومين';
-  if (days < 7) return `منذ ${days} أيام`;
-  if (weeks === 1) return 'منذ أسبوع';
-  if (weeks === 2) return 'منذ أسبوعين';
-  if (weeks < 5) return `منذ ${weeks} أسابيع`;
-  return new Date(dateStr).toLocaleDateString('ar-SA');
+  if (minutes < 1) return t('الآن', 'just now');
+  if (minutes === 1) return t('منذ دقيقة', '1 minute ago');
+  if (minutes === 2) return t('منذ دقيقتين', '2 minutes ago');
+  if (minutes < 11) return t(`منذ ${minutes} دقائق`, `${minutes} minutes ago`);
+  if (minutes < 60) return t(`منذ ${minutes} دقيقة`, `${minutes} minutes ago`);
+  if (hours === 1) return t('منذ ساعة', '1 hour ago');
+  if (hours === 2) return t('منذ ساعتين', '2 hours ago');
+  if (hours < 11) return t(`منذ ${hours} ساعات`, `${hours} hours ago`);
+  if (hours < 24) return t(`منذ ${hours} ساعة`, `${hours} hours ago`);
+  if (days === 1) return t('منذ يوم', 'yesterday');
+  if (days === 2) return t('منذ يومين', '2 days ago');
+  if (days < 7) return t(`منذ ${days} أيام`, `${days} days ago`);
+  if (weeks === 1) return t('منذ أسبوع', '1 week ago');
+  if (weeks === 2) return t('منذ أسبوعين', '2 weeks ago');
+  if (weeks < 5) return t(`منذ ${weeks} أسابيع`, `${weeks} weeks ago`);
+  return new Date(dateStr).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US');
 }
 
 // ---------------------------------------------------------------------------
 // Reading time estimate
 // ---------------------------------------------------------------------------
 
-function readingTimeArabic(body: string | null): string | null {
+function readingTime(body: string | null, t: (ar: string, en: string) => string): string | null {
   if (!body || body.length < 100) return null;
   const words = body.split(/\s+/).length;
   const mins = Math.max(1, Math.ceil(words / 200));
-  return `قراءة ${mins} دقائق`;
+  return t(`قراءة ${mins} دقائق`, `${mins} min read`);
 }
 
 // ---------------------------------------------------------------------------
@@ -289,9 +289,9 @@ function ArticleCard({
   ticker?: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const sourceColor = getSourceColor(sourceName);
-  const readTime = readingTimeArabic(body);
+  const readTime = readingTime(body, t);
 
   return (
     <article
@@ -368,7 +368,7 @@ function ArticleCard({
             <StockBadge ticker={ticker} />
             {publishedAt && (
               <span className="text-xs text-[var(--text-muted)]">
-                {timeAgo(publishedAt)}
+                {timeAgo(publishedAt, t, language)}
               </span>
             )}
             <PriorityIndicator priority={priority} />
@@ -406,6 +406,7 @@ function SearchInput({
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
+  const { isRTL } = useLanguage();
   const [local, setLocal] = useState(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -449,7 +450,7 @@ function SearchInput({
           'focus:outline-none focus:border-[#D4A84B]/50 focus:ring-1 focus:ring-[#D4A84B]/20',
           'transition-colors',
         )}
-        dir="rtl"
+        dir={isRTL ? 'rtl' : 'ltr'}
       />
       {/* Clear button */}
       {local && (
