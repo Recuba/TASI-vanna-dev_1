@@ -4,11 +4,12 @@ FastAPI dependency functions for authentication.
 Provides injectable dependencies for route handlers:
 - get_current_user: extracts and validates the Bearer token, returns user dict
 - require_admin: ensures the current user has admin-level access
+- get_optional_current_user: like get_current_user but returns None when no token
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, FrozenSet
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -19,6 +20,10 @@ from api.dependencies import get_db_connection
 
 _bearer_scheme = HTTPBearer()
 _bearer_scheme_optional = HTTPBearer(auto_error=False)
+
+# Tiers that grant admin-level access.  Override via ADMIN_TIERS env var
+# (comma-separated) or by importing and reassigning this module attribute.
+ADMIN_TIERS: FrozenSet[str] = frozenset({"enterprise", "admin"})
 
 
 def get_optional_current_user(
@@ -120,11 +125,21 @@ def require_admin(
 ) -> Dict[str, Any]:
     """Ensure the current user has admin-level access.
 
-    Admin access is granted to users with subscription_tier 'enterprise'.
+    Admin access is granted when the user's ``subscription_tier`` is in
+    :data:`ADMIN_TIERS` (default: ``{"enterprise", "admin"}``).  To
+    customise allowed tiers, update the module-level ``ADMIN_TIERS``
+    constant or set the ``ADMIN_TIERS`` env var (comma-separated).
+
+    This dependency can be injected on any route that should be restricted
+    to admin users::
+
+        @router.get("/admin/users", dependencies=[Depends(require_admin)])
+        async def list_users(): ...
 
     Returns the user dict if authorized; raises HTTPException 403 otherwise.
     """
-    if current_user.get("subscription_tier") != "enterprise":
+    tier = current_user.get("subscription_tier", "")
+    if tier not in ADMIN_TIERS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required",

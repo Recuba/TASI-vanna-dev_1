@@ -1,23 +1,93 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChatMessage, SSEEvent } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 const SSE_ENDPOINT = '/api/vanna/v2/chat_sse';
+const STORAGE_KEY = 'raid-chat-messages';
+const MAX_STORED_MESSAGES = 100;
 
-let messageId = 0;
-function nextId(): string {
-  return `msg-${++messageId}-${Date.now()}`;
+/** Serializable version of ChatMessage for localStorage */
+interface StoredMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  components?: SSEEvent[];
+  isError?: boolean;
+}
+
+function saveMessages(messages: ChatMessage[]) {
+  try {
+    // Only store completed, non-streaming messages; cap at MAX
+    const toStore: StoredMessage[] = messages
+      .filter((m) => !m.isStreaming)
+      .slice(-MAX_STORED_MESSAGES)
+      .map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp.toISOString(),
+        components: m.components,
+        isError: m.isError,
+      }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+  } catch {
+    // localStorage full or unavailable - silently ignore
+  }
+}
+
+function loadMessages(): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const stored: StoredMessage[] = JSON.parse(raw);
+    return stored.map((m) => ({
+      ...m,
+      timestamp: new Date(m.timestamp),
+      isStreaming: false,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 /**
  * Hook that manages the chat conversation with the Vanna SSE backend.
+ * Includes localStorage persistence, error recovery, and retry.
  */
 export function useSSEChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const messageIdRef = useRef(0);
+  const initializedRef = useRef(false);
+
+  // Restore messages from localStorage on mount
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    const restored = loadMessages();
+    if (restored.length > 0) {
+      // Update messageIdRef to avoid collisions
+      messageIdRef.current = restored.length;
+      setMessages(restored);
+    }
+  }, []);
+
+  // Persist messages whenever they change (skip initial empty + skip while streaming)
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    const hasStreaming = messages.some((m) => m.isStreaming);
+    if (!hasStreaming && messages.length > 0) {
+      saveMessages(messages);
+    }
+  }, [messages]);
+
+  function nextId(): string {
+    return `msg-${++messageIdRef.current}-${Date.now()}`;
+  }
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
@@ -103,18 +173,19 @@ export function useSSEChat() {
       }
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
-      // Add error as a text component
+      // Add user-friendly Arabic error
       setMessages((prev) =>
         prev.map((msg) => {
           if (msg.id !== assistantId) return msg;
           const errorEvent: SSEEvent = {
             type: 'text',
-            data: { content: `Error: ${(err as Error).message}` },
+            data: { content: 'حدث خطأ. يرجى المحاولة مرة أخرى' },
           };
           return {
             ...msg,
             components: [...(msg.components || []), errorEvent],
-            content: `Error: ${(err as Error).message}`,
+            content: 'حدث خطأ. يرجى المحاولة مرة أخرى',
+            isError: true,
           };
         })
       );
@@ -136,6 +207,11 @@ export function useSSEChat() {
     }
     setMessages([]);
     setIsLoading(false);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   }, []);
 
   const stopStreaming = useCallback(() => {
@@ -149,5 +225,32 @@ export function useSSEChat() {
     );
   }, []);
 
-  return { messages, isLoading, sendMessage, clearMessages, stopStreaming };
+  /** Retry the last failed query by re-sending the last user message */
+  const retryLast = useCallback(() => {
+    // Find the last user message
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
+    if (!lastUserMsg) return;
+
+    // Remove the last assistant message (the error one)
+    setMessages((prev) => {
+      const lastAssistantIdx = prev.findLastIndex((m) => m.role === 'assistant');
+      if (lastAssistantIdx === -1) return prev;
+      return prev.filter((_, i) => i !== lastAssistantIdx);
+    });
+
+    // Remove the last user message too since sendMessage will re-add it
+    setMessages((prev) => {
+      const lastUserIdx = prev.findLastIndex((m) => m.role === 'user');
+      if (lastUserIdx === -1) return prev;
+      return prev.filter((_, i) => i !== lastUserIdx);
+    });
+
+    // Re-send
+    // Use setTimeout so state updates flush first
+    setTimeout(() => {
+      sendMessage(lastUserMsg.content);
+    }, 0);
+  }, [messages, sendMessage]);
+
+  return { messages, isLoading, sendMessage, clearMessages, stopStreaming, retryLast };
 }

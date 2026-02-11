@@ -10,33 +10,49 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 
 // ---------------------------------------------------------------------------
-// Static quick-action cards (never change)
+// Quick action cards - Arabic
 // ---------------------------------------------------------------------------
 
 const quickActions = [
   {
-    title: 'AI Chat',
-    description: 'Ask questions about Saudi stocks in natural language',
+    title: '\u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629',
+    description: '\u0627\u0633\u0623\u0644 \u0639\u0646 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629',
     href: '/chat',
-    icon: '\u{1F4AC}',
+    icon: (
+      <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+      </svg>
+    ),
   },
   {
-    title: 'Market Overview',
-    description: 'Browse all TASI-listed companies and sectors',
+    title: '\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0633\u0648\u0642',
+    description: '\u062A\u0635\u0641\u062D \u062C\u0645\u064A\u0639 \u0627\u0644\u0634\u0631\u0643\u0627\u062A \u0648\u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A \u0641\u064A \u062A\u0627\u0633\u064A',
     href: '/market',
-    icon: '\u{1F4C8}',
+    icon: (
+      <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+      </svg>
+    ),
   },
   {
-    title: 'News Feed',
-    description: 'Latest market news and announcements',
+    title: '\u0627\u0644\u0631\u0633\u0648\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A\u0629',
+    description: '\u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629 \u0644\u0644\u0645\u0624\u0634\u0631 \u0648\u0627\u0644\u0623\u0633\u0647\u0645',
+    href: '/charts',
+    icon: (
+      <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v-5.5m3 5.5V8.25m3 3v-2" />
+      </svg>
+    ),
+  },
+  {
+    title: '\u0627\u0644\u0623\u062E\u0628\u0627\u0631',
+    description: '\u0622\u062E\u0631 \u0623\u062E\u0628\u0627\u0631 \u0627\u0644\u0633\u0648\u0642 \u0648\u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A',
     href: '/news',
-    icon: '\u{1F4F0}',
-  },
-  {
-    title: 'Reports',
-    description: 'Technical analysis and research reports',
-    href: '/reports',
-    icon: '\u{1F4CB}',
+    icon: (
+      <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6V7.5Z" />
+      </svg>
+    ),
   },
 ];
 
@@ -48,7 +64,7 @@ const sectorColors = [
 ];
 
 // ---------------------------------------------------------------------------
-// Mini sparkline wrapper -- hooks cannot be called inside a map callback
+// Mini sparkline wrapper
 // ---------------------------------------------------------------------------
 
 function StockSparkline({ ticker }: { ticker: string }) {
@@ -80,29 +96,30 @@ export default function Home() {
 
   const totalCompanies = sectors ? sectors.reduce((sum, s) => sum + s.company_count, 0) : null;
 
-  const marketStats = [
-    { label: 'Companies', value: totalCompanies ? `~${totalCompanies}` : '~500', icon: '\u{1F4CA}' },
-    { label: 'Data Tables', value: '10', icon: '\u{1F5C3}' },
-    { label: 'Exchange', value: 'TASI', icon: '\u{1F3E6}' },
-    { label: 'AI Engine', value: 'Claude', icon: '\u26A1' },
+  const platformStats = [
+    { label: '\u0633\u0647\u0645', value: totalCompanies ? `${totalCompanies}+` : '500+' },
+    { label: '\u0645\u0635\u062F\u0631 \u0623\u062E\u0628\u0627\u0631', value: '5' },
+    { label: '\u062C\u062F\u0648\u0644 \u0628\u064A\u0627\u0646\u0627\u062A', value: '10' },
+    { label: '\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A', value: 'Gemini' },
   ];
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
-      <div className="max-w-content-lg mx-auto space-y-6">
+      <div className="max-w-content-lg mx-auto space-y-8">
 
         {/* Onboarding Banner */}
         {showOnboarding && (
           <div className={cn(
-            'flex items-start gap-3 p-4 rounded-md',
+            'flex items-start gap-3 p-4 rounded-xl',
             'bg-gold/5 border border-gold/20',
             'animate-fade-in-up'
           )}>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gold mb-1">Welcome to Ra&apos;d AI</p>
-              <p className="text-xs text-[var(--text-secondary)]">
-                Explore Saudi stock market data and ask questions in natural language.
-                Use Ctrl+K (or Cmd+K on Mac) to jump to AI Chat anytime.
+              <p className="text-sm font-bold text-gold mb-1" dir="rtl">
+                {'\u0645\u0631\u062D\u0628\u064B\u0627 \u0628\u0643 \u0641\u064A \u0631\u0627\u0626\u062F'}
+              </p>
+              <p className="text-xs text-[var(--text-secondary)]" dir="rtl">
+                {'\u0627\u0633\u062A\u0643\u0634\u0641 \u0628\u064A\u0627\u0646\u0627\u062A \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0648\u0627\u0633\u0623\u0644 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629. \u0627\u0633\u062A\u062E\u062F\u0645 Ctrl+K \u0644\u0644\u0627\u0646\u062A\u0642\u0627\u0644 \u0644\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629.'}
               </p>
             </div>
             <button
@@ -118,57 +135,67 @@ export default function Home() {
           </div>
         )}
 
-        {/* Hero */}
-        <section className="text-center py-6 animate-fade-in-up">
-          <h2 className="text-2xl sm:text-[28px] xl:text-[32px] font-bold leading-tight mb-2 gold-text">
-            Saudi Stock Market AI Analyst
-          </h2>
-          <p className="text-sm text-[var(--text-secondary)] max-w-lg mx-auto">
-            AI-powered financial intelligence for TASI-listed companies.
-            Charts, data analysis, and natural language queries.
+        {/* Hero Section */}
+        <section className="text-center py-8 animate-fade-in-up">
+          <div className="inline-block mb-4">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[#D4A84B] via-[#E8C872] to-[#B8860B] flex items-center justify-center shadow-lg shadow-gold/20">
+              <svg className="w-8 h-8 text-[#0E0E0E]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v-5.5m3 5.5V8.25m3 3v-2" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-3 gold-text" dir="rtl">
+            {'\u0631\u0627\u0626\u062F \u2014 \u0645\u062D\u0644\u0644 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A'}
+          </h1>
+          <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto leading-relaxed" dir="rtl">
+            {'\u0645\u0646\u0635\u0629 \u0630\u0643\u064A\u0629 \u0644\u062A\u062D\u0644\u064A\u0644 \u0628\u064A\u0627\u0646\u0627\u062A \u0633\u0648\u0642 \u062A\u0627\u0633\u064A \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629\u060C \u0645\u0639 \u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629 \u0648\u0623\u062E\u0628\u0627\u0631 \u0644\u062D\u0638\u064A\u0629'}
           </p>
         </section>
 
-        {/* Market Stats */}
-        <div className="flex justify-center gap-3 flex-wrap animate-fade-in-up-delay-1">
-          {marketStats.map((stat, i) => (
+        {/* Platform Stats */}
+        <div className="flex justify-center gap-4 flex-wrap animate-fade-in-up-delay-1" dir="rtl">
+          {platformStats.map((stat, i) => (
             <div
               key={i}
               className={cn(
-                'inline-flex items-center gap-1.5',
-                'bg-[var(--bg-card)] border gold-border gold-border-hover',
-                'rounded-pill px-4 py-1.5',
-                'text-[13px] font-medium text-[var(--text-secondary)]',
-                'transition-all duration-300'
+                'flex flex-col items-center gap-1',
+                'bg-[var(--bg-card)] border gold-border',
+                'rounded-xl px-6 py-3 min-w-[100px]',
+                'transition-all duration-300',
+                'hover:border-gold hover:bg-[var(--bg-card-hover)]'
               )}
             >
-              <span className="text-sm">{stat.icon}</span>
-              <span className="text-gold font-bold">{stat.value}</span>
-              {stat.label}
+              <span className="text-xl font-bold text-gold">{stat.value}</span>
+              <span className="text-xs text-[var(--text-muted)]">{stat.label}</span>
             </div>
           ))}
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Action Cards */}
         <section className="animate-fade-in-up-delay-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickActions.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
                 className={cn(
-                  'block p-4 rounded-md',
-                  'bg-[var(--bg-card)] border gold-border',
-                  'hover:border-gold hover:bg-[var(--bg-card-hover)]',
+                  'block p-5 rounded-xl',
+                  'bg-[var(--bg-card)] border border-[#2A2A2A]',
+                  'hover:border-gold/60 hover:bg-[var(--bg-card-hover)]',
                   'transition-all duration-300',
-                  'group'
+                  'group relative overflow-hidden'
                 )}
               >
-                <span className="text-2xl mb-2 block">{action.icon}</span>
-                <h3 className="text-sm font-bold text-[var(--text-primary)] group-hover:text-gold transition-colors">
-                  {action.title}
-                </h3>
-                <p className="text-xs text-[var(--text-muted)] mt-1">{action.description}</p>
+                <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative" dir="rtl">
+                  <div className="text-[var(--text-muted)] group-hover:text-gold transition-colors duration-300 mb-3">
+                    {action.icon}
+                  </div>
+                  <h3 className="text-sm font-bold text-[var(--text-primary)] group-hover:text-gold transition-colors mb-1">
+                    {action.title}
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">{action.description}</p>
+                </div>
               </Link>
             ))}
           </div>
@@ -178,42 +205,60 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in-up-delay-3">
 
           {/* Sector Cards */}
-          <section className="bg-[var(--bg-card)] border gold-border rounded-md p-4">
-            <h3 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">Sectors</h3>
+          <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gold uppercase tracking-wider"
+                dir="rtl">{'\u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A'}</h3>
+              <Link href="/market" className="text-xs text-[var(--text-muted)] hover:text-gold transition-colors">
+                {'\u0639\u0631\u0636 \u0627\u0644\u0643\u0644'} &larr;
+              </Link>
+            </div>
             {sectorsLoading ? (
-              <LoadingSpinner message="Loading sectors..." />
+              <LoadingSpinner message={'\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...'} />
             ) : sectorsError ? (
               <ErrorDisplay message={sectorsError} onRetry={refetchSectors} />
             ) : sectors && sectors.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {sectors.map((sector, i) => (
-                  <div key={sector.sector} className="flex items-center gap-3">
-                    <span className={cn('w-2 h-2 rounded-full flex-shrink-0', sectorColors[i % sectorColors.length])} />
-                    <span className="text-sm text-[var(--text-secondary)] flex-1">{sector.sector}</span>
-                    <span className="text-xs font-medium text-[var(--text-muted)]">{sector.company_count}</span>
-                  </div>
+                  <Link
+                    key={sector.sector}
+                    href={`/market?sector=${encodeURIComponent(sector.sector)}`}
+                    className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-card-hover)] transition-colors"
+                  >
+                    <span className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', sectorColors[i % sectorColors.length])} />
+                    <span className="text-sm text-[var(--text-secondary)] flex-1 truncate">{sector.sector}</span>
+                    <span className="text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-input)] px-2 py-0.5 rounded-full">
+                      {sector.company_count}
+                    </span>
+                  </Link>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[var(--text-muted)]">No sector data available.</p>
+              <p className="text-sm text-[var(--text-muted)]" dir="rtl">{'\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A'}</p>
             )}
           </section>
 
           {/* Top Movers */}
-          <section className="bg-[var(--bg-card)] border gold-border rounded-md p-4">
-            <h3 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">Top by Market Cap</h3>
+          <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-gold uppercase tracking-wider"
+                dir="rtl">{'\u0623\u0639\u0644\u0649 \u0627\u0644\u0634\u0631\u0643\u0627\u062A \u0642\u064A\u0645\u0629'}</h3>
+              <Link href="/market" className="text-xs text-[var(--text-muted)] hover:text-gold transition-colors">
+                {'\u0639\u0631\u0636 \u0627\u0644\u0643\u0644'} &larr;
+              </Link>
+            </div>
             {moversLoading ? (
-              <LoadingSpinner message="Loading stocks..." />
+              <LoadingSpinner message={'\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...'} />
             ) : moversError ? (
               <ErrorDisplay message={moversError} onRetry={refetchMovers} />
             ) : topMovers && topMovers.items.length > 0 ? (
               <ChartErrorBoundary fallbackHeight={200}>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {topMovers.items.map((stock) => (
                   <Link
                     key={stock.ticker}
                     href={`/stock/${encodeURIComponent(stock.ticker)}`}
-                    className="flex items-center gap-3 py-1.5 hover:bg-[var(--bg-card-hover)] rounded-md px-2 -mx-2 transition-colors"
+                    className="flex items-center gap-3 py-2 hover:bg-[var(--bg-card-hover)] rounded-lg px-2 -mx-2 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[var(--text-primary)] truncate">
@@ -239,34 +284,48 @@ export default function Home() {
               </div>
               </ChartErrorBoundary>
             ) : (
-              <p className="text-sm text-[var(--text-muted)]">No market data available.</p>
+              <p className="text-sm text-[var(--text-muted)]" dir="rtl">{'\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A'}</p>
             )}
           </section>
 
         </div>
 
-        {/* TradingView Attribution */}
-        <div className="text-center">
-          <TradingViewAttribution />
-        </div>
+        {/* About Section */}
+        <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-6 animate-fade-in-up-delay-3" dir="rtl">
+          <h3 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">
+            {'\u0639\u0646 \u0631\u0627\u0626\u062F'}
+          </h3>
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+            {'\u0631\u0627\u0626\u062F \u0647\u064A \u0645\u0646\u0635\u0629 \u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0645\u062A\u0642\u062F\u0645\u0629 \u0644\u062A\u062D\u0644\u064A\u0644 \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 (TASI). \u062A\u0648\u0641\u0631 \u0627\u0644\u0645\u0646\u0635\u0629 \u0625\u0645\u0643\u0627\u0646\u064A\u0629 \u0627\u0644\u0627\u0633\u062A\u0639\u0644\u0627\u0645 \u0639\u0646 \u0628\u064A\u0627\u0646\u0627\u062A \u0623\u0643\u062B\u0631 \u0645\u0646 500 \u0634\u0631\u0643\u0629 \u0645\u062F\u0631\u062C\u0629 \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0623\u0648 \u0627\u0644\u0625\u0646\u062C\u0644\u064A\u0632\u064A\u0629\u060C \u0645\u0639 \u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629\u060C \u0648\u0623\u062E\u0628\u0627\u0631 \u0645\u0646 5 \u0645\u0635\u0627\u062F\u0631 \u0639\u0631\u0628\u064A\u0629\u060C \u0648\u062A\u0642\u0627\u0631\u064A\u0631 \u0645\u0627\u0644\u064A\u0629 \u0645\u0641\u0635\u0644\u0629.'}
+          </p>
+        </section>
 
-        {/* AI Chat Quick Access */}
+        {/* AI Chat CTA */}
         <section className="animate-fade-in-up-delay-3">
           <Link
             href="/chat"
             className={cn(
-              'block p-6 rounded-md text-center',
-              'bg-gold/5 border border-gold/20',
-              'hover:bg-gold/10 hover:border-gold/40',
+              'block p-6 rounded-xl text-center',
+              'bg-gradient-to-r from-gold/10 via-gold/5 to-gold/10',
+              'border border-gold/20',
+              'hover:from-gold/15 hover:via-gold/10 hover:to-gold/15',
+              'hover:border-gold/40',
               'transition-all duration-300'
             )}
           >
-            <p className="text-lg font-bold gold-text mb-1">Start AI Chat</p>
-            <p className="text-sm text-[var(--text-secondary)]">
-              Ask anything about Saudi stocks, financials, and market data
+            <p className="text-lg font-bold gold-text mb-1" dir="rtl">
+              {'\u0627\u0628\u062F\u0623 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629'}
+            </p>
+            <p className="text-sm text-[var(--text-secondary)]" dir="rtl">
+              {'\u0627\u0633\u0623\u0644 \u0623\u064A \u0633\u0624\u0627\u0644 \u0639\u0646 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0648\u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0645\u0627\u0644\u064A\u0629'}
             </p>
           </Link>
         </section>
+
+        {/* TradingView Attribution */}
+        <div className="text-center pb-4">
+          <TradingViewAttribution />
+        </div>
 
       </div>
     </div>

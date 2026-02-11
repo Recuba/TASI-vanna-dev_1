@@ -55,6 +55,14 @@ const config: Config = {
           '0%, 80%, 100%': { transform: 'scale(0)' },
           '40%': { transform: 'scale(1)' },
         },
+        'slide-down': {
+          from: { opacity: '0', transform: 'translateY(-8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
       },
       animation: {
         'gold-pulse': 'gold-pulse 2s ease-in-out infinite',
@@ -64,6 +72,8 @@ const config: Config = {
         'fade-in-up-delay-3': 'fade-in-up 0.6s ease-out 0.3s both',
         shimmer: 'shimmer 2s infinite',
         'dot-bounce': 'dot-bounce 1.4s ease-in-out infinite both',
+        'slide-down': 'slide-down 0.2s ease-out',
+        'fade-in': 'fade-in 0.2s ease-out',
       },
     },
   },

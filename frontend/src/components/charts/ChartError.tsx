@@ -19,15 +19,16 @@ export function ChartError({
         height,
         border: '1px solid rgba(212, 168, 75, 0.3)',
         background: '#1A1A1A',
+        animation: 'chart-fade-in 0.4s ease-out',
       }}
     >
       <svg
-        width="32"
-        height="32"
+        width="36"
+        height="36"
         viewBox="0 0 24 24"
         fill="none"
         stroke="#D4A84B"
-        strokeWidth="2"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
@@ -36,31 +37,28 @@ export function ChartError({
         <line x1="12" y1="8" x2="12" y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
-      <p style={{ color: '#B0B0B0', fontSize: 14 }}>{message}</p>
+      <p className="text-sm" style={{ color: '#B0B0B0' }}>{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
           aria-label="Retry loading chart data"
+          className="px-4 py-1.5 text-xs font-medium rounded-md border transition-all duration-200 hover:bg-[rgba(212,168,75,0.1)]"
           style={{
-            padding: '6px 16px',
-            fontSize: 13,
-            borderRadius: 6,
             border: '1px solid #D4A84B',
             background: 'transparent',
             color: '#D4A84B',
             cursor: 'pointer',
-            transition: 'background 0.15s, outline-color 0.15s',
-            outline: '2px solid transparent',
-            outlineOffset: '2px',
           }}
-          onFocus={(e) => (e.currentTarget.style.outlineColor = '#D4A84B')}
-          onBlur={(e) => (e.currentTarget.style.outlineColor = 'transparent')}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(212, 168, 75, 0.1)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         >
           Retry
         </button>
       )}
+      <style>{`
+        @keyframes chart-fade-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

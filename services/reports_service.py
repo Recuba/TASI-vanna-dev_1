@@ -12,6 +12,7 @@ connections auto-return to the pool on ``close()``.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -19,6 +20,8 @@ from typing import Any, Dict, List, Optional
 
 import psycopg2
 import psycopg2.extras
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +123,10 @@ class TechnicalReportsService:
                 cur.execute(sql, report.to_dict())
             conn.commit()
             return report.id
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to store report %s", report.id, exc_info=True)
+            raise
         finally:
             conn.close()
 
@@ -150,6 +157,10 @@ class TechnicalReportsService:
                 cur.executemany(sql, [r.to_dict() for r in reports])
             conn.commit()
             return len(reports)
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to store %d reports", len(reports), exc_info=True)
+            raise
         finally:
             conn.close()
 

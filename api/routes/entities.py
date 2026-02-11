@@ -123,9 +123,16 @@ async def get_entity(ticker: str) -> CompanyDetail:
             c.ticker, c.short_name, c.sector, c.industry, c.exchange, c.currency,
             m.current_price, m.previous_close, m.day_high, m.day_low,
             m.week_52_high, m.week_52_low, m.volume, m.market_cap, m.beta,
+            m.avg_50d, m.avg_200d, m.avg_volume, m.shares_outstanding,
+            m.pct_held_insiders, m.pct_held_institutions,
             v.trailing_pe, v.forward_pe, v.price_to_book, v.trailing_eps,
+            v.price_to_sales, v.enterprise_value, v.ev_to_revenue,
+            v.peg_ratio, v.forward_eps, v.book_value,
             p.roe, p.profit_margin, p.revenue_growth,
-            a.recommendation, a.target_mean_price, a.analyst_count
+            p.roa, p.operating_margin, p.gross_margin, p.ebitda_margin,
+            p.earnings_growth,
+            a.recommendation, a.target_mean_price, a.analyst_count,
+            a.target_high_price, a.target_low_price, a.target_median_price
         FROM companies c
         LEFT JOIN market_data m ON m.ticker = c.ticker
         LEFT JOIN valuation_metrics v ON v.ticker = c.ticker
@@ -176,4 +183,25 @@ async def get_entity(ticker: str) -> CompanyDetail:
         recommendation=row.get("recommendation"),
         target_mean_price=_f(row.get("target_mean_price")),
         analyst_count=_i(row.get("analyst_count")),
+        # expanded fields
+        price_to_sales=_f(row.get("price_to_sales")),
+        enterprise_value=_f(row.get("enterprise_value")),
+        ev_to_revenue=_f(row.get("ev_to_revenue")),
+        peg_ratio=_f(row.get("peg_ratio")),
+        forward_eps=_f(row.get("forward_eps")),
+        book_value=_f(row.get("book_value")),
+        roa=_f(row.get("roa")),
+        operating_margin=_f(row.get("operating_margin")),
+        gross_margin=_f(row.get("gross_margin")),
+        ebitda_margin=_f(row.get("ebitda_margin")),
+        earnings_growth=_f(row.get("earnings_growth")),
+        avg_50d=_f(row.get("avg_50d")),
+        avg_200d=_f(row.get("avg_200d")),
+        avg_volume=_i(row.get("avg_volume")),
+        shares_outstanding=_f(row.get("shares_outstanding")),
+        pct_held_insiders=_f(row.get("pct_held_insiders")),
+        pct_held_institutions=_f(row.get("pct_held_institutions")),
+        target_high_price=_f(row.get("target_high_price")),
+        target_low_price=_f(row.get("target_low_price")),
+        target_median_price=_f(row.get("target_median_price")),
     )

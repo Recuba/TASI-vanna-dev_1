@@ -1,9 +1,7 @@
 """
 Watchlists and alerts API routes.
 
-Read endpoints (GET) require JWT authentication (same as write endpoints).
-Unauthenticated requests receive an empty list instead of 401.
-Write endpoints (POST, PATCH, DELETE) require JWT authentication.
+All endpoints require JWT authentication. Unauthenticated requests receive 401.
 """
 
 from __future__ import annotations
@@ -21,23 +19,21 @@ from api.schemas.watchlists import (
     WatchlistResponse,
     WatchlistUpdateRequest,
 )
-from auth.dependencies import get_current_user, get_optional_current_user
+from auth.dependencies import get_current_user
 from services.user_service import UserService
 
 router = APIRouter(prefix="/api/watchlists", tags=["watchlists"])
 
 
 # ---------------------------------------------------------------------------
-# Watchlist read endpoints (authenticated; unauthenticated returns empty list)
+# Watchlist read endpoints (authenticated via JWT)
 # ---------------------------------------------------------------------------
 @router.get("", response_model=List[WatchlistResponse])
 async def list_watchlists(
-    current_user: Dict[str, Any] | None = Depends(get_optional_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     svc: UserService = Depends(get_user_service),
 ) -> List[WatchlistResponse]:
-    """Return all watchlists for the authenticated user (empty list if unauthenticated)."""
-    if current_user is None:
-        return []
+    """Return all watchlists for the authenticated user. Returns 401 if not authenticated."""
     wls = svc.get_watchlists(user_id=current_user["id"])
     return [
         WatchlistResponse(id=w.id, user_id=w.user_id, name=w.name, tickers=w.tickers)
@@ -132,17 +128,15 @@ async def delete_watchlist(
 
 
 # ---------------------------------------------------------------------------
-# Alert read endpoints (authenticated; unauthenticated returns empty list)
+# Alert read endpoints (authenticated via JWT)
 # ---------------------------------------------------------------------------
 @router.get("/alerts", response_model=List[AlertResponse])
 async def list_alerts(
     ticker: Optional[str] = Query(None),
-    current_user: Dict[str, Any] | None = Depends(get_optional_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     svc: UserService = Depends(get_user_service),
 ) -> List[AlertResponse]:
-    """Return active alerts for the authenticated user (empty list if unauthenticated)."""
-    if current_user is None:
-        return []
+    """Return active alerts for the authenticated user. Returns 401 if not authenticated."""
     alerts = svc.get_active_alerts(user_id=current_user["id"], ticker=ticker)
     return [
         AlertResponse(

@@ -78,6 +78,25 @@ class TestCORSMiddleware:
         assert response.status_code == 200
         assert "access-control-allow-methods" in response.headers
 
+    def test_cors_preflight_patch_with_auth_headers(self):
+        from middleware.cors import setup_cors
+
+        app = _create_test_app()
+        setup_cors(app, allowed_origins=["http://localhost:3000"])
+        client = TestClient(app)
+
+        response = client.options(
+            "/test",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "PATCH",
+                "Access-Control-Request-Headers": "authorization,content-type,x-user-id",
+            },
+        )
+        assert response.status_code == 200
+        assert "access-control-allow-methods" in response.headers
+        assert "access-control-allow-headers" in response.headers
+
     def test_cors_allows_credentials(self):
         from middleware.cors import setup_cors
 
@@ -239,8 +258,8 @@ class TestErrorHandlerMiddleware:
         response = client.get("/error")
         assert response.status_code == 500
         data = response.json()
-        assert data["detail"] == "Internal server error"
-        assert data["code"] == "INTERNAL_ERROR"
+        assert data["error"]["message"] == "Internal server error"
+        assert data["error"]["code"] == "INTERNAL_ERROR"
 
     def test_normal_requests_pass_through(self):
         from middleware.error_handler import ErrorHandlerMiddleware

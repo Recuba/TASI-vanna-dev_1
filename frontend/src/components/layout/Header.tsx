@@ -1,10 +1,27 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/providers/ThemeProvider';
+import { useLanguage } from '@/providers/LanguageProvider';
 
-export function Header() {
+interface HeaderProps {
+  onToggleMobileSidebar?: () => void;
+}
+
+const navLinks = [
+  { href: '/', labelAr: 'الرئيسية', labelEn: 'Home' },
+  { href: '/market', labelAr: 'السوق', labelEn: 'Market' },
+  { href: '/charts', labelAr: 'الرسوم البيانية', labelEn: 'Charts' },
+  { href: '/news', labelAr: 'الأخبار', labelEn: 'News' },
+  { href: '/chat', labelAr: 'المحادثة', labelEn: 'AI Chat' },
+];
+
+export function Header({ onToggleMobileSidebar }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
+  const { language, toggleLanguage, t } = useLanguage();
+  const pathname = usePathname();
 
   return (
     <header
@@ -12,43 +29,127 @@ export function Header() {
         'sticky top-0 z-50',
         'h-header',
         'flex items-center justify-center',
-        'px-6',
+        'px-4 sm:px-6',
         'border-b gold-border',
         'backdrop-blur-xl',
-        'dark:bg-dark-bg/85 bg-white/85'
+        'dark:bg-dark-bg/90 bg-white/90'
       )}
     >
-      <div className="w-full max-w-content-lg flex items-center gap-4">
-        {/* Brand Mark */}
-        <div
+      <div className="w-full max-w-content-lg flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <button
+          onClick={onToggleMobileSidebar}
           className={cn(
-            'w-[42px] h-[42px] flex-shrink-0',
-            'bg-gold-gradient rounded-sm',
-            'flex items-center justify-center',
-            'text-lg font-bold text-dark-bg',
-            'tracking-tight gold-glow-sm'
+            'lg:hidden p-2 rounded-md',
+            'text-[var(--text-muted)] hover:text-gold',
+            'hover:bg-[var(--bg-card-hover)]',
+            'transition-colors duration-200'
           )}
-          aria-hidden="true"
+          aria-label="Toggle navigation menu"
         >
-          RA
-        </div>
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
 
-        {/* Header Text */}
-        <div className="flex flex-col gap-px">
-          <h1 className="text-[17px] font-bold text-[var(--text-primary)] leading-tight">
-            Ra&apos;d AI
-          </h1>
-          <p className="text-xs text-[var(--text-muted)] leading-tight hidden sm:block">
-            Saudi Financial Intelligence Platform
-          </p>
-        </div>
+        {/* Brand Mark */}
+        <Link href="/" className="flex items-center gap-3 flex-shrink-0">
+          <div
+            className={cn(
+              'w-[38px] h-[38px] flex-shrink-0',
+              'bg-gold-gradient rounded-sm',
+              'flex items-center justify-center',
+              'text-base font-bold text-dark-bg',
+              'tracking-tight gold-glow-sm'
+            )}
+            aria-hidden="true"
+          >
+            RA
+          </div>
+          <div className="flex flex-col gap-px">
+            <h1 className="text-[16px] font-bold text-[var(--text-primary)] leading-tight">
+              Ra&apos;d AI
+            </h1>
+            <p className="text-[10px] text-[var(--text-muted)] leading-tight hidden sm:block">
+              {t('رائد للذكاء الاصطناعي', 'Saudi Stock Market AI')}
+            </p>
+          </div>
+        </Link>
 
-        {/* Right side: shortcut hint + theme toggle + status */}
-        <div className="ms-auto flex items-center gap-3">
-          {/* Chat shortcut hint */}
-          <span className="hidden sm:inline text-xs text-[var(--text-muted)]">
-            Ctrl+K to chat
-          </span>
+        {/* Desktop nav links */}
+        <nav className={cn('hidden md:flex items-center gap-1', language === 'ar' ? 'me-6' : 'ms-6')}>
+          {navLinks.map((link) => {
+            const isActive =
+              link.href === '/'
+                ? pathname === '/'
+                : pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'px-3 py-1.5 rounded-md text-sm font-medium',
+                  'transition-colors duration-200',
+                  isActive
+                    ? 'text-gold bg-gold/10'
+                    : 'text-[var(--text-secondary)] hover:text-gold hover:bg-[var(--bg-card-hover)]'
+                )}
+              >
+                {language === 'ar' ? link.labelAr : link.labelEn}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right side controls */}
+        <div className={cn('flex items-center gap-2', language === 'ar' ? 'me-auto' : 'ms-auto')}>
+          {/* Search / Command palette hint */}
+          <button
+            onClick={() => {
+              window.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }),
+              );
+            }}
+            className={cn(
+              'hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md',
+              'text-xs text-[var(--text-muted)]',
+              'bg-[var(--bg-input)] border border-[#2A2A2A]',
+              'hover:border-[#D4A84B]/30 hover:text-gold',
+              'transition-colors duration-200 cursor-pointer',
+            )}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span>Ctrl+K</span>
+          </button>
+
+          {/* Language toggle */}
+          <button
+            onClick={toggleLanguage}
+            className={cn(
+              'px-2.5 py-1.5 rounded-md transition-colors',
+              'text-xs font-semibold',
+              'text-[var(--text-muted)] hover:text-gold',
+              'hover:bg-[var(--bg-card-hover)]',
+              'border border-[#2A2A2A] hover:border-[#D4A84B]/30'
+            )}
+            aria-label={language === 'ar' ? 'Switch to English' : 'Switch to Arabic'}
+          >
+            {language === 'ar' ? 'EN' : 'عربي'}
+          </button>
+
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
@@ -79,13 +180,13 @@ export function Header() {
           </button>
 
           {/* Status indicator */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span
               className="w-2 h-2 bg-accent-green rounded-full animate-gold-pulse"
               aria-hidden="true"
             />
             <span className="text-xs font-medium text-accent-green hidden sm:inline">
-              Online
+              {t('متصل', 'Online')}
             </span>
           </div>
         </div>

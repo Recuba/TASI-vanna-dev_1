@@ -47,6 +47,30 @@ class CompanyDetail(BaseModel):
     recommendation: Optional[str] = None
     target_mean_price: Optional[float] = None
     analyst_count: Optional[int] = None
+    # valuation_metrics (expanded)
+    price_to_sales: Optional[float] = None
+    enterprise_value: Optional[float] = None
+    ev_to_revenue: Optional[float] = None
+    peg_ratio: Optional[float] = None
+    forward_eps: Optional[float] = None
+    book_value: Optional[float] = None
+    # profitability_metrics (expanded)
+    roa: Optional[float] = None
+    operating_margin: Optional[float] = None
+    gross_margin: Optional[float] = None
+    ebitda_margin: Optional[float] = None
+    earnings_growth: Optional[float] = None
+    # market_data (expanded)
+    avg_50d: Optional[float] = None
+    avg_200d: Optional[float] = None
+    avg_volume: Optional[int] = None
+    shares_outstanding: Optional[float] = None
+    pct_held_insiders: Optional[float] = None
+    pct_held_institutions: Optional[float] = None
+    # analyst_data (expanded)
+    target_high_price: Optional[float] = None
+    target_low_price: Optional[float] = None
+    target_median_price: Optional[float] = None
 
 
 class EntityListResponse(BaseModel):

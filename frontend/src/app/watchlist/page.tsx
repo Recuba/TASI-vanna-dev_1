@@ -9,9 +9,11 @@ import {
   updateWatchlist as apiUpdateWatchlist,
   deleteWatchlist as apiDeleteWatchlist,
   getEntityDetail,
+  ApiError,
   type WatchlistItem,
   type CompanyDetail,
 } from '@/lib/api-client';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 
 // ---------------------------------------------------------------------------
@@ -42,8 +44,8 @@ function saveLocalWatchlists(lists: LocalWatchlist[]) {
 
 function getDefaultWatchlists(): LocalWatchlist[] {
   return [
-    { id: 'default', name: 'My Watchlist', tickers: ['2222.SR', '1180.SR', '2010.SR', '1010.SR', '7010.SR'] },
-    { id: 'banks', name: 'Banking Sector', tickers: ['1180.SR', '1010.SR', '1020.SR', '1050.SR'] },
+    { id: 'default', name: 'قائمتي', tickers: ['2222.SR', '1180.SR', '2010.SR', '1010.SR', '7010.SR'] },
+    { id: 'banks', name: 'قطاع البنوك', tickers: ['1180.SR', '1010.SR', '1020.SR', '1050.SR'] },
   ];
 }
 
@@ -52,6 +54,7 @@ function getDefaultWatchlists(): LocalWatchlist[] {
 // ---------------------------------------------------------------------------
 
 export default function WatchlistPage() {
+  const { user, loading: authLoading } = useAuth();
   const [watchlists, setWatchlists] = useState<LocalWatchlist[]>([]);
   const [activeList, setActiveList] = useState<string>('default');
   const [newListName, setNewListName] = useState('');
@@ -61,9 +64,21 @@ export default function WatchlistPage() {
   const [loading, setLoading] = useState(true);
   const [useApi, setUseApi] = useState(false);
 
-  // Load watchlists: try API first, fall back to localStorage
+  // Load watchlists: try API if authenticated, fall back to localStorage
   useEffect(() => {
+    if (authLoading) return;
+
     setLoading(true);
+
+    if (!user) {
+      // Not authenticated - use localStorage only
+      const local = loadLocalWatchlists();
+      setWatchlists(local);
+      if (local.length > 0) setActiveList(local[0].id);
+      setLoading(false);
+      return;
+    }
+
     getWatchlists()
       .then((apiWatchlists: WatchlistItem[]) => {
         if (apiWatchlists.length > 0) {
@@ -77,14 +92,16 @@ export default function WatchlistPage() {
           if (local.length > 0) setActiveList(local[0].id);
         }
       })
-      .catch(() => {
-        // API not available, use localStorage
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          // Token expired or invalid - use local fallback
+        }
         const local = loadLocalWatchlists();
         setWatchlists(local);
         if (local.length > 0) setActiveList(local[0].id);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [user, authLoading]);
 
   // Save to localStorage whenever watchlists change (for local mode)
   useEffect(() => {
@@ -138,6 +155,7 @@ export default function WatchlistPage() {
 
   const handleDeleteList = useCallback(
     async (id: string) => {
+      if (!window.confirm('هل أنت متأكد من حذف هذه القائمة؟')) return;
       if (useApi) {
         try {
           await apiDeleteWatchlist(id);
@@ -195,10 +213,46 @@ export default function WatchlistPage() {
     [activeList, currentList, useApi]
   );
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
-        <LoadingSpinner message="Loading watchlists..." />
+        <LoadingSpinner message="جاري تحميل قوائم المراقبة..." />
+      </div>
+    );
+  }
+
+  // Show login prompt for unauthenticated users
+  if (!user) {
+    return (
+      <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
+        <div className="max-w-content-lg mx-auto space-y-4">
+          <div dir="rtl">
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">قوائم المراقبة</h1>
+            <p className="text-sm text-[var(--text-muted)]">تابع أسهمك المفضلة في تداول</p>
+          </div>
+          <div className="text-center py-16 bg-[var(--bg-card)] border gold-border rounded-md">
+            <svg className="mx-auto mb-4" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--text-muted)' }}>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2" dir="rtl">
+              يرجى تسجيل الدخول لعرض قوائم المراقبة
+            </h2>
+            <p className="text-sm text-[var(--text-muted)] mb-6 max-w-sm mx-auto" dir="rtl">
+              سجل دخولك لمزامنة قوائم المراقبة عبر الأجهزة والوصول لمتابعة الأسهم المخصصة.
+            </p>
+            <Link
+              href="/login"
+              className={cn(
+                'inline-block px-6 py-2.5 rounded-md text-sm font-medium',
+                'bg-gold text-dark-bg',
+                'hover:bg-gold-light transition-colors'
+              )}
+            >
+              تسجيل الدخول
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -208,10 +262,10 @@ export default function WatchlistPage() {
       <div className="max-w-content-lg mx-auto space-y-4">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" dir="rtl">
           <div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">Watchlists</h1>
-            <p className="text-sm text-[var(--text-muted)]">Track your favorite TASI stocks</p>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">قوائم المراقبة</h1>
+            <p className="text-sm text-[var(--text-muted)]">تابع أسهمك المفضلة في تداول</p>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
@@ -221,19 +275,19 @@ export default function WatchlistPage() {
               'hover:bg-gold-light transition-colors'
             )}
           >
-            + New List
+            + قائمة جديدة
           </button>
         </div>
 
         {/* Create list form */}
         {showCreateForm && (
-          <div className="flex gap-2 p-3 bg-[var(--bg-card)] border gold-border rounded-md">
+          <div className="flex gap-2 p-3 bg-[var(--bg-card)] border gold-border rounded-md" dir="rtl">
             <input
               type="text"
               value={newListName}
               onChange={(e) => setNewListName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
-              placeholder="List name..."
+              placeholder="اسم القائمة..."
               className="flex-1 bg-[var(--bg-input)] text-[var(--text-primary)] border gold-border rounded-md px-3 py-1.5 text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-gold"
             />
             <button
@@ -241,13 +295,19 @@ export default function WatchlistPage() {
               disabled={!newListName.trim()}
               className="px-3 py-1.5 rounded-md text-xs font-medium bg-gold text-dark-bg hover:bg-gold-light disabled:opacity-30 transition-colors"
             >
-              Create
+              إنشاء
+            </button>
+            <button
+              onClick={() => { setShowCreateForm(false); setNewListName(''); }}
+              className="px-3 py-1.5 rounded-md text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              إلغاء
             </button>
           </div>
         )}
 
         {/* Watchlist Tabs */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap" dir="rtl">
           {watchlists.map((wl) => (
             <button
               key={wl.id}
@@ -269,13 +329,13 @@ export default function WatchlistPage() {
         {currentList && (
           <>
             {/* Add ticker */}
-            <div className="flex gap-2">
+            <div className="flex gap-2" dir="rtl">
               <input
                 type="text"
                 value={addTicker}
                 onChange={(e) => setAddTicker(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTicker()}
-                placeholder="Add ticker (e.g., 2222.SR)..."
+                placeholder="أضف رمز السهم (مثال: 2222.SR)..."
                 className="flex-1 bg-[var(--bg-input)] text-[var(--text-primary)] border gold-border rounded-md px-3 py-1.5 text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-gold"
               />
               <button
@@ -283,34 +343,34 @@ export default function WatchlistPage() {
                 disabled={!addTicker.trim()}
                 className="px-3 py-1.5 rounded-md text-xs font-medium bg-gold/20 text-gold hover:bg-gold/30 disabled:opacity-30 transition-colors"
               >
-                Add
+                إضافة
               </button>
               {currentList.id !== 'default' && (
                 <button
                   onClick={() => handleDeleteList(currentList.id)}
                   className="px-3 py-1.5 rounded-md text-xs font-medium text-accent-red/60 hover:text-accent-red hover:bg-accent-red/10 transition-colors"
                 >
-                  Delete List
+                  حذف القائمة
                 </button>
               )}
             </div>
 
             {/* Ticker List */}
             {currentList.tickers.length === 0 ? (
-              <div className="text-center py-12 bg-[var(--bg-card)] border gold-border rounded-md">
-                <p className="text-sm text-[var(--text-muted)]">No tickers in this watchlist. Add one above.</p>
+              <div className="text-center py-12 bg-[var(--bg-card)] border gold-border rounded-md" dir="rtl">
+                <p className="text-sm text-[var(--text-muted)]">لا توجد أسهم في هذه القائمة. أضف سهم أعلاه.</p>
               </div>
             ) : (
               <div className="bg-[var(--bg-card)] border gold-border rounded-md overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" dir="rtl">
                   <thead>
                     <tr className="bg-[var(--bg-input)]">
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider">Ticker</th>
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">Name</th>
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">Sector</th>
-                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">Price</th>
-                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">Change</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium text-gold uppercase tracking-wider w-10"></th>
+                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider">الرمز</th>
+                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">الاسم</th>
+                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">القطاع</th>
+                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">السعر</th>
+                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">التغيير</th>
+                      <th className="px-3 py-2 text-center text-xs font-medium text-gold uppercase tracking-wider w-10">إجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -347,7 +407,7 @@ export default function WatchlistPage() {
                             <button
                               onClick={() => handleRemoveTicker(ticker)}
                               className="text-[var(--text-muted)] hover:text-accent-red transition-colors"
-                              aria-label={`Remove ${ticker}`}
+                              aria-label={`حذف ${ticker}`}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />

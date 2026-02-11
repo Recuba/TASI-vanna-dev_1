@@ -1,21 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
+/**
+ * Global keyboard shortcuts.
+ * Ctrl+K is now handled by CommandPalette directly, so it's removed here.
+ * This component is kept for future global shortcuts.
+ */
 export function GlobalKeyboardShortcuts() {
-  const router = useRouter();
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        router.push('/chat');
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router]);
-
   return null;
 }

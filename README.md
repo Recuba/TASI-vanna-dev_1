@@ -2,11 +2,11 @@
 
 AI-powered financial analyst for the Saudi stock market (TASI - Tadawul All Share Index). Ask questions in natural language, get SQL-backed answers with interactive Plotly charts.
 
-Built on [Vanna 2.0](https://vanna.ai/) with Claude Sonnet 4.5, supporting dual SQLite/PostgreSQL backends.
+Built on [Vanna 2.0](https://vanna.ai/) with Google Gemini, supporting dual SQLite/PostgreSQL backends.
 
 ## Features
 
-- Natural language to SQL query generation via Claude Sonnet 4.5
+- Natural language to SQL query generation via Google Gemini
 - Interactive Plotly chart visualization (bar, line, scatter, heatmap)
 - Comprehensive data for ~500 Saudi-listed companies
 - Financial statements (balance sheet, income statement, cash flow) with multi-period history
@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 # Configure
 cp .env.example .env
-# Edit .env and set ANTHROPIC_API_KEY
+# Edit .env and set GEMINI_API_KEY
 
 # Build database and start
 python csv_to_sqlite.py
@@ -39,7 +39,7 @@ Open http://localhost:8084
 
 ```bash
 cp .env.example .env
-# Edit .env: set ANTHROPIC_API_KEY and POSTGRES_PASSWORD
+# Edit .env: set GEMINI_API_KEY and POSTGRES_PASSWORD
 
 docker compose up -d
 ```
@@ -63,7 +63,7 @@ Services:
                              |
                     +--------v---------+
                     |  Vanna 2.0 Agent |
-                    |  - Claude LLM    |
+                    |  - Gemini LLM    |
                     |  - RunSqlTool    |
                     |  - VisualizeTool |
                     +--------+---------+
@@ -105,7 +105,8 @@ All settings via environment variables. See `.env.example` for the complete refe
 
 | Variable | Default | Description |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | (required) | Claude API key |
+| `GEMINI_API_KEY` | (required) | Gemini API key |
+| `ANTHROPIC_API_KEY` | (optional) | Legacy fallback key |
 | `DB_BACKEND` | `sqlite` | Database backend (`sqlite` or `postgres`) |
 | `DB_SQLITE_PATH` | `saudi_stocks.db` | SQLite file path |
 | `POSTGRES_HOST` | `localhost` | PostgreSQL host |

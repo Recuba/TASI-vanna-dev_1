@@ -37,24 +37,6 @@ export function validateOHLCVData(data: unknown): data is Array<{
 }
 
 /**
- * Validate line/area data array (time + value pairs).
- */
-export function validateLineData(data: unknown): data is Array<{
-  time: string;
-  value: number;
-}> {
-  if (!Array.isArray(data) || data.length === 0) return false;
-  return data.every(
-    (item) =>
-      isObject(item) &&
-      typeof item.time === 'string' &&
-      item.time.length >= 8 &&
-      typeof item.value === 'number' &&
-      isFinite(item.value as number),
-  );
-}
-
-/**
  * Validate a TASI index API response envelope.
  */
 export function validateTasiResponse(resp: unknown): resp is {

@@ -1,17 +1,44 @@
+# Secrets and VCS
 .env
 .git
 .gitignore
+
+# Python bytecode
 __pycache__
 *.pyc
 *.pyo
+
+# Data files (allow specific exceptions)
 *.db
 *.csv
 !saudi_stocks.db
 !saudi_stocks_yahoo_data.csv
+
+# Documentation
 *.md
+
+# Reference docs (read-only, not needed at runtime)
 vanna_docs/
 vanna-skill/
+
+# Test files
 test_*.py
+tests/
+pytest.ini
+.pytest_cache/
+
+# Frontend (built separately, not in Python container)
+frontend/
+node_modules/
+vitest.config.ts
+*.test.ts
+*.test.tsx
+
+# Scripts (deployment helpers, not runtime)
+scripts/
+
+# CI/CD
 .github/
+
+# Windows artifacts
 nul
-f8c88490871f6169

@@ -43,4 +43,6 @@ export interface ChatMessage {
   components?: SSEEvent[];
   /** Whether the assistant is still streaming */
   isStreaming?: boolean;
+  /** Whether this message resulted in an error */
+  isError?: boolean;
 }

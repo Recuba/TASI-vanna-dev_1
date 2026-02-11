@@ -67,15 +67,13 @@ class DatabaseSettings(BaseSettings):
 
 
 class LLMSettings(BaseSettings):
-    """LLM provider settings. Supports Gemini (active) and Anthropic (legacy)."""
+    """LLM provider settings (Anthropic Claude)."""
 
     model_config = SettingsConfigDict(env_prefix="LLM_")
 
-    model: str = "gemini-2.5-flash"
+    model: str = "claude-sonnet-4-5-20250929"
     api_key: str = ""
     max_tool_iterations: int = 10
-    # Gemini-specific settings (read via GEMINI_* env vars in app.py)
-    # These are here for documentation; app.py reads GEMINI_API_KEY directly.
 
 
 class PoolSettings(BaseSettings):

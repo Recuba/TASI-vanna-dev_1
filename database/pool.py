@@ -125,9 +125,15 @@ def get_pool_connection():
     conn = _pool.getconn()
     # Wrap close() so existing service code that calls conn.close()
     # returns the connection to the pool instead of destroying it.
+    # Always rollback uncommitted work first to avoid returning an
+    # aborted transaction to the pool (transaction-safety fix).
     _original_close = conn.close
 
     def _pool_aware_close():
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         try:
             _pool.putconn(conn)
         except Exception:

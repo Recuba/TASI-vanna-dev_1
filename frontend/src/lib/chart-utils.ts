@@ -1,12 +1,12 @@
 /**
- * Chart utility functions for generating mock data, filtering, and formatting.
+ * Chart utility functions for generating mock data.
  *
- * Used by chart components and data hooks throughout the Ra'd AI frontend.
+ * Used by data hooks for fallback when the backend API is unavailable.
  */
 
-import type { OHLCVData, LineDataPoint, ChartTimeRange } from '@/components/charts/chart-types';
+import type { OHLCVData, LineDataPoint } from '@/components/charts/chart-types';
 
-export type { OHLCVData, LineDataPoint, ChartTimeRange };
+export type { OHLCVData, LineDataPoint };
 
 // ---------------------------------------------------------------------------
 // Mock data generation
@@ -106,86 +106,4 @@ export function generateMockPriceTrend(days: number = 365): LineDataPoint[] {
   // Use a generic ticker to generate trend data
   const ohlcv = generateMockOHLCV('TASI_INDEX', days);
   return ohlcv.map((d) => ({ time: d.time, value: d.close }));
-}
-
-// ---------------------------------------------------------------------------
-// Data filtering
-// ---------------------------------------------------------------------------
-
-/**
- * Filter time-series data by a ChartTimeRange relative to today.
- */
-export function filterByTimeRange<T extends { time: string }>(
-  data: T[],
-  range: ChartTimeRange,
-): T[] {
-  if (range === 'ALL' || data.length === 0) return data;
-
-  const now = new Date();
-  let cutoff: Date;
-
-  switch (range) {
-    case '1W':
-      cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      break;
-    case '1M':
-      cutoff = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-      break;
-    case '3M':
-      cutoff = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-      break;
-    case '6M':
-      cutoff = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
-      break;
-    case '1Y':
-      cutoff = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-      break;
-    default:
-      return data;
-  }
-
-  const cutoffStr = toDateStr(cutoff);
-  return data.filter((d) => d.time >= cutoffStr);
-}
-
-// ---------------------------------------------------------------------------
-// Calculations
-// ---------------------------------------------------------------------------
-
-/**
- * Calculate a simple moving average over close prices.
- */
-export function calculateMA(data: OHLCVData[], period: number): LineDataPoint[] {
-  const result: LineDataPoint[] = [];
-  for (let i = period - 1; i < data.length; i++) {
-    let sum = 0;
-    for (let j = i - period + 1; j <= i; j++) {
-      sum += data[j].close;
-    }
-    result.push({ time: data[i].time, value: +(sum / period).toFixed(2) });
-  }
-  return result;
-}
-
-// ---------------------------------------------------------------------------
-// Formatting
-// ---------------------------------------------------------------------------
-
-/**
- * Format a large number with abbreviated suffix (1.5B, 2.3M, 5.7K).
- */
-export function formatVolume(value: number): string {
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000_000_000) return (value / 1_000_000_000_000).toFixed(1) + 'T';
-  if (abs >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1) + 'B';
-  if (abs >= 1_000_000) return (value / 1_000_000).toFixed(1) + 'M';
-  if (abs >= 1_000) return (value / 1_000).toFixed(1) + 'K';
-  return value.toString();
-}
-
-/**
- * Format a price with currency prefix.
- */
-export function formatPrice(value: number, currency: string = 'SAR'): string {
-  return `${currency} ${value.toFixed(2)}`;
 }

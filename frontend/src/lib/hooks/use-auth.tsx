@@ -28,10 +28,43 @@ interface AuthContextValue {
 }
 
 const TOKEN_KEY = 'rad-ai-token';
+const REFRESH_TOKEN_KEY = 'rad-ai-refresh-token';
 const USER_KEY = 'rad-ai-user';
-const USER_ID_KEY = 'rad-ai-user-id';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Decode the payload section of a JWT (base64url) without verifying the
+ * signature.  We only need the claims (`sub`, `email`) that the backend
+ * embeds so we can populate the local User object immediately after login
+ * without an extra round-trip to /api/auth/me.
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Invalid JWT format');
+  }
+  // base64url -> base64 -> decode
+  const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+  const json = atob(base64);
+  return JSON.parse(json);
+}
+
+type AuthApiResponse = {
+  token?: string;
+  access_token?: string;
+  refresh_token?: string;
+  user_id?: string;
+  name?: string;
+};
+
+function extractAccessToken(data: AuthApiResponse): string {
+  return data.token ?? data.access_token ?? '';
+}
 
 // ---------------------------------------------------------------------------
 // Context
@@ -57,10 +90,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const persistAuth = useCallback((token: string, u: User) => {
-    localStorage.setItem(TOKEN_KEY, token);
+  const persistAuth = useCallback((accessToken: string, refreshToken: string, u: User) => {
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
     localStorage.setItem(USER_KEY, JSON.stringify(u));
-    localStorage.setItem(USER_ID_KEY, u.id);
     setUser(u);
   }, []);
 
@@ -75,8 +108,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const body = await res.text().catch(() => '');
         throw new Error(body || `Login failed (${res.status})`);
       }
-      const data = await res.json();
-      persistAuth(data.token, { id: data.user_id, email, name: data.name ?? email });
+      const data = (await res.json()) as AuthApiResponse;
+      const accessToken = extractAccessToken(data);
+      const refreshToken = data.refresh_token ?? '';
+      if (!accessToken || !refreshToken) {
+        throw new Error('Login response missing tokens');
+      }
+
+      let userId = data.user_id;
+      let userEmail = email;
+      try {
+        const claims = decodeJwtPayload(accessToken);
+        userId = userId ?? (claims.sub as string);
+        userEmail = (claims.email as string) ?? userEmail;
+      } catch {
+        // If claims cannot be decoded, continue with API-provided fields.
+      }
+
+      persistAuth(accessToken, refreshToken, {
+        id: userId || email,
+        email: userEmail,
+        name: data.name || userEmail,
+      });
     },
     [persistAuth],
   );
@@ -86,22 +139,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+        // Backend accepts both `name` and `display_name`; use the canonical field.
+        body: JSON.stringify({ email, password, display_name: name }),
       });
       if (!res.ok) {
         const body = await res.text().catch(() => '');
         throw new Error(body || `Registration failed (${res.status})`);
       }
-      const data = await res.json();
-      persistAuth(data.token, { id: data.user_id, email, name });
+      const data = (await res.json()) as AuthApiResponse;
+      const accessToken = extractAccessToken(data);
+      const refreshToken = data.refresh_token ?? '';
+      if (!accessToken || !refreshToken) {
+        throw new Error('Registration response missing tokens');
+      }
+
+      let userId = data.user_id;
+      let userEmail = email;
+      try {
+        const claims = decodeJwtPayload(accessToken);
+        userId = userId ?? (claims.sub as string);
+        userEmail = (claims.email as string) ?? userEmail;
+      } catch {
+        // If claims cannot be decoded, continue with API-provided fields.
+      }
+
+      persistAuth(accessToken, refreshToken, {
+        id: userId || email,
+        email: userEmail,
+        name: data.name || name || userEmail,
+      });
     },
     [persistAuth],
   );
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(USER_ID_KEY);
     setUser(null);
   }, []);
 

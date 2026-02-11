@@ -9,6 +9,7 @@ Requires a psycopg2 connection factory passed at init.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,6 +17,8 @@ from typing import Any, Dict, List, Optional
 
 import psycopg2
 import psycopg2.extras
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -136,6 +139,10 @@ class AuditService:
                 )
             conn.commit()
             return entry_id
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to log audit query", exc_info=True)
+            raise
         finally:
             conn.close()
 

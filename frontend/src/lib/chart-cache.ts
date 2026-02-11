@@ -21,8 +21,10 @@ export const chartCacheConfig: SWRConfiguration = {
 
 export const chartKeys = {
   ohlcv: (ticker: string) => ['ohlcv', ticker] as const,
+  stockOhlcv: (ticker: string, period: string) => ['stockOhlcv', ticker, period] as const,
   priceTrend: (ticker: string, days: number) => ['priceTrend', ticker, days] as const,
   marketIndex: (period: string) => ['marketIndex', period] as const,
+  tasiOhlcv: (period: string) => ['tasiOhlcv', period] as const,
   miniChart: (ticker: string) => ['miniChart', ticker] as const,
 };
 

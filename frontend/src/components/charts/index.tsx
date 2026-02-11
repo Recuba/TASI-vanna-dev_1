@@ -21,6 +21,21 @@ export const MiniSparkline = dynamic(() => import('./MiniSparkline'), {
   loading: () => <ChartSkeleton height={40} />,
 });
 
+export const TradingViewWidget = dynamic(() => import('./TradingViewWidget'), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={700} />,
+});
+
+export const StockOHLCVChart = dynamic(() => import('./StockOHLCVChart'), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={550} />,
+});
+
+export const TASIIndexChart = dynamic(() => import('./TASIIndexChart'), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={550} />,
+});
+
 export { ChartSkeleton } from './ChartSkeleton';
 export { ChartError } from './ChartError';
 export { ChartEmpty } from './ChartEmpty';

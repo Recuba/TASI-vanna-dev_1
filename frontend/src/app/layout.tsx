@@ -1,13 +1,13 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans_Arabic, Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/providers/ThemeProvider';
+import { LanguageProvider } from '@/providers/LanguageProvider';
 import { AuthProvider } from '@/lib/hooks/use-auth';
 import { ErrorBoundary } from '@/components/common/error-boundary';
-import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { Footer } from '@/components/layout/Footer';
 import { GlobalKeyboardShortcuts } from '@/components/common/GlobalKeyboardShortcuts';
+import { ScrollToTop } from '@/components/common/ScrollToTop';
+import { AppShell } from '@/components/layout/AppShell';
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   subsets: ['arabic', 'latin'],
@@ -29,32 +29,34 @@ export const metadata: Metadata = {
     'AI-powered Saudi stock market analysis. Query TASI data with natural language.',
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" className="dark" suppressHydrationWarning>
+    <html lang="en" dir="ltr" className="dark" suppressHydrationWarning>
       <body
-        className={`${ibmPlexArabic.variable} ${inter.variable} font-arabic antialiased`}
+        className={`${ibmPlexArabic.variable} ${inter.variable} font-english antialiased`}
       >
         <ThemeProvider>
-          <AuthProvider>
-            <GlobalKeyboardShortcuts />
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <div className="flex flex-1">
-                <Sidebar />
-                <main className="flex-1 flex flex-col min-w-0">
-                  <ErrorBoundary>
-                    {children}
-                  </ErrorBoundary>
-                </main>
-              </div>
-              <Footer />
-            </div>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <GlobalKeyboardShortcuts />
+              <ScrollToTop />
+              <AppShell>
+                <ErrorBoundary>
+                  {children}
+                </ErrorBoundary>
+              </AppShell>
+            </AuthProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -26,10 +26,15 @@ export interface NewsArticle {
   created_at: string | null;
 }
 
-export interface NewsListResponse {
-  items: NewsArticle[];
-  count: number;
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }
+
+export type NewsListResponse = PaginatedResponse<NewsArticle>;
 
 export interface ReportItem {
   id: string;
@@ -47,10 +52,7 @@ export interface ReportItem {
   created_at: string | null;
 }
 
-export interface ReportListResponse {
-  items: ReportItem[];
-  count: number;
-}
+export type ReportListResponse = PaginatedResponse<ReportItem>;
 
 export interface AnnouncementItem {
   id: string;
@@ -68,10 +70,7 @@ export interface AnnouncementItem {
   created_at: string | null;
 }
 
-export interface AnnouncementListResponse {
-  items: AnnouncementItem[];
-  count: number;
-}
+export type AnnouncementListResponse = PaginatedResponse<AnnouncementItem>;
 
 export interface CompanySummary {
   ticker: string;
@@ -139,9 +138,16 @@ export interface ChartResponse {
   data: ChartDataPoint[];
 }
 
+export interface HealthComponentResponse {
+  name: string;
+  status: string;
+  latency_ms: number | null;
+  message: string;
+}
+
 export interface HealthResponse {
   status: string;
-  components: Record<string, unknown>[];
+  components: HealthComponentResponse[];
 }
 
 // ---------------------------------------------------------------------------
@@ -169,10 +175,6 @@ function authHeaders(): Record<string, string> {
     const token = localStorage.getItem('rad-ai-token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-    }
-    const userId = localStorage.getItem('rad-ai-user-id');
-    if (userId) {
-      headers['X-User-Id'] = userId;
     }
   }
   return headers;
@@ -217,8 +219,8 @@ export function getHealth(): Promise<HealthResponse> {
 
 // -- News --
 export function getNews(params?: {
-  limit?: number;
-  offset?: number;
+  page?: number;
+  page_size?: number;
   language?: string;
 }): Promise<NewsListResponse> {
   return request(`/api/news${qs(params ?? {})}`);
@@ -226,15 +228,15 @@ export function getNews(params?: {
 
 export function getNewsByTicker(
   ticker: string,
-  params?: { limit?: number; offset?: number; sentiment?: string },
+  params?: { page?: number; page_size?: number; sentiment?: string },
 ): Promise<NewsListResponse> {
   return request(`/api/news/ticker/${encodeURIComponent(ticker)}${qs(params ?? {})}`);
 }
 
 // -- Reports --
 export function getReports(params?: {
-  limit?: number;
-  offset?: number;
+  page?: number;
+  page_size?: number;
   recommendation?: string;
   report_type?: string;
 }): Promise<ReportListResponse> {
@@ -243,15 +245,15 @@ export function getReports(params?: {
 
 export function getReportsByTicker(
   ticker: string,
-  params?: { limit?: number; offset?: number },
+  params?: { page?: number; page_size?: number },
 ): Promise<ReportListResponse> {
   return request(`/api/reports/ticker/${encodeURIComponent(ticker)}${qs(params ?? {})}`);
 }
 
 // -- Announcements --
 export function getAnnouncements(params?: {
-  limit?: number;
-  offset?: number;
+  page?: number;
+  page_size?: number;
   ticker?: string;
   category?: string;
   source?: string;
@@ -368,4 +370,212 @@ export interface TasiIndexResponse {
 
 export function getTasiIndex(period: string = '1y'): Promise<TasiIndexResponse> {
   return request(`/api/v1/charts/tasi/index${qs({ period })}`);
+}
+
+// -- News Feed --
+export interface NewsFeedItem {
+  id: string;
+  title: string;
+  body: string | null;
+  source_name: string;
+  source_url: string | null;
+  published_at: string | null;
+  priority: number;
+  language: string;
+}
+
+export interface NewsFeedResponse {
+  items: NewsFeedItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export function getNewsFeed(params?: {
+  limit?: number;
+  offset?: number;
+  source?: string;
+}): Promise<NewsFeedResponse> {
+  return request(`/api/v1/news/feed${qs(params ?? {})}`);
+}
+
+export function getNewsArticle(id: string): Promise<NewsFeedItem> {
+  return request(`/api/v1/news/feed/${encodeURIComponent(id)}`);
+}
+
+export function searchNewsFeed(params: {
+  q: string;
+  limit?: number;
+  offset?: number;
+}): Promise<NewsFeedResponse> {
+  return request(`/api/v1/news/search${qs(params)}`);
+}
+
+export interface NewsSourceInfo {
+  source_name: string;
+  count: number;
+}
+
+export interface NewsSourcesResponse {
+  sources: NewsSourceInfo[];
+}
+
+export function getNewsSources(): Promise<NewsSourcesResponse> {
+  return request('/api/v1/news/sources');
+}
+
+// ---------------------------------------------------------------------------
+// Market Analytics types
+// ---------------------------------------------------------------------------
+
+export interface MarketMover {
+  ticker: string;
+  company_name_ar: string;
+  company_name_en: string;
+  current_price: number;
+  previous_close: number;
+  change_pct: number;
+  volume: number;
+  sector: string;
+}
+
+export interface MarketSummary {
+  total_market_cap: number;
+  total_volume: number;
+  gainers_count: number;
+  losers_count: number;
+  unchanged_count: number;
+  top_gainers: MarketMover[];
+  top_losers: MarketMover[];
+}
+
+export interface SectorPerformance {
+  sector: string;
+  avg_change_pct: number;
+  total_volume: number;
+  total_market_cap: number;
+  company_count: number;
+  gainers: number;
+  losers: number;
+}
+
+export interface HeatmapItem {
+  ticker: string;
+  name: string;
+  sector: string;
+  market_cap: number;
+  change_pct: number;
+}
+
+// ---------------------------------------------------------------------------
+// Stock data types
+// ---------------------------------------------------------------------------
+
+export interface StockDividends {
+  ticker: string;
+  dividend_rate: number | null;
+  dividend_yield: number | null;
+  payout_ratio: number | null;
+  five_year_avg_dividend_yield: number | null;
+  ex_dividend_date: string | null;
+  last_dividend_value: number | null;
+  last_dividend_date: string | null;
+  trailing_annual_dividend_rate: number | null;
+  trailing_annual_dividend_yield: number | null;
+}
+
+export interface FinancialSummary {
+  ticker: string;
+  total_revenue: number | null;
+  revenue_per_share: number | null;
+  total_cash: number | null;
+  total_debt: number | null;
+  debt_to_equity: number | null;
+  current_ratio: number | null;
+  quick_ratio: number | null;
+  free_cashflow: number | null;
+  ebitda: number | null;
+  gross_profit: number | null;
+  operating_cashflow: number | null;
+}
+
+export interface FinancialStatement {
+  period_type: string;
+  period_index: number;
+  period_date: string;
+  [key: string]: string | number | null;
+}
+
+export interface StockComparison {
+  tickers: Array<{ ticker: string; name: string; metrics: Record<string, number | null> }>;
+}
+
+export interface BatchQuote {
+  ticker: string;
+  name: string;
+  current_price: number;
+  previous_close: number;
+  change_pct: number;
+  volume: number;
+}
+
+// ---------------------------------------------------------------------------
+// Market Analytics API
+// ---------------------------------------------------------------------------
+
+export function getMarketMovers(
+  type: 'gainers' | 'losers',
+  limit?: number,
+): Promise<MarketMover[]> {
+  return request(`/api/market/movers${qs({ type, limit })}`);
+}
+
+export function getMarketSummary(): Promise<MarketSummary> {
+  return request('/api/market/summary');
+}
+
+export function getSectorPerformance(): Promise<SectorPerformance[]> {
+  return request('/api/market/sectors/performance');
+}
+
+export function getMarketHeatmap(): Promise<HeatmapItem[]> {
+  return request('/api/market/heatmap');
+}
+
+// ---------------------------------------------------------------------------
+// Stock Data API
+// ---------------------------------------------------------------------------
+
+export function getStockDividends(ticker: string): Promise<StockDividends> {
+  return request(`/api/entities/${encodeURIComponent(ticker)}/dividends`);
+}
+
+export function getStockFinancialSummary(ticker: string): Promise<FinancialSummary> {
+  return request(`/api/entities/${encodeURIComponent(ticker)}/financial-summary`);
+}
+
+export function getStockFinancials(
+  ticker: string,
+  params?: { statement?: string; period_type?: string },
+): Promise<FinancialStatement[]> {
+  return request(
+    `/api/entities/${encodeURIComponent(ticker)}/financials${qs(params ?? {})}`,
+  );
+}
+
+export function compareStocks(
+  tickers: string[],
+  metrics: string[],
+): Promise<StockComparison> {
+  return request('/api/entities/compare', {
+    method: 'POST',
+    body: JSON.stringify({ tickers, metrics }),
+  });
+}
+
+export function getBatchQuotes(tickers: string[]): Promise<BatchQuote[]> {
+  return request('/api/entities/batch-quotes', {
+    method: 'POST',
+    body: JSON.stringify({ tickers }),
+  });
 }

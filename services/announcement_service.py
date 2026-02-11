@@ -12,6 +12,7 @@ connections auto-return to the pool on ``close()``.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -19,6 +20,8 @@ from typing import Any, Dict, List, Optional
 
 import psycopg2
 import psycopg2.extras
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +124,10 @@ class AnnouncementService:
                 cur.executemany(sql, [a.to_dict() for a in announcements])
             conn.commit()
             return len(announcements)
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to store %d announcements", len(announcements), exc_info=True)
+            raise
         finally:
             conn.close()
 

@@ -2,8 +2,8 @@
 Vanna 2.0 Saudi Stock Market Analyst
 =====================================
 Connects to a SQLite or PostgreSQL database of ~500 Saudi-listed companies
-and exposes a FastAPI chat interface powered by Google Gemini 2.5 Flash
-via the Gemini API (OpenAI-compatible endpoint).
+and exposes a FastAPI chat interface powered by Claude Sonnet 4.5
+via the Anthropic API.
 
 Set DB_BACKEND=postgres (with POSTGRES_* env vars) to use PostgreSQL.
 Default is SQLite.
@@ -25,7 +25,7 @@ from vanna import Agent, AgentConfig, ToolRegistry
 from vanna.core.system_prompt.base import SystemPromptBuilder
 from vanna.core.user.resolver import UserResolver, RequestContext, User
 from vanna.integrations.local.agent_memory.in_memory import DemoAgentMemory
-from vanna.integrations.openai import OpenAILlmService
+from vanna.integrations.anthropic import AnthropicLlmService
 from vanna.integrations.sqlite import SqliteRunner
 from vanna.integrations.postgres import PostgresRunner
 from vanna.servers.fastapi import VannaFastAPIServer
@@ -47,32 +47,16 @@ _settings = get_settings()
 _HERE = Path(__file__).resolve().parent
 
 # ---------------------------------------------------------------------------
-# 1. LLM -- Google Gemini 2.5 Flash via Gemini API (OpenAI-compatible)
+# 1. LLM -- Claude Sonnet 4.5 via Anthropic API
 # ---------------------------------------------------------------------------
-# Use config settings first, then fall back to GEMINI_* env vars for
-# backward compatibility.  The LLMSettings env prefix is LLM_, so
-# GEMINI_API_KEY is not captured by pydantic-settings automatically.
-_llm_api_key = (
-    _settings.llm.api_key if _settings and _settings.llm.api_key
-    else os.environ.get("GEMINI_API_KEY", "")
-)
-# GEMINI_MODEL env var takes highest priority, then config, then default.
-_llm_model = os.environ.get("GEMINI_MODEL") or (
-    _settings.llm.model if _settings else "gemini-2.5-flash"
-)
-# gemini-3-flash-preview requires thought_signature in tool round-trips
-# which Vanna's OpenAI integration does not preserve -- auto-fallback.
-_INCOMPATIBLE_MODELS = {"gemini-3-flash-preview"}
-if _llm_model in _INCOMPATIBLE_MODELS:
-    logger.warning("Model %s incompatible with Vanna tool calling, falling back to gemini-2.5-flash", _llm_model)
-    _llm_model = "gemini-2.5-flash"
+_llm_model = _settings.llm.model if _settings else "claude-sonnet-4-5-20250929"
+_llm_api_key = _settings.get_llm_api_key() if _settings else os.environ.get("ANTHROPIC_API_KEY", "")
 
-llm = OpenAILlmService(
+llm = AnthropicLlmService(
     model=_llm_model,
     api_key=_llm_api_key,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
-logger.info("LLM configured: model=%s, provider=gemini", _llm_model)
+logger.info("LLM configured: model=%s, provider=anthropic", _llm_model)
 
 # ---------------------------------------------------------------------------
 # 2. SQL runner -- SQLite (default) or PostgreSQL

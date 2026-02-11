@@ -116,9 +116,10 @@ async def announcements_by_sector(
         offset=pagination.offset,
         since=since,
     )
+    total = svc.count_announcements()
     return PaginatedResponse.build(
         items=[_to_response(a) for a in items],
-        total=len(items),
+        total=total,
         page=pagination.page,
         page_size=pagination.page_size,
     )

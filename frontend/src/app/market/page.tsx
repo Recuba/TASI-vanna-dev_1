@@ -1,16 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useSectors, useEntities } from '@/lib/hooks/use-api';
 import { AreaChart, MiniSparkline, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
 import { useMarketIndex, useMiniChartData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
+// ---------------------------------------------------------------------------
+// Sort types
+// ---------------------------------------------------------------------------
+
+type SortField = 'short_name' | 'ticker' | 'current_price' | 'change_pct' | 'market_cap';
+type SortDir = 'asc' | 'desc';
+
+const PAGE_SIZE = 50;
 
 // ---------------------------------------------------------------------------
-// Mini sparkline wrapper -- hooks cannot be called inside a map callback
+// Mini sparkline wrapper
 // ---------------------------------------------------------------------------
 
 function StockSparkline({ ticker }: { ticker: string }) {
@@ -20,35 +29,145 @@ function StockSparkline({ ticker }: { ticker: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Market overview page - fetches real data from /api/entities and /api/entities/sectors
+// Sort icon
+// ---------------------------------------------------------------------------
+
+function SortIndicator({ field, current, dir }: { field: SortField; current: SortField; dir: SortDir }) {
+  if (field !== current) {
+    return (
+      <svg className="w-3 h-3 text-[var(--text-muted)] opacity-40" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4M16 15l-4 4-4-4" />
+      </svg>
+    );
+  }
+  return dir === 'asc' ? (
+    <svg className="w-3 h-3 text-gold" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 15l4-4 4 4" />
+    </svg>
+  ) : (
+    <svg className="w-3 h-3 text-gold" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 9l-4 4-4-4" />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Format market cap
+// ---------------------------------------------------------------------------
+
+function fmtCap(val: number | null): string {
+  if (val === null || val === undefined) return '-';
+  if (val >= 1e9) return `${(val / 1e9).toFixed(1)}B`;
+  if (val >= 1e6) return `${(val / 1e6).toFixed(0)}M`;
+  return val.toFixed(0);
+}
+
+// ---------------------------------------------------------------------------
+// Market overview page
 // ---------------------------------------------------------------------------
 
 export default function MarketPage() {
-  const [selectedSector, setSelectedSector] = useState<string | undefined>(undefined);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const initialPage = Math.max(1, Number(searchParams.get('page')) || 1);
+  const initialSector = searchParams.get('sector') || undefined;
+
+  const [selectedSector, setSelectedSector] = useState<string | undefined>(initialSector);
   const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState<SortField>('market_cap');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [page, setPage] = useState(initialPage);
   const { data: indexData, loading: indexLoading, source: indexSource } = useMarketIndex();
 
   const { data: sectors, loading: sectorsLoading, error: sectorsError, refetch: refetchSectors } = useSectors();
   const { data: entities, loading: entitiesLoading, error: entitiesError, refetch: refetchEntities } = useEntities({
-    limit: 50,
+    limit: PAGE_SIZE,
+    offset: (page - 1) * PAGE_SIZE,
     sector: selectedSector,
     search: search || undefined,
   });
+
+  const totalCount = entities?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function updateUrl(newPage: number, newSector?: string) {
+    const params = new URLSearchParams();
+    if (newPage > 1) params.set('page', String(newPage));
+    if (newSector) params.set('sector', newSector);
+    const qs = params.toString();
+    router.replace(`/market${qs ? `?${qs}` : ''}`, { scroll: false });
+  }
+
+  function handlePageChange(newPage: number) {
+    setPage(newPage);
+    updateUrl(newPage, selectedSector);
+  }
+
+  function handleSectorChange(sector: string | undefined) {
+    setSelectedSector(sector);
+    setPage(1);
+    updateUrl(1, sector);
+  }
+
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir(field === 'short_name' || field === 'ticker' ? 'asc' : 'desc');
+    }
+  }
+
+  const sortedItems = useMemo(() => {
+    if (!entities?.items) return [];
+    return [...entities.items].sort((a, b) => {
+      let aVal: string | number | null;
+      let bVal: string | number | null;
+      if (sortField === 'short_name') {
+        aVal = a.short_name || a.ticker;
+        bVal = b.short_name || b.ticker;
+      } else if (sortField === 'ticker') {
+        aVal = a.ticker;
+        bVal = b.ticker;
+      } else {
+        aVal = a[sortField];
+        bVal = b[sortField];
+      }
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      return sortDir === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+    });
+  }, [entities?.items, sortField, sortDir]);
+
+  const headerCols: { field: SortField; label: string; align: 'start' | 'end' }[] = [
+    { field: 'short_name', label: '\u0627\u0644\u0634\u0631\u0643\u0629', align: 'start' },
+    { field: 'current_price', label: '\u0627\u0644\u0633\u0639\u0631', align: 'end' },
+    { field: 'change_pct', label: '\u0627\u0644\u062A\u063A\u064A\u0631', align: 'end' },
+    { field: 'market_cap', label: '\u0627\u0644\u0642\u064A\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064A\u0629', align: 'end' },
+  ];
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       <div className="max-w-content-lg mx-auto space-y-6">
 
         {/* Header */}
-        <div>
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">Market Overview</h1>
-          <p className="text-sm text-[var(--text-muted)]">Browse TASI sectors and companies</p>
+        <div dir="rtl">
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">
+            {'\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629 \u0639\u0644\u0649 \u0627\u0644\u0633\u0648\u0642'}
+          </h1>
+          <p className="text-sm text-[var(--text-muted)]">
+            {'\u062A\u0635\u0641\u062D \u0642\u0637\u0627\u0639\u0627\u062A \u0648\u0634\u0631\u0643\u0627\u062A \u062A\u0627\u0633\u064A'}
+          </p>
         </div>
 
         {/* TASI Index Chart */}
-        <section className="bg-[var(--bg-card)] border gold-border rounded-md p-4">
+        <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-4">
           <ChartErrorBoundary fallbackHeight={250}>
-            <ChartWrapper title="TASI Index" source={indexSource}>
+            <ChartWrapper title={'\u0645\u0624\u0634\u0631 \u062A\u0627\u0633\u064A'} source={indexSource}>
               <AreaChart data={indexData || []} height={250} loading={indexLoading} title="" />
             </ChartWrapper>
           </ChartErrorBoundary>
@@ -57,118 +176,220 @@ export default function MarketPage() {
           </div>
         </section>
 
-        {/* Search */}
-        <div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by ticker or company name..."
-            className={cn(
-              'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
-              'border gold-border rounded-md px-3 py-2 text-sm',
-              'placeholder:text-[var(--text-muted)]',
-              'focus:outline-none focus:border-gold transition-colors',
-            )}
-          />
+        {/* Search + Sector Filter Row */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder={'\u0628\u062D\u062B \u0628\u0627\u0644\u0631\u0645\u0632 \u0623\u0648 \u0627\u0633\u0645 \u0627\u0644\u0634\u0631\u0643\u0629...'}
+              dir="rtl"
+              className={cn(
+                'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
+                'border border-[#2A2A2A] rounded-xl px-3 py-2.5 pr-10 text-sm',
+                'placeholder:text-[var(--text-muted)]',
+                'focus:outline-none focus:border-gold transition-colors',
+              )}
+            />
+          </div>
+
+          {/* Sector Dropdown */}
+          <div className="sm:w-56">
+            <select
+              value={selectedSector || ''}
+              onChange={(e) => handleSectorChange(e.target.value || undefined)}
+              dir="rtl"
+              className={cn(
+                'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
+                'border border-[#2A2A2A] rounded-xl px-3 py-2.5 text-sm',
+                'focus:outline-none focus:border-gold transition-colors',
+                'appearance-none cursor-pointer',
+              )}
+            >
+              <option value="">{'\u062C\u0645\u064A\u0639 \u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A'}</option>
+              {sectors?.map((s) => (
+                <option key={s.sector} value={s.sector}>
+                  {s.sector} ({s.company_count})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Sector Table */}
+        {/* Sector Chips */}
+        {sectorsLoading ? (
+          <LoadingSpinner message={'\u062C\u0627\u0631\u064A \u062A\u062D\u0645\u064A\u0644 \u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A...'} />
+        ) : sectorsError ? (
+          <ErrorDisplay message={sectorsError} onRetry={refetchSectors} />
+        ) : sectors && sectors.length > 0 ? (
+          <div className="flex flex-wrap gap-2" dir="rtl">
+            <button
+              onClick={() => handleSectorChange(undefined)}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                !selectedSector
+                  ? 'bg-gold text-[#0E0E0E]'
+                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] border border-[#2A2A2A] hover:border-gold/40'
+              )}
+            >
+              {'\u0627\u0644\u0643\u0644'}
+            </button>
+            {sectors.map((s) => (
+              <button
+                key={s.sector}
+                onClick={() => handleSectorChange(selectedSector === s.sector ? undefined : s.sector)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                  selectedSector === s.sector
+                    ? 'bg-gold text-[#0E0E0E]'
+                    : 'bg-[var(--bg-input)] text-[var(--text-secondary)] border border-[#2A2A2A] hover:border-gold/40'
+                )}
+              >
+                {s.sector}
+                <span className="text-[10px] opacity-70 mr-1">({s.company_count})</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Companies Table */}
         <section>
-          <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">Sectors</h2>
-          {sectorsLoading ? (
-            <LoadingSpinner message="Loading sectors..." />
-          ) : sectorsError ? (
-            <ErrorDisplay message={sectorsError} onRetry={refetchSectors} />
-          ) : sectors && sectors.length > 0 ? (
-            <div className="bg-[var(--bg-card)] border gold-border rounded-md overflow-hidden">
+          <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir="rtl">
+            {selectedSector ? `${selectedSector}` : '\u062C\u0645\u064A\u0639 \u0627\u0644\u0634\u0631\u0643\u0627\u062A'}
+            {entities && <span className="text-[var(--text-muted)] font-normal mr-2">({totalCount})</span>}
+          </h2>
+
+          {entitiesLoading ? (
+            <LoadingSpinner message={'\u062C\u0627\u0631\u064A \u062A\u062D\u0645\u064A\u0644 \u0627\u0644\u0634\u0631\u0643\u0627\u062A...'} />
+          ) : entitiesError ? (
+            <ErrorDisplay message={entitiesError} onRetry={refetchEntities} />
+          ) : sortedItems.length > 0 ? (
+            <ChartErrorBoundary fallbackHeight={200}>
+            <div className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-[var(--bg-input)]">
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider">Sector</th>
-                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">Companies</th>
+                      {headerCols.map((col) => (
+                        <th
+                          key={col.field}
+                          onClick={() => toggleSort(col.field)}
+                          className={cn(
+                            'px-4 py-3 text-xs font-medium text-gold uppercase tracking-wider cursor-pointer select-none',
+                            'hover:bg-gold/5 transition-colors',
+                            col.align === 'end' ? 'text-end' : 'text-start'
+                          )}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            {col.label}
+                            <SortIndicator field={col.field} current={sortField} dir={sortDir} />
+                          </span>
+                        </th>
+                      ))}
+                      <th className="px-4 py-3 text-end text-xs font-medium text-gold uppercase tracking-wider w-20">
+                        {'\u0627\u0644\u0631\u0633\u0645'}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sectors.map((s) => (
+                    {sortedItems.map((stock, idx) => (
                       <tr
-                        key={s.sector}
-                        onClick={() => setSelectedSector(selectedSector === s.sector ? undefined : s.sector)}
+                        key={stock.ticker}
                         className={cn(
-                          'border-t border-[var(--bg-input)] hover:bg-[var(--bg-card-hover)] transition-colors cursor-pointer',
-                          selectedSector === s.sector && 'bg-gold/5',
+                          'border-t border-[#2A2A2A]/50 hover:bg-[var(--bg-card-hover)] transition-colors',
+                          idx % 2 === 1 && 'bg-[#1A1A1A]/30'
                         )}
                       >
-                        <td className="px-3 py-2 text-[var(--text-primary)] font-medium">{s.sector}</td>
-                        <td className="px-3 py-2 text-end text-[var(--text-secondary)]">{s.company_count}</td>
+                        <td className="px-4 py-2.5">
+                          <Link href={`/stock/${encodeURIComponent(stock.ticker)}`} className="block group">
+                            <p className="text-sm font-medium text-[var(--text-primary)] group-hover:text-gold transition-colors truncate max-w-[200px]">
+                              {stock.short_name || stock.ticker}
+                            </p>
+                            <p className="text-xs text-[var(--text-muted)]">
+                              {stock.ticker}
+                              {stock.sector && <span className="mr-1"> &middot; {stock.sector}</span>}
+                            </p>
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2.5 text-end">
+                          <span className="text-sm font-bold text-[var(--text-primary)]">
+                            {stock.current_price !== null ? stock.current_price.toFixed(2) : '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-end">
+                          {stock.change_pct !== null && stock.change_pct !== undefined ? (
+                            <span className={cn(
+                              'text-xs font-bold px-2 py-0.5 rounded-full',
+                              stock.change_pct >= 0
+                                ? 'text-accent-green bg-accent-green/10'
+                                : 'text-accent-red bg-accent-red/10'
+                            )}>
+                              {stock.change_pct >= 0 ? '+' : ''}{stock.change_pct.toFixed(2)}%
+                            </span>
+                          ) : (
+                            <span className="text-xs text-[var(--text-muted)]">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 text-end">
+                          <span className="text-xs text-[var(--text-secondary)]">
+                            {stock.market_cap !== null ? `SAR ${fmtCap(stock.market_cap)}` : '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-end">
+                          <StockSparkline ticker={stock.ticker} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
-          ) : (
-            <p className="text-sm text-[var(--text-muted)]">No sector data available.</p>
-          )}
-        </section>
 
-        {/* Companies List */}
-        <section>
-          <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">
-            {selectedSector ? `Companies - ${selectedSector}` : 'All Companies'}
-          </h2>
-          {entitiesLoading ? (
-            <LoadingSpinner message="Loading companies..." />
-          ) : entitiesError ? (
-            <ErrorDisplay message={entitiesError} onRetry={refetchEntities} />
-          ) : entities && entities.items.length > 0 ? (
-            <ChartErrorBoundary fallbackHeight={200}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {entities.items.map((stock) => (
-                <Link
-                  key={stock.ticker}
-                  href={`/stock/${encodeURIComponent(stock.ticker)}`}
-                  className={cn(
-                    'block p-3 rounded-md',
-                    'bg-[var(--bg-card)] border gold-border',
-                    'hover:border-gold hover:bg-[var(--bg-card-hover)]',
-                    'transition-all duration-300 group'
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs text-gold font-medium group-hover:text-gold-light">{stock.ticker}</p>
-                    {stock.change_pct !== null && stock.change_pct !== undefined && (
-                      <p className={cn('text-xs font-medium', stock.change_pct >= 0 ? 'text-accent-green' : 'text-accent-red')}>
-                        {stock.change_pct >= 0 ? '+' : ''}{stock.change_pct.toFixed(2)}%
-                      </p>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 py-3 border-t border-[#2A2A2A]" dir="rtl">
+                  <button
+                    onClick={() => handlePageChange(Math.max(1, page - 1))}
+                    disabled={page === 1}
+                    className={cn(
+                      'px-4 py-2 text-sm font-medium rounded-md border transition-colors',
+                      page === 1
+                        ? 'border-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed opacity-50'
+                        : 'border-gold/30 text-gold bg-[var(--bg-card)] hover:bg-gold/10 hover:border-gold/50'
                     )}
-                  </div>
-                  <p className="text-sm font-bold text-[var(--text-primary)] truncate">{stock.short_name || stock.ticker}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">{stock.sector || '-'}</p>
-                  <div className="my-1.5">
-                    <StockSparkline ticker={stock.ticker} />
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      {stock.current_price !== null ? stock.current_price.toFixed(2) : '-'}
-                    </p>
-                    {stock.market_cap !== null && (
-                      <p className="text-xs text-[var(--text-muted)]">
-                        {stock.market_cap >= 1e9
-                          ? `SAR ${(stock.market_cap / 1e9).toFixed(1)}B`
-                          : stock.market_cap >= 1e6
-                            ? `SAR ${(stock.market_cap / 1e6).toFixed(0)}M`
-                            : `SAR ${stock.market_cap.toFixed(0)}`}
-                      </p>
+                  >
+                    السابق
+                  </button>
+                  <span className="text-sm font-medium text-[var(--text-secondary)]">
+                    صفحة {page} من {totalPages}
+                    <span className="text-[var(--text-muted)] mr-1">({totalCount} شركة)</span>
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+                    disabled={page >= totalPages}
+                    className={cn(
+                      'px-4 py-2 text-sm font-medium rounded-md border transition-colors',
+                      page >= totalPages
+                        ? 'border-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed opacity-50'
+                        : 'border-gold/30 text-gold bg-[var(--bg-card)] hover:bg-gold/10 hover:border-gold/50'
                     )}
-                  </div>
-                </Link>
-              ))}
+                  >
+                    التالي
+                  </button>
+                </div>
+              )}
             </div>
             </ChartErrorBoundary>
           ) : (
-            <p className="text-sm text-[var(--text-muted)]">No companies found.</p>
+            <div className="text-center py-12">
+              <p className="text-sm text-[var(--text-muted)]" dir="rtl">
+                {'\u0644\u0627 \u062A\u0648\u062C\u062F \u0634\u0631\u0643\u0627\u062A \u0645\u0637\u0627\u0628\u0642\u0629'}
+              </p>
+            </div>
           )}
         </section>
 
@@ -177,15 +398,19 @@ export default function MarketPage() {
           <Link
             href="/chat"
             className={cn(
-              'block p-4 rounded-md text-center',
-              'bg-gold/5 border border-gold/20',
-              'hover:bg-gold/10 hover:border-gold/40',
+              'block p-5 rounded-xl text-center',
+              'bg-gradient-to-r from-gold/10 via-gold/5 to-gold/10',
+              'border border-gold/20',
+              'hover:from-gold/15 hover:via-gold/10 hover:to-gold/15',
+              'hover:border-gold/40',
               'transition-all duration-300'
             )}
           >
-            <p className="text-sm font-bold gold-text">Want deeper analysis?</p>
-            <p className="text-xs text-[var(--text-secondary)] mt-1">
-              Use AI Chat to query any company, sector, or metric with natural language
+            <p className="text-sm font-bold gold-text" dir="rtl">
+              {'\u062A\u0631\u064A\u062F \u062A\u062D\u0644\u064A\u0644 \u0623\u0639\u0645\u0642\u061F'}
+            </p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1" dir="rtl">
+              {'\u0627\u0633\u062A\u062E\u062F\u0645 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629 \u0644\u0644\u0627\u0633\u062A\u0639\u0644\u0627\u0645 \u0639\u0646 \u0623\u064A \u0634\u0631\u0643\u0629 \u0623\u0648 \u0642\u0637\u0627\u0639 \u0623\u0648 \u0645\u0624\u0634\u0631'}
             </p>
           </Link>
         </section>

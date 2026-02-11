@@ -16,6 +16,7 @@ from api.dependencies import get_db_connection
 from auth.dependencies import get_current_user
 from auth.jwt_handler import decode_token
 from auth.models import (
+    AuthResponse,
     TokenRefreshRequest,
     TokenResponse,
     UserCreate,
@@ -32,13 +33,14 @@ def _get_auth_service() -> AuthService:
 
 
 @router.post(
-    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
+    "/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED
 )
 async def register(body: UserCreate):
     """Register a new user account.
 
     Creates a local auth user with bcrypt-hashed password.
-    Returns access and refresh tokens on success.
+    Returns access/refresh tokens and user info so the frontend can
+    persist the session without a separate ``/me`` call.
 
     Raises 409 if the email is already registered.
     """
@@ -53,12 +55,17 @@ async def register(body: UserCreate):
 
     claims = AuthService.build_token_claims(result.user_id, result.email)
     tokens = AuthService.create_tokens(claims)
-    return TokenResponse(**tokens)
+    return AuthResponse(
+        token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        user_id=result.user_id,
+        name=body.display_name or body.email,
+    )
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=AuthResponse)
 async def login(body: UserLogin):
-    """Authenticate a user and return tokens.
+    """Authenticate a user and return tokens with user info.
 
     Verifies the email/password against the users table.
     Only works for auth_provider='local' users.
@@ -76,7 +83,12 @@ async def login(body: UserLogin):
 
     claims = AuthService.build_token_claims(result.user_id, result.email)
     tokens = AuthService.create_tokens(claims)
-    return TokenResponse(**tokens)
+    return AuthResponse(
+        token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        user_id=result.user_id,
+        name=result.email,
+    )
 
 
 @router.post("/refresh", response_model=TokenResponse)

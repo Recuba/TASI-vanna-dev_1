@@ -9,6 +9,7 @@ from auth.jwt_handler import create_access_token, create_refresh_token, decode_t
 from auth.password import hash_password, verify_password
 from auth.dependencies import get_current_user, require_admin
 from auth.models import (
+    AuthResponse,
     UserCreate,
     UserLogin,
     TokenResponse,
@@ -24,6 +25,7 @@ __all__ = [
     "verify_password",
     "get_current_user",
     "require_admin",
+    "AuthResponse",
     "UserCreate",
     "UserLogin",
     "TokenResponse",

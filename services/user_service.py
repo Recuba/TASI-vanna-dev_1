@@ -9,6 +9,7 @@ Requires a psycopg2 connection factory passed at init.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,6 +17,8 @@ from typing import Any, Dict, List, Optional
 
 import psycopg2
 import psycopg2.extras
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +175,10 @@ class UserService:
                 cur.execute(sql_select, {"email": email})
                 row = cur.fetchone()
                 return self._row_to_user(row)
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to get_or_create user %s", email, exc_info=True)
+            raise
         finally:
             conn.close()
 
@@ -220,6 +227,10 @@ class UserService:
             with conn.cursor() as cur:
                 cur.execute(sql, {"id": user_id})
             conn.commit()
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to increment usage for user %s", user_id, exc_info=True)
+            raise
         finally:
             conn.close()
 
@@ -277,6 +288,10 @@ class UserService:
                 row = cur.fetchone()
             conn.commit()
             return self._row_to_watchlist(row)
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to create watchlist for user %s", user_id, exc_info=True)
+            raise
         finally:
             conn.close()
 
@@ -315,6 +330,10 @@ class UserService:
             if row is None:
                 return None
             return self._row_to_watchlist(row)
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to update watchlist %s", watchlist_id, exc_info=True)
+            raise
         finally:
             conn.close()
 
@@ -332,6 +351,10 @@ class UserService:
                 deleted = cur.rowcount > 0
             conn.commit()
             return deleted
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to delete watchlist %s", watchlist_id, exc_info=True)
+            raise
         finally:
             conn.close()
 
@@ -374,6 +397,10 @@ class UserService:
                 row = cur.fetchone()
             conn.commit()
             return self._row_to_alert(row)
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to create alert for user %s ticker %s", user_id, ticker, exc_info=True)
+            raise
         finally:
             conn.close()
 
@@ -422,5 +449,9 @@ class UserService:
                 updated = cur.rowcount > 0
             conn.commit()
             return updated
+        except Exception:
+            conn.rollback()
+            logger.error("Failed to deactivate alert %s", alert_id, exc_info=True)
+            raise
         finally:
             conn.close()

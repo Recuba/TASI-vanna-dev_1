@@ -17,22 +17,29 @@ export function ChartEmpty({
         height,
         border: '1px solid rgba(212, 168, 75, 0.1)',
         background: '#1A1A1A',
+        animation: 'chart-fade-in 0.4s ease-out',
       }}
     >
       <svg
-        width="32"
-        height="32"
+        width="40"
+        height="40"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#707070"
-        strokeWidth="2"
+        stroke="#404040"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
       >
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
-      <p style={{ color: '#707070', fontSize: 14 }}>{message}</p>
+      <p className="text-sm" style={{ color: '#707070' }}>{message}</p>
+      <style>{`
+        @keyframes chart-fade-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
