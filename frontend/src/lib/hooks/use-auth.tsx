@@ -24,6 +24,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
+  guestLogin: () => Promise<void>;
   logout: () => void;
 }
 
@@ -172,6 +173,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [persistAuth],
   );
 
+  const guestLogin = useCallback(async () => {
+    const res = await fetch(`${API_BASE}/api/auth/guest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(body || `Guest login failed (${res.status})`);
+    }
+    const data = (await res.json()) as AuthApiResponse;
+    const accessToken = extractAccessToken(data);
+    const refreshToken = data.refresh_token ?? '';
+    if (!accessToken) {
+      throw new Error('Guest login response missing token');
+    }
+
+    persistAuth(accessToken, refreshToken, {
+      id: data.user_id || 'guest',
+      email: 'guest@local',
+      name: data.name || 'Guest',
+    });
+  }, [persistAuth]);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -180,7 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, guestLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

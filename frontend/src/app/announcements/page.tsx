@@ -317,8 +317,27 @@ export default function AnnouncementsPage() {
             </p>
           </div>
         ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-sm text-[#FF6B6B] mb-3">{error}</p>
+          <div className="text-center py-16 space-y-4">
+            <svg className="w-14 h-14 mx-auto text-[var(--text-muted)] opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <p className="text-base font-medium text-[var(--text-secondary)]">
+              {t('تعذر تحميل الإعلانات', 'Unable to load announcements')}
+            </p>
+            <p className="text-sm text-[var(--text-muted)]">
+              {t('يرجى التحقق من الاتصال والمحاولة مرة أخرى', 'Please check your connection and try again')}
+            </p>
+            {error && (
+              <details className="text-xs text-[var(--text-muted)]">
+                <summary className="cursor-pointer hover:text-[var(--text-secondary)] transition-colors">
+                  {t('تفاصيل الخطأ', 'Error details')}
+                </summary>
+                <p className="mt-2 font-mono bg-[var(--bg-input)] p-2 rounded text-left" dir="ltr">
+                  {error}
+                </p>
+              </details>
+            )}
             <button
               onClick={fetchAnnouncements}
               className={cn(

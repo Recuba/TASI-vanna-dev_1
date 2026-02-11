@@ -163,6 +163,20 @@ export class ApiError extends Error {
     super(`[API_ERROR:${status}] ${statusText}${body ? ` - ${body}` : ''}`);
     this.name = 'ApiError';
   }
+
+  /** Get a user-friendly error message. */
+  getUserMessage(): string {
+    switch (this.status) {
+      case 0: return 'Request timed out';
+      case 401: return 'Authentication required';
+      case 403: return 'Access denied';
+      case 404: return 'Not found';
+      case 429: return 'Too many requests';
+      case 500: return 'Server error';
+      case 503: return 'Service unavailable';
+      default: return 'An unexpected error occurred';
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -180,24 +194,41 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit, timeoutMs: number = 15000): Promise<T> {
   const url = `${API_BASE}${path}`;
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders(),
-      ...init?.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new ApiError(res.status, res.statusText, body);
+  try {
+    const res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...init?.headers,
+      },
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new ApiError(res.status, res.statusText, body);
+    }
+
+    if (res.status === 204) return undefined as T;
+    return res.json() as Promise<T>;
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiError(0, 'Request timed out', 'The request took too long to complete.');
+    }
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new ApiError(0, 'Network error', 'Could not connect to server. Check your internet connection.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
 }
 
 function qs(params: Record<string, string | number | undefined | null>): string {
@@ -206,6 +237,23 @@ function qs(params: Record<string, string | number | undefined | null>): string 
   );
   if (entries.length === 0) return '';
   return '?' + entries.map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join('&');
+}
+
+// ---------------------------------------------------------------------------
+// In-memory cache for frequently accessed, relatively static data
+// ---------------------------------------------------------------------------
+
+const _cache = new Map<string, { data: unknown; expiry: number }>();
+
+async function cachedRequest<T>(path: string, ttlMs: number = 60000): Promise<T> {
+  const now = Date.now();
+  const cached = _cache.get(path);
+  if (cached && cached.expiry > now) {
+    return cached.data as T;
+  }
+  const result = await request<T>(path);
+  _cache.set(path, { data: result, expiry: now + ttlMs });
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -276,7 +324,7 @@ export function getEntityDetail(ticker: string): Promise<CompanyDetail> {
 }
 
 export function getSectors(): Promise<SectorInfo[]> {
-  return request('/api/entities/sectors');
+  return cachedRequest('/api/entities/sectors', 60000);
 }
 
 // -- Watchlists --
@@ -382,6 +430,7 @@ export interface NewsFeedItem {
   published_at: string | null;
   priority: number;
   language: string;
+  created_at: string | null;
 }
 
 export interface NewsFeedResponse {

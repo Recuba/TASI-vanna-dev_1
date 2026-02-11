@@ -223,45 +223,24 @@ export default function WatchlistPage() {
     );
   }
 
-  // Show login prompt for unauthenticated users
-  if (!user) {
-    return (
-      <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
-        <div className="max-w-content-lg mx-auto space-y-4">
-          <div dir={isRTL ? 'rtl' : 'ltr'}>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('قوائم المراقبة', 'Watchlists')}</h1>
-            <p className="text-sm text-[var(--text-muted)]">{t('تابع أسهمك المفضلة في تداول', 'Track your favorite Tadawul stocks')}</p>
-          </div>
-          <div className="text-center py-16 bg-[var(--bg-card)] border gold-border rounded-md">
-            <svg className="mx-auto mb-4" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--text-muted)' }}>
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2" dir={isRTL ? 'rtl' : 'ltr'}>
-              {t('يرجى تسجيل الدخول لعرض قوائم المراقبة', 'Please sign in to view watchlists')}
-            </h2>
-            <p className="text-sm text-[var(--text-muted)] mb-6 max-w-sm mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
-              {t('سجل دخولك لمزامنة قوائم المراقبة عبر الأجهزة والوصول لمتابعة الأسهم المخصصة.', 'Sign in to sync your watchlists across devices and access personalized stock tracking.')}
+  return (
+    <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
+      <div className="max-w-content-lg mx-auto space-y-4">
+
+        {/* Sync banner for anonymous users */}
+        {!user && (
+          <div className="flex items-center justify-between gap-3 px-3 py-2 bg-gold/5 border border-gold/20 rounded-md" dir={isRTL ? 'rtl' : 'ltr'}>
+            <p className="text-xs text-[var(--text-muted)]">
+              {t('سجل دخولك لمزامنة قوائم المراقبة عبر الأجهزة', 'Sign in to sync watchlists across devices')}
             </p>
             <Link
-              href="/login"
-              className={cn(
-                'inline-block px-6 py-2.5 rounded-md text-sm font-medium',
-                'bg-gold text-dark-bg',
-                'hover:bg-gold-light transition-colors'
-              )}
+              href="/login?redirect=/watchlist"
+              className="shrink-0 px-3 py-1 rounded-md text-xs font-medium bg-gold/20 text-gold hover:bg-gold/30 transition-colors"
             >
               {t('تسجيل الدخول', 'Sign In')}
             </Link>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
-      <div className="max-w-content-lg mx-auto space-y-4">
+        )}
 
         {/* Header */}
         <div className="flex items-center justify-between" dir={isRTL ? 'rtl' : 'ltr'}>

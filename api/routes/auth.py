@@ -1,20 +1,22 @@
 """
 Authentication API routes.
 
-Endpoints for user registration, login, token refresh, and profile retrieval.
+Endpoints for user registration, login, guest access, token refresh,
+and profile retrieval.
 Delegates database operations to AuthService for separation of concerns.
+The guest endpoint works without a database (generates anonymous tokens).
 """
 
 from __future__ import annotations
 
+import uuid
 from typing import Any, Dict
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from api.dependencies import get_db_connection
 from auth.dependencies import get_current_user
-from auth.jwt_handler import decode_token
+from auth.jwt_handler import create_access_token, create_refresh_token, decode_token
 from auth.models import (
     AuthResponse,
     TokenRefreshRequest,
@@ -23,13 +25,31 @@ from auth.models import (
     UserLogin,
     UserProfile,
 )
-from services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-def _get_auth_service() -> AuthService:
-    return AuthService(get_conn=get_db_connection)
+def _get_auth_service():
+    """Get AuthService, importing DB dependencies lazily.
+
+    Returns None if the database backend is not available (e.g. SQLite mode).
+    """
+    try:
+        from api.dependencies import get_db_connection
+        from services.auth_service import AuthService
+
+        return AuthService(get_conn=get_db_connection)
+    except Exception:
+        return None
+
+
+def _build_tokens(user_id: str, email: str) -> Dict[str, str]:
+    """Build access and refresh tokens for a user."""
+    claims = {"sub": user_id, "email": email}
+    return {
+        "access_token": create_access_token(claims),
+        "refresh_token": create_refresh_token(claims),
+    }
 
 
 @router.post(
@@ -43,8 +63,15 @@ async def register(body: UserCreate):
     persist the session without a separate ``/me`` call.
 
     Raises 409 if the email is already registered.
+    Raises 503 if the database backend is not available.
     """
     service = _get_auth_service()
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Registration requires PostgreSQL backend",
+        )
+
     result = service.register(body.email, body.password, body.display_name)
 
     if not result.success:
@@ -53,8 +80,7 @@ async def register(body: UserCreate):
             detail=result.error,
         )
 
-    claims = AuthService.build_token_claims(result.user_id, result.email)
-    tokens = AuthService.create_tokens(claims)
+    tokens = _build_tokens(result.user_id, result.email)
     return AuthResponse(
         token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
@@ -71,8 +97,15 @@ async def login(body: UserLogin):
     Only works for auth_provider='local' users.
 
     Raises 401 if credentials are invalid.
+    Raises 503 if the database backend is not available.
     """
     service = _get_auth_service()
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Login requires PostgreSQL backend",
+        )
+
     result = service.login(body.email, body.password)
 
     if not result.success:
@@ -81,13 +114,31 @@ async def login(body: UserLogin):
             detail=result.error,
         )
 
-    claims = AuthService.build_token_claims(result.user_id, result.email)
-    tokens = AuthService.create_tokens(claims)
+    tokens = _build_tokens(result.user_id, result.email)
     return AuthResponse(
         token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
         user_id=result.user_id,
         name=result.email,
+    )
+
+
+@router.post("/guest", response_model=AuthResponse)
+async def guest_login():
+    """Generate a guest token for anonymous access.
+
+    No credentials required. Creates a short-lived token with a
+    unique guest ID that can be used to access the AI chat and
+    other features without registration.
+    """
+    guest_id = f"guest-{uuid.uuid4().hex[:12]}"
+    guest_email = f"{guest_id}@guest.local"
+    tokens = _build_tokens(guest_id, guest_email)
+    return AuthResponse(
+        token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        user_id=guest_id,
+        name="Guest",
     )
 
 
@@ -118,18 +169,18 @@ async def refresh_token(body: TokenRefreshRequest):
             detail="Invalid token claims",
         )
 
-    # Verify user still exists and is active
-    service = _get_auth_service()
-    result = service.verify_user_active(user_id)
+    # For guest tokens, skip DB verification
+    if not str(user_id).startswith("guest-"):
+        service = _get_auth_service()
+        if service is not None:
+            result = service.verify_user_active(user_id)
+            if not result.success:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=result.error,
+                )
 
-    if not result.success:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=result.error,
-        )
-
-    claims = AuthService.build_token_claims(user_id, email)
-    tokens = AuthService.create_tokens(claims)
+    tokens = _build_tokens(user_id, email)
     return TokenResponse(**tokens)
 
 

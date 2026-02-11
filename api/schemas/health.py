@@ -20,4 +20,7 @@ class HealthResponse(BaseModel):
     """Aggregated health status for the platform."""
 
     status: str
+    service: str = "raid-ai-tasi"
+    version: str = "1.0.0"
+    uptime_seconds: float = 0.0
     components: List[ComponentHealthResponse]

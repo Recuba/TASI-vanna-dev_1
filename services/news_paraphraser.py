@@ -124,8 +124,12 @@ def paraphrase_article(article: dict) -> dict:
     """Paraphrase the title and body of an article dict.
 
     Returns a new dict (does not modify the original).
+    Handles None/empty body gracefully -- always returns a string for body.
     """
     modified = dict(article)
-    modified["title"] = paraphrase_text(article.get("title", ""))
-    modified["body"] = paraphrase_text(article.get("body", ""))
+    title = article.get("title") or ""
+    body = article.get("body") or ""
+
+    modified["title"] = paraphrase_text(title) if title else ""
+    modified["body"] = paraphrase_text(body) if body else ""
     return modified

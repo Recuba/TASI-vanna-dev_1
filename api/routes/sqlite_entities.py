@@ -2,7 +2,8 @@
 SQLite-backed entity (company/stock) API routes.
 
 Provides the same entity endpoints as the PG-backed entities.py but queries
-SQLite directly. Registered ONLY when DB_BACKEND != "postgres".
+SQLite directly. Used as a fallback when PostgreSQL is unavailable or as the
+primary backend when DB_BACKEND=sqlite.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -22,11 +24,29 @@ router = APIRouter(prefix="/api/entities", tags=["entities"])
 _HERE = Path(__file__).resolve().parent.parent.parent
 _DB_PATH = str(_HERE / "saudi_stocks.db")
 
+logger.info("SQLite entities: project root resolved to %s", _HERE)
+logger.info("SQLite entities: DB path = %s, exists = %s", _DB_PATH, Path(_DB_PATH).exists())
+
 
 def _get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    """Get a SQLite connection. Raises HTTPException 503 if DB file is missing."""
+    if not Path(_DB_PATH).exists():
+        logger.error("SQLite DB not found at %s", _DB_PATH)
+        raise HTTPException(
+            status_code=503,
+            detail=f"SQLite database not found at {_DB_PATH}. "
+            "Run csv_to_sqlite.py to generate it.",
+        )
+    try:
+        conn = sqlite3.connect(_DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except sqlite3.Error as exc:
+        logger.error("Failed to connect to SQLite DB: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail=f"SQLite database connection failed: {exc}",
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -150,32 +170,38 @@ async def list_entities(
 
     where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
 
-    conn = _get_conn()
     try:
-        # Total count
-        count_row = conn.execute(
-            f"SELECT COUNT(*) AS cnt FROM companies c {where}", params
-        ).fetchone()
-        total = count_row["cnt"] if count_row else 0
+        conn = _get_conn()
+        try:
+            # Total count
+            count_row = conn.execute(
+                f"SELECT COUNT(*) AS cnt FROM companies c {where}", params
+            ).fetchone()
+            total = count_row["cnt"] if count_row else 0
 
-        # Data
-        sql = f"""
-            SELECT
-                c.ticker, c.short_name, c.sector, c.industry,
-                m.current_price, m.market_cap,
-                CASE WHEN m.previous_close > 0
-                     THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
-                     ELSE NULL
-                END AS change_pct
-            FROM companies c
-            LEFT JOIN market_data m ON m.ticker = c.ticker
-            {where}
-            ORDER BY m.market_cap DESC
-            LIMIT ? OFFSET ?
-        """
-        rows = conn.execute(sql, params + [limit, offset]).fetchall()
-    finally:
-        conn.close()
+            # Data
+            sql = f"""
+                SELECT
+                    c.ticker, c.short_name, c.sector, c.industry,
+                    m.current_price, m.market_cap,
+                    CASE WHEN m.previous_close > 0
+                         THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
+                         ELSE NULL
+                    END AS change_pct
+                FROM companies c
+                LEFT JOIN market_data m ON m.ticker = c.ticker
+                {where}
+                ORDER BY m.market_cap DESC
+                LIMIT ? OFFSET ?
+            """
+            rows = conn.execute(sql, params + [limit, offset]).fetchall()
+        finally:
+            conn.close()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error listing entities: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
     items = [
         CompanySummary(
@@ -202,11 +228,17 @@ async def list_sectors() -> List[SectorInfo]:
         GROUP BY sector
         ORDER BY company_count DESC
     """
-    conn = _get_conn()
     try:
-        rows = conn.execute(sql).fetchall()
-    finally:
-        conn.close()
+        conn = _get_conn()
+        try:
+            rows = conn.execute(sql).fetchall()
+        finally:
+            conn.close()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error listing sectors: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
     return [SectorInfo(sector=r["sector"], company_count=r["company_count"]) for r in rows]
 
@@ -244,11 +276,17 @@ async def get_entity(ticker: str) -> CompanyFullDetail:
         LEFT JOIN analyst_data a ON a.ticker = c.ticker
         WHERE c.ticker = ?
     """
-    conn = _get_conn()
     try:
-        row = conn.execute(sql, (ticker,)).fetchone()
-    finally:
-        conn.close()
+        conn = _get_conn()
+        try:
+            row = conn.execute(sql, (ticker,)).fetchone()
+        finally:
+            conn.close()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error fetching entity %s: %s", ticker, exc)
+        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
     if row is None:
         raise HTTPException(status_code=404, detail="Company not found")

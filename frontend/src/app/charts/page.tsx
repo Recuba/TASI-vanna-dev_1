@@ -54,8 +54,17 @@ const POPULAR_STOCKS = [
 // Recent searches helpers (localStorage)
 // ---------------------------------------------------------------------------
 
-const RECENT_KEY = 'raid-charts-recent';
+const RECENT_KEY = 'rad-ai-charts-recent';
 const MAX_RECENT = 5;
+
+// Migrate old key name
+if (typeof window !== 'undefined') {
+  const oldVal = localStorage.getItem('raid-charts-recent');
+  if (oldVal && !localStorage.getItem('rad-ai-charts-recent')) {
+    localStorage.setItem('rad-ai-charts-recent', oldVal);
+    localStorage.removeItem('raid-charts-recent');
+  }
+}
 
 function getRecentSearches(): { ticker: string; name: string }[] {
   if (typeof window === 'undefined') return [];

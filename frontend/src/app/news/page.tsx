@@ -854,7 +854,7 @@ export default function NewsPage() {
                     title={article.title}
                     body={article.body}
                     sourceName={article.source_name}
-                    publishedAt={article.published_at}
+                    publishedAt={article.published_at || article.created_at}
                     priority={article.priority}
                     bookmarked={bookmarks.has(article.id)}
                     onToggleBookmark={handleToggleBookmark}
@@ -866,9 +866,14 @@ export default function NewsPage() {
             </div>
 
             {/* Article count */}
-            {!isSearching && total > 0 && (
+            {!isSearching && !showSaved && total > 0 && (
               <p className="text-xs text-center text-[var(--text-muted)]">
                 {t(`عرض ${allArticles.length} من ${total}`, `Showing ${allArticles.length} of ${total}`)}
+              </p>
+            )}
+            {showSaved && (
+              <p className="text-xs text-center text-[var(--text-muted)]">
+                {t(`${displayArticles.length} مقال محفوظ`, `${displayArticles.length} saved article${displayArticles.length !== 1 ? 's' : ''}`)}
               </p>
             )}
 

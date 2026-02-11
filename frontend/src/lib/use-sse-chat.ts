@@ -5,8 +5,17 @@ import type { ChatMessage, SSEEvent } from './types';
 
 const API_BASE = '';
 const SSE_ENDPOINT = '/api/vanna/v2/chat_sse';
-const STORAGE_KEY = 'raid-chat-messages';
+const STORAGE_KEY = 'rad-ai-chat-messages';
 const MAX_STORED_MESSAGES = 100;
+
+// Migrate old key name
+if (typeof window !== 'undefined') {
+  const oldVal = localStorage.getItem('raid-chat-messages');
+  if (oldVal && !localStorage.getItem('rad-ai-chat-messages')) {
+    localStorage.setItem('rad-ai-chat-messages', oldVal);
+    localStorage.removeItem('raid-chat-messages');
+  }
+}
 
 /** Serializable version of ChatMessage for localStorage */
 interface StoredMessage {

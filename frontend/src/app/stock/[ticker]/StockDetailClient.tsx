@@ -14,7 +14,16 @@ import { useLanguage } from '@/providers/LanguageProvider';
 // Watchlist localStorage helper
 // ---------------------------------------------------------------------------
 
-const WATCHLIST_KEY = 'raid-watchlist-tickers';
+const WATCHLIST_KEY = 'rad-ai-watchlist-tickers';
+
+// Migrate old key name
+if (typeof window !== 'undefined') {
+  const oldVal = localStorage.getItem('raid-watchlist-tickers');
+  if (oldVal && !localStorage.getItem('rad-ai-watchlist-tickers')) {
+    localStorage.setItem('rad-ai-watchlist-tickers', oldVal);
+    localStorage.removeItem('raid-watchlist-tickers');
+  }
+}
 
 function getWatchlistTickers(): string[] {
   if (typeof window === 'undefined') return [];

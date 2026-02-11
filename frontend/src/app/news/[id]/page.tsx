@@ -409,18 +409,40 @@ export default function ArticleDetailPage() {
         {loading ? (
           <ArticleSkeleton />
         ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-sm text-accent-red mb-3">{error}</p>
-            <button
-              onClick={refetch}
-              className={cn(
-                'px-4 py-1.5 rounded-md text-xs font-medium',
-                'bg-gold/10 text-gold border border-gold/20',
-                'hover:bg-gold/20 transition-colors',
+          <div className="text-center py-16 space-y-4">
+            <svg className="w-12 h-12 mx-auto text-[var(--text-muted)] opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              {error.includes('404') ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               )}
-            >
-              {t('إعادة المحاولة', 'Retry')}
-            </button>
+            </svg>
+            <p className="text-lg font-bold text-[var(--text-primary)]">
+              {error.includes('404')
+                ? t('المقال غير موجود', 'Article Not Found')
+                : t('حدث خطأ', 'An error occurred')}
+            </p>
+            <p className="text-sm text-[var(--text-muted)]">
+              {error.includes('404')
+                ? t('قد يكون المقال قد حُذف أو أن الرابط غير صحيح.', 'The article may have been removed or the link is incorrect.')
+                : t('تعذر تحميل المقال. يرجى المحاولة مرة أخرى.', 'Could not load the article. Please try again.')}
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Link
+                href="/news"
+                className="px-4 py-1.5 rounded-md text-xs font-medium bg-[var(--bg-input)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                {t('العودة للأخبار', 'Back to News')}
+              </Link>
+              {!error.includes('404') && (
+                <button
+                  onClick={refetch}
+                  className="px-4 py-1.5 rounded-md text-xs font-medium bg-gold/10 text-gold border border-gold/20 hover:bg-gold/20 transition-colors"
+                >
+                  {t('إعادة المحاولة', 'Retry')}
+                </button>
+              )}
+            </div>
           </div>
         ) : !article ? (
           <div className="text-center py-16">
@@ -457,13 +479,16 @@ export default function ArticleDetailPage() {
             {/* Meta row: large source badge + date */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <LargeSourceBadge name={article.source_name} />
-              {article.published_at && (
+              {(article.published_at || article.created_at) && (
                 <div className="text-left">
                   <p className="text-sm text-[var(--text-secondary)]">
-                    {formatDate(article.published_at, language)}
+                    {formatDate(article.published_at || article.created_at, language)}
                   </p>
                   <p className="text-xs text-[var(--text-muted)]">
-                    {timeAgo(article.published_at, t, language)}
+                    {timeAgo(article.published_at || article.created_at, t, language)}
+                    {!article.published_at && article.created_at && (
+                      <span className="opacity-60"> ({t('تقريبي', 'approximate')})</span>
+                    )}
                   </p>
                 </div>
               )}
@@ -519,8 +544,8 @@ export default function ArticleDetailPage() {
               </div>
             )}
 
-            {/* Source link */}
-            {article.source_url && (
+            {/* Source link -- only show when body exists (when no body, link is inside the alert box above) */}
+            {article.body && article.source_url && (
               <div className="pt-2">
                 <a
                   href={article.source_url}
@@ -564,7 +589,7 @@ export default function ArticleDetailPage() {
                       key={related.id}
                       id={related.id}
                       title={related.title}
-                      publishedAt={related.published_at}
+                      publishedAt={related.published_at || related.created_at}
                       sourceName={related.source_name}
                     />
                   ))}

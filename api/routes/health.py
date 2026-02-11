@@ -19,6 +19,9 @@ async def health_check() -> HealthResponse:
 
     response = HealthResponse(
         status=report.status.value,
+        service=report.service,
+        version=report.version,
+        uptime_seconds=round(report.uptime_seconds, 1),
         components=[
             ComponentHealthResponse(
                 name=c.name,

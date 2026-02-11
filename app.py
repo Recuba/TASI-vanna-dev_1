@@ -110,8 +110,9 @@ tools.register_local_tool(
 class JWTUserResolver(UserResolver):
     """Resolve user identity from JWT token.
 
-    In PostgreSQL mode, authentication is required for chat endpoints.
-    In SQLite mode, anonymous fallback is allowed for local development.
+    Authentication is optional: if a valid token is present, the user
+    identity is extracted from it. Otherwise, an anonymous user is returned.
+    Invalid tokens are still rejected to prevent confusion.
     """
 
     async def resolve_user(self, request_context: RequestContext) -> User:
@@ -125,8 +126,6 @@ class JWTUserResolver(UserResolver):
             token = auth_header[7:]
 
         if not token:
-            if DB_BACKEND == "postgres":
-                raise ValueError("Authentication required")
             return User(
                 id="anonymous",
                 email="anonymous@localhost",
@@ -145,13 +144,7 @@ class JWTUserResolver(UserResolver):
                 group_memberships=["user"],
             )
         except Exception:
-            if DB_BACKEND == "postgres":
-                raise ValueError("Invalid or expired authentication token")
-            return User(
-                id="anonymous",
-                email="anonymous@localhost",
-                group_memberships=["user"],
-            )
+            raise ValueError("Invalid or expired authentication token")
 
 
 # ---------------------------------------------------------------------------
@@ -282,8 +275,8 @@ try:
 except ImportError as exc:
     logger.warning("Middleware modules not available, skipping: %s", exc)
 
-# Postgres mode: require JWT for Vanna chat HTTP endpoints.
-# This ensures unauthenticated callers receive a proper 401 response.
+# Postgres mode: validate JWT for Vanna chat HTTP endpoints if present.
+# Anonymous access is allowed (token optional), but invalid tokens are rejected.
 if DB_BACKEND == "postgres":
     from fastapi import Request as _Request
 
@@ -291,20 +284,18 @@ if DB_BACKEND == "postgres":
     async def _require_chat_auth(request: _Request, call_next):
         if request.url.path in ("/api/vanna/v2/chat_sse", "/api/vanna/v2/chat_poll"):
             auth_header = request.headers.get("authorization", "")
-            if not auth_header.lower().startswith("bearer "):
-                return JSONResponse(
-                    status_code=401, content={"detail": "Authentication required"}
-                )
-            token = auth_header[7:]
-            try:
-                from auth.jwt_handler import decode_token
+            if auth_header.lower().startswith("bearer "):
+                token = auth_header[7:]
+                try:
+                    from auth.jwt_handler import decode_token
 
-                decode_token(token, expected_type="access")
-            except Exception:
-                return JSONResponse(
-                    status_code=401,
-                    content={"detail": "Invalid or expired authentication token"},
-                )
+                    decode_token(token, expected_type="access")
+                except Exception:
+                    return JSONResponse(
+                        status_code=401,
+                        content={"detail": "Invalid or expired authentication token"},
+                    )
+            # If no auth header, allow through (anonymous access)
         return await call_next(request)
 
 # ---------------------------------------------------------------------------
@@ -319,39 +310,34 @@ try:
 except ImportError as exc:
     logger.warning("Health route not available: %s", exc)
 
-# PG-backed service routes: register always, but they will return 503 if
-# the dependency injection fails at request time (psycopg2 connect error).
-# In SQLite mode, we register lightweight stubs that return 503.
+# PG-backed service routes: register in postgres mode for news, reports,
+# announcements, watchlists. Entities and charts have SQLite fallbacks
+# registered below (section 9g/9h), so PG versions are optional.
 if DB_BACKEND == "postgres":
     try:
         from api.routes.news import router as news_router
         from api.routes.reports import router as reports_router
         from api.routes.announcements import router as announcements_router
-        from api.routes.entities import router as entities_router
         from api.routes.watchlists import router as watchlists_router
-        from api.routes.charts import router as charts_router
 
         app.include_router(news_router)
         app.include_router(reports_router)
         app.include_router(announcements_router)
-        app.include_router(entities_router)
         app.include_router(watchlists_router)
-        app.include_router(charts_router)
-        logger.info("PG-backed service routes registered (news, reports, announcements, entities, watchlists, charts)")
+        logger.info("PG-backed service routes registered (news, reports, announcements, watchlists)")
     except ImportError as exc:
         logger.warning("PG service routes not available: %s", exc)
 else:
     # SQLite mode: register stub routers that return 503 for PG-only endpoints
-    # so the frontend gets a clear error instead of silent 404.
+    # (news, reports, announcements, watchlists). Entities and charts have
+    # real SQLite handlers registered in sections 9g/9h below.
     from fastapi import APIRouter as _APIRouter
 
     _pg_stub_configs = [
         ("/api/news", "news"),
         ("/api/reports", "reports"),
         ("/api/announcements", "announcements"),
-        ("/api/entities", "entities"),
         ("/api/watchlists", "watchlists"),
-        ("/api/charts", "charts"),
     ]
 
     for _prefix, _tag in _pg_stub_configs:
@@ -376,15 +362,14 @@ else:
 
     logger.info("SQLite mode: PG-only endpoint stubs registered (503 responses)")
 
-# Auth routes (PostgreSQL-only, since users table is PG-only)
-if DB_BACKEND == "postgres":
-    try:
-        from api.routes.auth import router as auth_router
+# Auth routes (guest endpoint works with any backend; login/register need PG)
+try:
+    from api.routes.auth import router as auth_router
 
-        app.include_router(auth_router)
-        logger.info("Auth routes registered at /api/auth")
-    except ImportError as exc:
-        logger.warning("Auth routes not available: %s", exc)
+    app.include_router(auth_router)
+    logger.info("Auth routes registered at /api/auth")
+except ImportError as exc:
+    logger.warning("Auth routes not available: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -444,27 +429,26 @@ except ImportError as exc:
     logger.warning("Stock data routes not available: %s", exc)
 
 # ---------------------------------------------------------------------------
-# 9g. SQLite entities routes (only when NOT using PostgreSQL)
+# 9g. SQLite entities routes (always registered as fallback for both backends)
 # ---------------------------------------------------------------------------
-if DB_BACKEND != "postgres":
-    try:
-        from api.routes.sqlite_entities import router as sqlite_entities_router
+try:
+    from api.routes.sqlite_entities import router as sqlite_entities_router
 
-        # Remove the 503 stub for /api/entities since we now have a real SQLite handler
-        app.routes[:] = [
-            r for r in app.routes
-            if not (
-                hasattr(r, "path")
-                and getattr(r, "path", "").startswith("/api/entities")
-                and hasattr(r, "tags")
-                and "entities" in getattr(r, "tags", [])
-            )
-        ]
+    app.include_router(sqlite_entities_router)
+    logger.info("SQLite entities routes registered at /api/entities")
+except ImportError as exc:
+    logger.warning("SQLite entities routes not available: %s", exc)
 
-        app.include_router(sqlite_entities_router)
-        logger.info("SQLite entities routes registered at /api/entities")
-    except ImportError as exc:
-        logger.warning("SQLite entities routes not available: %s", exc)
+# ---------------------------------------------------------------------------
+# 9h. SQLite chart analytics routes (always registered as fallback)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.charts_analytics import router as charts_analytics_router
+
+    app.include_router(charts_analytics_router)
+    logger.info("SQLite chart analytics routes registered at /api/charts")
+except ImportError as exc:
+    logger.warning("SQLite chart analytics routes not available: %s", exc)
 
 # ---------------------------------------------------------------------------
 # 10. Custom routes and static files

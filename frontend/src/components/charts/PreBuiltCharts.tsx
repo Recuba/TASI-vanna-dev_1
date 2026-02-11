@@ -173,18 +173,24 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <p className="text-xs text-red-400">{error}</p>
-              {httpStatus && (
+              <p className="text-xs text-red-400">
+                {httpStatus === 404
+                  ? t('البيانات غير متوفرة حالياً', 'Data not currently available')
+                  : t('تعذر تحميل البيانات', 'Failed to load data')}
+              </p>
+              {httpStatus && httpStatus !== 404 && (
                 <p className="text-[10px] dark:text-[#606060] text-gray-400">
                   {t(`رمز الخطأ: ${httpStatus}`, `Error code: ${httpStatus}`)}
                 </p>
               )}
-              <button
-                onClick={fetchData}
-                className="px-3 py-1 text-xs font-medium rounded-md border border-gold text-gold hover:bg-gold/10 transition-colors"
-              >
-                {t('إعادة المحاولة', 'Retry')}
-              </button>
+              {httpStatus !== 404 && (
+                <button
+                  onClick={fetchData}
+                  className="px-3 py-1 text-xs font-medium rounded-md border border-gold text-gold hover:bg-gold/10 transition-colors"
+                >
+                  {t('إعادة المحاولة', 'Retry')}
+                </button>
+              )}
             </div>
           </div>
         )}

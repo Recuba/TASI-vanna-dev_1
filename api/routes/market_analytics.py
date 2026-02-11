@@ -12,7 +12,7 @@ import sqlite3
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -22,11 +22,29 @@ router = APIRouter(prefix="/api/v1/market", tags=["market-analytics"])
 _HERE = Path(__file__).resolve().parent.parent.parent
 _DB_PATH = str(_HERE / "saudi_stocks.db")
 
+logger.info("Market analytics: project root resolved to %s", _HERE)
+logger.info("Market analytics: DB path = %s, exists = %s", _DB_PATH, Path(_DB_PATH).exists())
+
 
 def _get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    """Get a SQLite connection. Raises HTTPException 503 if DB file is missing."""
+    if not Path(_DB_PATH).exists():
+        logger.error("SQLite DB not found at %s", _DB_PATH)
+        raise HTTPException(
+            status_code=503,
+            detail=f"SQLite database not found at {_DB_PATH}. "
+            "Run csv_to_sqlite.py to generate it.",
+        )
+    try:
+        conn = sqlite3.connect(_DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except sqlite3.Error as exc:
+        logger.error("Failed to connect to SQLite DB: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail=f"SQLite database connection failed: {exc}",
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -124,11 +142,17 @@ async def get_movers(
     order = "DESC" if type == "gainers" else "ASC"
     sql = _MOVERS_SQL + f" ORDER BY change_pct {order} LIMIT ?"
 
-    conn = _get_conn()
     try:
-        rows = conn.execute(sql, (limit,)).fetchall()
-    finally:
-        conn.close()
+        conn = _get_conn()
+        try:
+            rows = conn.execute(sql, (limit,)).fetchall()
+        finally:
+            conn.close()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error fetching movers: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
     items = [_row_to_mover(r) for r in rows]
     return MoversResponse(items=items, type=type, count=len(items))
@@ -137,35 +161,41 @@ async def get_movers(
 @router.get("/summary", response_model=MarketSummary)
 async def get_market_summary() -> MarketSummary:
     """Get overall market summary with totals and top 5 movers."""
-    conn = _get_conn()
     try:
-        # Aggregates
-        agg = conn.execute("""
-            SELECT
-                SUM(m.market_cap) AS total_market_cap,
-                SUM(m.volume) AS total_volume,
-                SUM(CASE WHEN m.previous_close > 0 AND m.current_price > m.previous_close THEN 1 ELSE 0 END) AS gainers_count,
-                SUM(CASE WHEN m.previous_close > 0 AND m.current_price < m.previous_close THEN 1 ELSE 0 END) AS losers_count,
-                SUM(CASE WHEN m.previous_close > 0 AND m.current_price = m.previous_close THEN 1 ELSE 0 END) AS unchanged_count
-            FROM market_data m
-            WHERE m.current_price IS NOT NULL
-        """).fetchone()
+        conn = _get_conn()
+        try:
+            # Aggregates
+            agg = conn.execute("""
+                SELECT
+                    COALESCE(SUM(m.market_cap), 0) AS total_market_cap,
+                    COALESCE(SUM(m.volume), 0) AS total_volume,
+                    SUM(CASE WHEN m.previous_close > 0 AND m.current_price > m.previous_close THEN 1 ELSE 0 END) AS gainers_count,
+                    SUM(CASE WHEN m.previous_close > 0 AND m.current_price < m.previous_close THEN 1 ELSE 0 END) AS losers_count,
+                    SUM(CASE WHEN m.previous_close > 0 AND m.current_price = m.previous_close THEN 1 ELSE 0 END) AS unchanged_count
+                FROM market_data m
+                WHERE m.current_price IS NOT NULL
+            """).fetchone()
 
-        # Top 5 gainers
-        gainers = conn.execute(
-            _MOVERS_SQL + " ORDER BY change_pct DESC LIMIT 5"
-        ).fetchall()
+            # Top 5 gainers
+            gainers = conn.execute(
+                _MOVERS_SQL + " ORDER BY change_pct DESC LIMIT 5"
+            ).fetchall()
 
-        # Top 5 losers
-        losers = conn.execute(
-            _MOVERS_SQL + " ORDER BY change_pct ASC LIMIT 5"
-        ).fetchall()
-    finally:
-        conn.close()
+            # Top 5 losers
+            losers = conn.execute(
+                _MOVERS_SQL + " ORDER BY change_pct ASC LIMIT 5"
+            ).fetchall()
+        finally:
+            conn.close()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error fetching market summary: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
     return MarketSummary(
-        total_market_cap=agg["total_market_cap"],
-        total_volume=int(agg["total_volume"]) if agg["total_volume"] is not None else None,
+        total_market_cap=float(agg["total_market_cap"]) if agg["total_market_cap"] else None,
+        total_volume=int(agg["total_volume"]) if agg["total_volume"] else None,
         gainers_count=agg["gainers_count"] or 0,
         losers_count=agg["losers_count"] or 0,
         unchanged_count=agg["unchanged_count"] or 0,
@@ -183,8 +213,8 @@ async def get_sector_analytics() -> List[SectorAnalytics]:
             AVG(CASE WHEN m.previous_close > 0
                  THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
                  ELSE NULL END) AS avg_change_pct,
-            SUM(m.volume) AS total_volume,
-            SUM(m.market_cap) AS total_market_cap,
+            COALESCE(SUM(m.volume), 0) AS total_volume,
+            COALESCE(SUM(m.market_cap), 0) AS total_market_cap,
             COUNT(*) AS company_count,
             SUM(CASE WHEN m.previous_close > 0 AND m.current_price > m.previous_close THEN 1 ELSE 0 END) AS gainers,
             SUM(CASE WHEN m.previous_close > 0 AND m.current_price < m.previous_close THEN 1 ELSE 0 END) AS losers
@@ -194,18 +224,24 @@ async def get_sector_analytics() -> List[SectorAnalytics]:
         GROUP BY c.sector
         ORDER BY total_market_cap DESC
     """
-    conn = _get_conn()
     try:
-        rows = conn.execute(sql).fetchall()
-    finally:
-        conn.close()
+        conn = _get_conn()
+        try:
+            rows = conn.execute(sql).fetchall()
+        finally:
+            conn.close()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error fetching sector analytics: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
     return [
         SectorAnalytics(
             sector=r["sector"],
-            avg_change_pct=round(r["avg_change_pct"], 2) if r["avg_change_pct"] is not None else None,
+            avg_change_pct=round(float(r["avg_change_pct"]), 2) if r["avg_change_pct"] is not None else None,
             total_volume=int(r["total_volume"]) if r["total_volume"] is not None else None,
-            total_market_cap=r["total_market_cap"],
+            total_market_cap=float(r["total_market_cap"]) if r["total_market_cap"] is not None else None,
             company_count=r["company_count"],
             gainers=r["gainers"] or 0,
             losers=r["losers"] or 0,
@@ -232,19 +268,25 @@ async def get_heatmap() -> List[HeatmapItem]:
         WHERE m.current_price IS NOT NULL AND m.market_cap IS NOT NULL
         ORDER BY m.market_cap DESC
     """
-    conn = _get_conn()
     try:
-        rows = conn.execute(sql).fetchall()
-    finally:
-        conn.close()
+        conn = _get_conn()
+        try:
+            rows = conn.execute(sql).fetchall()
+        finally:
+            conn.close()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error fetching heatmap data: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
     return [
         HeatmapItem(
             ticker=r["ticker"],
             name=r["name"],
             sector=r["sector"],
-            market_cap=r["market_cap"],
-            change_pct=round(r["change_pct"], 2) if r["change_pct"] is not None else None,
+            market_cap=float(r["market_cap"]) if r["market_cap"] is not None else None,
+            change_pct=round(float(r["change_pct"]), 2) if r["change_pct"] is not None else None,
         )
         for r in rows
     ]

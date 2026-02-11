@@ -33,9 +33,23 @@ interface CachedStock {
 // Constants
 // ---------------------------------------------------------------------------
 
-const RECENT_KEY = 'rad-palette-recent';
-const STOCK_CACHE_KEY = 'rad-palette-stocks';
+const RECENT_KEY = 'rad-ai-palette-recent';
+const STOCK_CACHE_KEY = 'rad-ai-palette-stocks';
 const MAX_RECENT = 5;
+
+// Migrate old key names
+if (typeof window !== 'undefined') {
+  const oldRecent = localStorage.getItem('rad-palette-recent');
+  if (oldRecent && !localStorage.getItem('rad-ai-palette-recent')) {
+    localStorage.setItem('rad-ai-palette-recent', oldRecent);
+    localStorage.removeItem('rad-palette-recent');
+  }
+  const oldStocks = localStorage.getItem('rad-palette-stocks');
+  if (oldStocks && !localStorage.getItem('rad-ai-palette-stocks')) {
+    localStorage.setItem('rad-ai-palette-stocks', oldStocks);
+    localStorage.removeItem('rad-palette-stocks');
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Helpers

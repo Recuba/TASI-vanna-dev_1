@@ -121,8 +121,10 @@ def extract_ticker(title: str, body: str) -> str | None:
 # Constants
 # ---------------------------------------------------------------------------
 REQUEST_TIMEOUT = 10  # seconds
+ARTICLE_FETCH_TIMEOUT = 5  # seconds for individual article fetches
 INTER_REQUEST_DELAY = 1.5  # seconds between requests
 MAX_ARTICLES_PER_SOURCE = 10
+MAX_FULL_ARTICLE_FETCHES = 5  # limit full-article fetches per source
 
 DEFAULT_HEADERS = {
     "User-Agent": (
@@ -180,6 +182,9 @@ class BaseNewsScraper(ABC):
             relevant = [a for a in raw_articles if self._is_relevant(a)]
             limited = relevant[:MAX_ARTICLES_PER_SOURCE]
 
+            # Fetch full article bodies for articles with empty/short body
+            limited = self._enrich_bodies(limited)
+
             logger.info(
                 "%s: parsed %d articles, %d relevant, returning %d",
                 self.source_name, len(raw_articles), len(relevant), len(limited),
@@ -207,6 +212,70 @@ class BaseNewsScraper(ABC):
             title, body, source_name, source_url, published_at, priority, language
         """
 
+    def _fetch_full_article(self, url: str) -> str:
+        """Fetch full article body from the article URL.
+
+        Tries common article content selectors, falling back to paragraph
+        extraction. Returns empty string on failure.
+        """
+        try:
+            resp = self._session.get(url, timeout=ARTICLE_FETCH_TIMEOUT)
+            resp.raise_for_status()
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            soup = BeautifulSoup(resp.text, "lxml")
+
+            # Try common article content selectors (most specific first)
+            for selector in [
+                "article .article-body",
+                "article .entry-content",
+                ".article-content",
+                ".post-content",
+                ".story-body",
+                ".article__body",
+                ".article-text",
+                ".content-article",
+                "article p",
+                "main article",
+                ".content-area",
+            ]:
+                content = soup.select(selector)
+                if content:
+                    text = " ".join(el.get_text(strip=True) for el in content)
+                    if len(text) > 50:
+                        return text
+
+            # Fallback: get all paragraphs from article/main/content areas
+            paragraphs = soup.select("article p, main p, .content p")
+            if paragraphs:
+                text = " ".join(p.get_text(strip=True) for p in paragraphs)
+                if len(text) > 50:
+                    return text
+
+            return ""
+        except Exception:
+            logger.debug("Failed to fetch full article from %s", url)
+            return ""
+
+    def _enrich_bodies(self, articles: List[dict]) -> List[dict]:
+        """Fetch full article bodies for articles with empty body.
+
+        Fetches up to MAX_FULL_ARTICLE_FETCHES articles per source to avoid
+        excessive requests. Respects INTER_REQUEST_DELAY between fetches.
+        """
+        fetched_count = 0
+        for article in articles:
+            if fetched_count >= MAX_FULL_ARTICLE_FETCHES:
+                break
+            body = article.get("body", "")
+            url = article.get("source_url", "")
+            if (not body or len(body) < 50) and url:
+                time.sleep(INTER_REQUEST_DELAY)
+                full_body = self._fetch_full_article(url)
+                if full_body:
+                    article["body"] = full_body
+                fetched_count += 1
+        return articles
+
     def _make_article(
         self,
         title: str,
@@ -214,13 +283,16 @@ class BaseNewsScraper(ABC):
         url: str,
         published_at: Optional[str] = None,
     ) -> dict:
-        """Build a standardized article dict."""
+        """Build a standardized article dict.
+
+        Falls back to current UTC time when published_at is not available.
+        """
         return {
             "title": title.strip(),
-            "body": body.strip(),
+            "body": (body or "").strip(),
             "source_name": self.source_name,
             "source_url": url.strip(),
-            "published_at": published_at,
+            "published_at": published_at or datetime.utcnow().isoformat(),
             "priority": self.priority,
             "language": "ar",
         }
@@ -259,40 +331,49 @@ class BaseNewsScraper(ABC):
 # ---------------------------------------------------------------------------
 class AlarabiyaScraper(BaseNewsScraper):
     source_name = "العربية"
-    source_url = "https://www.alarabiya.net/aswaq/financial-markets"
+    source_url = "https://www.alarabiya.net/aswaq"
     priority = 1
 
     def _parse_page(self, html: str) -> List[dict]:
         soup = BeautifulSoup(html, "lxml")
         articles = []
+        seen_urls: set = set()
 
-        # Al Arabiya uses article cards with links and headlines
-        for item in soup.select("a.article-card, article a, .card a, a[href*='/aswaq/']"):
-            href = item.get("href", "")
-            if not href or "/aswaq/" not in href:
+        # Strategy 1: article/card containers with links
+        for item in soup.select("article, .article-card, .card, [class*='article'], [class*='story'], [class*='card']"):
+            link = item.select_one("a[href*='/aswaq/'], a[href*='/economy/'], a[href*='/business/']")
+            if not link:
                 continue
 
+            href = link.get("href", "")
             url = self._absolute_url(self.source_url, href)
-            title_el = item.select_one("h2, h3, .article-title, .headline, span.title")
-            title = self._extract_text(title_el) if title_el else self._extract_text(item)
+            if url in seen_urls:
+                continue
+
+            title_el = item.select_one("h1, h2, h3, h4, [class*='title'], [class*='headline']")
+            title = self._extract_text(title_el) if title_el else self._extract_text(link)
             if not title or len(title) < 10:
                 continue
 
-            summary_el = item.select_one("p, .summary, .excerpt, .description")
+            seen_urls.add(url)
+            summary_el = item.select_one("p, [class*='summary'], [class*='excerpt'], [class*='desc']")
             body = self._extract_text(summary_el) if summary_el else ""
 
-            time_el = item.select_one("time, .date, .timestamp")
+            time_el = item.select_one("time, [class*='date'], [class*='time'], [datetime]")
             published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
 
             articles.append(self._make_article(title, body, url, published))
 
-        # Fallback: look for broader link patterns
+        # Strategy 2: direct links to /aswaq/ or /economy/ articles
         if not articles:
-            for link in soup.select("a[href*='/aswaq/']"):
+            for link in soup.select("a[href*='/aswaq/'], a[href*='/economy/'], a[href*='/business/']"):
                 href = link.get("href", "")
+                url = self._absolute_url(self.source_url, href)
+                if url in seen_urls:
+                    continue
                 title = self._extract_text(link)
                 if title and len(title) >= 15:
-                    url = self._absolute_url(self.source_url, href)
+                    seen_urls.add(url)
                     articles.append(self._make_article(title, "", url))
 
         return articles
@@ -303,37 +384,69 @@ class AlarabiyaScraper(BaseNewsScraper):
 # ---------------------------------------------------------------------------
 class AsharqBusinessScraper(BaseNewsScraper):
     source_name = "الشرق بلومبرغ"
-    source_url = "https://asharqbusiness.com/%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9/"
+    source_url = "https://www.asharqbusiness.com/"
     priority = 2
+
+    # Try multiple entry URLs for better coverage
+    _alt_urls = [
+        "https://www.asharqbusiness.com/",
+        "https://www.asharqbusiness.com/%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9/",
+        "https://asharqbusiness.com/",
+    ]
+
+    def fetch_articles(self) -> List[dict]:
+        """Override to try multiple URLs for Asharq Business."""
+        for url in self._alt_urls:
+            self.source_url = url
+            articles = super().fetch_articles()
+            if articles:
+                return articles
+        return []
 
     def _parse_page(self, html: str) -> List[dict]:
         soup = BeautifulSoup(html, "lxml")
         articles = []
+        seen_urls: set = set()
 
-        # Asharq Business uses card-style article listings
-        for item in soup.select("article, .article-card, .story-card, .news-item, a[href*='/article/']"):
-            if item.name == "a":
-                href = item.get("href", "")
-                title = self._extract_text(item)
-            else:
-                link = item.select_one("a[href]")
-                if not link:
-                    continue
-                href = link.get("href", "")
-                title_el = item.select_one("h2, h3, h4, .title, .headline")
-                title = self._extract_text(title_el) if title_el else self._extract_text(link)
+        # Strategy 1: structured containers
+        for item in soup.select("article, [class*='article'], [class*='story'], [class*='card'], [class*='news']"):
+            link = item.select_one("a[href]")
+            if not link:
+                continue
 
-            if not title or len(title) < 10:
+            href = link.get("href", "")
+            if not href or href == "#" or href == "/":
                 continue
 
             url = self._absolute_url(self.source_url, href)
-            summary_el = item.select_one("p, .summary, .excerpt, .description") if item.name != "a" else None
+            if url in seen_urls:
+                continue
+
+            title_el = item.select_one("h1, h2, h3, h4, [class*='title'], [class*='headline']")
+            title = self._extract_text(title_el) if title_el else self._extract_text(link)
+            if not title or len(title) < 10:
+                continue
+
+            seen_urls.add(url)
+            summary_el = item.select_one("p, [class*='summary'], [class*='excerpt'], [class*='desc']")
             body = self._extract_text(summary_el) if summary_el else ""
 
-            time_el = item.select_one("time, .date, .timestamp") if item.name != "a" else None
+            time_el = item.select_one("time, [class*='date'], [class*='time'], [datetime]")
             published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
 
             articles.append(self._make_article(title, body, url, published))
+
+        # Strategy 2: direct links with article-like paths
+        if not articles:
+            for link in soup.select("a[href*='/article/'], a[href*='/news/'], a[href*='/%D8%A7%D9%84']"):
+                href = link.get("href", "")
+                url = self._absolute_url(self.source_url, href)
+                if url in seen_urls:
+                    continue
+                title = self._extract_text(link)
+                if title and len(title) >= 15:
+                    seen_urls.add(url)
+                    articles.append(self._make_article(title, "", url))
 
         return articles
 
@@ -349,23 +462,32 @@ class ArgaamScraper(BaseNewsScraper):
     def _parse_page(self, html: str) -> List[dict]:
         soup = BeautifulSoup(html, "lxml")
         articles = []
+        seen_urls: set = set()
 
-        # Argaam uses news item containers
-        for item in soup.select(".articleList a, .newsItem a, article a, a[href*='/article/'], a[href*='/news/']"):
+        # Strategy 1: structured containers
+        for item in soup.select(
+            ".articleList a, .newsItem a, article a, "
+            "[class*='article'] a, [class*='news'] a, "
+            "a[href*='/article/'], a[href*='/news/']"
+        ):
             href = item.get("href", "")
-            if not href:
+            if not href or href == "#":
                 continue
 
-            title_el = item.select_one("h2, h3, h4, .title, span")
+            url = self._absolute_url(self.source_url, href)
+            if url in seen_urls:
+                continue
+
+            title_el = item.select_one("h2, h3, h4, [class*='title'], span")
             title = self._extract_text(title_el) if title_el else self._extract_text(item)
             if not title or len(title) < 10:
                 continue
 
-            url = self._absolute_url(self.source_url, href)
-            summary_el = item.select_one("p, .summary")
+            seen_urls.add(url)
+            summary_el = item.select_one("p, [class*='summary'], [class*='desc']")
             body = self._extract_text(summary_el) if summary_el else ""
 
-            time_el = item.select_one("time, .date, .time")
+            time_el = item.select_one("time, [class*='date'], [class*='time']")
             published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
 
             articles.append(self._make_article(title, body, url, published))
@@ -378,40 +500,79 @@ class ArgaamScraper(BaseNewsScraper):
 # ---------------------------------------------------------------------------
 class MaaalScraper(BaseNewsScraper):
     source_name = "معال"
-    source_url = "https://maaal.com/news"
+    source_url = "https://maaal.com/"
     priority = 4
+
+    # Try multiple paths since the /news path may have changed
+    _alt_urls = [
+        "https://maaal.com/",
+        "https://maaal.com/news",
+        "https://maaal.com/archives/category/news",
+        "https://www.maaal.com/",
+    ]
+
+    def fetch_articles(self) -> List[dict]:
+        """Override to try multiple URLs for Maaal."""
+        for url in self._alt_urls:
+            self.source_url = url
+            articles = super().fetch_articles()
+            if articles:
+                return articles
+        return []
 
     def _parse_page(self, html: str) -> List[dict]:
         soup = BeautifulSoup(html, "lxml")
         articles = []
+        seen_urls: set = set()
 
-        # Maaal uses WordPress-style article listings
-        for item in soup.select("article, .post, .entry, .news-item"):
+        # Strategy 1: WordPress-style article/post containers
+        for item in soup.select("article, .post, .entry, [class*='news'], [class*='article'], [class*='post']"):
             link = item.select_one("a[href]")
             if not link:
                 continue
 
             href = link.get("href", "")
-            title_el = item.select_one("h2 a, h3 a, h2, h3, .entry-title a, .post-title a")
+            if not href or href == "#" or href == "/":
+                continue
+
+            url = self._absolute_url(self.source_url, href)
+            if url in seen_urls:
+                continue
+
+            title_el = item.select_one(
+                "h1 a, h2 a, h3 a, h1, h2, h3, h4, "
+                "[class*='title'] a, [class*='title'], "
+                ".entry-title a, .post-title a"
+            )
             title = self._extract_text(title_el) if title_el else self._extract_text(link)
             if not title or len(title) < 10:
                 continue
 
-            url = self._absolute_url(self.source_url, href)
-            summary_el = item.select_one(".entry-content p, .excerpt, .summary, p")
+            seen_urls.add(url)
+            summary_el = item.select_one(
+                ".entry-content p, .excerpt, .summary, p, "
+                "[class*='excerpt'], [class*='desc']"
+            )
             body = self._extract_text(summary_el) if summary_el else ""
 
-            time_el = item.select_one("time, .date, .entry-date, .post-date")
+            time_el = item.select_one("time, [class*='date'], [class*='time'], [datetime]")
             published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
 
             articles.append(self._make_article(title, body, url, published))
 
-        # Fallback: plain links
+        # Strategy 2: Fallback - plain links to article-like URLs
         if not articles:
-            for link in soup.select("a[href*='/news/'], a[href*='/2026/'], a[href*='/2025/']"):
+            for link in soup.select(
+                "a[href*='/news/'], a[href*='/2026/'], a[href*='/2025/'], "
+                "a[href*='/archives/'], a[href*='/?p=']"
+            ):
+                href = link.get("href", "")
+                url = self._absolute_url(self.source_url, href)
+                if url in seen_urls:
+                    continue
                 title = self._extract_text(link)
                 if title and len(title) >= 15:
-                    url = self._absolute_url(self.source_url, link.get("href", ""))
+                    seen_urls.add(url)
                     articles.append(self._make_article(title, "", url))
 
         return articles
@@ -428,31 +589,54 @@ class MubasherScraper(BaseNewsScraper):
     def _parse_page(self, html: str) -> List[dict]:
         soup = BeautifulSoup(html, "lxml")
         articles = []
+        seen_urls: set = set()
 
-        # Mubasher uses news listing components
-        for item in soup.select(".news-item, .article-item, article, .card, a[href*='/news/']"):
+        # Strategy 1: structured containers
+        for item in soup.select(
+            ".news-item, .article-item, article, .card, "
+            "[class*='news'], [class*='article'], [class*='story']"
+        ):
             if item.name == "a":
                 href = item.get("href", "")
                 title = self._extract_text(item)
+                link = item
             else:
                 link = item.select_one("a[href]")
                 if not link:
                     continue
                 href = link.get("href", "")
-                title_el = item.select_one("h2, h3, h4, .title, .headline")
+                title_el = item.select_one("h1, h2, h3, h4, [class*='title'], [class*='headline']")
                 title = self._extract_text(title_el) if title_el else self._extract_text(link)
 
             if not title or len(title) < 10:
                 continue
+            if not href or href == "#" or href == "/":
+                continue
 
             url = self._absolute_url(self.source_url, href)
-            summary_el = item.select_one("p, .summary, .excerpt") if item.name != "a" else None
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+
+            summary_el = item.select_one("p, [class*='summary'], [class*='excerpt'], [class*='desc']") if item.name != "a" else None
             body = self._extract_text(summary_el) if summary_el else ""
 
-            time_el = item.select_one("time, .date, .timestamp") if item.name != "a" else None
+            time_el = item.select_one("time, [class*='date'], [class*='time'], [datetime]") if item.name != "a" else None
             published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
 
             articles.append(self._make_article(title, body, url, published))
+
+        # Strategy 2: direct news links
+        if not articles:
+            for link in soup.select("a[href*='/news/'], a[href*='/article/']"):
+                href = link.get("href", "")
+                url = self._absolute_url(self.source_url, href)
+                if url in seen_urls:
+                    continue
+                title = self._extract_text(link)
+                if title and len(title) >= 15:
+                    seen_urls.add(url)
+                    articles.append(self._make_article(title, "", url))
 
         return articles
 

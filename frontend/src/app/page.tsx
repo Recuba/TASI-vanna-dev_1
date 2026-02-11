@@ -91,13 +91,21 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('raid-onboarding-seen')) {
-      setShowOnboarding(true);
+    if (typeof window !== 'undefined') {
+      // Migrate old key name
+      const oldVal = localStorage.getItem('raid-onboarding-seen');
+      if (oldVal && !localStorage.getItem('rad-ai-onboarding-seen')) {
+        localStorage.setItem('rad-ai-onboarding-seen', oldVal);
+        localStorage.removeItem('raid-onboarding-seen');
+      }
+      if (!localStorage.getItem('rad-ai-onboarding-seen')) {
+        setShowOnboarding(true);
+      }
     }
   }, []);
 
   function dismissOnboarding() {
-    localStorage.setItem('raid-onboarding-seen', '1');
+    localStorage.setItem('rad-ai-onboarding-seen', '1');
     setShowOnboarding(false);
   }
 
