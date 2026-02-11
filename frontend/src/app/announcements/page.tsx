@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Types (matches AnnouncementItem in api-client.ts)
@@ -37,20 +38,14 @@ interface PaginatedResponse {
 
 const PAGE_SIZE = 20;
 
-const FILTER_TABS = [
-  { key: null, label: '\u0627\u0644\u0643\u0644' },
-  { key: 'material', label: '\u062C\u0648\u0647\u0631\u064A' },
-  { key: 'general', label: '\u0639\u0627\u0645' },
-] as const;
-
 // ---------------------------------------------------------------------------
 // Date formatter
 // ---------------------------------------------------------------------------
 
-function formatDate(dateStr: string | null): string {
+function formatDate(dateStr: string | null, locale: string): string {
   if (!dateStr) return '';
   try {
-    return new Date(dateStr).toLocaleDateString('ar-SA', {
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -87,8 +82,15 @@ function SkeletonCard() {
 
 function AnnouncementCard({ item }: { item: Announcement }) {
   const [expanded, setExpanded] = useState(false);
-  const title = item.title_ar || item.title_en || '\u0628\u062F\u0648\u0646 \u0639\u0646\u0648\u0627\u0646';
-  const body = item.body_ar || item.body_en || '';
+  const { t, language } = useLanguage();
+  const title =
+    language === 'ar'
+      ? item.title_ar || item.title_en || 'بدون عنوان'
+      : item.title_en || item.title_ar || 'No title';
+  const body =
+    language === 'ar'
+      ? item.body_ar || item.body_en || ''
+      : item.body_en || item.body_ar || '';
 
   return (
     <article
@@ -104,12 +106,12 @@ function AnnouncementCard({ item }: { item: Announcement }) {
         <div className="flex items-center gap-2 flex-wrap">
           {item.is_material && (
             <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FF6B6B]/10 text-[#FF6B6B] border border-[#FF6B6B]/20">
-              \u062C\u0648\u0647\u0631\u064A
+              {t('جوهري', 'Material')}
             </span>
           )}
           {!item.is_material && (
             <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#4A9FFF]/10 text-[#4A9FFF] border border-[#4A9FFF]/20">
-              \u0639\u0627\u0645
+              {t('عام', 'General')}
             </span>
           )}
           {item.ticker && (
@@ -145,7 +147,7 @@ function AnnouncementCard({ item }: { item: Announcement }) {
                 onClick={() => setExpanded((v) => !v)}
                 className="text-xs text-gold hover:text-gold-light mt-1 transition-colors"
               >
-                {expanded ? '\u0625\u063A\u0644\u0627\u0642' : '\u0627\u0642\u0631\u0623 \u0627\u0644\u0645\u0632\u064A\u062F'}
+                {expanded ? t('إغلاق', 'Close') : t('اقرأ المزيد', 'Read more')}
               </button>
             )}
           </div>
@@ -154,7 +156,7 @@ function AnnouncementCard({ item }: { item: Announcement }) {
         {/* Footer */}
         <div className="flex items-center gap-3 flex-wrap text-xs text-[var(--text-muted)]">
           {item.announcement_date && (
-            <span>{formatDate(item.announcement_date)}</span>
+            <span>{formatDate(item.announcement_date, language === 'ar' ? 'ar-SA' : 'en-US')}</span>
           )}
           {item.source && <span>{item.source}</span>}
           {item.source_url && (
@@ -164,7 +166,7 @@ function AnnouncementCard({ item }: { item: Announcement }) {
               rel="noopener noreferrer"
               className="text-gold hover:text-gold-light transition-colors"
             >
-              \u0627\u0644\u0645\u0635\u062F\u0631
+              {t('المصدر', 'Source')}
             </a>
           )}
         </div>
@@ -178,6 +180,7 @@ function AnnouncementCard({ item }: { item: Announcement }) {
 // ---------------------------------------------------------------------------
 
 export default function AnnouncementsPage() {
+  const { t } = useLanguage();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -185,6 +188,12 @@ export default function AnnouncementsPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState<string | null>(null);
+
+  const FILTER_TABS = [
+    { key: null, label: t('الكل', 'All') },
+    { key: 'material', label: t('جوهري', 'Material') },
+    { key: 'general', label: t('عام', 'General') },
+  ] as const;
 
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
@@ -223,7 +232,7 @@ export default function AnnouncementsPage() {
       setAnnouncements(data.items);
       setTotal(data.total);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '\u062E\u0637\u0623 \u063A\u064A\u0631 \u0645\u062A\u0648\u0642\u0639';
+      const msg = err instanceof Error ? err.message : t('خطأ غير متوقع', 'Unexpected error');
       // Check if it's a connection error that likely means no PG
       if (msg.includes('503') || msg.includes('Failed to fetch')) {
         setPgRequired(true);
@@ -233,7 +242,7 @@ export default function AnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, filter]);
+  }, [page, filter, t]);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -252,10 +261,10 @@ export default function AnnouncementsPage() {
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-[var(--text-primary)]">
-            \u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A
+            {t('الإعلانات', 'Announcements')}
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            \u0625\u0639\u0644\u0627\u0646\u0627\u062A \u0647\u064A\u0626\u0629 \u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u0645\u0627\u0644\u064A\u0629 \u0648\u062A\u062F\u0627\u0648\u0644
+            {t('إعلانات هيئة السوق المالية وتداول', 'Capital Market Authority and Tadawul Announcements')}
           </p>
         </div>
 
@@ -301,10 +310,10 @@ export default function AnnouncementsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
             <p className="text-base font-medium text-[var(--text-secondary)] mb-2">
-              \u0647\u0630\u0647 \u0627\u0644\u062E\u062F\u0645\u0629 \u062A\u062A\u0637\u0644\u0628 \u0642\u0627\u0639\u062F\u0629 \u0628\u064A\u0627\u0646\u0627\u062A PostgreSQL
+              {t('هذه الخدمة تتطلب قاعدة بيانات PostgreSQL', 'This service requires a PostgreSQL database')}
             </p>
             <p className="text-sm text-[var(--text-muted)]">
-              \u064A\u0631\u062C\u0649 \u0627\u0644\u0627\u062A\u0635\u0627\u0644 \u0628\u0627\u0644\u0645\u0633\u0624\u0648\u0644 \u0644\u062A\u0641\u0639\u064A\u0644 \u0647\u0630\u0647 \u0627\u0644\u0645\u064A\u0632\u0629
+              {t('يرجى الاتصال بالمسؤول لتفعيل هذه الميزة', 'Please contact the administrator to enable this feature')}
             </p>
           </div>
         ) : error ? (
@@ -318,7 +327,7 @@ export default function AnnouncementsPage() {
                 'hover:bg-gold/20 transition-colors',
               )}
             >
-              \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629
+              {t('إعادة المحاولة', 'Retry')}
             </button>
           </div>
         ) : announcements.length === 0 ? (
@@ -333,7 +342,7 @@ export default function AnnouncementsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <p className="text-sm text-[var(--text-muted)]">
-              \u0644\u0627 \u062A\u0648\u062C\u062F \u0625\u0639\u0644\u0627\u0646\u0627\u062A \u062D\u0627\u0644\u064A\u0627\u064B
+              {t('لا توجد إعلانات حالياً', 'No announcements currently')}
             </p>
           </div>
         ) : (
@@ -358,7 +367,7 @@ export default function AnnouncementsPage() {
                       : 'border-[#D4A84B]/30 text-[#D4A84B] hover:bg-[#D4A84B]/10',
                   )}
                 >
-                  \u0627\u0644\u0633\u0627\u0628\u0642
+                  {t('السابق', 'Previous')}
                 </button>
                 <span className="text-sm text-[var(--text-secondary)]">
                   {page} / {totalPages}
@@ -373,7 +382,7 @@ export default function AnnouncementsPage() {
                       : 'border-[#D4A84B]/30 text-[#D4A84B] hover:bg-[#D4A84B]/10',
                   )}
                 >
-                  \u0627\u0644\u062A\u0627\u0644\u064A
+                  {t('التالي', 'Next')}
                 </button>
               </div>
             )}

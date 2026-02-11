@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,6 +21,7 @@ interface ChartResponse {
 interface ChartCardConfig {
   endpoint: string;
   titleAr: string;
+  titleEn: string;
   suffix?: string;
   color: string;
 }
@@ -34,24 +36,28 @@ const CHART_CONFIGS: ChartCardConfig[] = [
   {
     endpoint: '/api/charts/sector-market-cap',
     titleAr: 'القيمة السوقية حسب القطاع',
+    titleEn: 'Market Cap by Sector',
     suffix: 'SAR',
     color: '#D4A84B',
   },
   {
     endpoint: '/api/charts/top-companies?limit=10',
     titleAr: 'أكبر الشركات',
+    titleEn: 'Top Companies',
     suffix: 'SAR',
     color: '#2196F3',
   },
   {
     endpoint: '/api/charts/sector-pe',
     titleAr: 'مكرر الأرباح حسب القطاع',
+    titleEn: 'PE Ratio by Sector',
     suffix: 'x',
     color: '#4CAF50',
   },
   {
     endpoint: '/api/charts/dividend-yield-top?limit=10',
     titleAr: 'أعلى توزيعات أرباح',
+    titleEn: 'Top Dividend Yields',
     suffix: '%',
     color: '#F44336',
   },
@@ -79,24 +85,38 @@ function formatLargeNumber(val: number, suffix?: string): string {
 // ---------------------------------------------------------------------------
 
 function BarChartCard({ config }: { config: ChartCardConfig }) {
+  const { t } = useLanguage();
   const [data, setData] = useState<ChartDataPoint[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [httpStatus, setHttpStatus] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setHttpStatus(null);
+    let status: number | null = null;
     try {
       const res = await fetch(`${API_BASE}${config.endpoint}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        status = res.status;
+        setHttpStatus(status);
+        throw new Error(`HTTP ${res.status}`);
+      }
       const json: ChartResponse = await res.json();
       setData(json.data ?? []);
-    } catch {
-      setError('Failed to load');
+    } catch (err) {
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setError(t('تعذر الاتصال بالخادم', 'Could not connect to server'));
+      } else if (status === 404) {
+        setError(t('نقطة البيانات غير متوفرة', 'Data endpoint not available'));
+      } else {
+        setError(t('فشل التحميل', 'Failed to load'));
+      }
     } finally {
       setLoading(false);
     }
-  }, [config.endpoint]);
+  }, [config.endpoint, t]);
 
   useEffect(() => {
     fetchData();
@@ -106,20 +126,14 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
-      style={{
-        background: '#1A1A1A',
-        border: '1px solid #2A2A2A',
-      }}
+      className="rounded-xl overflow-hidden dark:bg-[#1A1A1A] bg-white dark:border-[#2A2A2A] border-gray-200 border"
     >
       {/* Card header */}
       <div
-        className="px-4 py-3"
-        style={{ borderBottom: '1px solid #2A2A2A' }}
-        dir="rtl"
+        className="px-4 py-3 dark:border-[#2A2A2A] border-gray-200 border-b"
       >
         <h3 className="text-sm font-bold text-[var(--text-primary)]">
-          {config.titleAr}
+          {t(config.titleAr, config.titleEn)}
         </h3>
       </div>
 
@@ -143,13 +157,33 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
 
         {error && (
           <div className="flex items-center justify-center py-6">
-            <div className="text-center">
+            <div className="text-center space-y-2">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mx-auto text-red-400"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
               <p className="text-xs text-red-400">{error}</p>
+              {httpStatus && (
+                <p className="text-[10px] dark:text-[#606060] text-gray-400">
+                  {t(`رمز الخطأ: ${httpStatus}`, `Error code: ${httpStatus}`)}
+                </p>
+              )}
               <button
                 onClick={fetchData}
-                className="text-xs text-gold hover:text-gold-light mt-1"
+                className="px-3 py-1 text-xs font-medium rounded-md border border-gold text-gold hover:bg-gold/10 transition-colors"
               >
-                Retry
+                {t('إعادة المحاولة', 'Retry')}
               </button>
             </div>
           </div>
@@ -193,7 +227,7 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
 
         {!loading && !error && data && data.length === 0 && (
           <p className="text-xs text-[var(--text-muted)] text-center py-6">
-            No data available
+            {t('لا توجد بيانات متاحة', 'No data available')}
           </p>
         )}
       </div>

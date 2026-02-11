@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useNewsArticle, useNewsFeed } from '@/lib/hooks/use-api';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // Extended type for extra API fields
 type ArticleExtras = {
@@ -228,6 +229,7 @@ function ReadingProgressBar() {
 // ---------------------------------------------------------------------------
 
 function ShareButton() {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -262,13 +264,13 @@ function ShareButton() {
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
         </svg>
-        مشاركة
+        {t('مشاركة', 'Share')}
       </button>
 
       {/* Toast */}
       {copied && (
         <div className="absolute top-full mt-2 right-0 px-3 py-1.5 rounded-md bg-gold text-black text-xs font-medium whitespace-nowrap shadow-lg animate-fade-in z-50">
-          تم نسخ الرابط
+          {t('تم نسخ الرابط', 'Link copied')}
         </div>
       )}
     </div>
@@ -354,6 +356,7 @@ function RelatedArticleCard({
 // ---------------------------------------------------------------------------
 
 export default function ArticleDetailPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const id = typeof params.id === 'string' ? params.id : '';
   const { data: article, loading, error, refetch } = useNewsArticle(id);
@@ -384,7 +387,7 @@ export default function ArticleDetailPage() {
             href="/news"
             className="text-gold hover:text-gold-light transition-colors"
           >
-            الأخبار
+            {t('الأخبار', 'News')}
           </Link>
           <svg
             className="w-3 h-3 text-[var(--text-muted)] rtl:rotate-180"
@@ -396,7 +399,7 @@ export default function ArticleDetailPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
           <span className="text-[var(--text-muted)] truncate max-w-[300px]">
-            {loading ? '...' : article?.title ?? 'المقال'}
+            {loading ? '...' : article?.title ?? t('المقال', 'Article')}
           </span>
         </nav>
 
@@ -414,16 +417,16 @@ export default function ArticleDetailPage() {
                 'hover:bg-gold/20 transition-colors',
               )}
             >
-              إعادة المحاولة
+              {t('إعادة المحاولة', 'Retry')}
             </button>
           </div>
         ) : !article ? (
           <div className="text-center py-16">
             <p className="text-lg font-bold text-[var(--text-primary)] mb-2">
-              المقال غير موجود
+              {t('المقال غير موجود', 'Article Not Found')}
             </p>
             <p className="text-sm text-[var(--text-muted)]">
-              قد يكون المقال قد حُذف أو أن الرابط غير صحيح.
+              {t('قد يكون المقال قد حُذف أو أن الرابط غير صحيح.', 'The article may have been removed or the link is incorrect.')}
             </p>
           </div>
         ) : (
@@ -479,9 +482,39 @@ export default function ArticleDetailPage() {
                 {article.body}
               </div>
             ) : (
-              <p className="text-sm text-[var(--text-muted)] italic">
-                لا يتوفر نص كامل لهذا المقال.
-              </p>
+              <div className="rounded-xl border border-[#2A2A2A] bg-[var(--bg-input)] p-6 space-y-3">
+                <div className="flex items-center gap-2 text-[var(--text-muted)]">
+                  <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                  <p className="text-sm font-medium">
+                    {t('النص الكامل غير متوفر', 'Full text not available')}
+                  </p>
+                </div>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  {t(
+                    'لم يتم استخراج النص الكامل لهذا المقال من المصدر. يمكنك الاطلاع على المقال الأصلي من خلال رابط المصدر أدناه.',
+                    'The full text could not be retrieved from the source. You can read the original article via the source link below.'
+                  )}
+                </p>
+                {article.source_url && (
+                  <a
+                    href={article.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
+                      'bg-gold/10 text-gold border border-gold/20',
+                      'hover:bg-gold/20 transition-colors',
+                    )}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    {t('قراءة من المصدر الأصلي', 'Read from original source')}
+                  </a>
+                )}
+              </div>
             )}
 
             {/* Source link */}
@@ -504,16 +537,16 @@ export default function ArticleDetailPage() {
                       d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                     />
                   </svg>
-                  قراءة من المصدر الأصلي
+                  {t('قراءة من المصدر الأصلي', 'Read from original source')}
                 </a>
               </div>
             )}
 
             {/* Language info */}
             <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] pt-2 border-t border-gold/10">
-              <span>اللغة: {article.language === 'ar' ? 'العربية' : article.language}</span>
+              <span>{t('اللغة', 'Language')}: {article.language === 'ar' ? t('العربية', 'Arabic') : article.language}</span>
               <span>&middot;</span>
-              <span>الأولوية: {article.priority}</span>
+              <span>{t('الأولوية', 'Priority')}: {article.priority}</span>
             </div>
 
             {/* Related articles */}
@@ -521,7 +554,7 @@ export default function ArticleDetailPage() {
               <section className="pt-4 space-y-4">
                 <hr className="border-gold/10" />
                 <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                  أخبار ذات صلة من {article.source_name}
+                  {t(`أخبار ذات صلة من ${article.source_name}`, `Related news from ${article.source_name}`)}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {relatedArticles.map((related) => (

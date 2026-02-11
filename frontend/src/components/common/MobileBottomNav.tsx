@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Nav items
@@ -12,7 +13,8 @@ import { cn } from '@/lib/utils';
 const navItems = [
   {
     href: '/',
-    label: '\u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629',
+    labelAr: 'الرئيسية',
+    labelEn: 'Home',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -22,7 +24,8 @@ const navItems = [
   },
   {
     href: '/market',
-    label: '\u0627\u0644\u0633\u0648\u0642',
+    labelAr: 'السوق',
+    labelEn: 'Market',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -31,7 +34,8 @@ const navItems = [
   },
   {
     href: '/chat',
-    label: '\u0631\u0627\u0626\u062F',
+    labelAr: 'رائد',
+    labelEn: 'Ra\'d',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -41,7 +45,8 @@ const navItems = [
   },
   {
     href: '/news',
-    label: '\u0627\u0644\u0623\u062E\u0628\u0627\u0631',
+    labelAr: 'الأخبار',
+    labelEn: 'News',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
@@ -51,7 +56,8 @@ const navItems = [
   },
   {
     href: '/charts',
-    label: '\u0627\u0644\u0631\u0633\u0648\u0645',
+    labelAr: 'الرسوم',
+    labelEn: 'Charts',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 20V14" /><path d="M10 20V10" /><path d="M14 20V4" /><path d="M18 20V8" />
@@ -66,6 +72,7 @@ const navItems = [
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { t, language } = useLanguage();
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   // Detect virtual keyboard by watching viewport height changes
@@ -98,7 +105,7 @@ export function MobileBottomNav() {
         'flex items-center justify-around',
         'pb-[env(safe-area-inset-bottom)]',
       )}
-      dir="rtl"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
     >
       {navItems.map((item) => {
         const active = isActive(item.href);
@@ -137,7 +144,7 @@ export function MobileBottomNav() {
               'text-[10px] font-medium',
               item.center && 'mt-0.5',
             )}>
-              {item.label}
+              {t(item.labelAr, item.labelEn)}
             </span>
           </Link>
         );

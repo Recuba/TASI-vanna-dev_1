@@ -107,10 +107,10 @@ export default function Home() {
   const totalCompanies = sectors ? sectors.reduce((sum, s) => sum + s.company_count, 0) : null;
 
   const platformStats = [
-    { labelAr: '\u0633\u0647\u0645', labelEn: 'Stocks', value: totalCompanies ? `${totalCompanies}+` : '500+' },
-    { labelAr: '\u0645\u0635\u062F\u0631 \u0623\u062E\u0628\u0627\u0631', labelEn: 'News Sources', value: '5' },
-    { labelAr: '\u062C\u062F\u0648\u0644 \u0628\u064A\u0627\u0646\u0627\u062A', labelEn: 'Data Tables', value: '10' },
-    { labelAr: '\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A', labelEn: 'AI Engine', value: 'Gemini' },
+    { labelAr: '\u0633\u0647\u0645', labelEn: 'Stocks', value: totalCompanies ? `${totalCompanies}+` : '500+', href: '/market' },
+    { labelAr: '\u0645\u0635\u062F\u0631 \u0623\u062E\u0628\u0627\u0631', labelEn: 'News Sources', value: '5', href: '/news' },
+    { labelAr: '\u062C\u062F\u0648\u0644 \u0628\u064A\u0627\u0646\u0627\u062A', labelEn: 'Data Tables', value: '10', href: '/chat' },
+    { labelAr: '\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A', labelEn: 'AI Engine', value: 'Gemini', href: '/chat' },
   ];
 
   return (
@@ -171,19 +171,23 @@ export default function Home() {
         {/* Platform Stats */}
         <div className="flex justify-center gap-4 flex-wrap animate-fade-in-up-delay-1">
           {platformStats.map((stat, i) => (
-            <div
+            <Link
               key={i}
+              href={stat.href}
               className={cn(
                 'flex flex-col items-center gap-1',
-                'bg-[var(--bg-card)] border gold-border',
+                'bg-[var(--bg-card)]',
+                'border border-[var(--border-color)] dark:border-[#2A2A2A]/50',
+                'hover:border-gold/30',
                 'rounded-xl px-6 py-3 min-w-[100px]',
+                'cursor-pointer',
                 'transition-all duration-300',
-                'hover:border-gold hover:bg-[var(--bg-card-hover)]'
+                'hover:scale-[1.02] hover:bg-[var(--bg-card-hover)] hover:shadow-lg hover:shadow-gold/5'
               )}
             >
               <span className="text-xl font-bold text-gold">{stat.value}</span>
               <span className="text-xs text-[var(--text-muted)]">{language === 'ar' ? stat.labelAr : stat.labelEn}</span>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -196,8 +200,9 @@ export default function Home() {
                 href={action.href}
                 className={cn(
                   'block p-5 rounded-xl',
-                  'bg-[var(--bg-card)] border border-[#2A2A2A]',
-                  'hover:border-gold/60 hover:bg-[var(--bg-card-hover)]',
+                  'bg-[var(--bg-card)]',
+                  'border border-[var(--border-color)] dark:border-[#2A2A2A]/50',
+                  'hover:border-gold/30 hover:bg-[var(--bg-card-hover)]',
                   'transition-all duration-300',
                   'group relative overflow-hidden'
                 )}
@@ -223,7 +228,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in-up-delay-3">
 
           {/* Sector Cards */}
-          <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+          <section className="bg-[var(--bg-card)] border border-[var(--border-color)] dark:border-[#2A2A2A]/50 hover:border-gold/30 rounded-xl p-5 transition-colors">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-gold uppercase tracking-wider">
                 {t('\u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A', 'Sectors')}
@@ -258,7 +263,7 @@ export default function Home() {
           </section>
 
           {/* Top Movers */}
-          <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+          <section className="bg-[var(--bg-card)] border border-[var(--border-color)] dark:border-[#2A2A2A]/50 hover:border-gold/30 rounded-xl p-5 transition-colors">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-gold uppercase tracking-wider">
                 {t('\u0623\u0639\u0644\u0649 \u0627\u0644\u0634\u0631\u0643\u0627\u062A \u0642\u064A\u0645\u0629', 'Top Companies by Value')}
@@ -311,7 +316,7 @@ export default function Home() {
         </div>
 
         {/* About Section */}
-        <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-6 animate-fade-in-up-delay-3">
+        <section className="bg-[var(--bg-card)] border border-[var(--border-color)] dark:border-[#2A2A2A]/50 hover:border-gold/30 rounded-xl p-6 animate-fade-in-up-delay-3 transition-colors">
           <h3 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">
             {t('\u0639\u0646 \u0631\u0627\u0626\u062F', 'About Ra\'d')}
           </h3>

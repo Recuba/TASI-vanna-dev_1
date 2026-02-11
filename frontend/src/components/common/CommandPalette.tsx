@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,23 +36,6 @@ interface CachedStock {
 const RECENT_KEY = 'rad-palette-recent';
 const STOCK_CACHE_KEY = 'rad-palette-stocks';
 const MAX_RECENT = 5;
-
-const PAGE_ITEMS: PaletteItem[] = [
-  { id: 'page-home', label: '\u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629', sublabel: 'Home', section: '\u0627\u0644\u0635\u0641\u062D\u0627\u062A', href: '/' },
-  { id: 'page-market', label: '\u0627\u0644\u0633\u0648\u0642', sublabel: 'Market', section: '\u0627\u0644\u0635\u0641\u062D\u0627\u062A', href: '/market' },
-  { id: 'page-charts', label: '\u0627\u0644\u0631\u0633\u0648\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A\u0629', sublabel: 'Charts', section: '\u0627\u0644\u0635\u0641\u062D\u0627\u062A', href: '/charts' },
-  { id: 'page-news', label: '\u0627\u0644\u0623\u062E\u0628\u0627\u0631', sublabel: 'News', section: '\u0627\u0644\u0635\u0641\u062D\u0627\u062A', href: '/news' },
-  { id: 'page-chat', label: '\u0631\u0627\u0626\u062F - \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629', sublabel: 'AI Chat', section: '\u0627\u0644\u0635\u0641\u062D\u0627\u062A', href: '/chat' },
-  { id: 'page-reports', label: '\u0627\u0644\u062A\u0642\u0627\u0631\u064A\u0631', sublabel: 'Reports', section: '\u0627\u0644\u0635\u0641\u062D\u0627\u062A', href: '/reports' },
-  { id: 'page-watchlist', label: '\u0627\u0644\u0645\u0641\u0636\u0644\u0629', sublabel: 'Watchlist', section: '\u0627\u0644\u0635\u0641\u062D\u0627\u062A', href: '/watchlist' },
-  { id: 'page-announcements', label: '\u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A', sublabel: 'Announcements', section: '\u0627\u0644\u0635\u0641\u062D\u0627\u062A', href: '/announcements' },
-];
-
-const ACTION_ITEMS: PaletteItem[] = [
-  { id: 'act-charts', label: '\u0639\u0631\u0636 \u0627\u0644\u0631\u0633\u0648\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A\u0629', section: '\u0625\u062C\u0631\u0627\u0621\u0627\u062A', href: '/charts' },
-  { id: 'act-ask', label: '\u0627\u0633\u0623\u0644 \u0631\u0627\u0626\u062F \u0639\u0646...', section: '\u0625\u062C\u0631\u0627\u0621\u0627\u062A', href: '/chat' },
-  { id: 'act-movers', label: '\u0639\u0631\u0636 \u0623\u0643\u062B\u0631 \u0627\u0644\u0623\u0633\u0647\u0645 \u062A\u062D\u0631\u0643\u0627\u064B', section: '\u0625\u062C\u0631\u0627\u0621\u0627\u062A', href: '/market' },
-];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -108,6 +92,7 @@ function fuzzyMatch(text: string, query: string): boolean {
 // ---------------------------------------------------------------------------
 
 export function CommandPalette() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -116,6 +101,26 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Bilingual labels for page items
+  const PAGE_ITEMS: PaletteItem[] = useMemo(() => [
+    { id: 'page-home', label: t('الرئيسية', 'Home'), sublabel: t('Home', 'الرئيسية'), section: t('الصفحات', 'Pages'), href: '/' },
+    { id: 'page-market', label: t('السوق', 'Market'), sublabel: t('Market', 'السوق'), section: t('الصفحات', 'Pages'), href: '/market' },
+    { id: 'page-charts', label: t('الرسوم البيانية', 'Charts'), sublabel: t('Charts', 'الرسوم البيانية'), section: t('الصفحات', 'Pages'), href: '/charts' },
+    { id: 'page-news', label: t('الأخبار', 'News'), sublabel: t('News', 'الأخبار'), section: t('الصفحات', 'Pages'), href: '/news' },
+    { id: 'page-chat', label: t('رائد - المحادثة', 'Ra\'d - AI Chat'), sublabel: t('AI Chat', 'رائد - المحادثة'), section: t('الصفحات', 'Pages'), href: '/chat' },
+    { id: 'page-reports', label: t('التقارير', 'Reports'), sublabel: t('Reports', 'التقارير'), section: t('الصفحات', 'Pages'), href: '/reports' },
+    { id: 'page-watchlist', label: t('المفضلة', 'Watchlist'), sublabel: t('Watchlist', 'المفضلة'), section: t('الصفحات', 'Pages'), href: '/watchlist' },
+    { id: 'page-announcements', label: t('الإعلانات', 'Announcements'), sublabel: t('Announcements', 'الإعلانات'), section: t('الصفحات', 'Pages'), href: '/announcements' },
+  ], [t]);
+
+  const ACTION_ITEMS: PaletteItem[] = useMemo(() => [
+    { id: 'act-charts', label: t('عرض الرسوم البيانية', 'View Charts'), section: t('إجراءات', 'Actions'), href: '/charts' },
+    { id: 'act-ask', label: t('اسأل رائد عن...', 'Ask Ra\'d about...'), section: t('إجراءات', 'Actions'), href: '/chat' },
+    { id: 'act-movers', label: t('عرض أكثر الأسهم تحركاً', 'View top movers'), section: t('إجراءات', 'Actions'), href: '/market' },
+  ], [t]);
+
+  const STOCKS_SECTION = t('الأسهم', 'Stocks');
 
   // Load stocks on first open
   useEffect(() => {
@@ -206,7 +211,7 @@ export function CommandPalette() {
         id: `stock-${s.ticker}`,
         label: `${s.ticker} - ${s.name}`,
         sublabel: s.sector,
-        section: '\u0627\u0644\u0623\u0633\u0647\u0645',
+        section: STOCKS_SECTION,
         href: `/stock/${s.ticker}`,
       });
     }
@@ -229,7 +234,7 @@ export function CommandPalette() {
     }
 
     return items;
-  }, [query, stocks]);
+  }, [query, stocks, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION]);
 
   // Reset index when results change
   useEffect(() => {
@@ -311,7 +316,7 @@ export function CommandPalette() {
         )}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="\u0628\u062D\u062B \u0633\u0631\u064A\u0639"
+        aria-label={t('بحث سريع', 'Quick search')}
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2A2A2A]">
@@ -330,13 +335,13 @@ export function CommandPalette() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="\u0627\u0628\u062D\u062B \u0639\u0646 \u0633\u0647\u0645 \u0623\u0648 \u0635\u0641\u062D\u0629..."
+            placeholder={t('ابحث عن سهم أو صفحة...', 'Search for a stock or page...')}
             className={cn(
               'flex-1 bg-transparent text-sm',
               'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]',
               'focus:outline-none',
             )}
-            dir="rtl"
+            dir="auto"
           />
           <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-[var(--text-muted)] bg-[#2A2A2A] rounded">
             ESC
@@ -346,7 +351,7 @@ export function CommandPalette() {
         {/* Recent searches */}
         {!query.trim() && recentSearches.length > 0 && (
           <div className="px-4 py-2 border-b border-[#2A2A2A]">
-            <p className="text-[10px] text-[var(--text-muted)] mb-1.5">\u0627\u0644\u0628\u062D\u062B \u0627\u0644\u0623\u062E\u064A\u0631</p>
+            <p className="text-[10px] text-[var(--text-muted)] mb-1.5">{t('البحث الأخير', 'Recent searches')}</p>
             <div className="flex flex-wrap gap-1.5">
               {recentSearches.map((s) => (
                 <button
@@ -365,7 +370,7 @@ export function CommandPalette() {
         <div ref={listRef} className="max-h-[50vh] overflow-y-auto py-2">
           {results.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-sm text-[var(--text-muted)]">\u0644\u0627 \u062A\u0648\u062C\u062F \u0646\u062A\u0627\u0626\u062C</p>
+              <p className="text-sm text-[var(--text-muted)]">{t('لا توجد نتائج', 'No results')}</p>
             </div>
           ) : (
             Array.from(grouped.entries()).map(([section, entries]) => (
@@ -386,15 +391,15 @@ export function CommandPalette() {
                         ? 'bg-[#D4A84B]/10 text-gold'
                         : 'text-[var(--text-secondary)] hover:bg-[#252525]',
                     )}
-                    dir="rtl"
+                    dir="auto"
                   >
                     {/* Icon based on section */}
                     <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                      {item.section === '\u0627\u0644\u0623\u0633\u0647\u0645' ? (
+                      {item.section === STOCKS_SECTION ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                         </svg>
-                      ) : item.section === '\u0625\u062C\u0631\u0627\u0621\u0627\u062A' ? (
+                      ) : item.section === t('إجراءات', 'Actions') ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="12" cy="12" r="10" />
                           <polygon points="10 8 16 12 10 16 10 8" />
@@ -429,15 +434,15 @@ export function CommandPalette() {
         <div className="px-4 py-2 border-t border-[#2A2A2A] flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
           <span className="flex items-center gap-1">
             <kbd className="px-1 py-0.5 bg-[#2A2A2A] rounded font-mono">&uarr;&darr;</kbd>
-            \u0644\u0644\u062A\u0646\u0642\u0644
+            {t('للتنقل', 'to navigate')}
           </span>
           <span className="flex items-center gap-1">
             <kbd className="px-1 py-0.5 bg-[#2A2A2A] rounded font-mono">Enter</kbd>
-            \u0644\u0644\u0641\u062A\u062D
+            {t('للفتح', 'to open')}
           </span>
           <span className="flex items-center gap-1">
             <kbd className="px-1 py-0.5 bg-[#2A2A2A] rounded font-mono">Esc</kbd>
-            \u0644\u0644\u0625\u063A\u0644\u0627\u0642
+            {t('للإغلاق', 'to close')}
           </span>
         </div>
       </div>

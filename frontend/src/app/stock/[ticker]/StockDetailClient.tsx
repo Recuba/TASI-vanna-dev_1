@@ -8,6 +8,7 @@ import { CandlestickChart, ChartWrapper, TradingViewAttribution, ChartErrorBound
 import { useOHLCVData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Watchlist localStorage helper
@@ -36,7 +37,7 @@ function setWatchlistTickers(tickers: string[]) {
 function Toast({ message, visible }: { message: string; visible: boolean }) {
   if (!visible) return null;
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-md bg-gold text-dark-bg text-sm font-medium shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300" dir="rtl">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-md bg-gold text-dark-bg text-sm font-medium shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
       {message}
     </div>
   );
@@ -85,6 +86,7 @@ interface StockDetailClientProps {
 export function StockDetailClient({ ticker }: StockDetailClientProps) {
   const { data: detail, loading, error, refetch } = useStockDetail(ticker);
   const { data: ohlcvData, loading: chartLoading, source: chartSource } = useOHLCVData(ticker);
+  const { t, language } = useLanguage();
 
   // Watchlist state
   const [inWatchlist, setInWatchlist] = useState(false);
@@ -99,23 +101,25 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
     const current = getWatchlistTickers();
     let msg: string;
     if (current.includes(ticker)) {
-      setWatchlistTickers(current.filter((t) => t !== ticker));
+      setWatchlistTickers(current.filter((tk) => tk !== ticker));
       setInWatchlist(false);
-      msg = '\u062A\u0645\u062A \u0627\u0644\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629';
+      msg = t('\u062A\u0645\u062A \u0627\u0644\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629', 'Removed from watchlist');
     } else {
       setWatchlistTickers([...current, ticker]);
       setInWatchlist(true);
-      msg = '\u062A\u0645\u062A \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629';
+      msg = t('\u062A\u0645\u062A \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Added to watchlist');
     }
     setToastMsg(msg);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2000);
-  }, [ticker]);
+  }, [ticker, t]);
+
+  const dir = language === 'ar' ? 'rtl' : 'ltr';
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <LoadingSpinner message={`${ticker} \u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...`} />
+        <LoadingSpinner message={t(`${ticker} \u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...`, `Loading ${ticker}...`)} />
       </div>
     );
   }
@@ -133,8 +137,8 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg font-bold text-[var(--text-primary)] mb-2">{ticker}</p>
-          <p className="text-sm text-[var(--text-muted)]" dir="rtl">
-            {'\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0633\u0647\u0645 \u063A\u064A\u0631 \u0645\u062A\u0627\u062D\u0629'}
+          <p className="text-sm text-[var(--text-muted)]" dir={dir}>
+            {t('\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0633\u0647\u0645 \u063A\u064A\u0631 \u0645\u062A\u0627\u062D\u0629', 'Stock data not available')}
           </p>
         </div>
       </div>
@@ -154,13 +158,13 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
       <div className="max-w-content-lg mx-auto space-y-5">
 
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]" dir="rtl">
+        <nav className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]" dir={dir}>
           <Link href="/" className="hover:text-gold transition-colors">
-            الرئيسية
+            {t('\u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629', 'Home')}
           </Link>
           <span className="text-[var(--text-muted)]">&gt;</span>
           <Link href="/market" className="hover:text-gold transition-colors">
-            السوق
+            {t('\u0627\u0644\u0633\u0648\u0642', 'Market')}
           </Link>
           {detail.sector && (
             <>
@@ -185,8 +189,8 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
               <button
                 onClick={toggleWatchlist}
                 className="mt-1 text-2xl transition-colors hover:scale-110 active:scale-95"
-                aria-label={inWatchlist ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
-                title={inWatchlist ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
+                aria-label={inWatchlist ? t('\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629', 'Remove from watchlist') : t('\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Add to watchlist')}
+                title={inWatchlist ? t('\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629', 'Remove from watchlist') : t('\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Add to watchlist')}
               >
                 {inWatchlist ? (
                   <span className="text-gold">&#9733;</span>
@@ -217,12 +221,12 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
             <div className="text-end">
               <p className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
                 {detail.current_price?.toFixed(2) || '-'}
-                <span className="text-sm text-[var(--text-muted)] mr-1">{detail.currency || 'SAR'}</span>
+                <span className={cn("text-sm text-[var(--text-muted)]", language === 'ar' ? 'mr-1' : 'ml-1')}>{detail.currency || 'SAR'}</span>
               </p>
               {priceChange !== null && (
                 <p className={cn('text-sm font-bold mt-0.5', isUp ? 'text-accent-green' : 'text-accent-red')}>
                   {isUp ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePct?.toFixed(2)}%)
-                  <span className="text-[10px] mr-1">{isUp ? '\u25B2' : '\u25BC'}</span>
+                  <span className={cn("text-[10px]", language === 'ar' ? 'mr-1' : 'ml-1')}>{isUp ? '\u25B2' : '\u25BC'}</span>
                 </p>
               )}
             </div>
@@ -231,22 +235,22 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
 
         {/* Price Summary Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <MetricCard label={'\u0627\u0644\u0625\u063A\u0644\u0627\u0642 \u0627\u0644\u0633\u0627\u0628\u0642'} value={detail.previous_close?.toFixed(2) || '-'} />
+          <MetricCard label={t('\u0627\u0644\u0625\u063A\u0644\u0627\u0642 \u0627\u0644\u0633\u0627\u0628\u0642', 'Previous Close')} value={detail.previous_close?.toFixed(2) || '-'} />
           <MetricCard
-            label={'\u0646\u0637\u0627\u0642 \u0627\u0644\u064A\u0648\u0645'}
+            label={t('\u0646\u0637\u0627\u0642 \u0627\u0644\u064A\u0648\u0645', 'Day Range')}
             value={`${detail.day_low?.toFixed(2) || '-'} - ${detail.day_high?.toFixed(2) || '-'}`}
           />
           <MetricCard
-            label={'\u0646\u0637\u0627\u0642 52 \u0623\u0633\u0628\u0648\u0639'}
+            label={t('\u0646\u0637\u0627\u0642 52 \u0623\u0633\u0628\u0648\u0639', '52-Week Range')}
             value={`${detail.week_52_low?.toFixed(2) || '-'} - ${detail.week_52_high?.toFixed(2) || '-'}`}
           />
-          <MetricCard label={'\u062D\u062C\u0645 \u0627\u0644\u062A\u062F\u0627\u0648\u0644'} value={formatNumber(detail.volume, { decimals: 0 })} />
+          <MetricCard label={t('\u062D\u062C\u0645 \u0627\u0644\u062A\u062F\u0627\u0648\u0644', 'Volume')} value={formatNumber(detail.volume, { decimals: 0 })} />
         </div>
 
         {/* Chart */}
         <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-4">
           <ChartErrorBoundary fallbackHeight={400}>
-            <ChartWrapper title={'\u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A'} source={chartSource}>
+            <ChartWrapper title={t('\u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A', 'Price Chart')} source={chartSource}>
               <CandlestickChart data={ohlcvData || []} height={400} ticker={ticker} loading={chartLoading} />
             </ChartWrapper>
           </ChartErrorBoundary>
@@ -254,9 +258,9 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
             <Link
               href={`/charts?ticker=${encodeURIComponent(ticker)}`}
               className="text-xs text-gold hover:text-gold-light transition-colors font-medium"
-              dir="rtl"
+              dir={dir}
             >
-              عرض الرسم البياني الكامل
+              {t('\u0639\u0631\u0636 \u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A \u0627\u0644\u0643\u0627\u0645\u0644', 'View full chart')}
             </Link>
             <TradingViewAttribution />
           </div>
@@ -267,14 +271,14 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
 
           {/* Key Metrics */}
           <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir="rtl">
-              {'\u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629'}
+            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+              {t('\u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629', 'Key Metrics')}
             </h2>
             <div className="grid grid-cols-2 gap-2">
-              <MetricCard label={'\u0627\u0644\u0642\u064A\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064A\u0629'} value={formatNumber(detail.market_cap, { prefix: 'SAR ' })} />
+              <MetricCard label={t('\u0627\u0644\u0642\u064A\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064A\u0629', 'Market Cap')} value={formatNumber(detail.market_cap, { prefix: 'SAR ' })} />
               <MetricCard label="Beta" value={detail.beta?.toFixed(2) || '-'} />
-              <MetricCard label="P/E (\u0645\u062A\u0623\u062E\u0631)" value={detail.trailing_pe?.toFixed(2) || '-'} />
-              <MetricCard label="P/E (\u0645\u062A\u0648\u0642\u0639)" value={detail.forward_pe?.toFixed(2) || '-'} />
+              <MetricCard label={t('P/E (\u0645\u062A\u0623\u062E\u0631)', 'P/E (Trailing)')} value={detail.trailing_pe?.toFixed(2) || '-'} />
+              <MetricCard label={t('P/E (\u0645\u062A\u0648\u0642\u0639)', 'P/E (Forward)')} value={detail.forward_pe?.toFixed(2) || '-'} />
               <MetricCard label="P/B" value={detail.price_to_book?.toFixed(2) || '-'} />
               <MetricCard label="EPS" value={detail.trailing_eps?.toFixed(2) || '-'} />
             </div>
@@ -282,22 +286,22 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
 
           {/* Profitability */}
           <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir="rtl">
-              {'\u0627\u0644\u0631\u0628\u062D\u064A\u0629'}
+            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+              {t('\u0627\u0644\u0631\u0628\u062D\u064A\u0629', 'Profitability')}
             </h2>
             <div className="grid grid-cols-2 gap-2">
               <MetricCard
-                label={'\u0627\u0644\u0639\u0627\u0626\u062F \u0639\u0644\u0649 \u0627\u0644\u0645\u0644\u0643\u064A\u0629'}
+                label={t('\u0627\u0644\u0639\u0627\u0626\u062F \u0639\u0644\u0649 \u0627\u0644\u0645\u0644\u0643\u064A\u0629', 'Return on Equity')}
                 value={formatPct(detail.roe)}
                 accent={detail.roe !== null && detail.roe !== undefined ? (detail.roe >= 0 ? 'green' : 'red') : undefined}
               />
               <MetricCard
-                label={'\u0647\u0627\u0645\u0634 \u0627\u0644\u0631\u0628\u062D'}
+                label={t('\u0647\u0627\u0645\u0634 \u0627\u0644\u0631\u0628\u062D', 'Profit Margin')}
                 value={formatPct(detail.profit_margin)}
                 accent={detail.profit_margin !== null && detail.profit_margin !== undefined ? (detail.profit_margin >= 0 ? 'green' : 'red') : undefined}
               />
               <MetricCard
-                label={'\u0646\u0645\u0648 \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A'}
+                label={t('\u0646\u0645\u0648 \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A', 'Revenue Growth')}
                 value={formatPct(detail.revenue_growth)}
                 accent={detail.revenue_growth !== null && detail.revenue_growth !== undefined ? (detail.revenue_growth >= 0 ? 'green' : 'red') : undefined}
               />
@@ -309,12 +313,12 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
         {/* Analyst Data */}
         {detail.recommendation && (
           <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir="rtl">
-              {'\u0625\u062C\u0645\u0627\u0639 \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646'}
+            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+              {t('\u0625\u062C\u0645\u0627\u0639 \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646', 'Analyst Consensus')}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="bg-[var(--bg-input)] rounded-xl px-4 py-3 text-center">
-                <p className="text-xs text-[var(--text-muted)] mb-1">{'\u0627\u0644\u062A\u0648\u0635\u064A\u0629'}</p>
+                <p className="text-xs text-[var(--text-muted)] mb-1">{t('\u0627\u0644\u062A\u0648\u0635\u064A\u0629', 'Recommendation')}</p>
                 <p className={cn(
                   'text-sm font-bold uppercase',
                   detail.recommendation.toLowerCase().includes('buy') ? 'text-accent-green'
@@ -324,15 +328,15 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
                   {detail.recommendation.toUpperCase()}
                 </p>
               </div>
-              <MetricCard label={'\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0645\u0633\u062A\u0647\u062F\u0641'} value={detail.target_mean_price?.toFixed(2) || '-'} />
-              <MetricCard label={'\u0639\u062F\u062F \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646'} value={String(detail.analyst_count || '-')} />
+              <MetricCard label={t('\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0645\u0633\u062A\u0647\u062F\u0641', 'Target Price')} value={detail.target_mean_price?.toFixed(2) || '-'} />
+              <MetricCard label={t('\u0639\u062F\u062F \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646', 'Number of Analysts')} value={String(detail.analyst_count || '-')} />
             </div>
           </section>
         )}
 
         {/* AI Chat CTA - pre-filled with ticker */}
         <Link
-          href={`/chat?q=${encodeURIComponent(`حلل سهم ${ticker}`)}`}
+          href={`/chat?q=${encodeURIComponent(language === 'ar' ? '\u062D\u0644\u0644 \u0633\u0647\u0645 ' + ticker : 'Analyze stock ' + ticker)}`}
           className={cn(
             'block p-5 rounded-xl text-center',
             'bg-gradient-to-r from-gold/10 via-gold/5 to-gold/10',
@@ -342,11 +346,11 @@ export function StockDetailClient({ ticker }: StockDetailClientProps) {
             'transition-all duration-300'
           )}
         >
-          <p className="text-sm font-bold gold-text" dir="rtl">
-            {'\u0627\u0633\u0623\u0644 \u0639\u0646'} {detail.short_name || ticker}
+          <p className="text-sm font-bold gold-text" dir={dir}>
+            {t('\u0627\u0633\u0623\u0644 \u0639\u0646', 'Ask about')} {detail.short_name || ticker}
           </p>
-          <p className="text-xs text-[var(--text-secondary)] mt-1" dir="rtl">
-            {'\u0627\u0633\u062A\u062E\u062F\u0645 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629 \u0644\u0644\u062D\u0635\u0648\u0644 \u0639\u0644\u0649 \u062A\u062D\u0644\u064A\u0644 \u0645\u0641\u0635\u0644'}
+          <p className="text-xs text-[var(--text-secondary)] mt-1" dir={dir}>
+            {t('\u0627\u0633\u062A\u062E\u062F\u0645 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629 \u0644\u0644\u062D\u0635\u0648\u0644 \u0639\u0644\u0649 \u062A\u062D\u0644\u064A\u0644 \u0645\u0641\u0635\u0644', 'Use AI chat for detailed analysis')}
           </p>
         </Link>
 

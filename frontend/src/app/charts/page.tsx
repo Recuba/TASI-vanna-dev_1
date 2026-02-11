@@ -8,16 +8,17 @@ import { useEntities } from '@/lib/hooks/use-api';
 import { TASIIndexChart, StockOHLCVChart } from '@/components/charts';
 import { getTASIStockName } from '@/lib/tradingview-utils';
 import { useStockDetail } from '@/lib/hooks/use-api';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // Dynamic imports for new chart components (no SSR)
 const StockComparisonChart = dynamic(
   () => import('@/components/charts/StockComparisonChart'),
-  { ssr: false, loading: () => <div className="h-[500px] rounded-xl bg-[#1A1A1A] animate-pulse" /> },
+  { ssr: false, loading: () => <div className="h-[500px] rounded-xl dark:bg-[#1A1A1A] bg-gray-100 animate-pulse" /> },
 );
 
 const PreBuiltCharts = dynamic(
   () => import('@/components/charts/PreBuiltCharts'),
-  { ssr: false, loading: () => <div className="h-[400px] rounded-xl bg-[#1A1A1A] animate-pulse" /> },
+  { ssr: false, loading: () => <div className="h-[400px] rounded-xl dark:bg-[#1A1A1A] bg-gray-100 animate-pulse" /> },
 );
 
 // ---------------------------------------------------------------------------
@@ -94,6 +95,7 @@ function StockChartPanel({
   onAddToCompare?: (ticker: string) => void;
   compareDisabled?: boolean;
 }) {
+  const { t } = useLanguage();
   const { data: detail } = useStockDetail(ticker);
 
   const priceChange =
@@ -152,9 +154,9 @@ function StockChartPanel({
                   ? 'bg-[#2A2A2A] text-[#505050] cursor-not-allowed'
                   : 'bg-gold/10 border border-gold/30 text-gold hover:bg-gold/20',
               )}
-              title={compareDisabled ? 'Already in comparison or limit reached' : 'Add to comparison'}
+              title={compareDisabled ? t('موجود بالفعل في المقارنة أو تم بلوغ الحد', 'Already in comparison or limit reached') : t('إضافة للمقارنة', 'Add to comparison')}
             >
-              + Compare
+              + {t('مقارنة', 'Compare')}
             </button>
           )}
           {/* Fullscreen toggle */}
@@ -196,7 +198,7 @@ function StockChartPanel({
             href={`/stock/${encodeURIComponent(ticker)}`}
             className="text-gold hover:text-gold-light transition-colors font-medium"
           >
-            View full details &rarr;
+            {t('عرض التفاصيل الكاملة', 'View full details')} &rarr;
           </Link>
         </div>
       )}
@@ -267,6 +269,7 @@ function CompareTickerSelector({
   onAdd: (ticker: string) => void;
   onRemove: (ticker: string) => void;
 }) {
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
   const [focused, setFocused] = useState(false);
 
@@ -336,7 +339,7 @@ function CompareTickerSelector({
               onChange={(e) => setSearch(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setTimeout(() => setFocused(false), 200)}
-              placeholder={`Add stock to compare (${selectedTickers.length}/5)...`}
+              placeholder={t(`أضف سهم للمقارنة (${selectedTickers.length}/5)...`, `Add stock to compare (${selectedTickers.length}/5)...`)}
               className={cn(
                 'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
                 'border gold-border rounded-md pl-9 pr-3 py-2.5 text-sm',
@@ -414,6 +417,7 @@ function CompareTickerSelector({
 // ---------------------------------------------------------------------------
 
 export default function ChartsPage() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabId>('stocks');
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -520,7 +524,7 @@ export default function ChartsPage() {
   if (isFullscreen && selectedTicker) {
     return (
       <div
-        className="fixed inset-0 z-50 bg-[#0E0E0E] overflow-auto"
+        className="fixed inset-0 z-50 dark:bg-[#0E0E0E] bg-white overflow-auto"
         style={{ animation: 'chart-fullscreen-in 0.3s ease-out' }}
       >
         <div className="max-w-[1600px] mx-auto px-4 py-3">
@@ -545,16 +549,15 @@ export default function ChartsPage() {
       <div className="max-w-[1400px] mx-auto space-y-5">
         {/* Header */}
         <div>
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">Charts</h1>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('الرسوم البيانية', 'Charts')}</h1>
           <p className="text-sm text-[var(--text-muted)]">
-            Interactive charts for TASI stocks
+            {t('رسوم بيانية تفاعلية لأسهم تاسي', 'Interactive charts for TASI stocks')}
           </p>
         </div>
 
         {/* Tab bar */}
         <div
-          className="flex items-center gap-0 rounded-lg overflow-hidden"
-          style={{ background: '#2A2A2A' }}
+          className="flex items-center gap-0 rounded-lg overflow-hidden dark:bg-[#2A2A2A] bg-gray-100"
         >
           {TABS.map((tab) => (
             <button
@@ -567,8 +570,7 @@ export default function ChartsPage() {
                   : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]',
               )}
             >
-              <span className="relative z-10">{tab.labelAr}</span>
-              <span className="relative z-10 text-[11px] ml-1.5 opacity-60">{tab.labelEn}</span>
+              <span className="relative z-10">{t(tab.labelAr, tab.labelEn)}</span>
               {/* Active indicator */}
               {activeTab === tab.id && (
                 <span
@@ -612,7 +614,7 @@ export default function ChartsPage() {
                     onFocus={() => setSearchFocused(true)}
                     onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
                     onKeyDown={handleSearchKeyDown}
-                    placeholder="Search by ticker or company name..."
+                    placeholder={t('البحث بالرمز أو اسم الشركة...', 'Search by ticker or company name...')}
                     className={cn(
                       'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
                       'border gold-border rounded-md pl-9 pr-3 py-2.5 text-sm',
@@ -656,7 +658,7 @@ export default function ChartsPage() {
                     )}
                   >
                     <div className="px-3 py-1.5 text-xs text-[var(--text-muted)] border-b border-[var(--bg-input)]">
-                      Recent searches
+                      {t('عمليات البحث الأخيرة', 'Recent searches')}
                     </div>
                     {recentSearches.map((r) => (
                       <button
@@ -723,9 +725,9 @@ export default function ChartsPage() {
               /* Default: TASI Index + welcome empty state */
               <section className="bg-[var(--bg-card)] border gold-border rounded-md p-4 space-y-3">
                 <div>
-                  <h2 className="text-xl font-bold text-[var(--text-primary)]">TASI Index</h2>
+                  <h2 className="text-xl font-bold text-[var(--text-primary)]">{t('مؤشر تاسي', 'TASI Index')}</h2>
                   <p className="text-sm text-[var(--text-muted)]">
-                    Tadawul All Share Index - Saudi Stock Exchange
+                    {t('مؤشر السوق الرئيسي - تداول السعودية', 'Tadawul All Share Index - Saudi Stock Exchange')}
                   </p>
                 </div>
 
@@ -756,7 +758,10 @@ export default function ChartsPage() {
                     <line x1="12" y1="8" x2="12.01" y2="8" />
                   </svg>
                   <p className="text-xs text-[var(--text-secondary)]">
-                    Search for a stock above or choose from popular stocks to view its detailed candlestick chart with OHLCV data.
+                    {t(
+                      'ابحث عن سهم أعلاه أو اختر من الأسهم الشائعة لعرض الرسم البياني التفصيلي مع بيانات OHLCV.',
+                      'Search for a stock above or choose from popular stocks to view its detailed candlestick chart with OHLCV data.'
+                    )}
                   </p>
                 </div>
               </section>
@@ -773,10 +778,10 @@ export default function ChartsPage() {
             <section className="bg-[var(--bg-card)] border gold-border rounded-md p-4 space-y-3">
               <div>
                 <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                  Stock Comparison
+                  {t('مقارنة الأسهم', 'Stock Comparison')}
                 </h2>
                 <p className="text-sm text-[var(--text-muted)]">
-                  Compare price performance of up to 5 stocks (normalized to base 100)
+                  {t('قارن أداء الأسعار لما يصل إلى 5 أسهم (تطبيع إلى أساس 100)', 'Compare price performance of up to 5 stocks (normalized to base 100)')}
                 </p>
               </div>
               <CompareTickerSelector
@@ -799,12 +804,12 @@ export default function ChartsPage() {
         {activeTab === 'analytics' && (
           <div className="space-y-5" style={{ animation: 'tab-in 0.25s ease-out' }}>
             <section>
-              <div className="mb-4" dir="rtl">
+              <div className="mb-4">
                 <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                  تحليلات السوق
+                  {t('تحليلات السوق', 'Market Analytics')}
                 </h2>
                 <p className="text-sm text-[var(--text-muted)]">
-                  بيانات تحليلية مباشرة من سوق تداول
+                  {t('بيانات تحليلية مباشرة من سوق تداول', 'Live analytical data from Tadawul market')}
                 </p>
               </div>
               <PreBuiltCharts />
@@ -823,9 +828,9 @@ export default function ChartsPage() {
               'transition-all duration-300',
             )}
           >
-            <p className="text-sm font-bold gold-text">Need deeper analysis?</p>
+            <p className="text-sm font-bold gold-text">{t('تحتاج تحليل أعمق؟', 'Need deeper analysis?')}</p>
             <p className="text-xs text-[var(--text-secondary)] mt-1">
-              Ask Ra&apos;d AI to analyze any stock, sector, or financial metric
+              {t('اسأل رعد AI لتحليل أي سهم أو قطاع أو مقياس مالي', 'Ask Ra\u2019d AI to analyze any stock, sector, or financial metric')}
             </p>
           </Link>
         </section>

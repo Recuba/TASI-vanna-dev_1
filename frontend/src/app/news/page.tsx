@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useNewsFeed, useNewsSources } from '@/lib/hooks/use-api';
 import { searchNewsFeed, type NewsFeedItem } from '@/lib/api-client';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Extended article type (API returns these but NewsFeedItem type is narrower)
@@ -251,7 +252,7 @@ function BookmarkButton({
           ? 'text-gold hover:text-gold-light'
           : 'text-[var(--text-muted)] hover:text-gold/60',
       )}
-      title={bookmarked ? 'إزالة من المحفوظات' : 'حفظ المقال'}
+      title={bookmarked ? 'Remove from saved' : 'Save article'}
     >
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -288,6 +289,7 @@ function ArticleCard({
   ticker?: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useLanguage();
   const sourceColor = getSourceColor(sourceName);
   const readTime = readingTimeArabic(body);
 
@@ -354,7 +356,7 @@ function ArticleCard({
                   }}
                   className="text-xs text-gold hover:text-gold-light mt-1 transition-colors"
                 >
-                  {expanded ? 'إغلاق' : 'اقرأ المزيد'}
+                  {expanded ? t('إغلاق', 'Close') : t('اقرأ المزيد', 'Read More')}
                 </button>
               )}
             </div>
@@ -379,7 +381,7 @@ function ArticleCard({
               href={`/news/${id}`}
               className="text-xs text-gold hover:text-gold-light mr-auto transition-colors"
             >
-              عرض التفاصيل
+              {t('عرض التفاصيل', 'View Details')}
             </Link>
           </div>
         </div>
@@ -398,9 +400,11 @@ function ArticleCard({
 function SearchInput({
   value,
   onChange,
+  placeholder = 'ابحث في الأخبار...',
 }: {
   value: string;
   onChange: (v: string) => void;
+  placeholder?: string;
 }) {
   const [local, setLocal] = useState(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -437,7 +441,7 @@ function SearchInput({
         type="text"
         value={local}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="ابحث في الأخبار..."
+        placeholder={placeholder}
         className={cn(
           'w-full pr-10 pl-10 py-2.5 rounded-lg text-sm',
           'bg-[var(--bg-input)] border border-[#2A2A2A]',
@@ -470,6 +474,7 @@ function SearchInput({
 // ---------------------------------------------------------------------------
 
 export default function NewsPage() {
+  const { t } = useLanguage();
   const [allArticles, setAllArticles] = useState<NewsFeedItem[]>([]);
   const [page, setPage] = useState(1);
   const [activeSource, setActiveSource] = useState<string | null>(null);
@@ -668,10 +673,10 @@ export default function NewsPage() {
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-[var(--text-primary)]">
-            أخبار السوق
+            {t('أخبار السوق', 'Market News')}
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            آخر أخبار سوق تداول السعودي
+            {t('آخر أخبار سوق تداول السعودي', 'Latest Saudi Tadawul market news')}
           </p>
         </div>
 
@@ -686,7 +691,7 @@ export default function NewsPage() {
           )}
         >
           {/* Search input */}
-          <SearchInput value={searchQuery} onChange={setSearchQuery} />
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder={t('ابحث في الأخبار...', 'Search news...')} />
 
           {/* Source filter chips + saved tab */}
           <div className="flex flex-wrap gap-2">
@@ -755,7 +760,7 @@ export default function NewsPage() {
               <svg className="w-3 h-3 inline-block ml-1" viewBox="0 0 24 24" fill={showSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
-              المحفوظات
+              {t('المحفوظات', 'Saved')}
               {bookmarks.size > 0 && (
                 <span className="mr-1 opacity-60">({bookmarks.size})</span>
               )}
@@ -774,7 +779,7 @@ export default function NewsPage() {
               'animate-pulse',
             )}
           >
-            {newArticleCount} أخبار جديدة - اضغط للتحديث
+            {t(`${newArticleCount} أخبار جديدة - اضغط للتحديث`, `${newArticleCount} new articles - tap to refresh`)}
           </button>
         )}
 
@@ -799,7 +804,7 @@ export default function NewsPage() {
                 'hover:bg-gold/20 transition-colors',
               )}
             >
-              إعادة المحاولة
+              {t('إعادة المحاولة', 'Retry')}
             </button>
           </div>
         ) : displayArticles.length === 0 ? (
@@ -822,10 +827,10 @@ export default function NewsPage() {
             </div>
             <p className="text-sm text-[var(--text-muted)]">
               {isSearching
-                ? `لا توجد نتائج للبحث "${searchQuery}"`
+                ? t(`لا توجد نتائج للبحث "${searchQuery}"`, `No results found for "${searchQuery}"`)
                 : showSaved
-                  ? 'لا توجد مقالات محفوظة - اضغط على أيقونة الحفظ لحفظ المقالات'
-                  : 'لا توجد أخبار حالياً - يتم تحديث الأخبار تلقائياً'}
+                  ? t('لا توجد مقالات محفوظة - اضغط على أيقونة الحفظ لحفظ المقالات', 'No saved articles - tap the bookmark icon to save articles')
+                  : t('لا توجد أخبار حالياً - يتم تحديث الأخبار تلقائياً', 'No news available - news updates automatically')}
             </p>
           </div>
         ) : (
@@ -833,7 +838,7 @@ export default function NewsPage() {
             {/* Search results count */}
             {isSearching && searchResults && (
               <p className="text-xs text-[var(--text-muted)]">
-                {searchResults.length} نتيجة للبحث
+                {t(`${searchResults.length} نتيجة للبحث`, `${searchResults.length} results found`)}
               </p>
             )}
 
@@ -862,7 +867,7 @@ export default function NewsPage() {
             {/* Article count */}
             {!isSearching && total > 0 && (
               <p className="text-xs text-center text-[var(--text-muted)]">
-                عرض {allArticles.length} من {total}
+                {t(`عرض ${allArticles.length} من ${total}`, `Showing ${allArticles.length} of ${total}`)}
               </p>
             )}
 

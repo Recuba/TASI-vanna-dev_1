@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useSSEChat } from '@/lib/use-sse-chat';
 import { MessageBubble } from './MessageBubble';
 import { LoadingDots } from './LoadingDots';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { ChatMessage } from '@/lib/types';
 
 const suggestions = [
@@ -68,6 +69,7 @@ function getFollowUpSuggestions(lastAssistant: ChatMessage | undefined): string[
 
 export function AIChatInterface() {
   const { messages, isLoading, sendMessage, clearMessages, stopStreaming, retryLast } = useSSEChat();
+  const { t } = useLanguage();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -130,7 +132,7 @@ export function AIChatInterface() {
             <div className="w-6 h-6 rounded-sm bg-gold-gradient flex items-center justify-center">
               <span className="text-[10px] font-bold text-[#0E0E0E]">RA</span>
             </div>
-            <span className="text-sm font-medium text-[var(--text-primary)]">محادثة رائد</span>
+            <span className="text-sm font-medium text-[var(--text-primary)]">{t('محادثة رائد', 'Ra\'d Chat')}</span>
           </div>
           <button
             onClick={clearMessages}
@@ -140,7 +142,7 @@ export function AIChatInterface() {
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
             </svg>
-            مسح المحادثة
+            {t('مسح المحادثة', 'Clear Chat')}
           </button>
         </div>
       )}
@@ -157,10 +159,10 @@ export function AIChatInterface() {
               </div>
               <div className="text-center">
                 <h2 className="text-2xl font-bold gold-text mb-2">
-                  مرحبا بك في رائد
+                  {t('مرحبا بك في رائد', 'Welcome to Ra\'d')}
                 </h2>
                 <p className="text-sm text-[var(--text-secondary)] max-w-md">
-                  مساعدك الذكي لتحليل سوق الأسهم السعودي. اسأل عن أي سهم أو قطاع أو مؤشر.
+                  {t('مساعدك الذكي لتحليل سوق الأسهم السعودي. اسأل عن أي سهم أو قطاع أو مؤشر.', 'Your AI assistant for Saudi stock market analysis. Ask about any stock, sector, or index.')}
                 </p>
               </div>
             </div>
@@ -233,7 +235,7 @@ export function AIChatInterface() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="اسأل عن الأسهم السعودية..."
+              placeholder={t('اسأل عن الأسهم السعودية...', 'Ask about Saudi stocks...')}
               disabled={isLoading}
               rows={1}
               className={cn(
@@ -261,7 +263,7 @@ export function AIChatInterface() {
                 'hover:bg-accent-red/30',
                 'transition-colors'
               )}
-              aria-label="إيقاف"
+              aria-label={t('إيقاف', 'Stop')}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="6" width="12" height="12" rx="1" />
@@ -278,7 +280,7 @@ export function AIChatInterface() {
                 'disabled:opacity-30 disabled:cursor-not-allowed',
                 'transition-all duration-300'
               )}
-              aria-label="إرسال"
+              aria-label={t('إرسال', 'Send')}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13" />
@@ -293,7 +295,7 @@ export function AIChatInterface() {
           <div className="max-w-4xl mx-auto mt-2 flex justify-center items-center">
             <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
               <LoadingDots />
-              <span>جاري التفكير...</span>
+              <span>{t('جاري التفكير...', 'Thinking...')}</span>
             </div>
           </div>
         )}

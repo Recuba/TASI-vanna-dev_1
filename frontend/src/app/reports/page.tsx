@@ -6,35 +6,13 @@ import { cn } from '@/lib/utils';
 import { type ReportItem } from '@/lib/api-client';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Filter types
 // ---------------------------------------------------------------------------
 
 type TypeFilter = 'all' | 'technical' | 'fundamental' | 'sector' | 'macro';
-
-const reportTypes: { label: string; value: TypeFilter }[] = [
-  { label: 'جميع التقارير', value: 'all' },
-  { label: 'فني', value: 'technical' },
-  { label: 'أساسي', value: 'fundamental' },
-  { label: 'قطاعي', value: 'sector' },
-  { label: 'اقتصاد كلي', value: 'macro' },
-];
-
-const typeLabels: Record<string, string> = {
-  technical: 'فني',
-  fundamental: 'أساسي',
-  sector: 'قطاعي',
-  macro: 'اقتصاد كلي',
-};
-
-const recommendationLabels: Record<string, string> = {
-  buy: 'شراء',
-  sell: 'بيع',
-  hold: 'إبقاء',
-  strong_buy: 'شراء قوي',
-  strong_sell: 'بيع قوي',
-};
 
 const typeColors: Record<string, string> = {
   technical: 'bg-accent-blue/10 text-accent-blue border-accent-blue/20',
@@ -67,6 +45,7 @@ interface PaginatedReportResponse {
 // ---------------------------------------------------------------------------
 
 export default function ReportsPage() {
+  const { t, language, isRTL } = useLanguage();
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -74,6 +53,29 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+
+  const reportTypes: { label: string; value: TypeFilter }[] = [
+    { label: t('الكل', 'All'), value: 'all' },
+    { label: t('فني', 'Technical'), value: 'technical' },
+    { label: t('أساسي', 'Fundamental'), value: 'fundamental' },
+    { label: t('قطاعي', 'Sector'), value: 'sector' },
+    { label: t('اقتصاد كلي', 'Macro'), value: 'macro' },
+  ];
+
+  const typeLabels: Record<string, string> = {
+    technical: t('فني', 'Technical'),
+    fundamental: t('أساسي', 'Fundamental'),
+    sector: t('قطاعي', 'Sector'),
+    macro: t('اقتصاد كلي', 'Macro'),
+  };
+
+  const recommendationLabels: Record<string, string> = {
+    buy: t('شراء', 'Buy'),
+    sell: t('بيع', 'Sell'),
+    hold: t('إبقاء', 'Hold'),
+    strong_buy: t('شراء قوي', 'Strong Buy'),
+    strong_sell: t('بيع قوي', 'Strong Sell'),
+  };
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -120,24 +122,25 @@ export default function ReportsPage() {
       <div className="max-w-content-lg mx-auto space-y-4">
 
         {/* Header */}
-        <div dir="rtl">
-          <h1 className="text-xl font-bold text-[var(--text-primary)]">تقارير البحث</h1>
-          <p className="text-sm text-[var(--text-muted)]">تحليلات فنية وأساسية لأسهم تاسي</p>
+        <div dir={isRTL ? 'rtl' : 'ltr'}>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('تقارير البحث', 'Research Reports')}</h1>
+          <p className="text-sm text-[var(--text-muted)]">{t('تحليلات فنية وأساسية لأسهم تاسي', 'Technical & fundamental analysis for TASI stocks')}</p>
         </div>
 
         {/* Search */}
-        <div className="relative" dir="rtl">
-          <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <div className="relative" dir={isRTL ? 'rtl' : 'ltr'}>
+          <svg className={cn('absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]', isRTL ? 'right-3' : 'left-3')} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <input
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="ابحث في التقارير..."
+            placeholder={t('ابحث في التقارير...', 'Search reports...')}
             className={cn(
               'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
-              'border gold-border rounded-md px-3 py-2 pr-10 text-sm',
+              'border gold-border rounded-md px-3 py-2 text-sm',
+              isRTL ? 'pr-10' : 'pl-10',
               'placeholder:text-[var(--text-muted)]',
               'focus:outline-none focus:border-gold transition-colors',
             )}
@@ -145,7 +148,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Type Filters */}
-        <div className="flex gap-2 flex-wrap" dir="rtl">
+        <div className="flex gap-2 flex-wrap" dir={isRTL ? 'rtl' : 'ltr'}>
           {reportTypes.map((rt) => (
             <button
               key={rt.value}
@@ -164,12 +167,12 @@ export default function ReportsPage() {
 
         {/* Reports Grid */}
         {loading ? (
-          <LoadingSpinner message="جاري تحميل التقارير..." />
+          <LoadingSpinner message={t('جاري تحميل التقارير...', 'Loading reports...')} />
         ) : error ? (
           <ErrorDisplay message={error} onRetry={fetchReports} />
         ) : reports.length === 0 ? (
-          <div className="text-center py-12" dir="rtl">
-            <p className="text-sm text-[var(--text-muted)] mb-4">لم يتم العثور على تقارير لهذه الفئة.</p>
+          <div className="text-center py-12" dir={isRTL ? 'rtl' : 'ltr'}>
+            <p className="text-sm text-[var(--text-muted)] mb-4">{t('لم يتم العثور على تقارير لهذه الفئة.', 'No reports found for this category.')}</p>
             <Link
               href="/chat"
               className={cn(
@@ -178,7 +181,7 @@ export default function ReportsPage() {
                 'hover:bg-gold/30 transition-colors'
               )}
             >
-              اسأل رائد عن هذا القطاع
+              {t('اسأل رائد عن هذا القطاع', 'Ask Ra\'d about this sector')}
             </Link>
           </div>
         ) : (
@@ -187,7 +190,7 @@ export default function ReportsPage() {
               {reports.map((report) => (
                 <article
                   key={report.id}
-                  dir="rtl"
+                  dir={isRTL ? 'rtl' : 'ltr'}
                   className={cn(
                     'p-4 rounded-md flex flex-col',
                     'bg-[var(--bg-card)] border gold-border',
@@ -211,7 +214,7 @@ export default function ReportsPage() {
                     )}
                     {report.published_at && (
                       <span className="text-xs text-[var(--text-muted)]">
-                        {new Date(report.published_at).toLocaleDateString('ar-SA')}
+                        {new Date(report.published_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                       </span>
                     )}
                   </div>
@@ -255,11 +258,11 @@ export default function ReportsPage() {
                   {/* Target price */}
                   {report.target_price !== null && (
                     <div className="mt-2 pt-2 border-t border-[var(--bg-input)] flex items-center gap-2 text-xs">
-                      <span className="text-[var(--text-muted)]">السعر المستهدف:</span>
+                      <span className="text-[var(--text-muted)]">{t('السعر المستهدف:', 'Target Price:')}</span>
                       <span className="text-gold font-medium">{report.target_price.toFixed(2)}</span>
                       {report.current_price_at_report !== null && (
                         <>
-                          <span className="text-[var(--text-muted)]">السعر الحالي:</span>
+                          <span className="text-[var(--text-muted)]">{t('السعر الحالي:', 'Current Price:')}</span>
                           <span className="text-[var(--text-secondary)]">{report.current_price_at_report.toFixed(2)}</span>
                         </>
                       )}
@@ -271,7 +274,7 @@ export default function ReportsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 pt-2 pb-4" dir="rtl">
+              <div className="flex items-center justify-center gap-4 pt-2 pb-4" dir={isRTL ? 'rtl' : 'ltr'}>
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
@@ -282,11 +285,11 @@ export default function ReportsPage() {
                       : 'border-gold/30 text-gold bg-[var(--bg-card)] hover:bg-gold/10 hover:border-gold/50'
                   )}
                 >
-                  السابق
+                  {t('السابق', 'Previous')}
                 </button>
                 <span className="text-sm font-medium text-[var(--text-secondary)]">
-                  صفحة {page} من {totalPages}
-                  <span className="text-[var(--text-muted)] mr-1">({total} تقرير)</span>
+                  {t(`صفحة ${page} من ${totalPages}`, `Page ${page} of ${totalPages}`)}
+                  <span className={cn('text-[var(--text-muted)]', isRTL ? 'mr-1' : 'ml-1')}>({total} {t('تقرير', 'reports')})</span>
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -298,7 +301,7 @@ export default function ReportsPage() {
                       : 'border-gold/30 text-gold bg-[var(--bg-card)] hover:bg-gold/10 hover:border-gold/50'
                   )}
                 >
-                  التالي
+                  {t('التالي', 'Next')}
                 </button>
               </div>
             )}

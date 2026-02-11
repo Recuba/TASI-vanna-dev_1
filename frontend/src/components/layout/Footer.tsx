@@ -1,7 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer
       className={cn(
@@ -17,31 +22,31 @@ export function Footer() {
             href="/market"
             className="text-xs text-[var(--text-secondary)] hover:text-gold transition-colors"
           >
-            السوق
+            {t('السوق', 'Market')}
           </Link>
           <Link
             href="/charts"
             className="text-xs text-[var(--text-secondary)] hover:text-gold transition-colors"
           >
-            الرسوم البيانية
+            {t('الرسوم البيانية', 'Charts')}
           </Link>
           <Link
             href="/news"
             className="text-xs text-[var(--text-secondary)] hover:text-gold transition-colors"
           >
-            الأخبار
+            {t('الأخبار', 'News')}
           </Link>
           <Link
             href="/chat"
             className="text-xs text-[var(--text-secondary)] hover:text-gold transition-colors"
           >
-            المحادثة الذكية
+            {t('المحادثة الذكية', 'AI Chat')}
           </Link>
           <Link
             href="/reports"
             className="text-xs text-[var(--text-secondary)] hover:text-gold transition-colors"
           >
-            التقارير
+            {t('التقارير', 'Reports')}
           </Link>
         </div>
 
@@ -50,12 +55,12 @@ export function Footer() {
 
         {/* Bottom row: copyright + attribution */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[var(--text-muted)]">
-          <p>&copy; 2024 Ra&apos;d AI - رائد للذكاء الاصطناعي</p>
+          <p>&copy; {new Date().getFullYear()} Ra&apos;d AI - {t('رائد للذكاء الاصطناعي', 'Ra\'d AI')}</p>
           <p>
             Powered by{' '}
             <span className="gold-text font-medium">Vanna AI</span>
             <span className="mx-2 text-[var(--text-muted)]/40">|</span>
-            Data sourced from Tadawul (TASI)
+            {t('البيانات من تداول (تاسي)', 'Data sourced from Tadawul (TASI)')}
           </p>
         </div>
       </div>

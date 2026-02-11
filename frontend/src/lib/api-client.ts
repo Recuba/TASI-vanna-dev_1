@@ -159,7 +159,8 @@ export class ApiError extends Error {
     public statusText: string,
     public body?: string,
   ) {
-    super(`API ${status}: ${statusText}`);
+    // Encode status in a parseable prefix so ErrorDisplay can extract it
+    super(`[API_ERROR:${status}] ${statusText}${body ? ` - ${body}` : ''}`);
     this.name = 'ApiError';
   }
 }

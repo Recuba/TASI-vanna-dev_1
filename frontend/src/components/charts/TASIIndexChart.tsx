@@ -29,6 +29,7 @@ import { DataSourceBadge } from './DataSourceBadge';
 import { useTasiOHLCV } from '@/lib/hooks/use-chart-data';
 import type { OHLCVData } from './chart-types';
 import dynamic from 'next/dynamic';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Period options
@@ -95,6 +96,7 @@ interface TASIIndexChartProps {
 // ---------------------------------------------------------------------------
 
 function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -378,20 +380,18 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
     <div
       dir="ltr"
       className={cn(
-        'rounded-xl overflow-hidden transition-opacity duration-500',
+        'rounded-xl overflow-hidden transition-opacity duration-500 dark:bg-[#1A1A1A] bg-white',
         chartVisible ? 'opacity-100' : 'opacity-0',
         className,
       )}
       style={{
         border: '1px solid rgba(212, 168, 75, 0.1)',
-        background: '#1A1A1A',
       }}
     >
       {/* Toolbar */}
       <div
-        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2"
+        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-[#2A2A2A] bg-gray-100"
         style={{
-          background: '#2A2A2A',
           borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
         }}
       >
@@ -402,7 +402,7 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
               TASI
             </span>
             <span className="text-xs hidden sm:inline" style={{ color: '#707070' }}>
-              Tadawul All Share Index
+              {t('مؤشر السوق الرئيسي', 'Tadawul All Share Index')}
             </span>
             <DataSourceBadge source={source} />
           </div>
@@ -438,9 +438,9 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
                   ? 'rgba(76, 175, 80, 0.1)'
                   : 'rgba(255, 107, 107, 0.1)',
               }}
-              title={`Period change over selected range`}
+              title={t('تغير الفترة خلال النطاق المحدد', 'Period change over selected range')}
             >
-              Period: {periodChange >= 0 ? '+' : ''}{periodChange.toFixed(2)}%
+              {t('الفترة', 'Period')}: {periodChange >= 0 ? '+' : ''}{periodChange.toFixed(2)}%
             </span>
           )}
         </div>
@@ -602,9 +602,8 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
 
       {/* Crosshair tooltip bar */}
       <div
-        className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px]"
+        className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px] dark:bg-[#1A1A1A] bg-gray-50"
         style={{
-          background: '#1A1A1A',
           borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
           color: '#808080',
         }}
@@ -638,12 +637,12 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
             </span>
           </>
         ) : (
-          <span style={{ color: '#505050' }}>Hover over chart for details</span>
+          <span style={{ color: '#505050' }}>{t('مرر المؤشر فوق الرسم البياني لعرض التفاصيل', 'Hover over chart for details')}</span>
         )}
       </div>
 
       {/* Chart container */}
-      <div ref={containerRef} style={{ height: chartHeight }} />
+      <div ref={containerRef} className="dark:bg-[#1A1A1A] bg-white" style={{ height: chartHeight }} />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from 'lightweight-charts';
 import { RAID_CHART_OPTIONS } from './chart-config';
 import { ChartSkeleton } from './ChartSkeleton';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -78,6 +79,7 @@ function StockComparisonChartInner({
   height = 500,
   className,
 }: StockComparisonChartProps) {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRefs = useRef<ISeriesApi<'Line'>[]>([]);
@@ -109,11 +111,28 @@ function StockComparisonChartInner({
     setLoading(true);
     setError(null);
 
+    // Race the fetch against a 15-second timeout
+    const timeoutPromise = new Promise<'timeout'>((resolve) =>
+      setTimeout(() => resolve('timeout'), 15000),
+    );
+
     try {
-      // Fetch all tickers in parallel
-      const results = await Promise.all(
-        tickers.map((t) => fetchOHLCV(t, period)),
-      );
+      // Fetch all tickers in parallel, with timeout
+      const raceResult = await Promise.race([
+        Promise.all(tickers.map((ticker) => fetchOHLCV(ticker, period))),
+        timeoutPromise,
+      ]);
+
+      if (raceResult === 'timeout') {
+        setError(t(
+          'انتهت مهلة التحميل. تحقق من اتصالك بالإنترنت وأعد المحاولة.',
+          'Loading timed out. Check your connection and try again.',
+        ));
+        setLoading(false);
+        return;
+      }
+
+      const results = raceResult as OHLCVItem[][];
 
       const validTickers: string[] = [];
       const normalizedSets: LineData[][] = [];
@@ -126,7 +145,7 @@ function StockComparisonChartInner({
       }
 
       if (validTickers.length === 0) {
-        setError('No data available for the selected stocks.');
+        setError(t('لا توجد بيانات للأسهم المختارة.', 'No data available for the selected stocks.'));
         setLoading(false);
         return;
       }
@@ -171,10 +190,10 @@ function StockComparisonChartInner({
       setLoading(false);
       requestAnimationFrame(() => setChartVisible(true));
     } catch {
-      setError('Failed to load comparison data.');
+      setError(t('فشل تحميل بيانات المقارنة.', 'Failed to load comparison data.'));
       setLoading(false);
     }
-  }, [tickers, period, height]);
+  }, [tickers, period, height, t]);
 
   useEffect(() => {
     buildChart();
@@ -194,11 +213,11 @@ function StockComparisonChartInner({
   if (tickers.length === 0) {
     return (
       <div
-        className="flex items-center justify-center rounded-xl"
-        style={{ height, background: '#1A1A1A', border: '1px solid rgba(212,168,75,0.1)' }}
+        className="flex items-center justify-center rounded-xl dark:bg-[#1A1A1A] bg-gray-50"
+        style={{ height, border: '1px solid rgba(212,168,75,0.1)' }}
       >
         <p className="text-sm text-[var(--text-muted)]">
-          Select stocks to compare (up to 5)
+          {t('اختر أسهم للمقارنة (حتى 5)', 'Select stocks to compare (up to 5)')}
         </p>
       </div>
     );
@@ -211,10 +230,21 @@ function StockComparisonChartInner({
   if (error) {
     return (
       <div
-        className="flex items-center justify-center rounded-xl"
-        style={{ height, background: '#1A1A1A', border: '1px solid rgba(212,168,75,0.1)' }}
+        className="flex flex-col items-center justify-center gap-3 rounded-xl dark:bg-[#1A1A1A] bg-gray-50"
+        style={{ height, border: '1px solid rgba(212,168,75,0.1)' }}
       >
         <p className="text-sm text-red-400">{error}</p>
+        <button
+          onClick={buildChart}
+          className="px-4 py-1.5 text-xs font-medium rounded-md border transition-all duration-200 hover:bg-[rgba(212,168,75,0.1)]"
+          style={{
+            border: '1px solid #D4A84B',
+            background: 'transparent',
+            color: '#D4A84B',
+          }}
+        >
+          {t('إعادة المحاولة', 'Retry')}
+        </button>
       </div>
     );
   }
@@ -229,31 +259,29 @@ function StockComparisonChartInner({
       )}
       style={{
         border: '1px solid rgba(212, 168, 75, 0.1)',
-        background: '#1A1A1A',
       }}
     >
       {/* Toolbar */}
       <div
-        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2"
+        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-[#2A2A2A] bg-gray-100"
         style={{
-          background: '#2A2A2A',
           borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
         }}
       >
         {/* Legend */}
         <div className="flex items-center gap-3 flex-wrap">
-          {loadedTickers.map((t, i) => (
-            <div key={t} className="flex items-center gap-1.5">
+          {loadedTickers.map((ticker, i) => (
+            <div key={ticker} className="flex items-center gap-1.5">
               <span
                 className="inline-block w-3 h-[3px] rounded-full"
                 style={{ background: SERIES_COLORS[i % SERIES_COLORS.length] }}
               />
               <span className="text-xs font-medium" style={{ color: SERIES_COLORS[i % SERIES_COLORS.length] }}>
-                {t}
+                {ticker}
               </span>
             </div>
           ))}
-          <span className="text-[10px] text-[#606060]">Base 100</span>
+          <span className="text-[10px] dark:text-[#606060] text-gray-400">{t('أساس 100', 'Base 100')}</span>
         </div>
 
         {/* Period selector */}
@@ -281,7 +309,7 @@ function StockComparisonChartInner({
       </div>
 
       {/* Chart container */}
-      <div ref={containerRef} style={{ height }} />
+      <div ref={containerRef} className="dark:bg-[#1A1A1A] bg-white" style={{ height }} />
     </div>
   );
 }

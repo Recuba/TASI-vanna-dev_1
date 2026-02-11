@@ -57,6 +57,16 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    label: 'Announcements',
+    labelAr: 'الإعلانات',
+    href: '/announcements',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0" />
+      </svg>
+    ),
+  },
+  {
     label: 'AI Chat',
     labelAr: 'المحادثة',
     href: '/chat',
@@ -115,7 +125,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const navContent = (
     <>
       {/* Nav Items */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 py-3 px-2 ps-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const active = isActive(item.href);
           return (
@@ -192,6 +202,8 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
     <>
       {/* Desktop sidebar */}
       <aside
+        role="navigation"
+        aria-label="Main navigation"
         className={cn(
           'hidden lg:flex flex-col flex-shrink-0',
           'h-[calc(100vh-64px)]',
@@ -216,10 +228,13 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
       {/* Mobile sidebar */}
       <aside
+        role="navigation"
+        aria-label="Mobile navigation"
+        aria-hidden={!mobileOpen}
         className={cn(
           'fixed top-[64px] end-0 z-50',
           'h-[calc(100vh-64px)] w-[260px]',
-          'flex flex-col',
+          'flex flex-col overflow-x-hidden',
           'border-s gold-border',
           'bg-[#141414] dark:bg-[#141414] bg-white',
           'transition-transform duration-300 ease-in-out',

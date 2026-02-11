@@ -15,6 +15,7 @@ import {
 } from '@/lib/api-client';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // LocalStorage fallback (when API is not available)
@@ -54,6 +55,7 @@ function getDefaultWatchlists(): LocalWatchlist[] {
 // ---------------------------------------------------------------------------
 
 export default function WatchlistPage() {
+  const { t, isRTL } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [watchlists, setWatchlists] = useState<LocalWatchlist[]>([]);
   const [activeList, setActiveList] = useState<string>('default');
@@ -155,7 +157,7 @@ export default function WatchlistPage() {
 
   const handleDeleteList = useCallback(
     async (id: string) => {
-      if (!window.confirm('هل أنت متأكد من حذف هذه القائمة؟')) return;
+      if (!window.confirm(t('هل أنت متأكد من حذف هذه القائمة؟', 'Are you sure you want to delete this list?'))) return;
       if (useApi) {
         try {
           await apiDeleteWatchlist(id);
@@ -171,7 +173,7 @@ export default function WatchlistPage() {
         return updated;
       });
     },
-    [activeList, useApi]
+    [activeList, useApi, t]
   );
 
   const handleAddTicker = useCallback(async () => {
@@ -216,7 +218,7 @@ export default function WatchlistPage() {
   if (authLoading || loading) {
     return (
       <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
-        <LoadingSpinner message="جاري تحميل قوائم المراقبة..." />
+        <LoadingSpinner message={t('جاري تحميل قوائم المراقبة...', 'Loading watchlists...')} />
       </div>
     );
   }
@@ -226,20 +228,20 @@ export default function WatchlistPage() {
     return (
       <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
         <div className="max-w-content-lg mx-auto space-y-4">
-          <div dir="rtl">
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">قوائم المراقبة</h1>
-            <p className="text-sm text-[var(--text-muted)]">تابع أسهمك المفضلة في تداول</p>
+          <div dir={isRTL ? 'rtl' : 'ltr'}>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('قوائم المراقبة', 'Watchlists')}</h1>
+            <p className="text-sm text-[var(--text-muted)]">{t('تابع أسهمك المفضلة في تداول', 'Track your favorite Tadawul stocks')}</p>
           </div>
           <div className="text-center py-16 bg-[var(--bg-card)] border gold-border rounded-md">
             <svg className="mx-auto mb-4" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--text-muted)' }}>
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-            <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2" dir="rtl">
-              يرجى تسجيل الدخول لعرض قوائم المراقبة
+            <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2" dir={isRTL ? 'rtl' : 'ltr'}>
+              {t('يرجى تسجيل الدخول لعرض قوائم المراقبة', 'Please sign in to view watchlists')}
             </h2>
-            <p className="text-sm text-[var(--text-muted)] mb-6 max-w-sm mx-auto" dir="rtl">
-              سجل دخولك لمزامنة قوائم المراقبة عبر الأجهزة والوصول لمتابعة الأسهم المخصصة.
+            <p className="text-sm text-[var(--text-muted)] mb-6 max-w-sm mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+              {t('سجل دخولك لمزامنة قوائم المراقبة عبر الأجهزة والوصول لمتابعة الأسهم المخصصة.', 'Sign in to sync your watchlists across devices and access personalized stock tracking.')}
             </p>
             <Link
               href="/login"
@@ -249,7 +251,7 @@ export default function WatchlistPage() {
                 'hover:bg-gold-light transition-colors'
               )}
             >
-              تسجيل الدخول
+              {t('تسجيل الدخول', 'Sign In')}
             </Link>
           </div>
         </div>
@@ -262,10 +264,10 @@ export default function WatchlistPage() {
       <div className="max-w-content-lg mx-auto space-y-4">
 
         {/* Header */}
-        <div className="flex items-center justify-between" dir="rtl">
+        <div className="flex items-center justify-between" dir={isRTL ? 'rtl' : 'ltr'}>
           <div>
-            <h1 className="text-xl font-bold text-[var(--text-primary)]">قوائم المراقبة</h1>
-            <p className="text-sm text-[var(--text-muted)]">تابع أسهمك المفضلة في تداول</p>
+            <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('قوائم المراقبة', 'Watchlists')}</h1>
+            <p className="text-sm text-[var(--text-muted)]">{t('تابع أسهمك المفضلة في تداول', 'Track your favorite Tadawul stocks')}</p>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
@@ -275,19 +277,19 @@ export default function WatchlistPage() {
               'hover:bg-gold-light transition-colors'
             )}
           >
-            + قائمة جديدة
+            + {t('قائمة جديدة', 'New List')}
           </button>
         </div>
 
         {/* Create list form */}
         {showCreateForm && (
-          <div className="flex gap-2 p-3 bg-[var(--bg-card)] border gold-border rounded-md" dir="rtl">
+          <div className="flex gap-2 p-3 bg-[var(--bg-card)] border gold-border rounded-md" dir={isRTL ? 'rtl' : 'ltr'}>
             <input
               type="text"
               value={newListName}
               onChange={(e) => setNewListName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
-              placeholder="اسم القائمة..."
+              placeholder={t('اسم القائمة...', 'List name...')}
               className="flex-1 bg-[var(--bg-input)] text-[var(--text-primary)] border gold-border rounded-md px-3 py-1.5 text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-gold"
             />
             <button
@@ -295,19 +297,19 @@ export default function WatchlistPage() {
               disabled={!newListName.trim()}
               className="px-3 py-1.5 rounded-md text-xs font-medium bg-gold text-dark-bg hover:bg-gold-light disabled:opacity-30 transition-colors"
             >
-              إنشاء
+              {t('إنشاء', 'Create')}
             </button>
             <button
               onClick={() => { setShowCreateForm(false); setNewListName(''); }}
               className="px-3 py-1.5 rounded-md text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
             >
-              إلغاء
+              {t('إلغاء', 'Cancel')}
             </button>
           </div>
         )}
 
         {/* Watchlist Tabs */}
-        <div className="flex gap-2 flex-wrap" dir="rtl">
+        <div className="flex gap-2 flex-wrap" dir={isRTL ? 'rtl' : 'ltr'}>
           {watchlists.map((wl) => (
             <button
               key={wl.id}
@@ -329,13 +331,13 @@ export default function WatchlistPage() {
         {currentList && (
           <>
             {/* Add ticker */}
-            <div className="flex gap-2" dir="rtl">
+            <div className="flex gap-2" dir={isRTL ? 'rtl' : 'ltr'}>
               <input
                 type="text"
                 value={addTicker}
                 onChange={(e) => setAddTicker(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTicker()}
-                placeholder="أضف رمز السهم (مثال: 2222.SR)..."
+                placeholder={t('أضف رمز السهم (مثال: 2222.SR)...', 'Add ticker (e.g. 2222.SR)...')}
                 className="flex-1 bg-[var(--bg-input)] text-[var(--text-primary)] border gold-border rounded-md px-3 py-1.5 text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-gold"
               />
               <button
@@ -343,34 +345,34 @@ export default function WatchlistPage() {
                 disabled={!addTicker.trim()}
                 className="px-3 py-1.5 rounded-md text-xs font-medium bg-gold/20 text-gold hover:bg-gold/30 disabled:opacity-30 transition-colors"
               >
-                إضافة
+                {t('إضافة', 'Add')}
               </button>
               {currentList.id !== 'default' && (
                 <button
                   onClick={() => handleDeleteList(currentList.id)}
                   className="px-3 py-1.5 rounded-md text-xs font-medium text-accent-red/60 hover:text-accent-red hover:bg-accent-red/10 transition-colors"
                 >
-                  حذف القائمة
+                  {t('حذف القائمة', 'Delete List')}
                 </button>
               )}
             </div>
 
             {/* Ticker List */}
             {currentList.tickers.length === 0 ? (
-              <div className="text-center py-12 bg-[var(--bg-card)] border gold-border rounded-md" dir="rtl">
-                <p className="text-sm text-[var(--text-muted)]">لا توجد أسهم في هذه القائمة. أضف سهم أعلاه.</p>
+              <div className="text-center py-12 bg-[var(--bg-card)] border gold-border rounded-md" dir={isRTL ? 'rtl' : 'ltr'}>
+                <p className="text-sm text-[var(--text-muted)]">{t('لا توجد أسهم في هذه القائمة. أضف سهم أعلاه.', 'No stocks in this list. Add a ticker above.')}</p>
               </div>
             ) : (
               <div className="bg-[var(--bg-card)] border gold-border rounded-md overflow-hidden">
-                <table className="w-full text-sm" dir="rtl">
+                <table className="w-full text-sm" dir={isRTL ? 'rtl' : 'ltr'}>
                   <thead>
                     <tr className="bg-[var(--bg-input)]">
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider">الرمز</th>
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">الاسم</th>
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">القطاع</th>
-                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">السعر</th>
-                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">التغيير</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium text-gold uppercase tracking-wider w-10">إجراءات</th>
+                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider">{t('الرمز', 'Ticker')}</th>
+                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">{t('الاسم', 'Name')}</th>
+                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">{t('القطاع', 'Sector')}</th>
+                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">{t('السعر', 'Price')}</th>
+                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">{t('التغيير', 'Change')}</th>
+                      <th className="px-3 py-2 text-center text-xs font-medium text-gold uppercase tracking-wider w-10">{t('إجراءات', 'Actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -407,7 +409,7 @@ export default function WatchlistPage() {
                             <button
                               onClick={() => handleRemoveTicker(ticker)}
                               className="text-[var(--text-muted)] hover:text-accent-red transition-colors"
-                              aria-label={`حذف ${ticker}`}
+                              aria-label={t(`حذف ${ticker}`, `Remove ${ticker}`)}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />

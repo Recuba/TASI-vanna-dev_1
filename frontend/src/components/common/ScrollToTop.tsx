@@ -22,9 +22,10 @@ export function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      aria-label="العودة للأعلى"
+      aria-label="Scroll to top"
       className={cn(
-        'fixed bottom-6 start-6 z-50',
+        'fixed bottom-20 end-6 z-50',
+        'lg:bottom-6 lg:start-[280px]',
         'w-10 h-10 rounded-full',
         'bg-gold text-[#0E0E0E]',
         'flex items-center justify-center',

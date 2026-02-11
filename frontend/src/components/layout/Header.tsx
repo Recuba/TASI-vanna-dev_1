@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,21 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const { language, toggleLanguage, t } = useLanguage();
   const pathname = usePathname();
+  const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await fetch('/health', { signal: AbortSignal.timeout(5000) });
+        setBackendStatus(res.ok ? 'online' : 'offline');
+      } catch {
+        setBackendStatus('offline');
+      }
+    };
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <header
@@ -182,11 +198,25 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
           {/* Status indicator */}
           <div className="flex items-center gap-1.5">
             <span
-              className="w-2 h-2 bg-accent-green rounded-full animate-gold-pulse"
+              className={cn(
+                'w-2 h-2 rounded-full',
+                backendStatus === 'online' && 'bg-accent-green animate-gold-pulse',
+                backendStatus === 'offline' && 'bg-accent-red',
+                backendStatus === 'checking' && 'bg-amber-400 animate-pulse',
+              )}
               aria-hidden="true"
             />
-            <span className="text-xs font-medium text-accent-green hidden sm:inline">
-              {t('متصل', 'Online')}
+            <span
+              className={cn(
+                'text-xs font-medium hidden sm:inline',
+                backendStatus === 'online' && 'text-accent-green',
+                backendStatus === 'offline' && 'text-accent-red',
+                backendStatus === 'checking' && 'text-amber-400',
+              )}
+            >
+              {backendStatus === 'online' && t('\u0645\u062A\u0635\u0644', 'Online')}
+              {backendStatus === 'offline' && t('\u063A\u064A\u0631 \u0645\u062A\u0635\u0644', 'Offline')}
+              {backendStatus === 'checking' && t('\u062C\u0627\u0631\u064A \u0627\u0644\u0641\u062D\u0635...', 'Checking...')}
             </span>
           </div>
         </div>
