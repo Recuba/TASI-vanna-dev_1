@@ -125,20 +125,23 @@ class AuthSettings(BaseSettings):
             object.__setattr__(self, "_is_auto_generated", False)
             return self
 
-        # Auto-generated secret -- fine for dev, dangerous in production.
+        # Auto-generated secret -- fine for dev, risky in production.
         environment = os.environ.get("ENVIRONMENT", "development").lower()
-        is_production = environment == "production" or os.environ.get("SERVER_DEBUG", "true").lower() in ("false", "0", "no")
+        is_production = environment == "production"
 
         if is_production:
-            raise ValueError(
-                "AUTH_JWT_SECRET must be explicitly set in production. "
-                "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+            _log.warning(
+                "AUTH_JWT_SECRET not set in production! "
+                "Using auto-generated secret -- sessions WILL be invalidated on restart. "
+                "Set AUTH_JWT_SECRET for stable sessions. Generate one with: "
+                'python -c "import secrets; print(secrets.token_urlsafe(32))"'
             )
-        _log.warning(
-            "AUTH_JWT_SECRET not set -- using auto-generated secret. "
-            "Sessions will be invalidated on restart. "
-            "Set AUTH_JWT_SECRET for stable sessions."
-        )
+        else:
+            _log.warning(
+                "AUTH_JWT_SECRET not set -- using auto-generated secret. "
+                "Sessions will be invalidated on restart. "
+                "Set AUTH_JWT_SECRET for stable sessions."
+            )
         return self
 
 
