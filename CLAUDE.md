@@ -165,7 +165,7 @@ PostgreSQL-backed CRUD services using `psycopg2`:
 
 - The system prompt in `app.py` documents the full database schema. If schema changes, update both the column mappings AND the system prompt.
 - `csv_to_sqlite.py` skips financial statement rows where `period_date` is null -- some companies have fewer periods than others (~71% coverage, not 100%).
-- Test files have hardcoded Windows paths for the database -- they will fail on other machines without path adjustment.
+- Test files resolve the database path via `Path(__file__).resolve().parent / "saudi_stocks.db"` -- ensure the SQLite database exists in the project root before running tests.
 - The `<vanna-chat>` component requires internet (loaded from CDN).
 - Database path in app.py is script-relative via `Path(__file__).resolve().parent / "saudi_stocks.db"`.
 - Services in `services/` require PostgreSQL (`psycopg2`) -- they are not available when running with SQLite backend.

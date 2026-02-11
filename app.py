@@ -488,6 +488,21 @@ async def lifespan(app):
     except ImportError:
         pass
 
+    # Validate configuration and log any issues
+    try:
+        from scripts.validate_config import validate_config
+
+        _config_issues = validate_config()
+        for _issue in _config_issues:
+            if _issue.startswith("FAIL:"):
+                logger.error("Config validation: %s", _issue)
+            else:
+                logger.warning("Config validation: %s", _issue)
+        if not _config_issues:
+            logger.info("Config validation: all checks passed")
+    except ImportError:
+        logger.debug("Config validation module not available, skipping")
+
     # Initialize PostgreSQL connection pool
     if DB_BACKEND == "postgres":
         try:
