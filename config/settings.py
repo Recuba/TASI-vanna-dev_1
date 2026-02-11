@@ -3,13 +3,16 @@ Configuration module for TASI AI Platform.
 Uses pydantic-settings for typed, validated configuration loaded from environment variables and .env files.
 """
 
+import logging
 import secrets
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_log = logging.getLogger(__name__)
 
 
 class DatabaseSettings(BaseSettings):
@@ -28,23 +31,23 @@ class DatabaseSettings(BaseSettings):
     # PostgreSQL settings — accept both DB_PG_* and POSTGRES_* env vars
     pg_host: str = Field(
         default="localhost",
-        validation_alias="POSTGRES_HOST",
+        validation_alias=AliasChoices("DB_PG_HOST", "POSTGRES_HOST"),
     )
     pg_port: int = Field(
         default=5432,
-        validation_alias="POSTGRES_PORT",
+        validation_alias=AliasChoices("DB_PG_PORT", "POSTGRES_PORT"),
     )
     pg_database: str = Field(
         default="tasi_platform",
-        validation_alias="POSTGRES_DB",
+        validation_alias=AliasChoices("DB_PG_DATABASE", "POSTGRES_DB"),
     )
     pg_user: str = Field(
         default="tasi_user",
-        validation_alias="POSTGRES_USER",
+        validation_alias=AliasChoices("DB_PG_USER", "POSTGRES_USER"),
     )
     pg_password: str = Field(
         default="",
-        validation_alias="POSTGRES_PASSWORD",
+        validation_alias=AliasChoices("DB_PG_PASSWORD", "POSTGRES_PASSWORD"),
     )
 
     @property
@@ -64,13 +67,15 @@ class DatabaseSettings(BaseSettings):
 
 
 class LLMSettings(BaseSettings):
-    """LLM settings (Anthropic only). All env vars prefixed with LLM_."""
+    """LLM provider settings. Supports Gemini (active) and Anthropic (legacy)."""
 
     model_config = SettingsConfigDict(env_prefix="LLM_")
 
-    model: str = "claude-sonnet-4-5-20250929"
+    model: str = "gemini-2.5-flash"
     api_key: str = ""
     max_tool_iterations: int = 10
+    # Gemini-specific settings (read via GEMINI_* env vars in app.py)
+    # These are here for documentation; app.py reads GEMINI_API_KEY directly.
 
 
 class PoolSettings(BaseSettings):
@@ -106,6 +111,37 @@ class AuthSettings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
+    _is_auto_generated: bool = True
+
+    @model_validator(mode="after")
+    def _validate_jwt_secret(self) -> "AuthSettings":
+        """Warn if JWT secret is auto-generated; fail in production."""
+        import os
+
+        # If the secret was explicitly provided via env var, it won't match
+        # the auto-generated default (the default_factory runs only when
+        # no value is supplied).  We detect this by checking whether
+        # AUTH_JWT_SECRET is actually set in the environment.
+        explicitly_set = bool(os.environ.get("AUTH_JWT_SECRET"))
+        if explicitly_set:
+            object.__setattr__(self, "_is_auto_generated", False)
+            return self
+
+        # Auto-generated secret -- fine for dev, dangerous in production.
+        environment = os.environ.get("ENVIRONMENT", "development").lower()
+        is_production = environment == "production" or os.environ.get("SERVER_DEBUG", "true").lower() in ("false", "0", "no")
+
+        if is_production:
+            raise ValueError(
+                "AUTH_JWT_SECRET must be explicitly set in production. "
+                "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+            )
+        _log.warning(
+            "AUTH_JWT_SECRET not set -- using auto-generated secret. "
+            "Sessions will be invalidated on restart. "
+            "Set AUTH_JWT_SECRET for stable sessions."
+        )
+        return self
 
 
 class MiddlewareSettings(BaseSettings):
@@ -136,6 +172,11 @@ class ServerSettings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8084
     debug: bool = False
+    environment: str = Field(
+        default="development",
+        validation_alias=AliasChoices("SERVER_ENVIRONMENT", "ENVIRONMENT"),
+        description="Deployment environment: development, staging, production",
+    )
 
 
 class Settings(BaseSettings):
@@ -153,6 +194,11 @@ class Settings(BaseSettings):
 
     # Backward compatibility: existing .env uses ANTHROPIC_API_KEY
     anthropic_api_key: str = ""
+    # Gemini API key (active LLM provider)
+    gemini_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("GEMINI_API_KEY"),
+    )
 
     # Nested settings
     db: DatabaseSettings = DatabaseSettings()
@@ -164,8 +210,8 @@ class Settings(BaseSettings):
     middleware: MiddlewareSettings = MiddlewareSettings()
 
     def get_llm_api_key(self) -> str:
-        """Return the effective LLM API key, falling back to ANTHROPIC_API_KEY."""
-        return self.llm.api_key or self.anthropic_api_key
+        """Return the effective LLM API key (Gemini > LLM_API_KEY > ANTHROPIC_API_KEY)."""
+        return self.gemini_api_key or self.llm.api_key or self.anthropic_api_key
 
 
 @lru_cache(maxsize=1)
