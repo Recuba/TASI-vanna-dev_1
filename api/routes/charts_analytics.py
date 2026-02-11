@@ -1,9 +1,9 @@
 """
-SQLite-backed chart analytics API routes.
+Dual-backend chart analytics API routes.
 
-Provides the same chart data endpoints as the PG-backed charts.py but queries
-SQLite directly. Used as a fallback when PostgreSQL is unavailable or as the
-primary chart data source when DB_BACKEND=sqlite.
+Queries either SQLite (local dev) or PostgreSQL (Railway/Docker) depending on
+the DB_BACKEND environment variable.  Connection handling and parameter
+conversion are delegated to ``api.db_helper``.
 
 Endpoints match the frontend PreBuiltCharts.tsx expectations:
   - /api/charts/sector-market-cap
@@ -15,22 +15,16 @@ Endpoints match the frontend PreBuiltCharts.tsx expectations:
 from __future__ import annotations
 
 import logging
-import sqlite3
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from api.db_helper import get_conn, fetchall
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/charts", tags=["charts-analytics"])
-
-_HERE = Path(__file__).resolve().parent.parent.parent
-_DB_PATH = str(_HERE / "saudi_stocks.db")
-
-logger.info("Charts analytics: project root resolved to %s", _HERE)
-logger.info("Charts analytics: DB path = %s, exists = %s", _DB_PATH, Path(_DB_PATH).exists())
 
 
 # ---------------------------------------------------------------------------
@@ -49,31 +43,6 @@ class ChartResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _get_conn() -> sqlite3.Connection:
-    """Get a SQLite connection. Raises HTTPException 503 if DB file is missing."""
-    if not Path(_DB_PATH).exists():
-        logger.error("SQLite DB not found at %s", _DB_PATH)
-        raise HTTPException(
-            status_code=503,
-            detail=f"SQLite database not found at {_DB_PATH}. "
-            "Run csv_to_sqlite.py to generate it.",
-        )
-    try:
-        conn = sqlite3.connect(_DB_PATH)
-        conn.row_factory = sqlite3.Row
-        return conn
-    except sqlite3.Error as exc:
-        logger.error("Failed to connect to SQLite DB: %s", exc)
-        raise HTTPException(
-            status_code=503,
-            detail=f"SQLite database connection failed: {exc}",
-        )
-
-
-# ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
@@ -89,9 +58,9 @@ async def sector_market_cap() -> ChartResponse:
         ORDER BY value DESC
     """
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            rows = conn.execute(sql).fetchall()
+            rows = fetchall(conn, sql)
         finally:
             conn.close()
     except HTTPException:
@@ -133,9 +102,9 @@ async def top_companies_by_market_cap(
     params.append(limit)
 
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            rows = conn.execute(sql, params).fetchall()
+            rows = fetchall(conn, sql, params)
         finally:
             conn.close()
     except HTTPException:
@@ -170,9 +139,9 @@ async def sector_avg_pe() -> ChartResponse:
         ORDER BY value DESC
     """
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            rows = conn.execute(sql).fetchall()
+            rows = fetchall(conn, sql)
         finally:
             conn.close()
     except HTTPException:
@@ -205,9 +174,9 @@ async def top_dividend_yields(
         LIMIT ?
     """
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            rows = conn.execute(sql, (limit,)).fetchall()
+            rows = fetchall(conn, sql, (limit,))
         finally:
             conn.close()
     except HTTPException:

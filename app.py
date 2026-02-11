@@ -319,12 +319,14 @@ if DB_BACKEND == "postgres":
         from api.routes.reports import router as reports_router
         from api.routes.announcements import router as announcements_router
         from api.routes.watchlists import router as watchlists_router
+        from api.routes.entities import router as pg_entities_router
 
         app.include_router(news_router)
         app.include_router(reports_router)
         app.include_router(announcements_router)
         app.include_router(watchlists_router)
-        logger.info("PG-backed service routes registered (news, reports, announcements, watchlists)")
+        app.include_router(pg_entities_router)
+        logger.info("PG-backed service routes registered (news, reports, announcements, watchlists, entities)")
     except ImportError as exc:
         logger.warning("PG service routes not available: %s", exc)
 else:
@@ -407,7 +409,7 @@ except ImportError as exc:
 
 
 # ---------------------------------------------------------------------------
-# 9e. Market analytics routes (SQLite-backed -- works with any backend)
+# 9e. Market analytics routes (Dual-backend (SQLite/PostgreSQL) -- works with any backend)
 # ---------------------------------------------------------------------------
 try:
     from api.routes.market_analytics import router as market_analytics_router
@@ -418,7 +420,7 @@ except ImportError as exc:
     logger.warning("Market analytics routes not available: %s", exc)
 
 # ---------------------------------------------------------------------------
-# 9f. Stock data routes (SQLite-backed -- works with any backend)
+# 9f. Stock data routes (Dual-backend (SQLite/PostgreSQL) -- works with any backend)
 # ---------------------------------------------------------------------------
 try:
     from api.routes.stock_data import router as stock_data_router
@@ -429,18 +431,19 @@ except ImportError as exc:
     logger.warning("Stock data routes not available: %s", exc)
 
 # ---------------------------------------------------------------------------
-# 9g. SQLite entities routes (always registered as fallback for both backends)
+# 9g. SQLite entities routes (registered only when using SQLite backend)
 # ---------------------------------------------------------------------------
-try:
-    from api.routes.sqlite_entities import router as sqlite_entities_router
+if DB_BACKEND != "postgres":
+    try:
+        from api.routes.sqlite_entities import router as sqlite_entities_router
 
-    app.include_router(sqlite_entities_router)
-    logger.info("SQLite entities routes registered at /api/entities")
-except ImportError as exc:
-    logger.warning("SQLite entities routes not available: %s", exc)
+        app.include_router(sqlite_entities_router)
+        logger.info("SQLite entities routes registered at /api/entities")
+    except ImportError as exc:
+        logger.warning("SQLite entities routes not available: %s", exc)
 
 # ---------------------------------------------------------------------------
-# 9h. SQLite chart analytics routes (always registered as fallback)
+# 9h. Chart analytics routes (Dual-backend (SQLite/PostgreSQL))
 # ---------------------------------------------------------------------------
 try:
     from api.routes.charts_analytics import router as charts_analytics_router

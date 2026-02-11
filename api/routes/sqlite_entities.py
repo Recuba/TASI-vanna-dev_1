@@ -1,52 +1,24 @@
 """
-SQLite-backed entity (company/stock) API routes.
+Dual-backend entity (company/stock) API routes.
 
-Provides the same entity endpoints as the PG-backed entities.py but queries
-SQLite directly. Used as a fallback when PostgreSQL is unavailable or as the
-primary backend when DB_BACKEND=sqlite.
+Provides entity endpoints that work with both SQLite and PostgreSQL backends
+via the shared ``api.db_helper`` module. Used as a fallback when the PG-specific
+entities router is unavailable, or as the primary backend when DB_BACKEND=sqlite.
 """
 
 from __future__ import annotations
 
 import logging
-import sqlite3
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from api.db_helper import get_conn, fetchall, fetchone
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
-
-_HERE = Path(__file__).resolve().parent.parent.parent
-_DB_PATH = str(_HERE / "saudi_stocks.db")
-
-logger.info("SQLite entities: project root resolved to %s", _HERE)
-logger.info("SQLite entities: DB path = %s, exists = %s", _DB_PATH, Path(_DB_PATH).exists())
-
-
-def _get_conn() -> sqlite3.Connection:
-    """Get a SQLite connection. Raises HTTPException 503 if DB file is missing."""
-    if not Path(_DB_PATH).exists():
-        logger.error("SQLite DB not found at %s", _DB_PATH)
-        raise HTTPException(
-            status_code=503,
-            detail=f"SQLite database not found at {_DB_PATH}. "
-            "Run csv_to_sqlite.py to generate it.",
-        )
-    try:
-        conn = sqlite3.connect(_DB_PATH)
-        conn.row_factory = sqlite3.Row
-        return conn
-    except sqlite3.Error as exc:
-        logger.error("Failed to connect to SQLite DB: %s", exc)
-        raise HTTPException(
-            status_code=503,
-            detail=f"SQLite database connection failed: {exc}",
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +47,7 @@ class SectorInfo(BaseModel):
 
 
 class CompanyFullDetail(BaseModel):
-    """Full stock detail joining ALL available SQLite tables."""
+    """Full stock detail joining all available tables."""
     # companies
     ticker: str
     short_name: Optional[str] = None
@@ -155,7 +127,7 @@ async def list_entities(
     sector: Optional[str] = Query(None),
     search: Optional[str] = Query(None, description="Search by ticker or name"),
 ) -> EntityListResponse:
-    """List companies with basic market data (SQLite)."""
+    """List companies with basic market data."""
     clauses: list = []
     params: list = []
 
@@ -171,12 +143,14 @@ async def list_entities(
     where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
 
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
             # Total count
-            count_row = conn.execute(
-                f"SELECT COUNT(*) AS cnt FROM companies c {where}", params
-            ).fetchone()
+            count_row = fetchone(
+                conn,
+                f"SELECT COUNT(*) AS cnt FROM companies c {where}",
+                params,
+            )
             total = count_row["cnt"] if count_row else 0
 
             # Data
@@ -194,7 +168,7 @@ async def list_entities(
                 ORDER BY m.market_cap DESC
                 LIMIT ? OFFSET ?
             """
-            rows = conn.execute(sql, params + [limit, offset]).fetchall()
+            rows = fetchall(conn, sql, params + [limit, offset])
         finally:
             conn.close()
     except HTTPException:
@@ -220,7 +194,7 @@ async def list_entities(
 
 @router.get("/sectors", response_model=List[SectorInfo])
 async def list_sectors() -> List[SectorInfo]:
-    """Return all sectors with company counts (SQLite)."""
+    """Return all sectors with company counts."""
     sql = """
         SELECT sector, COUNT(*) AS company_count
         FROM companies
@@ -229,9 +203,9 @@ async def list_sectors() -> List[SectorInfo]:
         ORDER BY company_count DESC
     """
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            rows = conn.execute(sql).fetchall()
+            rows = fetchall(conn, sql)
         finally:
             conn.close()
     except HTTPException:
@@ -245,7 +219,7 @@ async def list_sectors() -> List[SectorInfo]:
 
 @router.get("/{ticker}", response_model=CompanyFullDetail)
 async def get_entity(ticker: str) -> CompanyFullDetail:
-    """Return full stock detail joining ALL SQLite tables."""
+    """Return full stock detail joining all available tables."""
     sql = """
         SELECT
             c.ticker, c.short_name, c.sector, c.industry, c.exchange, c.currency,
@@ -277,9 +251,9 @@ async def get_entity(ticker: str) -> CompanyFullDetail:
         WHERE c.ticker = ?
     """
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            row = conn.execute(sql, (ticker,)).fetchone()
+            row_dict = fetchone(conn, sql, (ticker,))
         finally:
             conn.close()
     except HTTPException:
@@ -288,10 +262,8 @@ async def get_entity(ticker: str) -> CompanyFullDetail:
         logger.error("Error fetching entity %s: %s", ticker, exc)
         raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
-    if row is None:
+    if row_dict is None:
         raise HTTPException(status_code=404, detail="Company not found")
-
-    row_dict = dict(row)
 
     def _f(val):
         return float(val) if val is not None else None

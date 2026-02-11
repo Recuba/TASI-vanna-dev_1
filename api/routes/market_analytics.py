@@ -1,50 +1,23 @@
 """
-Market analytics API routes (SQLite-backed).
+Market analytics API routes (dual-backend: SQLite + PostgreSQL).
 
 Provides market movers, summary, sector breakdown, and heatmap data.
-Works with the SQLite backend (companies + market_data tables).
+Works with both SQLite (local dev) and PostgreSQL (Railway/Docker) backends.
 """
 
 from __future__ import annotations
 
 import logging
-import sqlite3
-from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from api.db_helper import get_conn, fetchall, fetchone
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/market", tags=["market-analytics"])
-
-_HERE = Path(__file__).resolve().parent.parent.parent
-_DB_PATH = str(_HERE / "saudi_stocks.db")
-
-logger.info("Market analytics: project root resolved to %s", _HERE)
-logger.info("Market analytics: DB path = %s, exists = %s", _DB_PATH, Path(_DB_PATH).exists())
-
-
-def _get_conn() -> sqlite3.Connection:
-    """Get a SQLite connection. Raises HTTPException 503 if DB file is missing."""
-    if not Path(_DB_PATH).exists():
-        logger.error("SQLite DB not found at %s", _DB_PATH)
-        raise HTTPException(
-            status_code=503,
-            detail=f"SQLite database not found at {_DB_PATH}. "
-            "Run csv_to_sqlite.py to generate it.",
-        )
-    try:
-        conn = sqlite3.connect(_DB_PATH)
-        conn.row_factory = sqlite3.Row
-        return conn
-    except sqlite3.Error as exc:
-        logger.error("Failed to connect to SQLite DB: %s", exc)
-        raise HTTPException(
-            status_code=503,
-            detail=f"SQLite database connection failed: {exc}",
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -117,7 +90,7 @@ _MOVERS_SQL = """
 """
 
 
-def _row_to_mover(row: sqlite3.Row) -> MoverItem:
+def _row_to_mover(row: Dict[str, Any]) -> MoverItem:
     return MoverItem(
         ticker=row["ticker"],
         short_name=row["short_name"],
@@ -143,9 +116,9 @@ async def get_movers(
     sql = _MOVERS_SQL + f" ORDER BY change_pct {order} LIMIT ?"
 
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            rows = conn.execute(sql, (limit,)).fetchall()
+            rows = fetchall(conn, sql, (limit,))
         finally:
             conn.close()
     except HTTPException:
@@ -162,10 +135,10 @@ async def get_movers(
 async def get_market_summary() -> MarketSummary:
     """Get overall market summary with totals and top 5 movers."""
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
             # Aggregates
-            agg = conn.execute("""
+            agg = fetchone(conn, """
                 SELECT
                     COALESCE(SUM(m.market_cap), 0) AS total_market_cap,
                     COALESCE(SUM(m.volume), 0) AS total_volume,
@@ -174,17 +147,17 @@ async def get_market_summary() -> MarketSummary:
                     SUM(CASE WHEN m.previous_close > 0 AND m.current_price = m.previous_close THEN 1 ELSE 0 END) AS unchanged_count
                 FROM market_data m
                 WHERE m.current_price IS NOT NULL
-            """).fetchone()
+            """)
 
             # Top 5 gainers
-            gainers = conn.execute(
+            gainers = fetchall(conn,
                 _MOVERS_SQL + " ORDER BY change_pct DESC LIMIT 5"
-            ).fetchall()
+            )
 
             # Top 5 losers
-            losers = conn.execute(
+            losers = fetchall(conn,
                 _MOVERS_SQL + " ORDER BY change_pct ASC LIMIT 5"
-            ).fetchall()
+            )
         finally:
             conn.close()
     except HTTPException:
@@ -225,9 +198,9 @@ async def get_sector_analytics() -> List[SectorAnalytics]:
         ORDER BY total_market_cap DESC
     """
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            rows = conn.execute(sql).fetchall()
+            rows = fetchall(conn, sql)
         finally:
             conn.close()
     except HTTPException:
@@ -269,9 +242,9 @@ async def get_heatmap() -> List[HeatmapItem]:
         ORDER BY m.market_cap DESC
     """
     try:
-        conn = _get_conn()
+        conn = get_conn()
         try:
-            rows = conn.execute(sql).fetchall()
+            rows = fetchall(conn, sql)
         finally:
             conn.close()
     except HTTPException:

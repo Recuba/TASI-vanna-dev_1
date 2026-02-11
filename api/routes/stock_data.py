@@ -1,27 +1,24 @@
 """
-Stock data API routes (SQLite-backed).
+Stock data API routes (dual-backend: SQLite + PostgreSQL).
 
 Provides per-stock dividends, financial summary, financial statements,
 stock comparison, and batch quotes.
-Works with the SQLite backend.
+Works with both SQLite and PostgreSQL backends via db_helper.
 """
 
 from __future__ import annotations
 
 import logging
-import sqlite3
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from api.db_helper import get_conn, fetchall, fetchone
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/stocks", tags=["stock-data"])
-
-_HERE = Path(__file__).resolve().parent.parent.parent
-_DB_PATH = str(_HERE / "saudi_stocks.db")
 
 # Allowed financial statement tables to prevent SQL injection
 _STATEMENT_TABLES = {"balance_sheet", "income_statement", "cash_flow"}
@@ -76,14 +73,8 @@ for _col in [
     _METRIC_MAP[_col] = ("analyst_data", _col)
 
 
-def _get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def _ticker_exists(conn: sqlite3.Connection, ticker: str) -> bool:
-    row = conn.execute("SELECT 1 FROM companies WHERE ticker = ?", (ticker,)).fetchone()
+def _ticker_exists(conn, ticker: str) -> bool:
+    row = fetchone(conn, "SELECT 1 FROM companies WHERE ticker = ?", (ticker,))
     return row is not None
 
 
@@ -159,14 +150,12 @@ class QuoteItem(BaseModel):
 @router.get("/{ticker}/dividends", response_model=DividendData)
 async def get_dividends(ticker: str) -> DividendData:
     """Get dividend data for a specific stock."""
-    conn = _get_conn()
+    conn = get_conn()
     try:
         if not _ticker_exists(conn, ticker):
             raise HTTPException(status_code=404, detail="Company not found")
 
-        row = conn.execute(
-            "SELECT * FROM dividend_data WHERE ticker = ?", (ticker,)
-        ).fetchone()
+        row = fetchone(conn, "SELECT * FROM dividend_data WHERE ticker = ?", (ticker,))
     finally:
         conn.close()
 
@@ -190,14 +179,12 @@ async def get_dividends(ticker: str) -> DividendData:
 @router.get("/{ticker}/summary", response_model=FinancialSummaryData)
 async def get_financial_summary(ticker: str) -> FinancialSummaryData:
     """Get financial summary for a specific stock."""
-    conn = _get_conn()
+    conn = get_conn()
     try:
         if not _ticker_exists(conn, ticker):
             raise HTTPException(status_code=404, detail="Company not found")
 
-        row = conn.execute(
-            "SELECT * FROM financial_summary WHERE ticker = ?", (ticker,)
-        ).fetchone()
+        row = fetchone(conn, "SELECT * FROM financial_summary WHERE ticker = ?", (ticker,))
     finally:
         conn.close()
 
@@ -240,22 +227,22 @@ async def get_financials(
             detail="Invalid period_type. Must be one of: annual, quarterly, ttm",
         )
 
-    conn = _get_conn()
+    conn = get_conn()
     try:
         if not _ticker_exists(conn, ticker):
             raise HTTPException(status_code=404, detail="Company not found")
 
         # Table name is validated above against _STATEMENT_TABLES whitelist
-        rows = conn.execute(
+        rows = fetchall(
+            conn,
             f"SELECT * FROM {statement} WHERE ticker = ? AND period_type = ? ORDER BY period_index ASC",
             (ticker, period_type),
-        ).fetchall()
+        )
     finally:
         conn.close()
 
     periods = []
-    for row in rows:
-        row_dict = dict(row)
+    for row_dict in rows:
         # Extract metadata fields
         pt = row_dict.pop("period_type", None)
         pi = row_dict.pop("period_index", None)
@@ -301,14 +288,15 @@ async def compare_stocks(
         table, col = _METRIC_MAP[metric]
         table_columns.setdefault(table, []).append(col)
 
-    conn = _get_conn()
+    conn = get_conn()
     try:
         # Get company names
         placeholders = ",".join("?" for _ in ticker_list)
-        name_rows = conn.execute(
+        name_rows = fetchall(
+            conn,
             f"SELECT ticker, short_name FROM companies WHERE ticker IN ({placeholders})",
-            ticker_list,
-        ).fetchall()
+            tuple(ticker_list),
+        )
         name_map = {r["ticker"]: r["short_name"] for r in name_rows}
 
         # Fetch metrics per table
@@ -316,12 +304,12 @@ async def compare_stocks(
 
         for table, columns in table_columns.items():
             col_list = ", ".join(["ticker"] + columns)
-            rows = conn.execute(
+            rows = fetchall(
+                conn,
                 f"SELECT {col_list} FROM {table} WHERE ticker IN ({placeholders})",
-                ticker_list,
-            ).fetchall()
-            for row in rows:
-                row_dict = dict(row)
+                tuple(ticker_list),
+            )
+            for row_dict in rows:
                 tk = row_dict.pop("ticker")
                 for col in columns:
                     result_data[tk][col] = row_dict.get(col)
@@ -366,9 +354,9 @@ async def get_batch_quotes(
         WHERE c.ticker IN ({placeholders})
     """
 
-    conn = _get_conn()
+    conn = get_conn()
     try:
-        rows = conn.execute(sql, ticker_list).fetchall()
+        rows = fetchall(conn, sql, tuple(ticker_list))
     finally:
         conn.close()
 
