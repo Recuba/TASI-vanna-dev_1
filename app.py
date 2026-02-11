@@ -56,16 +56,23 @@ _llm_api_key = (
     _settings.llm.api_key if _settings and _settings.llm.api_key
     else os.environ.get("GEMINI_API_KEY", "")
 )
-_llm_model = (
-    _settings.llm.model if _settings
-    else os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+# GEMINI_MODEL env var takes highest priority, then config, then default.
+_llm_model = os.environ.get("GEMINI_MODEL") or (
+    _settings.llm.model if _settings else "gemini-2.5-flash"
 )
+# gemini-3-flash-preview requires thought_signature in tool round-trips
+# which Vanna's OpenAI integration does not preserve -- auto-fallback.
+_INCOMPATIBLE_MODELS = {"gemini-3-flash-preview"}
+if _llm_model in _INCOMPATIBLE_MODELS:
+    logger.warning("Model %s incompatible with Vanna tool calling, falling back to gemini-2.5-flash", _llm_model)
+    _llm_model = "gemini-2.5-flash"
 
 llm = OpenAILlmService(
     model=_llm_model,
     api_key=_llm_api_key,
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
+logger.info("LLM configured: model=%s, provider=gemini", _llm_model)
 
 # ---------------------------------------------------------------------------
 # 2. SQL runner -- SQLite (default) or PostgreSQL
