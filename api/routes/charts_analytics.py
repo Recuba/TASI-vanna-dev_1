@@ -166,7 +166,7 @@ async def top_dividend_yields(
 ) -> ChartResponse:
     """Return top N companies by dividend yield."""
     sql = """
-        SELECT c.short_name AS label, d.dividend_yield * 100 AS value
+        SELECT c.short_name AS label, d.dividend_yield AS value
         FROM companies c
         JOIN dividend_data d ON d.ticker = c.ticker
         WHERE d.dividend_yield IS NOT NULL AND d.dividend_yield > 0

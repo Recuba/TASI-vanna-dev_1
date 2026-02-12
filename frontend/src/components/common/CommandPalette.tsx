@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { translateSector, matchesSearch } from '@/lib/stock-translations';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -106,7 +107,7 @@ function fuzzyMatch(text: string, query: string): boolean {
 // ---------------------------------------------------------------------------
 
 export function CommandPalette() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -211,12 +212,13 @@ export function CommandPalette() {
 
     const items: PaletteItem[] = [];
 
-    // Filter stocks
+    // Filter stocks (with alias matching for common names like "Aramco")
     const matchedStocks = stocks
       .filter(
         (s) =>
           fuzzyMatch(s.ticker, q) ||
-          fuzzyMatch(s.name, q),
+          fuzzyMatch(s.name, q) ||
+          matchesSearch({ ticker: s.ticker, short_name: s.name }, q),
       )
       .slice(0, 8);
 
@@ -224,7 +226,7 @@ export function CommandPalette() {
       items.push({
         id: `stock-${s.ticker}`,
         label: `${s.ticker} - ${s.name}`,
-        sublabel: s.sector,
+        sublabel: translateSector(s.sector, language),
         section: STOCKS_SECTION,
         href: `/stock/${s.ticker}`,
       });

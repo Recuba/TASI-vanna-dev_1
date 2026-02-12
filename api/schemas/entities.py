@@ -78,6 +78,7 @@ class EntityListResponse(BaseModel):
 
     items: List[CompanySummary]
     count: int
+    total: int = 0
 
 
 class SectorInfo(BaseModel):

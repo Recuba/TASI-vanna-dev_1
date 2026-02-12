@@ -35,7 +35,8 @@ async def list_entities(
     search: Optional[str] = Query(None, description="Search by ticker or name"),
 ) -> EntityListResponse:
     """List companies with basic market data."""
-    clauses: list = []
+    # Always filter out stub entities with no meaningful market data
+    clauses: list = ["(m.current_price IS NOT NULL OR m.market_cap IS NOT NULL)"]
     params: dict = {"limit": limit, "offset": offset}
 
     if sector:
@@ -46,7 +47,14 @@ async def list_entities(
         clauses.append("(c.ticker ILIKE %(search)s OR c.short_name ILIKE %(search)s)")
         params["search"] = f"%{search}%"
 
-    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    where = "WHERE " + " AND ".join(clauses)
+
+    count_sql = f"""
+        SELECT COUNT(*) AS cnt
+        FROM companies c
+        LEFT JOIN market_data m ON m.ticker = c.ticker
+        {where}
+    """
 
     sql = f"""
         SELECT
@@ -66,6 +74,8 @@ async def list_entities(
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(count_sql, params)
+            total = cur.fetchone()["cnt"]
             cur.execute(sql, params)
             rows = cur.fetchall()
     finally:
@@ -89,17 +99,19 @@ async def list_entities(
         )
         for r in rows
     ]
-    return EntityListResponse(items=items, count=len(items))
+    return EntityListResponse(items=items, count=len(items), total=total)
 
 
 @router.get("/sectors", response_model=List[SectorInfo])
 async def list_sectors() -> List[SectorInfo]:
-    """Return all sectors with company counts."""
+    """Return all sectors with company counts (only companies with real market data)."""
     sql = """
-        SELECT sector, COUNT(*) AS company_count
-        FROM companies
-        WHERE sector IS NOT NULL
-        GROUP BY sector
+        SELECT c.sector, COUNT(*) AS company_count
+        FROM companies c
+        LEFT JOIN market_data m ON m.ticker = c.ticker
+        WHERE c.sector IS NOT NULL
+          AND (m.current_price IS NOT NULL OR m.market_cap IS NOT NULL)
+        GROUP BY c.sector
         ORDER BY company_count DESC
     """
     conn = get_db_connection()
@@ -115,9 +127,23 @@ async def list_sectors() -> List[SectorInfo]:
     ]
 
 
+def _normalize_ticker(ticker: str) -> str:
+    """Ensure Saudi ticker has .SR suffix.
+
+    The database stores tickers with the .SR suffix (e.g. '2222.SR').
+    Users and internal links often use just the number ('2222'), so
+    we append '.SR' when the input is purely numeric.
+    """
+    stripped = ticker.strip()
+    if stripped.isdigit():
+        return f"{stripped}.SR"
+    return stripped
+
+
 @router.get("/{ticker}", response_model=CompanyDetail)
 async def get_entity(ticker: str) -> CompanyDetail:
     """Return detailed company information with market data, valuation, and profitability."""
+    ticker = _normalize_ticker(ticker)
     sql = """
         SELECT
             c.ticker, c.short_name, c.sector, c.industry, c.exchange, c.currency,

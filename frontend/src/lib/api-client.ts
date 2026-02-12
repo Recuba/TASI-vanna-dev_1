@@ -410,6 +410,8 @@ export async function getOHLCVData(
 export interface TasiIndexResponse {
   data: OHLCVData[];
   source: 'real' | 'mock' | 'cached';
+  data_freshness: 'real-time' | 'cached' | 'stale' | 'mock';
+  cache_age_seconds: number | null;
   last_updated: string | null;
   symbol: string;
   period: string;
@@ -548,6 +550,20 @@ export interface FinancialSummary {
   operating_cashflow: number | null;
 }
 
+export interface FinancialPeriod {
+  period_type: string | null;
+  period_index: number | null;
+  period_date: string | null;
+  data: Record<string, string | number | null>;
+}
+
+export interface FinancialsResponse {
+  ticker: string;
+  statement: string;
+  periods: FinancialPeriod[];
+}
+
+/** @deprecated Use FinancialPeriod instead */
 export interface FinancialStatement {
   period_type: string;
   period_index: number;
@@ -561,7 +577,9 @@ export interface StockComparison {
 
 export interface BatchQuote {
   ticker: string;
+  /** Company short name (backend may return as "name" or "short_name"). */
   name: string;
+  short_name?: string | null;
   current_price: number;
   previous_close: number;
   change_pct: number;
@@ -606,7 +624,7 @@ export function getStockFinancialSummary(ticker: string): Promise<FinancialSumma
 export function getStockFinancials(
   ticker: string,
   params?: { statement?: string; period_type?: string },
-): Promise<FinancialStatement[]> {
+): Promise<FinancialsResponse> {
   return request(
     `/api/v1/stocks/${encodeURIComponent(ticker)}/financials${qs(params ?? {})}`,
   );

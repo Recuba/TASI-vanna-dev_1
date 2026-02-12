@@ -9,7 +9,7 @@ import { LoadingDots } from './LoadingDots';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { ChatMessage } from '@/lib/types';
 
-const suggestions = [
+const suggestionsAr = [
   { label: 'ما هي أعلى 10 أسهم من حيث القيمة السوقية؟', query: 'ما هي أعلى 10 أسهم من حيث القيمة السوقية؟' },
   { label: 'ما هو سعر سهم أرامكو اليوم؟', query: 'ما هو سعر سهم أرامكو اليوم؟' },
   { label: 'أظهر لي أرباح البنوك السعودية', query: 'أظهر لي أرباح البنوك السعودية' },
@@ -20,9 +20,21 @@ const suggestions = [
   { label: 'خريطة حرارية لأعلى 15 شركة', query: 'Show a heatmap of ROE, ROA, and profit margin for the top 15 companies by market cap' },
 ];
 
+const suggestionsEn = [
+  { label: 'Top 10 stocks by market cap?', query: 'What are the top 10 stocks by market cap?' },
+  { label: 'What is Aramco\'s stock price today?', query: 'What is Aramco\'s stock price today?' },
+  { label: 'Show Saudi banks\' profits', query: 'Show me the profits of Saudi banks' },
+  { label: 'Highest dividend-paying stocks?', query: 'What are the highest dividend-paying stocks?' },
+  { label: 'Compare Al Rajhi vs Al Ahli', query: 'Compare Al Rajhi Bank and Al Ahli Bank stocks' },
+  { label: 'Petrochemicals sector performance?', query: 'What is the performance of the petrochemicals sector?' },
+  { label: 'Aramco annual revenue chart', query: 'Plot the annual revenue trend for Saudi Aramco (2222.SR) over all available periods' },
+  { label: 'Heatmap of top 15 companies', query: 'Show a heatmap of ROE, ROA, and profit margin for the top 15 companies by market cap' },
+];
+
 /** Follow-up suggestion templates based on response context */
-function getFollowUpSuggestions(lastAssistant: ChatMessage | undefined): string[] {
+function getFollowUpSuggestions(lastAssistant: ChatMessage | undefined, language: string): string[] {
   if (!lastAssistant || !lastAssistant.components || lastAssistant.isStreaming || lastAssistant.isError) return [];
+  const isAr = language === 'ar';
 
   const hasTable = lastAssistant.components.some((c) => c.type === 'table');
   const hasChart = lastAssistant.components.some((c) => c.type === 'chart');
@@ -32,36 +44,36 @@ function getFollowUpSuggestions(lastAssistant: ChatMessage | undefined): string[
 
   // Stock-related follow-ups
   if (content.includes('أرامكو') || content.includes('aramco') || content.includes('2222')) {
-    followUps.push('أظهر الرسم البياني لسهم أرامكو');
-    followUps.push('قارن أرامكو مع قطاع الطاقة');
+    followUps.push(isAr ? 'أظهر الرسم البياني لسهم أرامكو' : 'Show Aramco stock chart');
+    followUps.push(isAr ? 'قارن أرامكو مع قطاع الطاقة' : 'Compare Aramco with the energy sector');
   } else if (content.includes('الراجحي') || content.includes('rajhi') || content.includes('1120')) {
-    followUps.push('أظهر الرسم البياني لسهم الراجحي');
-    followUps.push('قارن الراجحي مع البنوك الأخرى');
+    followUps.push(isAr ? 'أظهر الرسم البياني لسهم الراجحي' : 'Show Al Rajhi stock chart');
+    followUps.push(isAr ? 'قارن الراجحي مع البنوك الأخرى' : 'Compare Al Rajhi with other banks');
   }
 
   // Table-related follow-ups
   if (hasTable && followUps.length < 3) {
-    followUps.push('رتب النتائج من الأعلى إلى الأدنى');
+    followUps.push(isAr ? 'رتب النتائج من الأعلى إلى الأدنى' : 'Sort results from highest to lowest');
     if (!hasChart) {
-      followUps.push('أظهر النتائج كرسم بياني');
+      followUps.push(isAr ? 'أظهر النتائج كرسم بياني' : 'Show results as a chart');
     }
   }
 
   // Chart-related follow-ups
   if (hasChart && followUps.length < 3) {
-    followUps.push('أظهر البيانات كجدول');
+    followUps.push(isAr ? 'أظهر البيانات كجدول' : 'Show data as a table');
   }
 
   // Financial data follow-ups
   if ((content.includes('ربح') || content.includes('إيراد') || content.includes('revenue') || content.includes('profit')) && followUps.length < 3) {
-    followUps.push('أظهر الاتجاه خلال الفترات المتاحة');
-    followUps.push('قارن مع الشركات المنافسة');
+    followUps.push(isAr ? 'أظهر الاتجاه خلال الفترات المتاحة' : 'Show the trend over available periods');
+    followUps.push(isAr ? 'قارن مع الشركات المنافسة' : 'Compare with competing companies');
   }
 
   // Generic follow-ups if we still have room
   if (followUps.length === 0) {
-    followUps.push('أعطني المزيد من التفاصيل');
-    followUps.push('ما هي أعلى 5 أسهم أداء اليوم؟');
+    followUps.push(isAr ? 'أعطني المزيد من التفاصيل' : 'Give me more details');
+    followUps.push(isAr ? 'ما هي أعلى 5 أسهم أداء اليوم؟' : 'What are the top 5 performing stocks today?');
   }
 
   return followUps.slice(0, 3);
@@ -69,7 +81,7 @@ function getFollowUpSuggestions(lastAssistant: ChatMessage | undefined): string[
 
 export function AIChatInterface() {
   const { messages, isLoading, sendMessage, clearMessages, stopStreaming, retryLast } = useSSEChat();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -121,7 +133,8 @@ export function AIChatInterface() {
 
   // Get follow-up suggestions from the last assistant message
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
-  const followUps = !isLoading ? getFollowUpSuggestions(lastAssistant) : [];
+  const suggestions = language === 'ar' ? suggestionsAr : suggestionsEn;
+  const followUps = !isLoading ? getFollowUpSuggestions(lastAssistant, language) : [];
 
   return (
     <div className="flex flex-col h-full">

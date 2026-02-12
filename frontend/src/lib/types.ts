@@ -5,7 +5,7 @@
 /** SSE event types sent by the Vanna backend */
 export type SSEEventType = 'progress' | 'code' | 'table' | 'chart' | 'text';
 
-/** A single SSE event from the backend */
+/** A single SSE event from the backend (normalized format) */
 export interface SSEEvent {
   type: SSEEventType;
   data: SSEProgressData | SSECodeData | SSETableData | SSEChartData | SSETextData;
@@ -31,6 +31,39 @@ export interface SSEChartData {
 
 export interface SSETextData {
   content: string;
+}
+
+// ---------------------------------------------------------------------------
+// Vanna 2.0 raw SSE types (rich/simple envelope)
+// ---------------------------------------------------------------------------
+
+/** The raw rich component sent by the Vanna 2.0 backend */
+export interface Vanna2RichComponent {
+  id: string;
+  type: string;
+  lifecycle?: string;
+  children?: unknown[];
+  timestamp?: string;
+  visible?: boolean;
+  interactive?: boolean;
+  data: Record<string, unknown>;
+}
+
+/** The raw simple fallback sent alongside the rich component */
+export interface Vanna2SimpleComponent {
+  type?: string;
+  semantic_type?: string | null;
+  metadata?: unknown;
+  text?: string;
+}
+
+/** A raw SSE message in Vanna 2.0 format (rich/simple envelope) */
+export interface Vanna2RawEvent {
+  rich: Vanna2RichComponent;
+  simple: Vanna2SimpleComponent | null;
+  conversation_id?: string;
+  request_id?: string;
+  timestamp?: number;
 }
 
 /** A chat message in the conversation */

@@ -9,6 +9,7 @@ import { TASIIndexChart, StockOHLCVChart } from '@/components/charts';
 import { getTASIStockName } from '@/lib/tradingview-utils';
 import { useStockDetail } from '@/lib/hooks/use-api';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { translateSector } from '@/lib/stock-translations';
 
 // Dynamic imports for new chart components (no SSR)
 const StockComparisonChart = dynamic(
@@ -104,7 +105,7 @@ function StockChartPanel({
   onAddToCompare?: (ticker: string) => void;
   compareDisabled?: boolean;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data: detail } = useStockDetail(ticker);
 
   const priceChange =
@@ -129,7 +130,7 @@ function StockChartPanel({
           </h2>
           <p className="text-sm text-[var(--text-muted)]">
             {ticker}
-            {detail?.sector && <> &middot; {detail.sector}</>}
+            {detail?.sector && <> &middot; {translateSector(detail.sector, language)}</>}
           </p>
         </div>
         <div className="flex items-center gap-3">

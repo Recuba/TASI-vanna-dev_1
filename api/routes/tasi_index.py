@@ -40,6 +40,8 @@ class TASIOHLCVPoint(BaseModel):
 class TASIIndexResponse(BaseModel):
     data: List[TASIOHLCVPoint]
     source: Literal["real", "mock", "cached"]
+    data_freshness: Literal["real-time", "cached", "stale", "mock"] = "real-time"
+    cache_age_seconds: Optional[int] = None
     last_updated: str
     symbol: str
     period: str
@@ -70,6 +72,8 @@ async def get_tasi_index(
     return TASIIndexResponse(
         data=[TASIOHLCVPoint(**pt) for pt in result["data"]],
         source=result["source"],
+        data_freshness=result.get("data_freshness", "real-time"),
+        cache_age_seconds=result.get("cache_age_seconds"),
         last_updated=result["last_updated"],
         symbol=result["symbol"],
         period=period,

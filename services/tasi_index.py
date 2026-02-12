@@ -27,7 +27,7 @@ VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 # Circuit breaker state
 # ---------------------------------------------------------------------------
 CIRCUIT_BREAKER_THRESHOLD = 5       # consecutive failures before opening
-CIRCUIT_BREAKER_TIMEOUT = 900       # seconds to keep circuit open (15 min)
+CIRCUIT_BREAKER_TIMEOUT = 300       # seconds to keep circuit open (5 min)
 SYMBOL_RETRY_DELAY = 0.5            # seconds between symbol retries
 
 _consecutive_failures: int = 0
@@ -36,24 +36,34 @@ _circuit_lock = threading.Lock()
 
 
 def _get_cached(period: str) -> Optional[Dict[str, Any]]:
-    """Return cached data if still fresh, or stale data marked as 'cached'."""
+    """Return cached data if still fresh, enriched with freshness metadata."""
     entry = _cache.get(period)
     if entry is None:
         return None
     age = time.monotonic() - entry["fetched_at"]
     if age < _CACHE_TTL:
-        return entry["payload"]
+        payload = dict(entry["payload"])
+        payload["data_freshness"] = "cached"
+        payload["cache_age_seconds"] = round(age)
+        return payload
     # Stale -- caller can use it as fallback
     return None
 
 
 def _get_stale_cached(period: str) -> Optional[Dict[str, Any]]:
-    """Return stale cache entry (for fallback on fetch failure)."""
+    """Return stale cache entry (for fallback on fetch failure).
+
+    Enriches the payload with staleness metadata so consumers (especially
+    the frontend) can display an appropriate warning about data age.
+    """
     entry = _cache.get(period)
     if entry is None:
         return None
+    age_seconds = round(time.monotonic() - entry["fetched_at"])
     payload = dict(entry["payload"])
     payload["source"] = "cached"
+    payload["data_freshness"] = "stale"
+    payload["cache_age_seconds"] = age_seconds
     return payload
 
 
@@ -242,6 +252,8 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
                         payload = {
                             "data": data,
                             "source": "real",
+                            "data_freshness": "real-time",
+                            "cache_age_seconds": 0,
                             "last_updated": datetime.utcnow().isoformat() + "Z",
                             "symbol": symbol,
                         }
@@ -299,6 +311,8 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
     payload = {
         "data": mock_data,
         "source": "mock",
+        "data_freshness": "mock",
+        "cache_age_seconds": None,
         "last_updated": datetime.utcnow().isoformat() + "Z",
         "symbol": "^TASI",
     }

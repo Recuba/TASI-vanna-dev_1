@@ -5,6 +5,11 @@ Scrapes Arabic financial news from 5 Saudi market sources.
 Each source has a dedicated scraper subclass that handles site-specific
 HTML parsing. Articles are filtered for TASI/Saudi market relevance.
 
+Sources 1 and 2 (Al Arabiya, Asharq Bloomberg) use Google News RSS as a
+proxy because the original sites block non-browser requests (Cloudflare 403
+and AWS WAF challenge respectively). The RSS approach yields the same
+articles without requiring JavaScript rendering.
+
 Usage:
     from services.news_scraper import fetch_all_news
     articles = fetch_all_news()
@@ -19,6 +24,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from difflib import SequenceMatcher
 from typing import List, Optional
+from urllib.parse import quote_plus
 
 import requests
 from bs4 import BeautifulSoup
@@ -327,128 +333,186 @@ class BaseNewsScraper(ABC):
 
 
 # ---------------------------------------------------------------------------
-# Source 1: Al Arabiya Markets (priority 1)
+# Google News RSS base scraper (used for sources that block direct scraping)
 # ---------------------------------------------------------------------------
-class AlarabiyaScraper(BaseNewsScraper):
+class GoogleNewsRssScraper(BaseNewsScraper):
+    """Scraper that fetches articles via Google News RSS search.
+
+    Both Al Arabiya and Asharq Bloomberg block direct HTTP requests with
+    Cloudflare 403 and AWS WAF challenges respectively. Google News RSS
+    indexes their articles and provides them in a standard RSS feed, making
+    this a reliable proxy for otherwise inaccessible sources.
+
+    Subclasses set ``_rss_queries`` (a list of search queries to try) and
+    optionally ``_source_filter`` to filter results to a specific domain.
+    """
+
+    _rss_queries: List[str] = []
+    _source_filter: str = ""  # domain substring to filter, e.g. "alarabiya"
+    _google_rss_base = "https://news.google.com/rss/search"
+
+    def fetch_articles(self) -> List[dict]:
+        """Fetch articles from Google News RSS, trying each query in order."""
+        all_articles: List[dict] = []
+        seen_urls: set = set()
+
+        for query in self._rss_queries:
+            try:
+                encoded_query = quote_plus(query)
+                rss_url = (
+                    f"{self._google_rss_base}"
+                    f"?q={encoded_query}&hl=ar&gl=SA&ceid=SA:ar"
+                )
+                logger.info(
+                    "Fetching %s articles via Google News RSS: %s",
+                    self.source_name, query,
+                )
+                resp = self._session.get(rss_url, timeout=REQUEST_TIMEOUT)
+                resp.raise_for_status()
+                resp.encoding = "utf-8"
+
+                soup = BeautifulSoup(resp.text, "xml")
+                items = soup.select("item")
+                logger.info(
+                    "%s: Google RSS returned %d items for query '%s'",
+                    self.source_name, len(items), query,
+                )
+
+                for item in items:
+                    title_el = item.select_one("title")
+                    link_el = item.select_one("link")
+                    pub_date_el = item.select_one("pubDate")
+                    source_el = item.select_one("source")
+                    description_el = item.select_one("description")
+
+                    title = title_el.get_text(strip=True) if title_el else ""
+                    link = link_el.get_text(strip=True) if link_el else ""
+                    pub_date = pub_date_el.get_text(strip=True) if pub_date_el else None
+                    source_text = source_el.get_text(strip=True) if source_el else ""
+                    source_href = source_el.get("url", "") if source_el else ""
+                    body = ""
+                    if description_el:
+                        # Google wraps description in HTML; extract text
+                        desc_soup = BeautifulSoup(
+                            description_el.get_text(), "html.parser"
+                        )
+                        body = desc_soup.get_text(strip=True)
+
+                    if not title or len(title) < 10:
+                        continue
+
+                    # Filter by source domain if specified
+                    if self._source_filter:
+                        matches_source = (
+                            self._source_filter in source_href.lower()
+                            or self._source_filter in source_text.lower()
+                            or self._source_filter in link.lower()
+                        )
+                        if not matches_source:
+                            continue
+
+                    if link in seen_urls:
+                        continue
+                    seen_urls.add(link)
+
+                    # Parse RFC 2822 date from Google RSS
+                    published_at = None
+                    if pub_date:
+                        try:
+                            from email.utils import parsedate_to_datetime
+                            dt = parsedate_to_datetime(pub_date)
+                            published_at = dt.isoformat()
+                        except Exception:
+                            published_at = pub_date
+
+                    all_articles.append(
+                        self._make_article(title, body, link, published_at)
+                    )
+
+                if all_articles:
+                    break  # Got results from this query, skip remaining
+
+            except requests.exceptions.Timeout:
+                logger.warning(
+                    "%s: Google RSS timed out for query '%s'",
+                    self.source_name, query,
+                )
+            except requests.exceptions.ConnectionError:
+                logger.warning(
+                    "%s: Google RSS connection error for query '%s'",
+                    self.source_name, query,
+                )
+            except requests.exceptions.HTTPError as exc:
+                logger.warning(
+                    "%s: Google RSS HTTP error %s for query '%s'",
+                    self.source_name,
+                    exc.response.status_code if exc.response else exc,
+                    query,
+                )
+            except Exception:
+                logger.warning(
+                    "%s: unexpected error fetching Google RSS for query '%s'",
+                    self.source_name, query, exc_info=True,
+                )
+
+        # Filter for Saudi market relevance
+        relevant = [a for a in all_articles if self._is_relevant(a)]
+        limited = relevant[:MAX_ARTICLES_PER_SOURCE]
+
+        logger.info(
+            "%s: Google RSS total %d, relevant %d, returning %d",
+            self.source_name, len(all_articles), len(relevant), len(limited),
+        )
+        return limited
+
+    def _parse_page(self, html: str) -> List[dict]:
+        """Not used for RSS scrapers -- fetch_articles is overridden."""
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Source 1: Al Arabiya Markets via Google News RSS (priority 1)
+# ---------------------------------------------------------------------------
+class AlarabiyaScraper(GoogleNewsRssScraper):
+    """Fetches Al Arabiya market news via Google News RSS.
+
+    Al Arabiya (alarabiya.net) blocks direct HTTP requests with Cloudflare 403.
+    We use Google News RSS with ``site:alarabiya.net`` queries instead.
+    """
+
     source_name = "العربية"
     source_url = "https://www.alarabiya.net/aswaq"
     priority = 1
 
-    def _parse_page(self, html: str) -> List[dict]:
-        soup = BeautifulSoup(html, "lxml")
-        articles = []
-        seen_urls: set = set()
-
-        # Strategy 1: article/card containers with links
-        for item in soup.select("article, .article-card, .card, [class*='article'], [class*='story'], [class*='card']"):
-            link = item.select_one("a[href*='/aswaq/'], a[href*='/economy/'], a[href*='/business/']")
-            if not link:
-                continue
-
-            href = link.get("href", "")
-            url = self._absolute_url(self.source_url, href)
-            if url in seen_urls:
-                continue
-
-            title_el = item.select_one("h1, h2, h3, h4, [class*='title'], [class*='headline']")
-            title = self._extract_text(title_el) if title_el else self._extract_text(link)
-            if not title or len(title) < 10:
-                continue
-
-            seen_urls.add(url)
-            summary_el = item.select_one("p, [class*='summary'], [class*='excerpt'], [class*='desc']")
-            body = self._extract_text(summary_el) if summary_el else ""
-
-            time_el = item.select_one("time, [class*='date'], [class*='time'], [datetime]")
-            published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
-
-            articles.append(self._make_article(title, body, url, published))
-
-        # Strategy 2: direct links to /aswaq/ or /economy/ articles
-        if not articles:
-            for link in soup.select("a[href*='/aswaq/'], a[href*='/economy/'], a[href*='/business/']"):
-                href = link.get("href", "")
-                url = self._absolute_url(self.source_url, href)
-                if url in seen_urls:
-                    continue
-                title = self._extract_text(link)
-                if title and len(title) >= 15:
-                    seen_urls.add(url)
-                    articles.append(self._make_article(title, "", url))
-
-        return articles
+    _source_filter = "alarabiya"
+    _rss_queries = [
+        "تاسي أسهم site:alarabiya.net",
+        "سوق الأسهم السعودية site:alarabiya.net",
+        "أسواق السعودية site:alarabiya.net",
+    ]
 
 
 # ---------------------------------------------------------------------------
-# Source 2: Asharq Business Saudi (priority 2)
+# Source 2: Asharq Business / Bloomberg Saudi via Google News RSS (priority 2)
 # ---------------------------------------------------------------------------
-class AsharqBusinessScraper(BaseNewsScraper):
+class AsharqBusinessScraper(GoogleNewsRssScraper):
+    """Fetches Asharq Bloomberg business news via Google News RSS.
+
+    Asharq Business (asharqbusiness.com) uses AWS WAF with a JavaScript
+    challenge (HTTP 202) that cannot be bypassed with plain requests.
+    We use Google News RSS with ``site:asharqbusiness.com`` queries instead.
+    """
+
     source_name = "الشرق بلومبرغ"
     source_url = "https://www.asharqbusiness.com/"
     priority = 2
 
-    # Try multiple entry URLs for better coverage
-    _alt_urls = [
-        "https://www.asharqbusiness.com/",
-        "https://www.asharqbusiness.com/%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9/",
-        "https://asharqbusiness.com/",
+    _source_filter = "asharq"
+    _rss_queries = [
+        "أسهم سعودية site:asharqbusiness.com",
+        "تاسي تداول site:asharqbusiness.com",
+        "الأسهم السعودية اقتصاد الشرق",
     ]
-
-    def fetch_articles(self) -> List[dict]:
-        """Override to try multiple URLs for Asharq Business."""
-        for url in self._alt_urls:
-            self.source_url = url
-            articles = super().fetch_articles()
-            if articles:
-                return articles
-        return []
-
-    def _parse_page(self, html: str) -> List[dict]:
-        soup = BeautifulSoup(html, "lxml")
-        articles = []
-        seen_urls: set = set()
-
-        # Strategy 1: structured containers
-        for item in soup.select("article, [class*='article'], [class*='story'], [class*='card'], [class*='news']"):
-            link = item.select_one("a[href]")
-            if not link:
-                continue
-
-            href = link.get("href", "")
-            if not href or href == "#" or href == "/":
-                continue
-
-            url = self._absolute_url(self.source_url, href)
-            if url in seen_urls:
-                continue
-
-            title_el = item.select_one("h1, h2, h3, h4, [class*='title'], [class*='headline']")
-            title = self._extract_text(title_el) if title_el else self._extract_text(link)
-            if not title or len(title) < 10:
-                continue
-
-            seen_urls.add(url)
-            summary_el = item.select_one("p, [class*='summary'], [class*='excerpt'], [class*='desc']")
-            body = self._extract_text(summary_el) if summary_el else ""
-
-            time_el = item.select_one("time, [class*='date'], [class*='time'], [datetime]")
-            published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
-
-            articles.append(self._make_article(title, body, url, published))
-
-        # Strategy 2: direct links with article-like paths
-        if not articles:
-            for link in soup.select("a[href*='/article/'], a[href*='/news/'], a[href*='/%D8%A7%D9%84']"):
-                href = link.get("href", "")
-                url = self._absolute_url(self.source_url, href)
-                if url in seen_urls:
-                    continue
-                title = self._extract_text(link)
-                if title and len(title) >= 15:
-                    seen_urls.add(url)
-                    articles.append(self._make_article(title, "", url))
-
-        return articles
 
 
 # ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ import { useMiniChartData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { translateSector } from '@/lib/stock-translations';
 
 // ---------------------------------------------------------------------------
 // Quick action cards - bilingual
@@ -258,7 +259,7 @@ export default function Home() {
                     className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-card-hover)] transition-colors"
                   >
                     <span className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', sectorColors[i % sectorColors.length])} />
-                    <span className="text-sm text-[var(--text-secondary)] flex-1 truncate">{sector.sector}</span>
+                    <span className="text-sm text-[var(--text-secondary)] flex-1 truncate">{translateSector(sector.sector, language)}</span>
                     <span className="text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-input)] px-2 py-0.5 rounded-full">
                       {sector.company_count}
                     </span>

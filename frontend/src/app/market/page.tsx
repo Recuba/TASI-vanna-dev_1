@@ -10,6 +10,7 @@ import { useMarketIndex, useMiniChartData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { translateSector, findTickersByAlias, matchesSearch } from '@/lib/stock-translations';
 // ---------------------------------------------------------------------------
 // Sort types
 // ---------------------------------------------------------------------------
@@ -83,11 +84,25 @@ export default function MarketPage() {
   const { data: indexData, loading: indexLoading, source: indexSource } = useMarketIndex();
 
   const { data: sectors, loading: sectorsLoading, error: sectorsError, refetch: refetchSectors } = useSectors();
+
+  // Expand aliases: if search matches an alias (e.g. "Aramco" -> "2222.SR"),
+  // send the matched ticker to the backend for precise results.
+  const aliasMatchedTickers = useMemo(() => findTickersByAlias(search), [search]);
+  const effectiveSearch = useMemo(() => {
+    if (!search) return undefined;
+    // If the search matches aliases, use the first matched ticker (without .SR)
+    // so the backend LIKE query will match.
+    if (aliasMatchedTickers.length > 0) {
+      return aliasMatchedTickers[0].replace('.SR', '');
+    }
+    return search;
+  }, [search, aliasMatchedTickers]);
+
   const { data: entities, loading: entitiesLoading, error: entitiesError, refetch: refetchEntities } = useEntities({
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
     sector: selectedSector,
-    search: search || undefined,
+    search: effectiveSearch,
   });
 
   const totalCount = entities?.count ?? 0;
@@ -123,7 +138,14 @@ export default function MarketPage() {
 
   const sortedItems = useMemo(() => {
     if (!entities?.items) return [];
-    return [...entities.items].sort((a, b) => {
+    // Apply client-side alias filtering when the user typed an alias search.
+    // The backend already returned matching items via the expanded ticker search,
+    // but if the search was by original text and aliases matched, we further filter.
+    let filtered = entities.items;
+    if (search && aliasMatchedTickers.length > 0) {
+      filtered = entities.items.filter((item) => matchesSearch(item, search));
+    }
+    return [...filtered].sort((a, b) => {
       let aVal: string | number | null;
       let bVal: string | number | null;
       if (sortField === 'short_name') {
@@ -143,7 +165,7 @@ export default function MarketPage() {
       }
       return sortDir === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
     });
-  }, [entities?.items, sortField, sortDir]);
+  }, [entities?.items, sortField, sortDir, search, aliasMatchedTickers]);
 
   const headerCols: { field: SortField; labelAr: string; labelEn: string; align: 'start' | 'end' }[] = [
     { field: 'short_name', labelAr: '\u0627\u0644\u0634\u0631\u0643\u0629', labelEn: 'Company', align: 'start' },
@@ -219,7 +241,7 @@ export default function MarketPage() {
               <option value="">{t('\u062C\u0645\u064A\u0639 \u0627\u0644\u0642\u0637\u0627\u0639\u0627\u062A', 'All Sectors')}</option>
               {sectors?.map((s) => (
                 <option key={s.sector} value={s.sector}>
-                  {s.sector} ({s.company_count})
+                  {translateSector(s.sector, language)} ({s.company_count})
                 </option>
               ))}
             </select>
@@ -255,7 +277,7 @@ export default function MarketPage() {
                     : 'bg-[var(--bg-input)] text-[var(--text-secondary)] border border-[#2A2A2A] hover:border-gold/40'
                 )}
               >
-                {s.sector}
+                {translateSector(s.sector, language)}
                 <span className={cn("text-[10px] opacity-70", language === 'ar' ? 'mr-1' : 'ml-1')}>({s.company_count})</span>
               </button>
             ))}
@@ -265,7 +287,7 @@ export default function MarketPage() {
         {/* Companies Table */}
         <section>
           <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-            {selectedSector ? `${selectedSector}` : t('\u062C\u0645\u064A\u0639 \u0627\u0644\u0634\u0631\u0643\u0627\u062A', 'All Companies')}
+            {selectedSector ? translateSector(selectedSector, language) : t('\u062C\u0645\u064A\u0639 \u0627\u0644\u0634\u0631\u0643\u0627\u062A', 'All Companies')}
             {entities && <span className={cn("text-[var(--text-muted)] font-normal", language === 'ar' ? 'mr-2' : 'ml-2')}>({totalCount})</span>}
           </h2>
 
@@ -317,7 +339,7 @@ export default function MarketPage() {
                             </p>
                             <p className="text-xs text-[var(--text-muted)]">
                               {stock.ticker}
-                              {stock.sector && <span className={language === 'ar' ? 'mr-1' : 'ml-1'}> &middot; {stock.sector}</span>}
+                              {stock.sector && <span className={language === 'ar' ? 'mr-1' : 'ml-1'}> &middot; {translateSector(stock.sector, language)}</span>}
                             </p>
                           </Link>
                         </td>

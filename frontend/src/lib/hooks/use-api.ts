@@ -36,7 +36,7 @@ import {
   type HeatmapItem,
   type StockDividends,
   type FinancialSummary,
-  type FinancialStatement,
+  type FinancialsResponse,
   type StockComparison,
   type BatchQuote,
 } from '@/lib/api-client';
@@ -238,7 +238,7 @@ export function useStockFinancials(
   statement?: string,
   period_type?: string,
 ) {
-  return useAsync<FinancialStatement[]>(
+  return useAsync<FinancialsResponse>(
     () => getStockFinancials(ticker, { statement, period_type }),
     [ticker, statement, period_type],
   );
