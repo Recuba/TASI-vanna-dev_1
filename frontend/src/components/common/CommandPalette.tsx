@@ -123,7 +123,7 @@ export function CommandPalette() {
     { id: 'page-market', label: t('السوق', 'Market'), sublabel: t('Market', 'السوق'), section: t('الصفحات', 'Pages'), href: '/market' },
     { id: 'page-charts', label: t('الرسوم البيانية', 'Charts'), sublabel: t('Charts', 'الرسوم البيانية'), section: t('الصفحات', 'Pages'), href: '/charts' },
     { id: 'page-news', label: t('الأخبار', 'News'), sublabel: t('News', 'الأخبار'), section: t('الصفحات', 'Pages'), href: '/news' },
-    { id: 'page-chat', label: t('رائد - المحادثة', 'Ra\'d - AI Chat'), sublabel: t('AI Chat', 'رائد - المحادثة'), section: t('الصفحات', 'Pages'), href: '/chat' },
+    { id: 'page-chat', label: t('رعد - المحادثة', 'Ra\'d - AI Chat'), sublabel: t('AI Chat', 'رعد - المحادثة'), section: t('الصفحات', 'Pages'), href: '/chat' },
     { id: 'page-reports', label: t('التقارير', 'Reports'), sublabel: t('Reports', 'التقارير'), section: t('الصفحات', 'Pages'), href: '/reports' },
     { id: 'page-watchlist', label: t('المفضلة', 'Watchlist'), sublabel: t('Watchlist', 'المفضلة'), section: t('الصفحات', 'Pages'), href: '/watchlist' },
     { id: 'page-announcements', label: t('الإعلانات', 'Announcements'), sublabel: t('Announcements', 'الإعلانات'), section: t('الصفحات', 'Pages'), href: '/announcements' },
@@ -131,7 +131,7 @@ export function CommandPalette() {
 
   const ACTION_ITEMS: PaletteItem[] = useMemo(() => [
     { id: 'act-charts', label: t('عرض الرسوم البيانية', 'View Charts'), section: t('إجراءات', 'Actions'), href: '/charts' },
-    { id: 'act-ask', label: t('اسأل رائد عن...', 'Ask Ra\'d about...'), section: t('إجراءات', 'Actions'), href: '/chat' },
+    { id: 'act-ask', label: t('اسأل رعد عن...', 'Ask Ra\'d about...'), section: t('إجراءات', 'Actions'), href: '/chat' },
     { id: 'act-movers', label: t('عرض أكثر الأسهم تحركاً', 'View top movers'), section: t('إجراءات', 'Actions'), href: '/market' },
   ], [t]);
 

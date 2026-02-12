@@ -45,7 +45,7 @@
 
 ## 1. Project Overview
 
-**Ra'd AI** (رائد للذكاء الاصطناعي) is a full-stack TASI Saudi Stock Market AI Platform built on the **Vanna 2.0** framework. It provides:
+**Ra'd AI** (رعد للذكاء الاصطناعي) is a full-stack TASI Saudi Stock Market AI Platform built on the **Vanna 2.0** framework. It provides:
 
 - **Natural language to SQL** - Users ask questions in Arabic or English; the AI generates SQL against a normalized database of ~500 Saudi-listed companies and returns results with Plotly charts.
 - **Real-time market data** - TASI index and per-stock OHLCV candlestick charts via yfinance.

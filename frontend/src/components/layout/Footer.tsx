@@ -55,7 +55,7 @@ export function Footer() {
 
         {/* Bottom row: copyright + attribution */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[var(--text-muted)]">
-          <p>&copy; {new Date().getFullYear()} Ra&apos;d AI - {t('رائد للذكاء الاصطناعي', 'Ra\'d AI')}</p>
+          <p>&copy; {new Date().getFullYear()} Ra&apos;d AI - {t('رعد للذكاء الاصطناعي', 'Ra\'d AI')}</p>
           <p>
             Powered by{' '}
             <span className="gold-text font-medium">Vanna AI</span>

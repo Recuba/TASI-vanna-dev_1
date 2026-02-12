@@ -113,15 +113,6 @@ export default function Home() {
   const { data: sectors, loading: sectorsLoading, error: sectorsError, refetch: refetchSectors } = useSectors();
   const { data: topMovers, loading: moversLoading, error: moversError, refetch: refetchMovers } = useMarketData({ limit: 5 });
 
-  const totalCompanies = sectors ? sectors.reduce((sum, s) => sum + s.company_count, 0) : null;
-
-  const platformStats = [
-    { labelAr: '\u0633\u0647\u0645', labelEn: 'Stocks', value: totalCompanies ? `${totalCompanies}+` : '500+', href: '/market' },
-    { labelAr: '\u0645\u0635\u062F\u0631 \u0623\u062E\u0628\u0627\u0631', labelEn: 'News Sources', value: '5', href: '/news' },
-    { labelAr: '\u062C\u062F\u0648\u0644 \u0628\u064A\u0627\u0646\u0627\u062A', labelEn: 'Data Tables', value: '10', href: '/chat' },
-    { labelAr: '\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A', labelEn: 'AI Engine', value: 'Gemini', href: '/chat' },
-  ];
-
   return (
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       <div className="max-w-content-lg mx-auto space-y-8">
@@ -135,7 +126,7 @@ export default function Home() {
           )}>
             <div className="flex-1">
               <p className="text-sm font-bold text-gold mb-1">
-                {t('\u0645\u0631\u062D\u0628\u064B\u0627 \u0628\u0643 \u0641\u064A \u0631\u0627\u0626\u062F', 'Welcome to Ra\'d')}
+                {t('\u0645\u0631\u062D\u0628\u064B\u0627 \u0628\u0643 \u0641\u064A \u0631\u0639\u062F', 'Welcome to Ra\'d')}
               </p>
               <p className="text-xs text-[var(--text-secondary)]">
                 {t(
@@ -167,7 +158,7 @@ export default function Home() {
             </div>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold leading-tight mb-3 gold-text">
-            {t('\u0631\u0627\u0626\u062F \u2014 \u0645\u062D\u0644\u0644 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A', 'Ra\'d \u2014 Saudi Stock AI Analyst')}
+            {t('\u0631\u0639\u062F \u2014 \u0645\u062D\u0644\u0644 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A', 'Ra\'d \u2014 Saudi Stock AI Analyst')}
           </h1>
           <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto leading-relaxed">
             {t(
@@ -176,29 +167,6 @@ export default function Home() {
             )}
           </p>
         </section>
-
-        {/* Platform Stats */}
-        <div className="flex justify-center gap-4 flex-wrap animate-fade-in-up-delay-1">
-          {platformStats.map((stat, i) => (
-            <Link
-              key={i}
-              href={stat.href}
-              className={cn(
-                'flex flex-col items-center gap-1',
-                'bg-[var(--bg-card)]',
-                'border border-[var(--border-color)] dark:border-[#2A2A2A]/50',
-                'hover:border-gold/30',
-                'rounded-xl px-6 py-3 min-w-[100px]',
-                'cursor-pointer',
-                'transition-all duration-300',
-                'hover:scale-[1.02] hover:bg-[var(--bg-card-hover)] hover:shadow-lg hover:shadow-gold/5'
-              )}
-            >
-              <span className="text-xl font-bold text-gold">{stat.value}</span>
-              <span className="text-xs text-[var(--text-muted)]">{language === 'ar' ? stat.labelAr : stat.labelEn}</span>
-            </Link>
-          ))}
-        </div>
 
         {/* Quick Action Cards */}
         <section className="animate-fade-in-up-delay-2">
@@ -327,11 +295,11 @@ export default function Home() {
         {/* About Section */}
         <section className="bg-[var(--bg-card)] border border-[var(--border-color)] dark:border-[#2A2A2A]/50 hover:border-gold/30 rounded-xl p-6 animate-fade-in-up-delay-3 transition-colors">
           <h3 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider">
-            {t('\u0639\u0646 \u0631\u0627\u0626\u062F', 'About Ra\'d')}
+            {t('\u0639\u0646 \u0631\u0639\u062F', 'About Ra\'d')}
           </h3>
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
             {t(
-              '\u0631\u0627\u0626\u062F \u0647\u064A \u0645\u0646\u0635\u0629 \u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0645\u062A\u0642\u062F\u0645\u0629 \u0644\u062A\u062D\u0644\u064A\u0644 \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 (TASI). \u062A\u0648\u0641\u0631 \u0627\u0644\u0645\u0646\u0635\u0629 \u0625\u0645\u0643\u0627\u0646\u064A\u0629 \u0627\u0644\u0627\u0633\u062A\u0639\u0644\u0627\u0645 \u0639\u0646 \u0628\u064A\u0627\u0646\u0627\u062A \u0623\u0643\u062B\u0631 \u0645\u0646 500 \u0634\u0631\u0643\u0629 \u0645\u062F\u0631\u062C\u0629 \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0623\u0648 \u0627\u0644\u0625\u0646\u062C\u0644\u064A\u0632\u064A\u0629\u060C \u0645\u0639 \u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629\u060C \u0648\u0623\u062E\u0628\u0627\u0631 \u0645\u0646 5 \u0645\u0635\u0627\u062F\u0631 \u0639\u0631\u0628\u064A\u0629\u060C \u0648\u062A\u0642\u0627\u0631\u064A\u0631 \u0645\u0627\u0644\u064A\u0629 \u0645\u0641\u0635\u0644\u0629.',
+              '\u0631\u0639\u062F \u0647\u064A \u0645\u0646\u0635\u0629 \u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0645\u062A\u0642\u062F\u0645\u0629 \u0644\u062A\u062D\u0644\u064A\u0644 \u0633\u0648\u0642 \u0627\u0644\u0623\u0633\u0647\u0645 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 (TASI). \u062A\u0648\u0641\u0631 \u0627\u0644\u0645\u0646\u0635\u0629 \u0625\u0645\u0643\u0627\u0646\u064A\u0629 \u0627\u0644\u0627\u0633\u062A\u0639\u0644\u0627\u0645 \u0639\u0646 \u0628\u064A\u0627\u0646\u0627\u062A \u0623\u0643\u062B\u0631 \u0645\u0646 500 \u0634\u0631\u0643\u0629 \u0645\u062F\u0631\u062C\u0629 \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0623\u0648 \u0627\u0644\u0625\u0646\u062C\u0644\u064A\u0632\u064A\u0629\u060C \u0645\u0639 \u0631\u0633\u0648\u0645 \u0628\u064A\u0627\u0646\u064A\u0629 \u062A\u0641\u0627\u0639\u0644\u064A\u0629\u060C \u0648\u0623\u062E\u0628\u0627\u0631 \u0645\u0646 5 \u0645\u0635\u0627\u062F\u0631 \u0639\u0631\u0628\u064A\u0629\u060C \u0648\u062A\u0642\u0627\u0631\u064A\u0631 \u0645\u0627\u0644\u064A\u0629 \u0645\u0641\u0635\u0644\u0629.',
               'Ra\'d is an advanced AI platform for analyzing the Saudi stock market (TASI). The platform enables querying data for over 500 listed companies using Arabic or English, with interactive charts, news from 5 Arabic sources, and detailed financial reports.'
             )}
           </p>

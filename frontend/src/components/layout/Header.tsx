@@ -98,7 +98,7 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
               Ra&apos;d AI
             </h1>
             <p className="text-[10px] text-[var(--text-muted)] leading-tight hidden sm:block">
-              {t('رائد للذكاء الاصطناعي', 'Saudi Stock Market AI')}
+              {t('رعد للذكاء الاصطناعي', 'Saudi Stock Market AI')}
             </p>
           </div>
         </Link>

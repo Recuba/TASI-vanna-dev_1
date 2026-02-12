@@ -10,25 +10,25 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import type { ChatMessage } from '@/lib/types';
 
 const suggestionsAr = [
-  { label: 'ما هي أعلى 10 أسهم من حيث القيمة السوقية؟', query: 'ما هي أعلى 10 أسهم من حيث القيمة السوقية؟' },
-  { label: 'ما هو سعر سهم أرامكو اليوم؟', query: 'ما هو سعر سهم أرامكو اليوم؟' },
-  { label: 'أظهر لي أرباح البنوك السعودية', query: 'أظهر لي أرباح البنوك السعودية' },
-  { label: 'ما هي الأسهم التي توزع أعلى أرباح؟', query: 'ما هي الأسهم التي توزع أعلى أرباح؟' },
-  { label: 'قارن بين سهم الراجحي وسهم الأهلي', query: 'قارن بين سهم الراجحي وسهم الأهلي' },
-  { label: 'ما هو أداء قطاع البتروكيماويات؟', query: 'ما هو أداء قطاع البتروكيماويات؟' },
-  { label: 'أظهر رسم بياني لإيرادات أرامكو السنوية', query: 'Plot the annual revenue trend for Saudi Aramco (2222.SR) over all available periods' },
-  { label: 'خريطة حرارية لأعلى 15 شركة', query: 'Show a heatmap of ROE, ROA, and profit margin for the top 15 companies by market cap' },
+  { label: 'أعلى 10 شركات من حيث القيمة السوقية', query: 'ما هي أعلى 10 شركات من حيث القيمة السوقية مع القطاع والسعر الحالي؟' },
+  { label: 'أعلى الأسهم توزيعاً للأرباح', query: 'ما هي أعلى 10 أسهم من حيث عائد الأرباح الموزعة مع نسبة التوزيع؟' },
+  { label: 'أرباح البنوك السعودية', query: 'أظهر صافي الدخل وهامش الربح لجميع البنوك السعودية مرتبة من الأعلى' },
+  { label: 'قارن أرامكو والراجحي', query: 'قارن بين أرامكو والراجحي من حيث القيمة السوقية ومكرر الأرباح والعائد على حقوق الملكية' },
+  { label: 'رسم بياني للقيمة السوقية حسب القطاع', query: 'Plot a bar chart of total market cap grouped by sector for all sectors' },
+  { label: 'مكرر الأرباح لقطاع البنوك', query: 'ما هو مكرر الأرباح والقيمة الدفترية لجميع شركات قطاع البنوك؟' },
+  { label: 'إيرادات أرامكو السنوية', query: 'Plot the annual total revenue for ticker 2222.SR from the income statement across all periods' },
+  { label: 'أعلى 10 شركات نمواً في الأرباح', query: 'ما هي أعلى 10 شركات من حيث نمو الأرباح مع القطاع وهامش الربح؟' },
 ];
 
 const suggestionsEn = [
-  { label: 'Top 10 stocks by market cap?', query: 'What are the top 10 stocks by market cap?' },
-  { label: 'What is Aramco\'s stock price today?', query: 'What is Aramco\'s stock price today?' },
-  { label: 'Show Saudi banks\' profits', query: 'Show me the profits of Saudi banks' },
-  { label: 'Highest dividend-paying stocks?', query: 'What are the highest dividend-paying stocks?' },
-  { label: 'Compare Al Rajhi vs Al Ahli', query: 'Compare Al Rajhi Bank and Al Ahli Bank stocks' },
-  { label: 'Petrochemicals sector performance?', query: 'What is the performance of the petrochemicals sector?' },
-  { label: 'Aramco annual revenue chart', query: 'Plot the annual revenue trend for Saudi Aramco (2222.SR) over all available periods' },
-  { label: 'Heatmap of top 15 companies', query: 'Show a heatmap of ROE, ROA, and profit margin for the top 15 companies by market cap' },
+  { label: 'Top 10 companies by market cap', query: 'What are the top 10 companies by market cap? Show name, sector, and current price.' },
+  { label: 'Highest dividend-yielding stocks', query: 'What are the top 10 stocks by dividend yield? Include payout ratio and dividend rate.' },
+  { label: 'Saudi banks profitability', query: 'Show net income and profit margin for all Saudi banks, ordered by net income descending' },
+  { label: 'Compare Aramco vs Al Rajhi', query: 'Compare Aramco and Al Rajhi Bank on market cap, P/E ratio, ROE, and profit margin' },
+  { label: 'Market cap by sector chart', query: 'Plot a bar chart of total market cap grouped by sector for all sectors' },
+  { label: 'Banking sector P/E ratios', query: 'What is the trailing P/E and price-to-book for all companies in the banking sector?' },
+  { label: 'Aramco annual revenue trend', query: 'Plot the annual total revenue for ticker 2222.SR from the income statement across all periods' },
+  { label: 'Top 10 by earnings growth', query: 'What are the top 10 companies by earnings growth? Include sector and profit margin.' },
 ];
 
 /** Follow-up suggestion templates based on response context */
@@ -44,36 +44,39 @@ function getFollowUpSuggestions(lastAssistant: ChatMessage | undefined, language
 
   // Stock-related follow-ups
   if (content.includes('أرامكو') || content.includes('aramco') || content.includes('2222')) {
-    followUps.push(isAr ? 'أظهر الرسم البياني لسهم أرامكو' : 'Show Aramco stock chart');
-    followUps.push(isAr ? 'قارن أرامكو مع قطاع الطاقة' : 'Compare Aramco with the energy sector');
+    followUps.push(isAr ? 'ما هي إيرادات أرامكو السنوية؟' : 'What is Aramco annual revenue across all periods?');
+    followUps.push(isAr ? 'قارن أرامكو مع سابك من حيث الربحية' : 'Compare Aramco vs SABIC on profitability metrics');
   } else if (content.includes('الراجحي') || content.includes('rajhi') || content.includes('1120')) {
-    followUps.push(isAr ? 'أظهر الرسم البياني لسهم الراجحي' : 'Show Al Rajhi stock chart');
-    followUps.push(isAr ? 'قارن الراجحي مع البنوك الأخرى' : 'Compare Al Rajhi with other banks');
+    followUps.push(isAr ? 'ما هو العائد على حقوق ملكية الراجحي؟' : 'What is Al Rajhi ROE and profit margin?');
+    followUps.push(isAr ? 'قارن الراجحي مع بنك الأهلي' : 'Compare Al Rajhi with SNB (Al Ahli)');
   }
 
   // Table-related follow-ups
   if (hasTable && followUps.length < 3) {
-    followUps.push(isAr ? 'رتب النتائج من الأعلى إلى الأدنى' : 'Sort results from highest to lowest');
     if (!hasChart) {
-      followUps.push(isAr ? 'أظهر النتائج كرسم بياني' : 'Show results as a chart');
+      followUps.push(isAr ? 'أظهر النتائج كرسم بياني' : 'Plot these results as a chart');
     }
   }
 
   // Chart-related follow-ups
   if (hasChart && followUps.length < 3) {
-    followUps.push(isAr ? 'أظهر البيانات كجدول' : 'Show data as a table');
+    followUps.push(isAr ? 'أظهر البيانات كجدول' : 'Show the underlying data as a table');
   }
 
   // Financial data follow-ups
   if ((content.includes('ربح') || content.includes('إيراد') || content.includes('revenue') || content.includes('profit')) && followUps.length < 3) {
     followUps.push(isAr ? 'أظهر الاتجاه خلال الفترات المتاحة' : 'Show the trend over available periods');
-    followUps.push(isAr ? 'قارن مع الشركات المنافسة' : 'Compare with competing companies');
+  }
+
+  // Sector-related follow-ups
+  if ((content.includes('sector') || content.includes('قطاع')) && followUps.length < 3) {
+    followUps.push(isAr ? 'ما هي أكبر 5 شركات في هذا القطاع؟' : 'What are the top 5 companies in this sector by market cap?');
   }
 
   // Generic follow-ups if we still have room
   if (followUps.length === 0) {
-    followUps.push(isAr ? 'أعطني المزيد من التفاصيل' : 'Give me more details');
-    followUps.push(isAr ? 'ما هي أعلى 5 أسهم أداء اليوم؟' : 'What are the top 5 performing stocks today?');
+    followUps.push(isAr ? 'ما هي أعلى 5 شركات من حيث العائد على حقوق الملكية؟' : 'What are the top 5 companies by ROE?');
+    followUps.push(isAr ? 'أظهر توزيع القيمة السوقية حسب القطاع' : 'Show market cap distribution by sector');
   }
 
   return followUps.slice(0, 3);
@@ -145,7 +148,7 @@ export function AIChatInterface() {
             <div className="w-6 h-6 rounded-sm bg-gold-gradient flex items-center justify-center">
               <span className="text-[10px] font-bold text-[#0E0E0E]">RA</span>
             </div>
-            <span className="text-sm font-medium text-[var(--text-primary)]">{t('محادثة رائد', 'Ra\'d Chat')}</span>
+            <span className="text-sm font-medium text-[var(--text-primary)]">{t('محادثة رعد', 'Ra\'d Chat')}</span>
           </div>
           <button
             onClick={clearMessages}
@@ -172,7 +175,7 @@ export function AIChatInterface() {
               </div>
               <div className="text-center">
                 <h2 className="text-2xl font-bold gold-text mb-2">
-                  {t('مرحبا بك في رائد', 'Welcome to Ra\'d')}
+                  {t('مرحبا بك في رعد', 'Welcome to Ra\'d')}
                 </h2>
                 <p className="text-sm text-[var(--text-secondary)] max-w-md">
                   {t('مساعدك الذكي لتحليل سوق الأسهم السعودي. اسأل عن أي سهم أو قطاع أو مؤشر.', 'Your AI assistant for Saudi stock market analysis. Ask about any stock, sector, or index.')}

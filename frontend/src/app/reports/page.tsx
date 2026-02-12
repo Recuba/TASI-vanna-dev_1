@@ -181,7 +181,7 @@ export default function ReportsPage() {
                 'hover:bg-gold/30 transition-colors'
               )}
             >
-              {t('اسأل رائد عن هذا القطاع', 'Ask Ra\'d about this sector')}
+              {t('اسأل رعد عن هذا القطاع', 'Ask Ra\'d about this sector')}
             </Link>
           </div>
         ) : (
