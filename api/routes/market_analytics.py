@@ -24,6 +24,7 @@ router = APIRouter(prefix="/api/v1/market", tags=["market-analytics"])
 # Response models
 # ---------------------------------------------------------------------------
 
+
 class MoverItem(BaseModel):
     ticker: str
     short_name: Optional[str] = None
@@ -96,7 +97,9 @@ def _row_to_mover(row: Dict[str, Any]) -> MoverItem:
         short_name=row["short_name"],
         current_price=row["current_price"],
         previous_close=row["previous_close"],
-        change_pct=round(row["change_pct"], 2) if row["change_pct"] is not None else None,
+        change_pct=round(row["change_pct"], 2)
+        if row["change_pct"] is not None
+        else None,
         volume=int(row["volume"]) if row["volume"] is not None else None,
         sector=row["sector"],
     )
@@ -106,9 +109,12 @@ def _row_to_mover(row: Dict[str, Any]) -> MoverItem:
 # Routes
 # ---------------------------------------------------------------------------
 
+
 @router.get("/movers", response_model=MoversResponse)
 async def get_movers(
-    type: str = Query("gainers", pattern="^(gainers|losers)$", description="Type: gainers or losers"),
+    type: str = Query(
+        "gainers", pattern="^(gainers|losers)$", description="Type: gainers or losers"
+    ),
     limit: int = Query(10, ge=1, le=100),
 ) -> MoversResponse:
     """Get top market movers (gainers or losers) by percent change."""
@@ -138,7 +144,9 @@ async def get_market_summary() -> MarketSummary:
         conn = get_conn()
         try:
             # Aggregates
-            agg = fetchone(conn, """
+            agg = fetchone(
+                conn,
+                """
                 SELECT
                     COALESCE(SUM(m.market_cap), 0) AS total_market_cap,
                     COALESCE(SUM(m.volume), 0) AS total_volume,
@@ -147,17 +155,14 @@ async def get_market_summary() -> MarketSummary:
                     SUM(CASE WHEN m.previous_close > 0 AND m.current_price = m.previous_close THEN 1 ELSE 0 END) AS unchanged_count
                 FROM market_data m
                 WHERE m.current_price IS NOT NULL
-            """)
+            """,
+            )
 
             # Top 5 gainers
-            gainers = fetchall(conn,
-                _MOVERS_SQL + " ORDER BY change_pct DESC LIMIT 5"
-            )
+            gainers = fetchall(conn, _MOVERS_SQL + " ORDER BY change_pct DESC LIMIT 5")
 
             # Top 5 losers
-            losers = fetchall(conn,
-                _MOVERS_SQL + " ORDER BY change_pct ASC LIMIT 5"
-            )
+            losers = fetchall(conn, _MOVERS_SQL + " ORDER BY change_pct ASC LIMIT 5")
         finally:
             conn.close()
     except HTTPException:
@@ -167,7 +172,9 @@ async def get_market_summary() -> MarketSummary:
         raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
     return MarketSummary(
-        total_market_cap=float(agg["total_market_cap"]) if agg["total_market_cap"] else None,
+        total_market_cap=float(agg["total_market_cap"])
+        if agg["total_market_cap"]
+        else None,
         total_volume=int(agg["total_volume"]) if agg["total_volume"] else None,
         gainers_count=agg["gainers_count"] or 0,
         losers_count=agg["losers_count"] or 0,
@@ -212,9 +219,15 @@ async def get_sector_analytics() -> List[SectorAnalytics]:
     return [
         SectorAnalytics(
             sector=r["sector"],
-            avg_change_pct=round(float(r["avg_change_pct"]), 2) if r["avg_change_pct"] is not None else None,
-            total_volume=int(r["total_volume"]) if r["total_volume"] is not None else None,
-            total_market_cap=float(r["total_market_cap"]) if r["total_market_cap"] is not None else None,
+            avg_change_pct=round(float(r["avg_change_pct"]), 2)
+            if r["avg_change_pct"] is not None
+            else None,
+            total_volume=int(r["total_volume"])
+            if r["total_volume"] is not None
+            else None,
+            total_market_cap=float(r["total_market_cap"])
+            if r["total_market_cap"] is not None
+            else None,
             company_count=r["company_count"],
             gainers=r["gainers"] or 0,
             losers=r["losers"] or 0,
@@ -259,7 +272,9 @@ async def get_heatmap() -> List[HeatmapItem]:
             name=r["name"],
             sector=r["sector"],
             market_cap=float(r["market_cap"]) if r["market_cap"] is not None else None,
-            change_pct=round(float(r["change_pct"]), 2) if r["change_pct"] is not None else None,
+            change_pct=round(float(r["change_pct"]), 2)
+            if r["change_pct"] is not None
+            else None,
         )
         for r in rows
     ]

@@ -37,6 +37,7 @@ class TestTASIIndexEndpoint(unittest.TestCase):
 
     def setUp(self):
         import services.tasi_index as mod
+
         mod._cache.clear()
 
     def test_default_period_returns_200(self):
@@ -68,9 +69,18 @@ class TestTASIIndexEndpoint(unittest.TestCase):
             resp = self.client.get("/api/v1/charts/tasi/index")
 
         body = resp.json()
-        required_fields = {"data", "source", "last_updated", "symbol", "period", "count"}
-        self.assertTrue(required_fields.issubset(body.keys()),
-                        f"Missing fields: {required_fields - set(body.keys())}")
+        required_fields = {
+            "data",
+            "source",
+            "last_updated",
+            "symbol",
+            "period",
+            "count",
+        }
+        self.assertTrue(
+            required_fields.issubset(body.keys()),
+            f"Missing fields: {required_fields - set(body.keys())}",
+        )
 
     def test_data_points_have_ohlcv_keys(self):
         with patch.dict("sys.modules", {"yfinance": None}):
@@ -115,6 +125,7 @@ class TestTASIHealthEndpoint(unittest.TestCase):
 
     def setUp(self):
         import services.tasi_index as mod
+
         mod._cache.clear()
 
     def test_health_returns_200(self):
@@ -126,19 +137,26 @@ class TestTASIHealthEndpoint(unittest.TestCase):
         resp = self.client.get("/api/v1/charts/tasi/health")
         body = resp.json()
         required = {"status", "message"}
-        self.assertTrue(required.issubset(body.keys()),
-                        f"Missing: {required - set(body.keys())}")
+        self.assertTrue(
+            required.issubset(body.keys()), f"Missing: {required - set(body.keys())}"
+        )
 
     def test_health_does_not_expose_internals(self):
         """Sanitized health response must NOT leak infrastructure details."""
         resp = self.client.get("/api/v1/charts/tasi/health")
         body = resp.json()
-        forbidden = {"yfinance_available", "cache_status", "cache_age_seconds",
-                     "circuit_state", "consecutive_failures",
-                     "circuit_open_remaining_seconds"}
+        forbidden = {
+            "yfinance_available",
+            "cache_status",
+            "cache_age_seconds",
+            "circuit_state",
+            "consecutive_failures",
+            "circuit_open_remaining_seconds",
+        }
         exposed = forbidden & set(body.keys())
-        self.assertEqual(exposed, set(),
-                         f"Health endpoint leaks internal fields: {exposed}")
+        self.assertEqual(
+            exposed, set(), f"Health endpoint leaks internal fields: {exposed}"
+        )
 
     def test_health_status_ok_on_fresh_cache(self):
         # Populate cache by calling the index endpoint
@@ -183,10 +201,16 @@ class TestTASIResponseModels(unittest.TestCase):
         from api.routes.tasi_index import TASIIndexResponse, TASIOHLCVPoint
 
         resp = TASIIndexResponse(
-            data=[TASIOHLCVPoint(
-                time="2025-01-15", open=11500.0, high=11550.0,
-                low=11480.0, close=11520.0, volume=150000000,
-            )],
+            data=[
+                TASIOHLCVPoint(
+                    time="2025-01-15",
+                    open=11500.0,
+                    high=11550.0,
+                    low=11480.0,
+                    close=11520.0,
+                    volume=150000000,
+                )
+            ],
             source="mock",
             last_updated="2025-01-15T12:00:00Z",
             symbol="^TASI",

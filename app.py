@@ -50,7 +50,11 @@ _HERE = Path(__file__).resolve().parent
 # 1. LLM -- Claude Sonnet 4.5 via Anthropic API
 # ---------------------------------------------------------------------------
 _llm_model = _settings.llm.model if _settings else "claude-sonnet-4-5-20250929"
-_llm_api_key = _settings.get_llm_api_key() if _settings else os.environ.get("ANTHROPIC_API_KEY", "")
+_llm_api_key = (
+    _settings.get_llm_api_key()
+    if _settings
+    else os.environ.get("ANTHROPIC_API_KEY", "")
+)
 
 llm = AnthropicLlmService(
     model=_llm_model,
@@ -164,9 +168,7 @@ class SaudiStocksSystemPromptBuilder(SystemPromptBuilder):
 # ---------------------------------------------------------------------------
 # 6. Agent configuration
 # ---------------------------------------------------------------------------
-_max_iterations = (
-    _settings.llm.max_tool_iterations if _settings else 10
-)
+_max_iterations = _settings.llm.max_tool_iterations if _settings else 10
 
 config = AgentConfig(
     stream_responses=True,
@@ -237,7 +239,11 @@ try:
 
     _railway_domain = _os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip()
     if _railway_domain:
-        _railway_origin = f"https://{_railway_domain}" if not _railway_domain.startswith("http") else _railway_domain
+        _railway_origin = (
+            f"https://{_railway_domain}"
+            if not _railway_domain.startswith("http")
+            else _railway_domain
+        )
         if _railway_origin not in _cors_origins:
             _cors_origins.append(_railway_origin)
 
@@ -298,6 +304,7 @@ if DB_BACKEND == "postgres":
             # If no auth header, allow through (anonymous access)
         return await call_next(request)
 
+
 # ---------------------------------------------------------------------------
 # 9. API routers -- always registered, with graceful degradation
 # ---------------------------------------------------------------------------
@@ -326,7 +333,9 @@ if DB_BACKEND == "postgres":
         app.include_router(announcements_router)
         app.include_router(watchlists_router)
         app.include_router(pg_entities_router)
-        logger.info("PG-backed service routes registered (news, reports, announcements, watchlists, entities)")
+        logger.info(
+            "PG-backed service routes registered (news, reports, announcements, watchlists, entities)"
+        )
     except ImportError as exc:
         logger.warning("PG service routes not available: %s", exc)
 else:
@@ -351,15 +360,18 @@ else:
                 return JSONResponse(
                     status_code=503,
                     content={
-                        "detail": f"This endpoint requires PostgreSQL backend. "
-                        f"Current backend: SQLite. Set DB_BACKEND=postgres to enable.",
+                        "detail": "This endpoint requires PostgreSQL backend. "
+                        "Current backend: SQLite. Set DB_BACKEND=postgres to enable.",
                         "endpoint_prefix": prefix,
                     },
                 )
+
             return _stub_handler
 
         _stub.add_api_route("", _make_stub_handler(_prefix), methods=["GET"])
-        _stub.add_api_route("/{path:path}", _make_stub_handler(_prefix), methods=["GET"])
+        _stub.add_api_route(
+            "/{path:path}", _make_stub_handler(_prefix), methods=["GET"]
+        )
         app.include_router(_stub)
 
     logger.info("SQLite mode: PG-only endpoint stubs registered (503 responses)")
@@ -453,6 +465,7 @@ try:
 except ImportError as exc:
     logger.warning("SQLite chart analytics routes not available: %s", exc)
 
+
 # ---------------------------------------------------------------------------
 # 10. Custom routes and static files
 # ---------------------------------------------------------------------------
@@ -514,7 +527,9 @@ async def lifespan(app):
         try:
             from cache import init_redis
 
-            _redis_url = _settings.cache.redis_url if _settings else "redis://localhost:6379/0"
+            _redis_url = (
+                _settings.cache.redis_url if _settings else "redis://localhost:6379/0"
+            )
             init_redis(_redis_url)
             _redis_status = "connected"
             logger.info("Redis cache initialized")
@@ -566,6 +581,7 @@ async def lifespan(app):
     def _check_yfinance():
         try:
             import yfinance as yf
+
             ticker = yf.Ticker("^TASI")
             df = ticker.history(period="5d", auto_adjust=True, timeout=5)
             if df is not None and not df.empty:

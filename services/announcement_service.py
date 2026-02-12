@@ -126,7 +126,9 @@ class AnnouncementService:
             return len(announcements)
         except Exception:
             conn.rollback()
-            logger.error("Failed to store %d announcements", len(announcements), exc_info=True)
+            logger.error(
+                "Failed to store %d announcements", len(announcements), exc_info=True
+            )
             raise
         finally:
             conn.close()

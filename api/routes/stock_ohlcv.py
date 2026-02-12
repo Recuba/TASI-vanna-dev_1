@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 # Response models
 # ---------------------------------------------------------------------------
 
+
 class StockOHLCVPoint(BaseModel):
     time: str
     open: float
@@ -56,6 +57,7 @@ class StockHealthResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 @router.get("/{ticker}/ohlcv", response_model=StockOHLCVResponse)
 async def get_stock_ohlcv(
@@ -90,6 +92,7 @@ async def get_stock_ohlcv(
 # Health check
 # ---------------------------------------------------------------------------
 
+
 @router.get("/{ticker}/health", response_model=StockHealthResponse)
 async def stock_ohlcv_health(
     ticker: str = Path(..., description="Stock ticker (e.g. 2222 or 2222.SR)"),
@@ -121,9 +124,13 @@ async def stock_ohlcv_health(
     logger.debug(
         "stock_ohlcv health: ticker=%s, status=%s, yfinance=%s, cache=%s, "
         "cached_tickers=%s, circuit=%s, failures=%d",
-        ticker, status, yfinance_available, cache_status,
+        ticker,
+        status,
+        yfinance_available,
+        cache_status,
         cache_info.get("cached_tickers", 0),
-        cb_info["circuit_state"], cb_info["consecutive_failures"],
+        cb_info["circuit_state"],
+        cb_info["consecutive_failures"],
     )
 
     return StockHealthResponse(status=status, message=message)

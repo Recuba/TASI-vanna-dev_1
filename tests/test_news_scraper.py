@@ -40,6 +40,7 @@ from services.news_paraphraser import (
 # Scraper instantiation and priority tests
 # -----------------------------------------------------------------------
 
+
 class TestScraperInstantiation(unittest.TestCase):
     """Each scraper can be instantiated and has correct metadata."""
 
@@ -100,16 +101,26 @@ class TestScraperInstantiation(unittest.TestCase):
 # Article dict and relevance
 # -----------------------------------------------------------------------
 
+
 class TestArticleStructure(unittest.TestCase):
     """Articles produced by _make_article have required keys."""
 
     def _make(self):
         s = AlarabiyaScraper()
-        return s._make_article("عنوان الخبر", "نص المقال", "https://example.com/article/1")
+        return s._make_article(
+            "عنوان الخبر", "نص المقال", "https://example.com/article/1"
+        )
 
     def test_required_keys_present(self):
         a = self._make()
-        for key in ("title", "body", "source_name", "source_url", "priority", "language"):
+        for key in (
+            "title",
+            "body",
+            "source_name",
+            "source_url",
+            "priority",
+            "language",
+        ):
             self.assertIn(key, a, f"Missing key: {key}")
 
     def test_language_is_ar(self):
@@ -141,6 +152,7 @@ class TestRelevanceFilter(unittest.TestCase):
 # Deduplication
 # -----------------------------------------------------------------------
 
+
 class TestDeduplication(unittest.TestCase):
     """_deduplicate removes near-duplicate titles, keeping highest priority."""
 
@@ -169,6 +181,7 @@ class TestDeduplication(unittest.TestCase):
 # -----------------------------------------------------------------------
 # Error handling: mocked HTTP failures
 # -----------------------------------------------------------------------
+
 
 class TestScraperErrorHandling(unittest.TestCase):
     """fetch_articles returns [] on network errors (never raises)."""
@@ -202,6 +215,7 @@ class TestScraperErrorHandling(unittest.TestCase):
 # fetch_all_news integration (mocked scrapers)
 # -----------------------------------------------------------------------
 
+
 class TestFetchAllNews(unittest.TestCase):
     """fetch_all_news aggregates, paraphrases, deduplicates, and sorts."""
 
@@ -217,24 +231,48 @@ class TestFetchAllNews(unittest.TestCase):
             "priority": 1,
             "language": "ar",
         }
-        with patch.object(AlarabiyaScraper, "fetch_articles", return_value=[fake_article]):
+        with patch.object(
+            AlarabiyaScraper, "fetch_articles", return_value=[fake_article]
+        ):
             with patch.object(AsharqBusinessScraper, "fetch_articles", return_value=[]):
                 with patch.object(ArgaamScraper, "fetch_articles", return_value=[]):
                     with patch.object(MaaalScraper, "fetch_articles", return_value=[]):
-                        with patch.object(MubasherScraper, "fetch_articles", return_value=[]):
+                        with patch.object(
+                            MubasherScraper, "fetch_articles", return_value=[]
+                        ):
                             result = fetch_all_news()
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 0)
 
     @patch("services.news_scraper.time.sleep")
     def test_articles_sorted_by_priority(self, mock_sleep):
-        a1 = {"title": "خبر 1 عن سوق الأسهم", "body": "", "source_name": "أ", "source_url": "", "published_at": None, "priority": 3, "language": "ar"}
-        a2 = {"title": "خبر 2 عن سوق الأسهم", "body": "", "source_name": "ب", "source_url": "", "published_at": None, "priority": 1, "language": "ar"}
+        a1 = {
+            "title": "خبر 1 عن سوق الأسهم",
+            "body": "",
+            "source_name": "أ",
+            "source_url": "",
+            "published_at": None,
+            "priority": 3,
+            "language": "ar",
+        }
+        a2 = {
+            "title": "خبر 2 عن سوق الأسهم",
+            "body": "",
+            "source_name": "ب",
+            "source_url": "",
+            "published_at": None,
+            "priority": 1,
+            "language": "ar",
+        }
         with patch.object(AlarabiyaScraper, "fetch_articles", return_value=[]):
             with patch.object(AsharqBusinessScraper, "fetch_articles", return_value=[]):
                 with patch.object(ArgaamScraper, "fetch_articles", return_value=[a1]):
-                    with patch.object(MaaalScraper, "fetch_articles", return_value=[a2]):
-                        with patch.object(MubasherScraper, "fetch_articles", return_value=[]):
+                    with patch.object(
+                        MaaalScraper, "fetch_articles", return_value=[a2]
+                    ):
+                        with patch.object(
+                            MubasherScraper, "fetch_articles", return_value=[]
+                        ):
                             result = fetch_all_news()
         if len(result) >= 2:
             self.assertLessEqual(result[0]["priority"], result[1]["priority"])
@@ -243,6 +281,7 @@ class TestFetchAllNews(unittest.TestCase):
 # -----------------------------------------------------------------------
 # Rate limiting delay
 # -----------------------------------------------------------------------
+
 
 class TestRateLimiting(unittest.TestCase):
     """INTER_REQUEST_DELAY exists and is positive."""
@@ -257,6 +296,7 @@ class TestRateLimiting(unittest.TestCase):
 # -----------------------------------------------------------------------
 # Paraphraser tests
 # -----------------------------------------------------------------------
+
 
 class TestParaphraser(unittest.TestCase):
     """Paraphraser applies synonyms without changing meaning."""
@@ -274,6 +314,7 @@ class TestParaphraser(unittest.TestCase):
     def test_apply_synonyms_with_known_word(self):
         """Seeded random so replacement always fires."""
         import random
+
         random.seed(0)
         text = "ارتفع المؤشر"
         result = _apply_synonyms(text)
@@ -305,23 +346,32 @@ class TestParaphraser(unittest.TestCase):
 # URL helpers
 # -----------------------------------------------------------------------
 
+
 class TestAbsoluteUrl(unittest.TestCase):
     """_absolute_url correctly builds full URLs."""
 
     def test_already_absolute(self):
-        result = BaseNewsScraper._absolute_url("https://example.com", "https://other.com/page")
+        result = BaseNewsScraper._absolute_url(
+            "https://example.com", "https://other.com/page"
+        )
         self.assertEqual(result, "https://other.com/page")
 
     def test_protocol_relative(self):
-        result = BaseNewsScraper._absolute_url("https://example.com", "//cdn.example.com/img.png")
+        result = BaseNewsScraper._absolute_url(
+            "https://example.com", "//cdn.example.com/img.png"
+        )
         self.assertEqual(result, "https://cdn.example.com/img.png")
 
     def test_root_relative(self):
-        result = BaseNewsScraper._absolute_url("https://example.com/section/", "/article/1")
+        result = BaseNewsScraper._absolute_url(
+            "https://example.com/section/", "/article/1"
+        )
         self.assertEqual(result, "https://example.com/article/1")
 
     def test_path_relative(self):
-        result = BaseNewsScraper._absolute_url("https://example.com/section", "article/1")
+        result = BaseNewsScraper._absolute_url(
+            "https://example.com/section", "article/1"
+        )
         self.assertEqual(result, "https://example.com/section/article/1")
 
     def test_empty_href(self):

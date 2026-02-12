@@ -99,9 +99,9 @@ def _vary_openings(text: str) -> str:
     for original, replacement in OPENING_VARIATIONS:
         # Only modify if it appears at the start of a sentence
         # (beginning of text or after a period/newline)
-        pattern = rf'(^|[.\n]\s*){re.escape(original)}'
+        pattern = rf"(^|[.\n]\s*){re.escape(original)}"
         if re.search(pattern, result) and random.random() < 0.4:
-            result = re.sub(pattern, rf'\1{replacement}', result, count=1)
+            result = re.sub(pattern, rf"\1{replacement}", result, count=1)
 
     return result
 

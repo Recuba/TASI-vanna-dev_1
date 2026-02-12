@@ -303,8 +303,9 @@ class _DatabaseTestMixin:
                 custom_indexes = [row[0] for row in self.cursor.fetchall()]
             # Verify at least one index exists for query performance
             self.assertGreater(
-                len(custom_indexes), 0,
-                f"{table} should have at least one custom index for query performance"
+                len(custom_indexes),
+                0,
+                f"{table} should have at least one custom index for query performance",
             )
 
     def test_16_saudi_aramco_exists(self):
@@ -379,21 +380,25 @@ class _DatabaseTestMixin:
             )
             null_count = self.cursor.fetchone()[0]
             self.assertEqual(
-                null_count, 0,
-                f"{table} has {null_count} rows with null period_type"
+                null_count, 0, f"{table} has {null_count} rows with null period_type"
             )
 
     def test_22_no_negative_prices(self):
         """Verify price values are non-negative where present"""
-        price_columns = ["current_price", "previous_close", "open_price", "day_high", "day_low"]
+        price_columns = [
+            "current_price",
+            "previous_close",
+            "open_price",
+            "day_high",
+            "day_low",
+        ]
         for col in price_columns:
             self.cursor.execute(
                 f"SELECT COUNT(*) FROM market_data WHERE {col} IS NOT NULL AND {col} < 0"
             )
             negative = self.cursor.fetchone()[0]
             self.assertEqual(
-                negative, 0,
-                f"market_data.{col} has {negative} negative values"
+                negative, 0, f"market_data.{col} has {negative} negative values"
             )
 
     def test_23_sequential_period_indexes(self):
@@ -407,8 +412,9 @@ class _DatabaseTestMixin:
             """)
             bad = self.cursor.fetchall()
             self.assertEqual(
-                len(bad), 0,
-                f"{table} has ticker/period_type combos not starting at index 0: {bad[:5]}"
+                len(bad),
+                0,
+                f"{table} has ticker/period_type combos not starting at index 0: {bad[:5]}",
             )
 
     def _validate_columns(self, table: str, expected_columns: List[str]):

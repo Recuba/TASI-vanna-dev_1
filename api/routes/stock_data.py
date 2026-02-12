@@ -29,46 +29,84 @@ _METRIC_MAP: Dict[str, tuple] = {}
 
 # Build from valuation_metrics
 for _col in [
-    "trailing_pe", "forward_pe", "price_to_book", "price_to_sales",
-    "enterprise_value", "ev_to_revenue", "ev_to_ebitda", "peg_ratio",
-    "trailing_eps", "forward_eps", "book_value", "revenue_per_share",
+    "trailing_pe",
+    "forward_pe",
+    "price_to_book",
+    "price_to_sales",
+    "enterprise_value",
+    "ev_to_revenue",
+    "ev_to_ebitda",
+    "peg_ratio",
+    "trailing_eps",
+    "forward_eps",
+    "book_value",
+    "revenue_per_share",
 ]:
     _METRIC_MAP[_col] = ("valuation_metrics", _col)
 
 # Build from profitability_metrics
 for _col in [
-    "roa", "roe", "profit_margin", "operating_margin", "gross_margin",
-    "ebitda_margin", "earnings_growth", "revenue_growth", "earnings_quarterly_growth",
+    "roa",
+    "roe",
+    "profit_margin",
+    "operating_margin",
+    "gross_margin",
+    "ebitda_margin",
+    "earnings_growth",
+    "revenue_growth",
+    "earnings_quarterly_growth",
 ]:
     _METRIC_MAP[_col] = ("profitability_metrics", _col)
 
 # Build from market_data
 for _col in [
-    "current_price", "previous_close", "market_cap", "volume", "beta",
-    "avg_50d", "avg_200d", "shares_outstanding", "week_52_high", "week_52_low",
+    "current_price",
+    "previous_close",
+    "market_cap",
+    "volume",
+    "beta",
+    "avg_50d",
+    "avg_200d",
+    "shares_outstanding",
+    "week_52_high",
+    "week_52_low",
 ]:
     _METRIC_MAP[_col] = ("market_data", _col)
 
 # Build from dividend_data
 for _col in [
-    "dividend_rate", "dividend_yield", "payout_ratio",
-    "trailing_annual_dividend_rate", "trailing_annual_dividend_yield",
+    "dividend_rate",
+    "dividend_yield",
+    "payout_ratio",
+    "trailing_annual_dividend_rate",
+    "trailing_annual_dividend_yield",
     "avg_dividend_yield_5y",
 ]:
     _METRIC_MAP[_col] = ("dividend_data", _col)
 
 # Build from financial_summary
 for _col in [
-    "total_revenue", "total_cash", "total_debt", "debt_to_equity",
-    "current_ratio", "quick_ratio", "free_cashflow", "operating_cashflow",
-    "ebitda", "gross_profits",
+    "total_revenue",
+    "total_cash",
+    "total_debt",
+    "debt_to_equity",
+    "current_ratio",
+    "quick_ratio",
+    "free_cashflow",
+    "operating_cashflow",
+    "ebitda",
+    "gross_profits",
 ]:
     _METRIC_MAP[_col] = ("financial_summary", _col)
 
 # Build from analyst_data
 for _col in [
-    "target_mean_price", "target_high_price", "target_low_price",
-    "target_median_price", "analyst_count", "recommendation",
+    "target_mean_price",
+    "target_high_price",
+    "target_low_price",
+    "target_median_price",
+    "analyst_count",
+    "recommendation",
 ]:
     _METRIC_MAP[_col] = ("analyst_data", _col)
 
@@ -81,6 +119,7 @@ def _ticker_exists(conn, ticker: str) -> bool:
 # ---------------------------------------------------------------------------
 # Response models
 # ---------------------------------------------------------------------------
+
 
 class DividendData(BaseModel):
     ticker: str
@@ -147,6 +186,7 @@ class QuoteItem(BaseModel):
 # Routes
 # ---------------------------------------------------------------------------
 
+
 @router.get("/{ticker}/dividends", response_model=DividendData)
 async def get_dividends(ticker: str) -> DividendData:
     """Get dividend data for a specific stock."""
@@ -184,7 +224,9 @@ async def get_financial_summary(ticker: str) -> FinancialSummaryData:
         if not _ticker_exists(conn, ticker):
             raise HTTPException(status_code=404, detail="Company not found")
 
-        row = fetchone(conn, "SELECT * FROM financial_summary WHERE ticker = ?", (ticker,))
+        row = fetchone(
+            conn, "SELECT * FROM financial_summary WHERE ticker = ?", (ticker,)
+        )
     finally:
         conn.close()
 
@@ -211,7 +253,9 @@ async def get_financial_summary(ticker: str) -> FinancialSummaryData:
 @router.get("/{ticker}/financials", response_model=FinancialsResponse)
 async def get_financials(
     ticker: str,
-    statement: str = Query("balance_sheet", description="balance_sheet, income_statement, or cash_flow"),
+    statement: str = Query(
+        "balance_sheet", description="balance_sheet, income_statement, or cash_flow"
+    ),
     period_type: str = Query("annual", description="annual, quarterly, or ttm"),
 ) -> FinancialsResponse:
     """Get financial statement periods for a specific stock."""
@@ -249,20 +293,26 @@ async def get_financials(
         pd_ = row_dict.pop("period_date", None)
         row_dict.pop("id", None)
         row_dict.pop("ticker", None)
-        periods.append(FinancialPeriod(
-            period_type=pt,
-            period_index=pi,
-            period_date=pd_,
-            data=row_dict,
-        ))
+        periods.append(
+            FinancialPeriod(
+                period_type=pt,
+                period_index=pi,
+                period_date=pd_,
+                data=row_dict,
+            )
+        )
 
     return FinancialsResponse(ticker=ticker, statement=statement, periods=periods)
 
 
 @router.get("/compare", response_model=CompareResponse)
 async def compare_stocks(
-    tickers: str = Query(..., description="Comma-separated tickers (2-5), e.g. 2222,1120"),
-    metrics: str = Query(..., description="Comma-separated metric names, e.g. trailing_pe,roe,market_cap"),
+    tickers: str = Query(
+        ..., description="Comma-separated tickers (2-5), e.g. 2222,1120"
+    ),
+    metrics: str = Query(
+        ..., description="Comma-separated metric names, e.g. trailing_pe,roe,market_cap"
+    ),
 ) -> CompareResponse:
     """Compare 2-5 stocks side-by-side on specified metrics."""
     ticker_list = [t.strip() for t in tickers.split(",") if t.strip()]
@@ -318,18 +368,22 @@ async def compare_stocks(
 
     items = []
     for tk in ticker_list:
-        items.append(CompareMetrics(
-            ticker=tk,
-            short_name=name_map.get(tk),
-            metrics=result_data.get(tk, {}),
-        ))
+        items.append(
+            CompareMetrics(
+                ticker=tk,
+                short_name=name_map.get(tk),
+                metrics=result_data.get(tk, {}),
+            )
+        )
 
     return CompareResponse(tickers=items)
 
 
 @router.get("/quotes", response_model=List[QuoteItem])
 async def get_batch_quotes(
-    tickers: str = Query(..., description="Comma-separated tickers, e.g. 2222,1120,2010"),
+    tickers: str = Query(
+        ..., description="Comma-separated tickers, e.g. 2222,1120,2010"
+    ),
 ) -> List[QuoteItem]:
     """Get batch quotes for multiple tickers."""
     ticker_list = [t.strip() for t in tickers.split(",") if t.strip()]
@@ -366,7 +420,9 @@ async def get_batch_quotes(
             short_name=r["short_name"],
             current_price=r["current_price"],
             previous_close=r["previous_close"],
-            change_pct=round(r["change_pct"], 2) if r["change_pct"] is not None else None,
+            change_pct=round(r["change_pct"], 2)
+            if r["change_pct"] is not None
+            else None,
             volume=int(r["volume"]) if r["volume"] is not None else None,
         )
         for r in rows

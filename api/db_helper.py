@@ -38,6 +38,7 @@ def is_postgres() -> bool:
 # Connection factory
 # ---------------------------------------------------------------------------
 
+
 def get_conn():
     """Return a database connection for the active backend.
 
@@ -49,10 +50,12 @@ def get_conn():
     """
     if is_postgres():
         from api.dependencies import get_db_connection
+
         return get_db_connection()
 
     if not Path(_SQLITE_PATH).exists():
         from fastapi import HTTPException
+
         raise HTTPException(
             status_code=503,
             detail=f"SQLite database not found at {_SQLITE_PATH}. "
@@ -66,6 +69,7 @@ def get_conn():
 # ---------------------------------------------------------------------------
 # Query helpers
 # ---------------------------------------------------------------------------
+
 
 def _convert_sql(sql: str) -> str:
     """Convert ``?`` positional placeholders to ``%s`` for PostgreSQL."""

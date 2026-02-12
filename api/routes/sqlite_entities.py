@@ -25,6 +25,7 @@ router = APIRouter(prefix="/api/entities", tags=["entities"])
 # Response models
 # ---------------------------------------------------------------------------
 
+
 class CompanySummary(BaseModel):
     ticker: str
     short_name: Optional[str] = None
@@ -48,6 +49,7 @@ class SectorInfo(BaseModel):
 
 class CompanyFullDetail(BaseModel):
     """Full stock detail joining all available tables."""
+
     # companies
     ticker: str
     short_name: Optional[str] = None
@@ -120,6 +122,7 @@ class CompanyFullDetail(BaseModel):
 # Routes
 # ---------------------------------------------------------------------------
 
+
 @router.get("", response_model=EntityListResponse)
 async def list_entities(
     limit: int = Query(50, ge=1, le=500),
@@ -189,7 +192,9 @@ async def list_entities(
             industry=r["industry"],
             current_price=r["current_price"],
             market_cap=r["market_cap"],
-            change_pct=round(r["change_pct"], 2) if r["change_pct"] is not None else None,
+            change_pct=round(r["change_pct"], 2)
+            if r["change_pct"] is not None
+            else None,
         )
         for r in rows
     ]
@@ -220,7 +225,9 @@ async def list_sectors() -> List[SectorInfo]:
         logger.error("Error listing sectors: %s", exc)
         raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
 
-    return [SectorInfo(sector=r["sector"], company_count=r["company_count"]) for r in rows]
+    return [
+        SectorInfo(sector=r["sector"], company_count=r["company_count"]) for r in rows
+    ]
 
 
 def _normalize_ticker(ticker: str) -> str:
@@ -350,5 +357,7 @@ async def get_entity(ticker: str) -> CompanyFullDetail:
         target_low_price=_f(row_dict.get("target_low_price")),
         target_median_price=_f(row_dict.get("target_median_price")),
         analyst_count=_i(row_dict.get("analyst_count")),
-        change_pct=round(_f(row_dict.get("change_pct")), 2) if row_dict.get("change_pct") is not None else None,
+        change_pct=round(_f(row_dict.get("change_pct")), 2)
+        if row_dict.get("change_pct") is not None
+        else None,
     )

@@ -464,9 +464,7 @@ def check_news_scraper() -> ComponentHealth:
                 if last_created:
                     try:
                         last_dt = datetime.fromisoformat(last_created)
-                        last_scrape_age = (
-                            datetime.utcnow() - last_dt
-                        ).total_seconds()
+                        last_scrape_age = (datetime.utcnow() - last_dt).total_seconds()
                     except (ValueError, TypeError):
                         pass
 

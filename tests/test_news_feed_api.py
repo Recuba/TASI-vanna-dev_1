@@ -90,10 +90,12 @@ class TestGetNewsFeed(NewsFeedAPITestCase):
         self.assertEqual(len(data["items"]), 3)
 
     def test_source_filter(self):
-        self.store.store_articles([
-            _make_article(title="خبر أ", source_name="العربية"),
-            _make_article(title="خبر ب", source_name="أرقام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_article(title="خبر أ", source_name="العربية"),
+                _make_article(title="خبر ب", source_name="أرقام"),
+            ]
+        )
         resp = self.client.get("/api/v1/news/feed?source=العربية")
         data = resp.json()
         self.assertEqual(len(data["items"]), 1)
@@ -125,10 +127,12 @@ class TestGetSources(NewsFeedAPITestCase):
     """GET /api/v1/news/sources"""
 
     def test_returns_sources(self):
-        self.store.store_articles([
-            _make_article(title="خبر 1", source_name="العربية"),
-            _make_article(title="خبر 2", source_name="أرقام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_article(title="خبر 1", source_name="العربية"),
+                _make_article(title="خبر 2", source_name="أرقام"),
+            ]
+        )
         resp = self.client.get("/api/v1/news/sources")
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
@@ -147,10 +151,12 @@ class TestSearchEndpoint(NewsFeedAPITestCase):
     """GET /api/v1/news/search"""
 
     def test_search_returns_results(self):
-        self.store.store_articles([
-            _make_article(title="أرامكو تعلن عن أرباح"),
-            _make_article(title="سابك تحقق نموا"),
-        ])
+        self.store.store_articles(
+            [
+                _make_article(title="أرامكو تعلن عن أرباح"),
+                _make_article(title="سابك تحقق نموا"),
+            ]
+        )
         resp = self.client.get("/api/v1/news/search?q=أرامكو")
         self.assertEqual(resp.status_code, 200)
         data = resp.json()

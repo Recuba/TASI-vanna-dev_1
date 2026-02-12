@@ -27,8 +27,8 @@ VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 # ---------------------------------------------------------------------------
 # Circuit breaker state (independent from TASI index circuit breaker)
 # ---------------------------------------------------------------------------
-CIRCUIT_BREAKER_THRESHOLD = 5       # consecutive failures before opening
-CIRCUIT_BREAKER_TIMEOUT = 900       # seconds to keep circuit open (15 min)
+CIRCUIT_BREAKER_THRESHOLD = 5  # consecutive failures before opening
+CIRCUIT_BREAKER_TIMEOUT = 900  # seconds to keep circuit open (15 min)
 
 _consecutive_failures: int = 0
 _circuit_open_until: float = 0.0
@@ -38,6 +38,7 @@ _circuit_lock = threading.Lock()
 # ---------------------------------------------------------------------------
 # Ticker normalization
 # ---------------------------------------------------------------------------
+
 
 def _normalize_ticker(ticker: str) -> str:
     """Append .SR suffix for Saudi stocks if not already present."""
@@ -50,6 +51,7 @@ def _normalize_ticker(ticker: str) -> str:
 # ---------------------------------------------------------------------------
 # Cache helpers
 # ---------------------------------------------------------------------------
+
 
 def _get_cached(ticker: str, period: str) -> Optional[Dict[str, Any]]:
     """Return cached data if still fresh."""
@@ -80,6 +82,7 @@ def _set_cache(ticker: str, period: str, payload: Dict[str, Any]) -> None:
 # Circuit breaker helpers
 # ---------------------------------------------------------------------------
 
+
 def _is_circuit_open() -> bool:
     """Return True if the circuit breaker is currently open."""
     return time.monotonic() < _circuit_open_until
@@ -90,7 +93,10 @@ def _record_failure() -> None:
     global _consecutive_failures, _circuit_open_until
     with _circuit_lock:
         _consecutive_failures += 1
-        if _consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD and not _is_circuit_open():
+        if (
+            _consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD
+            and not _is_circuit_open()
+        ):
             _circuit_open_until = time.monotonic() + CIRCUIT_BREAKER_TIMEOUT
             logger.warning(
                 "stock_ohlcv circuit breaker OPEN -- serving cached/mock for next %d seconds "
@@ -126,6 +132,7 @@ def get_circuit_breaker_status() -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Mock data generator (deterministic per ticker)
 # ---------------------------------------------------------------------------
+
 
 def _generate_mock_data(ticker: str, period: str) -> List[Dict[str, Any]]:
     """Generate deterministic mock OHLCV data seeded by ticker + period."""
@@ -171,14 +178,16 @@ def _generate_mock_data(ticker: str, period: str) -> List[Dict[str, Any]]:
         low = min(open_price, price) - rng.uniform(0, day_range / 2)
         volume = int(rng.uniform(100_000, 20_000_000))
 
-        data.append({
-            "time": current.isoformat(),
-            "open": round(open_price, 2),
-            "high": round(high, 2),
-            "low": round(low, 2),
-            "close": round(price, 2),
-            "volume": volume,
-        })
+        data.append(
+            {
+                "time": current.isoformat(),
+                "open": round(open_price, 2),
+                "high": round(high, 2),
+                "low": round(low, 2),
+                "close": round(price, 2),
+                "volume": volume,
+            }
+        )
         count += 1
         current += timedelta(days=1)
 
@@ -188,6 +197,7 @@ def _generate_mock_data(ticker: str, period: str) -> List[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Main fetcher
 # ---------------------------------------------------------------------------
+
 
 def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
     """Fetch OHLCV data for a single Saudi stock.
@@ -212,7 +222,9 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
         logger.info(
             "stock_ohlcv fetch: source=cache, cache_hit=True, "
             "fetch_duration_ms=%.1f, symbol=%s, period=%s",
-            duration_ms, symbol, period,
+            duration_ms,
+            symbol,
+            period,
         )
         return cached
 
@@ -225,7 +237,9 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
             logger.info(
                 "stock_ohlcv fetch: source=cache, cache_hit=True, "
                 "fetch_duration_ms=%.1f, symbol=%s, period=%s",
-                duration_ms, symbol, period,
+                duration_ms,
+                symbol,
+                period,
             )
             return cached
 
@@ -234,7 +248,8 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
             logger.info(
                 "stock_ohlcv fetch: circuit_breaker=open, skipping yfinance, "
                 "symbol=%s, period=%s",
-                symbol, period,
+                symbol,
+                period,
             )
         else:
             # Try yfinance
@@ -254,14 +269,18 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
                         else:
                             time_str = str(date_val)[:10]
 
-                        data.append({
-                            "time": time_str,
-                            "open": round(float(row["Open"]), 2),
-                            "high": round(float(row["High"]), 2),
-                            "low": round(float(row["Low"]), 2),
-                            "close": round(float(row["Close"]), 2),
-                            "volume": int(row["Volume"]) if row.get("Volume") else 0,
-                        })
+                        data.append(
+                            {
+                                "time": time_str,
+                                "open": round(float(row["Open"]), 2),
+                                "high": round(float(row["High"]), 2),
+                                "low": round(float(row["Low"]), 2),
+                                "close": round(float(row["Close"]), 2),
+                                "volume": int(row["Volume"])
+                                if row.get("Volume")
+                                else 0,
+                            }
+                        )
 
                     payload = {
                         "data": data,
@@ -277,7 +296,10 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
                     logger.info(
                         "stock_ohlcv fetch: source=real, cache_hit=False, "
                         "fetch_duration_ms=%.1f, symbol=%s, period=%s, points=%d",
-                        duration_ms, symbol, period, len(data),
+                        duration_ms,
+                        symbol,
+                        period,
+                        len(data),
                     )
                     return payload
 
@@ -290,7 +312,10 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
                 error_category = "unknown"
                 if "429" in exc_msg or "rate" in exc_msg.lower():
                     error_category = "rate_limit"
-                elif any(k in exc_msg.lower() for k in ("timeout", "connect", "network", "dns", "socket")):
+                elif any(
+                    k in exc_msg.lower()
+                    for k in ("timeout", "connect", "network", "dns", "socket")
+                ):
                     error_category = "network"
                 else:
                     error_category = "data_error"
@@ -299,7 +324,11 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
                     "yfinance fetch failed: symbol=%s, period=%s, "
                     "error_type=%s, error_category=%s, message=%s, "
                     "consecutive_failures=%d",
-                    symbol, period, exc_type, error_category, exc_msg,
+                    symbol,
+                    period,
+                    exc_type,
+                    error_category,
+                    exc_msg,
                     _consecutive_failures,
                 )
 
@@ -310,7 +339,9 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
         logger.info(
             "stock_ohlcv fetch: source=cached, cache_hit=False, "
             "fetch_duration_ms=%.1f, symbol=%s, period=%s",
-            duration_ms, symbol, period,
+            duration_ms,
+            symbol,
+            period,
         )
         return stale
 
@@ -329,7 +360,10 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
     logger.info(
         "stock_ohlcv fetch: source=mock, cache_hit=False, "
         "fetch_duration_ms=%.1f, symbol=%s, period=%s, points=%d",
-        duration_ms, period, symbol, len(mock_data),
+        duration_ms,
+        period,
+        symbol,
+        len(mock_data),
     )
     return payload
 

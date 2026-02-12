@@ -31,6 +31,7 @@ router = APIRouter(prefix="/api/charts", tags=["charts-analytics"])
 # Response models (match api/schemas/charts.py for compatibility)
 # ---------------------------------------------------------------------------
 
+
 class ChartDataPoint(BaseModel):
     label: str
     value: float
@@ -45,6 +46,7 @@ class ChartResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 @router.get("/sector-market-cap", response_model=ChartResponse)
 async def sector_market_cap() -> ChartResponse:

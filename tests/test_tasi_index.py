@@ -52,12 +52,21 @@ class TestMockDataGenerator(unittest.TestCase):
         from services.tasi_index import _generate_mock_data
 
         lengths = {}
-        for period, expected_days in [("1mo", 22), ("3mo", 66), ("6mo", 132),
-                                       ("1y", 252), ("2y", 504), ("5y", 1260)]:
+        for period, expected_days in [
+            ("1mo", 22),
+            ("3mo", 66),
+            ("6mo", 132),
+            ("1y", 252),
+            ("2y", 504),
+            ("5y", 1260),
+        ]:
             data = _generate_mock_data(period)
             lengths[period] = len(data)
-            self.assertEqual(len(data), expected_days,
-                             f"period={period} should have {expected_days} points")
+            self.assertEqual(
+                len(data),
+                expected_days,
+                f"period={period} should have {expected_days} points",
+            )
 
     def test_mock_data_time_format(self):
         from services.tasi_index import _generate_mock_data
@@ -81,24 +90,28 @@ class TestFetchTasiIndex(unittest.TestCase):
     def setUp(self):
         # Clear the module-level cache before each test
         import services.tasi_index as mod
+
         mod._cache.clear()
 
     def _make_yf_dataframe(self, rows=10):
         """Build a fake yfinance-style DataFrame."""
         dates = pd.date_range("2025-01-01", periods=rows, freq="B")
-        return pd.DataFrame({
-            "Date": dates,
-            "Open": [11500 + i * 10 for i in range(rows)],
-            "High": [11520 + i * 10 for i in range(rows)],
-            "Low":  [11480 + i * 10 for i in range(rows)],
-            "Close": [11510 + i * 10 for i in range(rows)],
-            "Volume": [100_000_000 + i * 1_000_000 for i in range(rows)],
-        }).set_index("Date")
+        return pd.DataFrame(
+            {
+                "Date": dates,
+                "Open": [11500 + i * 10 for i in range(rows)],
+                "High": [11520 + i * 10 for i in range(rows)],
+                "Low": [11480 + i * 10 for i in range(rows)],
+                "Close": [11510 + i * 10 for i in range(rows)],
+                "Volume": [100_000_000 + i * 1_000_000 for i in range(rows)],
+            }
+        ).set_index("Date")
 
     @patch("services.tasi_index.yf", create=True)
     def test_fetch_real_data_success(self, mock_yf):
         """yfinance returns valid data -> source='real'."""
         import services.tasi_index as mod
+
         # Patch the import inside the function
         fake_ticker = MagicMock()
         fake_ticker.history.return_value = self._make_yf_dataframe(5)
@@ -120,6 +133,7 @@ class TestFetchTasiIndex(unittest.TestCase):
     def test_fetch_yfinance_exception_falls_to_mock(self, mock_yf):
         """yfinance raises -> fallback to mock data."""
         import services.tasi_index as mod
+
         mock_yf.Ticker.side_effect = Exception("network error")
 
         with patch.dict("sys.modules", {"yfinance": mock_yf}):
@@ -197,6 +211,7 @@ class TestCacheStatus(unittest.TestCase):
 
     def setUp(self):
         import services.tasi_index as mod
+
         mod._cache.clear()
 
     def test_empty_cache(self):
@@ -241,6 +256,7 @@ class TestThreadSafety(unittest.TestCase):
 
     def setUp(self):
         import services.tasi_index as mod
+
         mod._cache.clear()
 
     def test_concurrent_fetches_all_succeed(self):
@@ -249,10 +265,7 @@ class TestThreadSafety(unittest.TestCase):
 
         with patch.dict("sys.modules", {"yfinance": None}):
             with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-                futures = [
-                    pool.submit(mod.fetch_tasi_index, "1y")
-                    for _ in range(16)
-                ]
+                futures = [pool.submit(mod.fetch_tasi_index, "1y") for _ in range(16)]
                 results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
         self.assertEqual(len(results), 16)
@@ -266,10 +279,7 @@ class TestThreadSafety(unittest.TestCase):
 
         with patch.dict("sys.modules", {"yfinance": None}):
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
-                futures = [
-                    pool.submit(mod.fetch_tasi_index, "3mo")
-                    for _ in range(8)
-                ]
+                futures = [pool.submit(mod.fetch_tasi_index, "3mo") for _ in range(8)]
                 results = [f.result() for f in futures]
 
         first_data = results[0]["data"]
@@ -282,6 +292,7 @@ class TestStructuredLogging(unittest.TestCase):
 
     def setUp(self):
         import services.tasi_index as mod
+
         mod._cache.clear()
 
     def test_log_on_cache_hit(self):

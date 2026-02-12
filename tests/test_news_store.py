@@ -49,6 +49,7 @@ class TestTableCreation(unittest.TestCase):
         try:
             NewsStore(db_path)
             import sqlite3
+
             conn = sqlite3.connect(db_path)
             cursor = conn.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='news_articles'"
@@ -65,6 +66,7 @@ class TestTableCreation(unittest.TestCase):
         try:
             NewsStore(db_path)
             import sqlite3
+
             conn = sqlite3.connect(db_path)
             rows = conn.execute(
                 "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_news_%'"
@@ -211,11 +213,13 @@ class TestCountArticles(unittest.TestCase):
         self.assertEqual(self.store.count_articles(), 5)
 
     def test_count_by_source(self):
-        self.store.store_articles([
-            _make_article(title="خبر أ", source_name="العربية"),
-            _make_article(title="خبر ب", source_name="العربية"),
-            _make_article(title="خبر ج", source_name="أرقام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_article(title="خبر أ", source_name="العربية"),
+                _make_article(title="خبر ب", source_name="العربية"),
+                _make_article(title="خبر ج", source_name="أرقام"),
+            ]
+        )
         self.assertEqual(self.store.count_articles(source="العربية"), 2)
         self.assertEqual(self.store.count_articles(source="أرقام"), 1)
 
@@ -236,10 +240,12 @@ class TestGetSources(unittest.TestCase):
         os.unlink(self.db_path)
 
     def test_returns_sources(self):
-        self.store.store_articles([
-            _make_article(title="خبر 1", source_name="العربية"),
-            _make_article(title="خبر 2", source_name="أرقام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_article(title="خبر 1", source_name="العربية"),
+                _make_article(title="خبر 2", source_name="أرقام"),
+            ]
+        )
         sources = self.store.get_sources()
         self.assertEqual(len(sources), 2)
         names = [s["source_name"] for s in sources]
@@ -247,11 +253,13 @@ class TestGetSources(unittest.TestCase):
         self.assertIn("أرقام", names)
 
     def test_counts_are_correct(self):
-        self.store.store_articles([
-            _make_article(title="أ", source_name="العربية"),
-            _make_article(title="ب", source_name="العربية"),
-            _make_article(title="ج", source_name="أرقام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_article(title="أ", source_name="العربية"),
+                _make_article(title="ب", source_name="العربية"),
+                _make_article(title="ج", source_name="أرقام"),
+            ]
+        )
         sources = self.store.get_sources()
         src_dict = {s["source_name"]: s["count"] for s in sources}
         self.assertEqual(src_dict["العربية"], 2)
@@ -278,9 +286,12 @@ class TestCleanupOld(unittest.TestCase):
         # Insert an article, then manually backdate it
         self.store.store_articles([_make_article(title="خبر قديم", id="old-1")])
         import sqlite3
+
         old_date = (datetime.utcnow() - timedelta(days=30)).isoformat()
         conn = sqlite3.connect(self.db_path)
-        conn.execute("UPDATE news_articles SET created_at = ? WHERE id = 'old-1'", (old_date,))
+        conn.execute(
+            "UPDATE news_articles SET created_at = ? WHERE id = 'old-1'", (old_date,)
+        )
         conn.commit()
         conn.close()
 
@@ -308,10 +319,12 @@ class TestSearchArticles(unittest.TestCase):
         os.unlink(self.db_path)
 
     def test_search_by_title(self):
-        self.store.store_articles([
-            _make_article(title="أرامكو تعلن عن أرباح"),
-            _make_article(title="سابك تحقق نموا"),
-        ])
+        self.store.store_articles(
+            [
+                _make_article(title="أرامكو تعلن عن أرباح"),
+                _make_article(title="سابك تحقق نموا"),
+            ]
+        )
         result = self.store.search_articles("أرامكو")
         self.assertEqual(len(result), 1)
         self.assertIn("أرامكو", result[0]["title"])

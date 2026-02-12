@@ -75,7 +75,11 @@ class NewsStore:
             logger.info("news_articles table ensured in %s", self.db_path)
         except Exception:
             conn.rollback()
-            logger.error("Failed to ensure news_articles table in %s", self.db_path, exc_info=True)
+            logger.error(
+                "Failed to ensure news_articles table in %s",
+                self.db_path,
+                exc_info=True,
+            )
             raise
         finally:
             conn.close()
@@ -116,7 +120,9 @@ class NewsStore:
                 except sqlite3.IntegrityError:
                     pass
             conn.commit()
-            logger.info("Stored %d new articles (of %d provided)", inserted, len(articles))
+            logger.info(
+                "Stored %d new articles (of %d provided)", inserted, len(articles)
+            )
         except Exception:
             conn.rollback()
             logger.error("Failed to store articles", exc_info=True)
@@ -221,9 +227,7 @@ class NewsStore:
         cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
         conn = self._connect()
         try:
-            conn.execute(
-                "DELETE FROM news_articles WHERE created_at < ?", (cutoff,)
-            )
+            conn.execute("DELETE FROM news_articles WHERE created_at < ?", (cutoff,))
             deleted = conn.execute("SELECT changes()").fetchone()[0]
             conn.commit()
             if deleted:

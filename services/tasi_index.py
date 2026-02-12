@@ -26,9 +26,9 @@ VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 # ---------------------------------------------------------------------------
 # Circuit breaker state
 # ---------------------------------------------------------------------------
-CIRCUIT_BREAKER_THRESHOLD = 5       # consecutive failures before opening
-CIRCUIT_BREAKER_TIMEOUT = 300       # seconds to keep circuit open (5 min)
-SYMBOL_RETRY_DELAY = 0.5            # seconds between symbol retries
+CIRCUIT_BREAKER_THRESHOLD = 5  # consecutive failures before opening
+CIRCUIT_BREAKER_TIMEOUT = 300  # seconds to keep circuit open (5 min)
+SYMBOL_RETRY_DELAY = 0.5  # seconds between symbol retries
 
 _consecutive_failures: int = 0
 _circuit_open_until: float = 0.0
@@ -75,6 +75,7 @@ def _set_cache(period: str, payload: Dict[str, Any]) -> None:
 # Circuit breaker helpers
 # ---------------------------------------------------------------------------
 
+
 def _is_circuit_open() -> bool:
     """Return True if the circuit breaker is currently open (yfinance skipped)."""
     return time.monotonic() < _circuit_open_until
@@ -85,7 +86,10 @@ def _record_failure() -> None:
     global _consecutive_failures, _circuit_open_until
     with _circuit_lock:
         _consecutive_failures += 1
-        if _consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD and not _is_circuit_open():
+        if (
+            _consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD
+            and not _is_circuit_open()
+        ):
             _circuit_open_until = time.monotonic() + CIRCUIT_BREAKER_TIMEOUT
             logger.warning(
                 "yfinance circuit breaker OPEN — serving cached/mock for next %d seconds "
@@ -121,6 +125,7 @@ def get_circuit_breaker_status() -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Mock data generator (deterministic)
 # ---------------------------------------------------------------------------
+
 
 def _generate_mock_data(period: str) -> List[Dict[str, Any]]:
     """Generate deterministic mock TASI data seeded by period string."""
@@ -158,14 +163,16 @@ def _generate_mock_data(period: str) -> List[Dict[str, Any]]:
         low = min(open_price, price) - rng.uniform(0, day_range / 2)
         volume = int(rng.uniform(80_000_000, 300_000_000))
 
-        data.append({
-            "time": current.isoformat(),
-            "open": round(open_price, 2),
-            "high": round(high, 2),
-            "low": round(low, 2),
-            "close": round(price, 2),
-            "volume": volume,
-        })
+        data.append(
+            {
+                "time": current.isoformat(),
+                "open": round(open_price, 2),
+                "high": round(high, 2),
+                "low": round(low, 2),
+                "close": round(price, 2),
+                "volume": volume,
+            }
+        )
         count += 1
         current += timedelta(days=1)
 
@@ -175,6 +182,7 @@ def _generate_mock_data(period: str) -> List[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Main fetcher
 # ---------------------------------------------------------------------------
+
 
 def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
     """Fetch TASI index OHLCV data.
@@ -197,7 +205,9 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
         logger.info(
             "TASI fetch: source=cache, cache_hit=True, "
             "fetch_duration_ms=%.1f, symbol=%s, period=%s",
-            duration_ms, cached.get("symbol", "^TASI"), period,
+            duration_ms,
+            cached.get("symbol", "^TASI"),
+            period,
         )
         return cached
 
@@ -210,7 +220,9 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
             logger.info(
                 "TASI fetch: source=cache, cache_hit=True, "
                 "fetch_duration_ms=%.1f, symbol=%s, period=%s",
-                duration_ms, cached.get("symbol", "^TASI"), period,
+                duration_ms,
+                cached.get("symbol", "^TASI"),
+                period,
             )
             return cached
 
@@ -240,14 +252,18 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
                             else:
                                 time_str = str(date_val)[:10]
 
-                            data.append({
-                                "time": time_str,
-                                "open": round(float(row["Open"]), 2),
-                                "high": round(float(row["High"]), 2),
-                                "low": round(float(row["Low"]), 2),
-                                "close": round(float(row["Close"]), 2),
-                                "volume": int(row["Volume"]) if row.get("Volume") else 0,
-                            })
+                            data.append(
+                                {
+                                    "time": time_str,
+                                    "open": round(float(row["Open"]), 2),
+                                    "high": round(float(row["High"]), 2),
+                                    "low": round(float(row["Low"]), 2),
+                                    "close": round(float(row["Close"]), 2),
+                                    "volume": int(row["Volume"])
+                                    if row.get("Volume")
+                                    else 0,
+                                }
+                            )
 
                         payload = {
                             "data": data,
@@ -263,7 +279,10 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
                         logger.info(
                             "TASI fetch: source=real, cache_hit=False, "
                             "fetch_duration_ms=%.1f, symbol=%s, period=%s, points=%d",
-                            duration_ms, symbol, period, len(data),
+                            duration_ms,
+                            symbol,
+                            period,
+                            len(data),
                         )
                         return payload
 
@@ -278,7 +297,10 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
                     error_category = "unknown"
                     if "429" in exc_msg or "rate" in exc_msg.lower():
                         error_category = "rate_limit"
-                    elif any(k in exc_msg.lower() for k in ("timeout", "connect", "network", "dns", "socket")):
+                    elif any(
+                        k in exc_msg.lower()
+                        for k in ("timeout", "connect", "network", "dns", "socket")
+                    ):
                         error_category = "network"
                     else:
                         error_category = "data_error"
@@ -287,7 +309,11 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
                         "yfinance fetch failed: symbol=%s, period=%s, "
                         "error_type=%s, error_category=%s, message=%s, "
                         "consecutive_failures=%d",
-                        symbol, period, exc_type, error_category, exc_msg,
+                        symbol,
+                        period,
+                        exc_type,
+                        error_category,
+                        exc_msg,
                         _consecutive_failures,
                     )
                     # Add delay between symbol retries (but not after the last symbol)
@@ -302,7 +328,9 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
         logger.info(
             "TASI fetch: source=cached, cache_hit=False, "
             "fetch_duration_ms=%.1f, symbol=%s, period=%s",
-            duration_ms, stale.get("symbol", "^TASI"), period,
+            duration_ms,
+            stale.get("symbol", "^TASI"),
+            period,
         )
         return stale
 
@@ -321,7 +349,9 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
     logger.info(
         "TASI fetch: source=mock, cache_hit=False, "
         "fetch_duration_ms=%.1f, symbol=^TASI, period=%s, points=%d",
-        duration_ms, period, len(mock_data),
+        duration_ms,
+        period,
+        len(mock_data),
     )
     return payload
 

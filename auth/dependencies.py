@@ -27,9 +27,7 @@ ADMIN_TIERS: FrozenSet[str] = frozenset({"enterprise", "admin"})
 
 
 def get_optional_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(
-        _bearer_scheme_optional
-    ),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme_optional),
 ) -> Dict[str, Any] | None:
     """Extract and validate the access token if present.
 

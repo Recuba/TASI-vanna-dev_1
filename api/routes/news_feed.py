@@ -37,6 +37,7 @@ def get_store() -> NewsStore:
 # Response models
 # ---------------------------------------------------------------------------
 
+
 class NewsArticle(BaseModel):
     id: str
     ticker: Optional[str] = None
@@ -71,6 +72,7 @@ class NewsSourcesResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 @router.get("/feed", response_model=NewsFeedResponse)
 async def get_news_feed(
@@ -126,6 +128,4 @@ async def get_sources() -> NewsSourcesResponse:
     """Get available news sources with article counts."""
     store = get_store()
     sources = store.get_sources()
-    return NewsSourcesResponse(
-        sources=[NewsSourceInfo(**s) for s in sources]
-    )
+    return NewsSourcesResponse(sources=[NewsSourceInfo(**s) for s in sources])

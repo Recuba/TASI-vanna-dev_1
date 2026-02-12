@@ -1,12 +1,15 @@
 """Test news store and API readiness"""
-import sys, os
-sys.path.insert(0, '.')
-# Force UTF-8 output on Windows
-if sys.platform == 'win32':
-    os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-os.environ.setdefault('DB_BACKEND', 'sqlite')
+import os
+import sys
+
+sys.path.insert(0, ".")
+# Force UTF-8 output on Windows
+if sys.platform == "win32":
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+os.environ.setdefault("DB_BACKEND", "sqlite")
 
 from services.news_store import NewsStore
 from services.news_scraper import fetch_all_news

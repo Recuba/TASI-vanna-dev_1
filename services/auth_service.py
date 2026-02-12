@@ -33,7 +33,9 @@ class AuthService:
     def __init__(self, get_conn: Callable):
         self._get_conn = get_conn
 
-    def register(self, email: str, password: str, display_name: Optional[str] = None) -> AuthResult:
+    def register(
+        self, email: str, password: str, display_name: Optional[str] = None
+    ) -> AuthResult:
         """Register a new user account.
 
         Returns AuthResult with success=True and tokens on success,
@@ -46,7 +48,9 @@ class AuthService:
             with conn.cursor() as cur:
                 cur.execute("SELECT id FROM users WHERE email = %s", (email,))
                 if cur.fetchone() is not None:
-                    return AuthResult(success=False, error="Email already registered", error_code=409)
+                    return AuthResult(
+                        success=False, error="Email already registered", error_code=409
+                    )
 
                 cur.execute(
                     "INSERT INTO users (auth_provider, auth_provider_id, email, display_name) "

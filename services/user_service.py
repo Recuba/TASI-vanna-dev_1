@@ -229,7 +229,9 @@ class UserService:
             conn.commit()
         except Exception:
             conn.rollback()
-            logger.error("Failed to increment usage for user %s", user_id, exc_info=True)
+            logger.error(
+                "Failed to increment usage for user %s", user_id, exc_info=True
+            )
             raise
         finally:
             conn.close()
@@ -290,7 +292,9 @@ class UserService:
             return self._row_to_watchlist(row)
         except Exception:
             conn.rollback()
-            logger.error("Failed to create watchlist for user %s", user_id, exc_info=True)
+            logger.error(
+                "Failed to create watchlist for user %s", user_id, exc_info=True
+            )
             raise
         finally:
             conn.close()
@@ -399,7 +403,12 @@ class UserService:
             return self._row_to_alert(row)
         except Exception:
             conn.rollback()
-            logger.error("Failed to create alert for user %s ticker %s", user_id, ticker, exc_info=True)
+            logger.error(
+                "Failed to create alert for user %s ticker %s",
+                user_id,
+                ticker,
+                exc_info=True,
+            )
             raise
         finally:
             conn.close()

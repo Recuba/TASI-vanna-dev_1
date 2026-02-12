@@ -37,13 +37,32 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 POSITIVE_KEYWORDS = [
-    "ارتفاع", "صعود", "مكاسب", "أرباح", "نمو", "تحسن", "إيجابي",
-    "ارتفع", "صعد", "زيادة", "توزيعات", "فائض",
+    "ارتفاع",
+    "صعود",
+    "مكاسب",
+    "أرباح",
+    "نمو",
+    "تحسن",
+    "إيجابي",
+    "ارتفع",
+    "صعد",
+    "زيادة",
+    "توزيعات",
+    "فائض",
 ]
 
 NEGATIVE_KEYWORDS = [
-    "هبوط", "تراجع", "انخفاض", "خسائر", "خسارة", "سلبي",
-    "انخفض", "تراجعت", "عجز", "ديون", "إفلاس",
+    "هبوط",
+    "تراجع",
+    "انخفاض",
+    "خسائر",
+    "خسارة",
+    "سلبي",
+    "انخفض",
+    "تراجعت",
+    "عجز",
+    "ديون",
+    "إفلاس",
 ]
 
 
@@ -145,14 +164,51 @@ DEFAULT_HEADERS = {
 
 # Arabic keywords indicating Saudi/TASI market relevance
 RELEVANCE_KEYWORDS = [
-    "تاسي", "تداول", "سوق الأسهم", "سوق المال", "السوق السعودي",
-    "البورصة", "الأسهم السعودية", "هيئة السوق", "نمو", "السوق المالية",
-    "أرامكو", "سابك", "الراجحي", "الأهلي", "stc", "أسهم", "سهم",
-    "أرباح", "توزيعات", "مؤشر", "نقطة", "إغلاق", "افتتاح",
-    "صعود", "هبوط", "ارتفاع", "انخفاض", "تراجع", "مكاسب",
-    "قطاع", "البنوك", "البتروكيماويات", "العقار", "التأمين",
-    "ريال", "مليار", "مليون", "هللة", "صفقة", "تداولات",
-    "الاكتتاب", "إدراج", "طرح", "السعودية", "المملكة",
+    "تاسي",
+    "تداول",
+    "سوق الأسهم",
+    "سوق المال",
+    "السوق السعودي",
+    "البورصة",
+    "الأسهم السعودية",
+    "هيئة السوق",
+    "نمو",
+    "السوق المالية",
+    "أرامكو",
+    "سابك",
+    "الراجحي",
+    "الأهلي",
+    "stc",
+    "أسهم",
+    "سهم",
+    "أرباح",
+    "توزيعات",
+    "مؤشر",
+    "نقطة",
+    "إغلاق",
+    "افتتاح",
+    "صعود",
+    "هبوط",
+    "ارتفاع",
+    "انخفاض",
+    "تراجع",
+    "مكاسب",
+    "قطاع",
+    "البنوك",
+    "البتروكيماويات",
+    "العقار",
+    "التأمين",
+    "ريال",
+    "مليار",
+    "مليون",
+    "هللة",
+    "صفقة",
+    "تداولات",
+    "الاكتتاب",
+    "إدراج",
+    "طرح",
+    "السعودية",
+    "المملكة",
 ]
 
 
@@ -177,7 +233,9 @@ class BaseNewsScraper(ABC):
         failure and returns an empty list.
         """
         try:
-            logger.info("Fetching articles from %s (%s)", self.source_name, self.source_url)
+            logger.info(
+                "Fetching articles from %s (%s)", self.source_name, self.source_url
+            )
             resp = self._session.get(self.source_url, timeout=REQUEST_TIMEOUT)
             resp.raise_for_status()
             resp.encoding = resp.apparent_encoding or "utf-8"
@@ -192,21 +250,32 @@ class BaseNewsScraper(ABC):
 
             logger.info(
                 "%s: parsed %d articles, %d relevant, returning %d",
-                self.source_name, len(raw_articles), len(relevant), len(limited),
+                self.source_name,
+                len(raw_articles),
+                len(relevant),
+                len(limited),
             )
             return limited
 
         except requests.exceptions.Timeout:
-            logger.warning("%s: request timed out after %ds", self.source_name, REQUEST_TIMEOUT)
+            logger.warning(
+                "%s: request timed out after %ds", self.source_name, REQUEST_TIMEOUT
+            )
             return []
         except requests.exceptions.ConnectionError:
             logger.warning("%s: connection error", self.source_name)
             return []
         except requests.exceptions.HTTPError as exc:
-            logger.warning("%s: HTTP error %s", self.source_name, exc.response.status_code if exc.response else exc)
+            logger.warning(
+                "%s: HTTP error %s",
+                self.source_name,
+                exc.response.status_code if exc.response else exc,
+            )
             return []
         except Exception:
-            logger.warning("%s: unexpected error during fetch", self.source_name, exc_info=True)
+            logger.warning(
+                "%s: unexpected error during fetch", self.source_name, exc_info=True
+            )
             return []
 
     @abstractmethod
@@ -326,6 +395,7 @@ class BaseNewsScraper(ABC):
             return "https:" + href
         if href.startswith("/"):
             from urllib.parse import urlparse
+
             parsed = urlparse(base)
             return f"{parsed.scheme}://{parsed.netloc}{href}"
         return base.rstrip("/") + "/" + href
@@ -359,12 +429,12 @@ class GoogleNewsRssScraper(BaseNewsScraper):
             try:
                 encoded_query = quote_plus(query)
                 rss_url = (
-                    f"{self._google_rss_base}"
-                    f"?q={encoded_query}&hl=ar&gl=SA&ceid=SA:ar"
+                    f"{self._google_rss_base}?q={encoded_query}&hl=ar&gl=SA&ceid=SA:ar"
                 )
                 logger.info(
                     "Fetching %s articles via Google News RSS: %s",
-                    self.source_name, query,
+                    self.source_name,
+                    query,
                 )
                 resp = self._session.get(rss_url, timeout=REQUEST_TIMEOUT)
                 resp.raise_for_status()
@@ -374,7 +444,9 @@ class GoogleNewsRssScraper(BaseNewsScraper):
                 items = soup.select("item")
                 logger.info(
                     "%s: Google RSS returned %d items for query '%s'",
-                    self.source_name, len(items), query,
+                    self.source_name,
+                    len(items),
+                    query,
                 )
 
                 for item in items:
@@ -419,6 +491,7 @@ class GoogleNewsRssScraper(BaseNewsScraper):
                     if pub_date:
                         try:
                             from email.utils import parsedate_to_datetime
+
                             dt = parsedate_to_datetime(pub_date)
                             published_at = dt.isoformat()
                         except Exception:
@@ -434,12 +507,14 @@ class GoogleNewsRssScraper(BaseNewsScraper):
             except requests.exceptions.Timeout:
                 logger.warning(
                     "%s: Google RSS timed out for query '%s'",
-                    self.source_name, query,
+                    self.source_name,
+                    query,
                 )
             except requests.exceptions.ConnectionError:
                 logger.warning(
                     "%s: Google RSS connection error for query '%s'",
-                    self.source_name, query,
+                    self.source_name,
+                    query,
                 )
             except requests.exceptions.HTTPError as exc:
                 logger.warning(
@@ -451,7 +526,9 @@ class GoogleNewsRssScraper(BaseNewsScraper):
             except Exception:
                 logger.warning(
                     "%s: unexpected error fetching Google RSS for query '%s'",
-                    self.source_name, query, exc_info=True,
+                    self.source_name,
+                    query,
+                    exc_info=True,
                 )
 
         # Filter for Saudi market relevance
@@ -460,7 +537,10 @@ class GoogleNewsRssScraper(BaseNewsScraper):
 
         logger.info(
             "%s: Google RSS total %d, relevant %d, returning %d",
-            self.source_name, len(all_articles), len(relevant), len(limited),
+            self.source_name,
+            len(all_articles),
+            len(relevant),
+            len(limited),
         )
         return limited
 
@@ -542,7 +622,9 @@ class ArgaamScraper(BaseNewsScraper):
                 continue
 
             title_el = item.select_one("h2, h3, h4, [class*='title'], span")
-            title = self._extract_text(title_el) if title_el else self._extract_text(item)
+            title = (
+                self._extract_text(title_el) if title_el else self._extract_text(item)
+            )
             if not title or len(title) < 10:
                 continue
 
@@ -551,7 +633,11 @@ class ArgaamScraper(BaseNewsScraper):
             body = self._extract_text(summary_el) if summary_el else ""
 
             time_el = item.select_one("time, [class*='date'], [class*='time']")
-            published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
+            published = (
+                time_el.get("datetime", self._extract_text(time_el))
+                if time_el
+                else None
+            )
 
             articles.append(self._make_article(title, body, url, published))
 
@@ -589,7 +675,9 @@ class MaaalScraper(BaseNewsScraper):
         seen_urls: set = set()
 
         # Strategy 1: WordPress-style article/post containers
-        for item in soup.select("article, .post, .entry, [class*='news'], [class*='article'], [class*='post']"):
+        for item in soup.select(
+            "article, .post, .entry, [class*='news'], [class*='article'], [class*='post']"
+        ):
             link = item.select_one("a[href]")
             if not link:
                 continue
@@ -607,7 +695,9 @@ class MaaalScraper(BaseNewsScraper):
                 "[class*='title'] a, [class*='title'], "
                 ".entry-title a, .post-title a"
             )
-            title = self._extract_text(title_el) if title_el else self._extract_text(link)
+            title = (
+                self._extract_text(title_el) if title_el else self._extract_text(link)
+            )
             if not title or len(title) < 10:
                 continue
 
@@ -618,8 +708,14 @@ class MaaalScraper(BaseNewsScraper):
             )
             body = self._extract_text(summary_el) if summary_el else ""
 
-            time_el = item.select_one("time, [class*='date'], [class*='time'], [datetime]")
-            published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
+            time_el = item.select_one(
+                "time, [class*='date'], [class*='time'], [datetime]"
+            )
+            published = (
+                time_el.get("datetime", self._extract_text(time_el))
+                if time_el
+                else None
+            )
 
             articles.append(self._make_article(title, body, url, published))
 
@@ -668,8 +764,14 @@ class MubasherScraper(BaseNewsScraper):
                 if not link:
                     continue
                 href = link.get("href", "")
-                title_el = item.select_one("h1, h2, h3, h4, [class*='title'], [class*='headline']")
-                title = self._extract_text(title_el) if title_el else self._extract_text(link)
+                title_el = item.select_one(
+                    "h1, h2, h3, h4, [class*='title'], [class*='headline']"
+                )
+                title = (
+                    self._extract_text(title_el)
+                    if title_el
+                    else self._extract_text(link)
+                )
 
             if not title or len(title) < 10:
                 continue
@@ -681,11 +783,25 @@ class MubasherScraper(BaseNewsScraper):
                 continue
             seen_urls.add(url)
 
-            summary_el = item.select_one("p, [class*='summary'], [class*='excerpt'], [class*='desc']") if item.name != "a" else None
+            summary_el = (
+                item.select_one(
+                    "p, [class*='summary'], [class*='excerpt'], [class*='desc']"
+                )
+                if item.name != "a"
+                else None
+            )
             body = self._extract_text(summary_el) if summary_el else ""
 
-            time_el = item.select_one("time, [class*='date'], [class*='time'], [datetime]") if item.name != "a" else None
-            published = time_el.get("datetime", self._extract_text(time_el)) if time_el else None
+            time_el = (
+                item.select_one("time, [class*='date'], [class*='time'], [datetime]")
+                if item.name != "a"
+                else None
+            )
+            published = (
+                time_el.get("datetime", self._extract_text(time_el))
+                if time_el
+                else None
+            )
 
             articles.append(self._make_article(title, body, url, published))
 
@@ -796,7 +912,11 @@ def fetch_all_news() -> List[dict]:
         try:
             article = paraphrase_article(article)
         except Exception:
-            logger.warning("Paraphrase failed for article: %s", article.get("title", "")[:50], exc_info=True)
+            logger.warning(
+                "Paraphrase failed for article: %s",
+                article.get("title", "")[:50],
+                exc_info=True,
+            )
 
         # Sentiment analysis
         title = article.get("title", "")

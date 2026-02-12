@@ -28,6 +28,7 @@ router = APIRouter(prefix="/api/v1/charts/tasi", tags=["tasi-index"])
 # Response models
 # ---------------------------------------------------------------------------
 
+
 class TASIOHLCVPoint(BaseModel):
     time: str
     open: float
@@ -51,6 +52,7 @@ class TASIIndexResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Route
 # ---------------------------------------------------------------------------
+
 
 @router.get("/index", response_model=TASIIndexResponse)
 async def get_tasi_index(
@@ -127,9 +129,12 @@ async def tasi_health() -> TASIHealthResponse:
     logger.debug(
         "TASI health: status=%s, yfinance=%s, cache=%s, age=%s, "
         "circuit=%s, failures=%d",
-        status, yfinance_available, cache_status,
+        status,
+        yfinance_available,
+        cache_status,
         cache_info.get("cache_age_seconds"),
-        cb_info["circuit_state"], cb_info["consecutive_failures"],
+        cb_info["circuit_state"],
+        cb_info["consecutive_failures"],
     )
 
     return TASIHealthResponse(status=status, message=message)
