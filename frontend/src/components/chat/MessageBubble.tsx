@@ -9,9 +9,11 @@ import { useLanguage } from '@/providers/LanguageProvider';
 interface MessageBubbleProps {
   message: ChatMessage;
   onRetry?: () => void;
+  /** Live progress text for the currently-streaming message */
+  progressText?: string;
 }
 
-export function MessageBubble({ message, onRetry }: MessageBubbleProps) {
+export function MessageBubble({ message, onRetry, progressText }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const [showTime, setShowTime] = useState(false);
   const { t, language } = useLanguage();
@@ -51,7 +53,7 @@ export function MessageBubble({ message, onRetry }: MessageBubbleProps) {
           {isUser ? (
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
           ) : (
-            <AssistantContent message={message} />
+            <AssistantContent message={message} progressText={message.isStreaming ? progressText : undefined} />
           )}
         </div>
 

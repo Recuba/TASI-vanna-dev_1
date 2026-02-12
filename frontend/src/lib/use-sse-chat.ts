@@ -8,6 +8,9 @@ const SSE_ENDPOINT = '/api/vanna/v2/chat_sse';
 const STORAGE_KEY = 'rad-ai-chat-messages';
 const MAX_STORED_MESSAGES = 100;
 
+/** How often (ms) to flush batched SSE events to React state */
+const SSE_FLUSH_INTERVAL = 50;
+
 // Migrate old key name
 if (typeof window !== 'undefined') {
   const oldVal = localStorage.getItem('raid-chat-messages');
@@ -177,13 +180,14 @@ function normalizeSSEEvent(raw: unknown): SSEEvent | null {
         return { type: 'code', data: { language: 'sql', content: sql } };
       }
 
-      // Plotly chart
+      // Plotly chart — Vanna 2.0 puts chart fields (data, layout, etc.)
+      // directly in richData, not wrapped in plotly_json or fig.
       case 'plotly_chart':
       case 'chart': {
         const plotlyJson =
           (richData.plotly_json as Record<string, unknown>) ||
           (richData.fig as Record<string, unknown>) ||
-          {};
+          richData;
         return { type: 'chart', data: { plotly_json: plotlyJson } };
       }
 
@@ -240,14 +244,27 @@ function normalizeSSEEvent(raw: unknown): SSEEvent | null {
 
 /**
  * Hook that manages the chat conversation with the Vanna SSE backend.
- * Includes localStorage persistence, error recovery, and retry.
+ * Includes localStorage persistence, error recovery, retry, and
+ * batched SSE event processing for reduced React re-renders.
  */
 export function useSSEChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  /** The latest progress message from the SSE stream, updated independently */
+  const [progressText, setProgressText] = useState('');
   const abortRef = useRef<AbortController | null>(null);
   const messageIdRef = useRef(0);
   const initializedRef = useRef(false);
+
+  // --- Event batching refs ---
+  /** Accumulates SSE events between flushes */
+  const pendingEventsRef = useRef<SSEEvent[]>([]);
+  /** Accumulates text content between flushes */
+  const pendingTextRef = useRef('');
+  /** Timer handle for the flush interval */
+  const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** ID of the assistant message currently being streamed into */
+  const activeAssistantIdRef = useRef<string | null>(null);
 
   // Restore messages from localStorage on mount
   useEffect(() => {
@@ -274,6 +291,30 @@ export function useSSEChat() {
     return `msg-${++messageIdRef.current}-${Date.now()}`;
   }
 
+  /**
+   * Flush accumulated events from refs into React state in a single
+   * setMessages call, dramatically reducing re-renders during streaming.
+   */
+  const flushEvents = useCallback(() => {
+    const events = pendingEventsRef.current;
+    const text = pendingTextRef.current;
+    const assistantId = activeAssistantIdRef.current;
+    if (events.length === 0 || !assistantId) return;
+
+    // Reset refs before the state update
+    pendingEventsRef.current = [];
+    pendingTextRef.current = '';
+
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id !== assistantId) return msg;
+        const components = [...(msg.components || []), ...events];
+        const content = msg.content + text;
+        return { ...msg, components, content };
+      })
+    );
+  }, []);
+
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
 
@@ -286,6 +327,7 @@ export function useSSEChat() {
     };
 
     const assistantId = nextId();
+    activeAssistantIdRef.current = assistantId;
     const assistantMsg: ChatMessage = {
       id: assistantId,
       role: 'assistant',
@@ -297,6 +339,7 @@ export function useSSEChat() {
 
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
     setIsLoading(true);
+    setProgressText('');
 
     // Abort any previous request
     if (abortRef.current) {
@@ -304,6 +347,10 @@ export function useSSEChat() {
     }
     const controller = new AbortController();
     abortRef.current = controller;
+
+    // Start the periodic flush timer
+    const flushInterval = setInterval(flushEvents, SSE_FLUSH_INTERVAL);
+    flushTimerRef.current = flushInterval;
 
     try {
       const url = `${API_BASE}${SSE_ENDPOINT}`;
@@ -343,18 +390,19 @@ export function useSSEChat() {
             // Skip null events (silently ignored control messages)
             if (!event) continue;
 
-            setMessages((prev) =>
-              prev.map((msg) => {
-                if (msg.id !== assistantId) return msg;
-                const components = [...(msg.components || []), event];
-                // Accumulate text content
-                let textContent = msg.content;
-                if (event.type === 'text') {
-                  textContent += (event.data as { content: string }).content;
-                }
-                return { ...msg, components, content: textContent };
-              })
-            );
+            // Progress events: update the live progress text (shown in the
+            // loading indicator) but DON'T accumulate in components -- they
+            // are transient status messages, not final content.
+            if (event.type === 'progress') {
+              setProgressText((event.data as { message: string }).message);
+              continue;
+            }
+
+            // Batch the event into refs (flushed periodically)
+            pendingEventsRef.current.push(event);
+            if (event.type === 'text') {
+              pendingTextRef.current += (event.data as { content: string }).content;
+            }
           } catch {
             // Skip malformed JSON
           }
@@ -379,6 +427,11 @@ export function useSSEChat() {
         })
       );
     } finally {
+      // Stop the flush timer and do one final flush
+      clearInterval(flushInterval);
+      flushTimerRef.current = null;
+      flushEvents();
+
       // Mark streaming complete
       setMessages((prev) =>
         prev.map((msg) =>
@@ -386,16 +439,26 @@ export function useSSEChat() {
         )
       );
       setIsLoading(false);
+      setProgressText('');
+      activeAssistantIdRef.current = null;
       abortRef.current = null;
     }
-  }, [isLoading]);
+  }, [isLoading, flushEvents]);
 
   const clearMessages = useCallback(() => {
     if (abortRef.current) {
       abortRef.current.abort();
     }
+    if (flushTimerRef.current) {
+      clearInterval(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+    pendingEventsRef.current = [];
+    pendingTextRef.current = '';
+    activeAssistantIdRef.current = null;
     setMessages([]);
     setIsLoading(false);
+    setProgressText('');
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -408,11 +471,21 @@ export function useSSEChat() {
       abortRef.current.abort();
       abortRef.current = null;
     }
+    if (flushTimerRef.current) {
+      clearInterval(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+    // Final flush of any pending events
+    flushEvents();
+    pendingEventsRef.current = [];
+    pendingTextRef.current = '';
+    activeAssistantIdRef.current = null;
     setIsLoading(false);
+    setProgressText('');
     setMessages((prev) =>
       prev.map((msg) => (msg.isStreaming ? { ...msg, isStreaming: false } : msg))
     );
-  }, []);
+  }, [flushEvents]);
 
   /** Retry the last failed query by re-sending the last user message */
   const retryLast = useCallback(() => {
@@ -441,5 +514,5 @@ export function useSSEChat() {
     }, 0);
   }, [messages, sendMessage]);
 
-  return { messages, isLoading, sendMessage, clearMessages, stopStreaming, retryLast };
+  return { messages, isLoading, progressText, sendMessage, clearMessages, stopStreaming, retryLast };
 }

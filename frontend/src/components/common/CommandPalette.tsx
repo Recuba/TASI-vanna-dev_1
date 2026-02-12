@@ -250,7 +250,7 @@ export function CommandPalette() {
     }
 
     return items;
-  }, [query, stocks, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION]);
+  }, [query, stocks, language, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION]);
 
   // Reset index when results change
   useEffect(() => {

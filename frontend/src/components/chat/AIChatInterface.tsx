@@ -83,7 +83,7 @@ function getFollowUpSuggestions(lastAssistant: ChatMessage | undefined, language
 }
 
 export function AIChatInterface() {
-  const { messages, isLoading, sendMessage, clearMessages, stopStreaming, retryLast } = useSSEChat();
+  const { messages, isLoading, progressText, sendMessage, clearMessages, stopStreaming, retryLast } = useSSEChat();
   const { t, language } = useLanguage();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -209,7 +209,12 @@ export function AIChatInterface() {
           /* Message list */
           <div className="space-y-4 max-w-4xl mx-auto">
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} onRetry={msg.isError ? retryLast : undefined} />
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                onRetry={msg.isError ? retryLast : undefined}
+                progressText={msg.isStreaming ? progressText : undefined}
+              />
             ))}
 
             {/* Follow-up suggestions */}
@@ -306,12 +311,14 @@ export function AIChatInterface() {
           )}
         </form>
 
-        {/* Loading indicator */}
+        {/* Loading indicator with live progress */}
         {isLoading && (
           <div className="max-w-4xl mx-auto mt-2 flex justify-center items-center">
             <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
               <LoadingDots />
-              <span>{t('جاري التفكير...', 'Thinking...')}</span>
+              <span className="animate-fade-in">
+                {progressText || t('جاري التفكير...', 'Thinking...')}
+              </span>
             </div>
           </div>
         )}

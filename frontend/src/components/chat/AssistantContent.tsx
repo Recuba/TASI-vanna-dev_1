@@ -9,13 +9,15 @@ import ReactMarkdown from 'react-markdown';
 
 interface AssistantContentProps {
   message: ChatMessage;
+  /** Live progress text from the SSE stream */
+  progressText?: string;
 }
 
-export function AssistantContent({ message }: AssistantContentProps) {
+export function AssistantContent({ message, progressText }: AssistantContentProps) {
   const { components, isStreaming } = message;
 
   if ((!components || components.length === 0) && isStreaming) {
-    return <LoadingDots />;
+    return <LoadingDots progressText={progressText} />;
   }
 
   return (
@@ -23,7 +25,7 @@ export function AssistantContent({ message }: AssistantContentProps) {
       {components?.map((event, i) => (
         <EventBlock key={i} event={event} />
       ))}
-      {isStreaming && <LoadingDots />}
+      {isStreaming && <LoadingDots progressText={progressText} />}
     </div>
   );
 }
