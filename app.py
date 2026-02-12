@@ -120,10 +120,7 @@ class JWTUserResolver(UserResolver):
     """
 
     async def resolve_user(self, request_context: RequestContext) -> User:
-        request = request_context.request
-        auth_header = None
-        if hasattr(request, "headers"):
-            auth_header = request.headers.get("authorization")
+        auth_header = request_context.get_header("authorization")
 
         token = None
         if auth_header and auth_header.lower().startswith("bearer "):
