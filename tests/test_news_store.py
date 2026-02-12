@@ -8,7 +8,6 @@ Uses temporary databases via tempfile to avoid polluting real data.
 import os
 import sys
 import tempfile
-import time
 import unittest
 from datetime import datetime, timedelta
 
@@ -48,7 +47,7 @@ class TestTableCreation(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
         try:
-            store = NewsStore(db_path)
+            NewsStore(db_path)
             import sqlite3
             conn = sqlite3.connect(db_path)
             cursor = conn.execute(
@@ -64,7 +63,7 @@ class TestTableCreation(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
         try:
-            store = NewsStore(db_path)
+            NewsStore(db_path)
             import sqlite3
             conn = sqlite3.connect(db_path)
             rows = conn.execute(

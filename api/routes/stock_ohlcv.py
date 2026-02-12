@@ -9,7 +9,7 @@ Works with both SQLite and PostgreSQL backends (no database dependency).
 from __future__ import annotations
 
 import logging
-from typing import List, Literal, Optional
+from typing import List, Literal
 
 from fastapi import APIRouter, HTTPException, Path, Query
 from pydantic import BaseModel

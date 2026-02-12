@@ -6,7 +6,6 @@ and news scraper scheduler.
 """
 
 import logging
-import os
 import platform
 import sqlite3
 import time

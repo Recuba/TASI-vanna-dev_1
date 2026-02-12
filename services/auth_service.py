@@ -10,7 +10,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
-from auth.jwt_handler import create_access_token, create_refresh_token, decode_token
+from auth.jwt_handler import create_access_token, create_refresh_token
 from auth.password import hash_password, verify_password
 
 logger = logging.getLogger(__name__)

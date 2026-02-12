@@ -14,7 +14,7 @@ import logging
 from functools import lru_cache
 from typing import Generator
 
-from database.manager import DatabaseManager, get_database_manager
+from database.manager import get_database_manager
 from services.news_service import NewsAggregationService
 from services.reports_service import TechnicalReportsService
 from services.announcement_service import AnnouncementService

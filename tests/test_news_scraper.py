@@ -25,14 +25,12 @@ from services.news_scraper import (
     INTER_REQUEST_DELAY,
     MaaalScraper,
     MubasherScraper,
-    RELEVANCE_KEYWORDS,
     _deduplicate,
     fetch_all_news,
 )
 from services.news_paraphraser import (
     SYNONYM_PAIRS,
     _apply_synonyms,
-    _vary_openings,
     paraphrase_article,
     paraphrase_text,
 )

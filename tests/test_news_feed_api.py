@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from api.routes.news_feed import router, get_store
+from api.routes.news_feed import router
 from services.news_store import NewsStore
 
 
