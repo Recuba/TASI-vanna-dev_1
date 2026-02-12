@@ -27,23 +27,13 @@ _log = logging.getLogger(__name__)
 def _check_llm_provider() -> list[str]:
     """Validate exactly one LLM provider is configured."""
     issues: list[str] = []
-    gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     llm_key = os.environ.get("LLM_API_KEY", "").strip()
 
-    has_gemini = bool(gemini_key)
-    has_anthropic = bool(anthropic_key or llm_key)
-
-    if not has_gemini and not has_anthropic:
+    if not anthropic_key and not llm_key:
         issues.append(
             "FAIL: No LLM API key configured. "
-            "Set GEMINI_API_KEY (recommended) or ANTHROPIC_API_KEY."
-        )
-    elif has_gemini and has_anthropic:
-        issues.append(
-            "WARN: Both GEMINI_API_KEY and ANTHROPIC_API_KEY are set. "
-            "Gemini will be used as the active provider. "
-            "Remove the unused key to avoid confusion."
+            "Set ANTHROPIC_API_KEY or LLM_API_KEY for Claude Sonnet 4.5."
         )
     return issues
 

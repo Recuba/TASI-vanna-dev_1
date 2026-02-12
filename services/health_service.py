@@ -134,36 +134,22 @@ def check_database() -> ComponentHealth:
 def check_llm() -> ComponentHealth:
     """Check LLM API key is configured (does not make a live API call).
 
-    Provider-agnostic: checks GEMINI_API_KEY (active runtime provider),
-    then falls back to the config-based key (LLM_API_KEY / ANTHROPIC_API_KEY).
+    Checks ANTHROPIC_API_KEY / LLM_API_KEY for the Claude Sonnet 4.5 provider.
     """
     settings = get_settings()
 
-    # Check Gemini first (the active runtime provider)
-    gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    gemini_model = os.environ.get("GEMINI_MODEL", "")
-
-    if gemini_key and len(gemini_key) > 10:
-        model_name = gemini_model or "gemini-2.5-flash"
-        return ComponentHealth(
-            name="llm",
-            status=HealthStatus.HEALTHY,
-            message=f"provider=gemini, model={model_name}",
-        )
-
-    # Fall back to config-based key (Anthropic or other)
     api_key = settings.get_llm_api_key()
     if api_key and len(api_key) > 10:
         return ComponentHealth(
             name="llm",
             status=HealthStatus.HEALTHY,
-            message=f"provider=config, model={settings.llm.model}",
+            message=f"provider=anthropic, model={settings.llm.model}",
         )
 
     return ComponentHealth(
         name="llm",
         status=HealthStatus.DEGRADED,
-        message="No LLM API key configured (checked GEMINI_API_KEY, LLM_API_KEY, ANTHROPIC_API_KEY)",
+        message="No LLM API key configured (set ANTHROPIC_API_KEY or LLM_API_KEY)",
     )
 
 

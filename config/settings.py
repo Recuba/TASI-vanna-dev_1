@@ -195,11 +195,6 @@ class Settings(BaseSettings):
 
     # Backward compatibility: existing .env uses ANTHROPIC_API_KEY
     anthropic_api_key: str = ""
-    # Gemini API key (active LLM provider)
-    gemini_api_key: str = Field(
-        default="",
-        validation_alias=AliasChoices("GEMINI_API_KEY"),
-    )
 
     # Nested settings
     db: DatabaseSettings = DatabaseSettings()
@@ -211,8 +206,8 @@ class Settings(BaseSettings):
     middleware: MiddlewareSettings = MiddlewareSettings()
 
     def get_llm_api_key(self) -> str:
-        """Return the effective LLM API key (Gemini > LLM_API_KEY > ANTHROPIC_API_KEY)."""
-        return self.gemini_api_key or self.llm.api_key or self.anthropic_api_key
+        """Return the effective LLM API key (LLM_API_KEY > ANTHROPIC_API_KEY)."""
+        return self.llm.api_key or self.anthropic_api_key
 
 
 @lru_cache(maxsize=1)
