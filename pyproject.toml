@@ -14,6 +14,7 @@ markers = [
     "slow: Tests that may take longer (network, heavy computation)",
     "integration: Integration tests requiring app assembly or multiple components",
     "pg_required: Tests requiring a running PostgreSQL instance (skip if unavailable)",
+    "performance: Performance and load tests (may take longer to run)",
 ]
 
 # Default: run all tests except pg_required (use -m to override)

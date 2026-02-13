@@ -1,0 +1,31 @@
+{
+    "description": "Allowlist configuration for Ra'd AI SQL security. Tables and operations listed here are permitted for AI-generated queries.",
+    "allowed_tables": [
+        "companies",
+        "market_data",
+        "valuation_metrics",
+        "profitability_metrics",
+        "dividend_data",
+        "financial_summary",
+        "analyst_data",
+        "balance_sheet",
+        "income_statement",
+        "cash_flow",
+        "news_articles",
+        "news_feed"
+    ],
+    "allowed_operations": [
+        "SELECT"
+    ],
+    "blocked_tables": [
+        "sqlite_master",
+        "sqlite_sequence",
+        "information_schema",
+        "pg_catalog",
+        "pg_tables",
+        "users",
+        "user_watchlists",
+        "user_alerts",
+        "query_audit_log"
+    ]
+}

@@ -1,0 +1,1801 @@
+openapi: "3.0.3"
+info:
+  title: "Ra'd AI TASI Platform API"
+  description: |
+    REST API for the Ra'd AI Saudi Stock Market Intelligence Platform.
+
+    The platform provides natural language querying of TASI-listed company data,
+    market analytics, news aggregation, and stock charting capabilities.
+
+    ## Authentication
+    Most endpoints are public. Endpoints that require authentication use JWT Bearer tokens.
+    Obtain tokens via `/api/auth/login`, `/api/auth/register`, or `/api/auth/guest`.
+
+    ## Rate Limiting
+    All endpoints (except health checks) are rate-limited per IP address:
+    - Authentication endpoints: 10 requests/minute
+    - Chart/OHLCV endpoints: 30 requests/minute
+    - All other endpoints: 60 requests/minute
+
+    Exceeding the limit returns `429` with a `Retry-After` header.
+  version: "1.0.0"
+  contact:
+    name: "Ra'd AI Platform"
+  license:
+    name: "Proprietary"
+
+servers:
+  - url: "http://localhost:8084"
+    description: "Local development backend"
+  - url: "https://raid-ai-app-production.up.railway.app"
+    description: "Production (Railway)"
+
+tags:
+  - name: health
+    description: "Health check and readiness probes"
+  - name: auth
+    description: "Authentication and user management"
+  - name: news
+    description: "News articles (PostgreSQL-backed)"
+  - name: news-feed
+    description: "News feed from Arabic scrapers (SQLite-backed)"
+  - name: reports
+    description: "Technical and analyst reports"
+  - name: announcements
+    description: "CMA/Tadawul announcements"
+  - name: entities
+    description: "Company listing and detail"
+  - name: watchlists
+    description: "User watchlist management"
+  - name: charts
+    description: "Chart analytics"
+  - name: ohlcv
+    description: "Stock OHLCV candlestick data"
+  - name: tasi-index
+    description: "TASI index data"
+  - name: market
+    description: "Market analytics (movers, summary, sectors, heatmap)"
+  - name: stocks
+    description: "Stock data (dividends, financials, comparison)"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT access token obtained from /api/auth/login or /api/auth/guest"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "RATE_LIMITED"
+            message:
+              type: string
+              example: "Too many requests"
+            request_id:
+              type: string
+              format: uuid
+
+    PaginatedMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total_pages:
+          type: integer
+
+    # -- Health --
+    ComponentHealth:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "database"
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        latency_ms:
+          type: number
+          nullable: true
+          example: 1.23
+        message:
+          type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        service:
+          type: string
+          example: "raid-ai-tasi"
+        version:
+          type: string
+          example: "1.0.0"
+        uptime_seconds:
+          type: number
+          example: 3600.5
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComponentHealth"
+
+    # -- Auth --
+    UserCreate:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        name:
+          type: string
+          maxLength: 100
+          description: "Display name (alias for display_name)"
+
+    UserLogin:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: "JWT access token"
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: "bearer"
+        user_id:
+          type: string
+        name:
+          type: string
+
+    TokenRefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: "bearer"
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        display_name:
+          type: string
+          nullable: true
+        subscription_tier:
+          type: string
+        usage_count:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    # -- News --
+    NewsArticle:
+      type: object
+      properties:
+        id:
+          type: string
+        ticker:
+          type: string
+          nullable: true
+        title:
+          type: string
+        body:
+          type: string
+          nullable: true
+        source_name:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        sentiment_score:
+          type: number
+          nullable: true
+        sentiment_label:
+          type: string
+          nullable: true
+        language:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NewsListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedMeta"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/NewsArticle"
+
+    # -- News Feed --
+    NewsFeedItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+          nullable: true
+        source_name:
+          type: string
+        source_url:
+          type: string
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        priority:
+          type: integer
+        language:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    NewsFeedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsFeedItem"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    NewsSourceInfo:
+      type: object
+      properties:
+        source_name:
+          type: string
+        count:
+          type: integer
+
+    NewsSourcesResponse:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsSourceInfo"
+
+    # -- Reports --
+    ReportItem:
+      type: object
+      properties:
+        id:
+          type: string
+        ticker:
+          type: string
+          nullable: true
+        title:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        author:
+          type: string
+          nullable: true
+        source_name:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        recommendation:
+          type: string
+          nullable: true
+        target_price:
+          type: number
+          nullable: true
+        current_price_at_report:
+          type: number
+          nullable: true
+        report_type:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ReportListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedMeta"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ReportItem"
+
+    # -- Announcements --
+    AnnouncementItem:
+      type: object
+      properties:
+        id:
+          type: string
+        ticker:
+          type: string
+          nullable: true
+        title_ar:
+          type: string
+          nullable: true
+        title_en:
+          type: string
+          nullable: true
+        body_ar:
+          type: string
+          nullable: true
+        body_en:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        announcement_date:
+          type: string
+          format: date-time
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        classification:
+          type: string
+          nullable: true
+        is_material:
+          type: boolean
+        source_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AnnouncementListResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedMeta"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/AnnouncementItem"
+
+    # -- Entities --
+    CompanySummary:
+      type: object
+      properties:
+        ticker:
+          type: string
+          example: "2222.SR"
+        short_name:
+          type: string
+          nullable: true
+        sector:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        current_price:
+          type: number
+          nullable: true
+        market_cap:
+          type: number
+          nullable: true
+        change_pct:
+          type: number
+          nullable: true
+
+    EntityListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanySummary"
+        count:
+          type: integer
+
+    CompanyDetail:
+      type: object
+      properties:
+        ticker:
+          type: string
+        short_name:
+          type: string
+          nullable: true
+        sector:
+          type: string
+          nullable: true
+        industry:
+          type: string
+          nullable: true
+        exchange:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        current_price:
+          type: number
+          nullable: true
+        previous_close:
+          type: number
+          nullable: true
+        day_high:
+          type: number
+          nullable: true
+        day_low:
+          type: number
+          nullable: true
+        week_52_high:
+          type: number
+          nullable: true
+        week_52_low:
+          type: number
+          nullable: true
+        volume:
+          type: number
+          nullable: true
+        market_cap:
+          type: number
+          nullable: true
+        beta:
+          type: number
+          nullable: true
+        trailing_pe:
+          type: number
+          nullable: true
+        forward_pe:
+          type: number
+          nullable: true
+        price_to_book:
+          type: number
+          nullable: true
+        trailing_eps:
+          type: number
+          nullable: true
+        roe:
+          type: number
+          nullable: true
+        profit_margin:
+          type: number
+          nullable: true
+        revenue_growth:
+          type: number
+          nullable: true
+        recommendation:
+          type: string
+          nullable: true
+        target_mean_price:
+          type: number
+          nullable: true
+        analyst_count:
+          type: number
+          nullable: true
+
+    SectorInfo:
+      type: object
+      properties:
+        sector:
+          type: string
+        company_count:
+          type: integer
+
+    # -- Watchlists --
+    WatchlistItem:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+        tickers:
+          type: array
+          items:
+            type: string
+
+    WatchlistCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        tickers:
+          type: array
+          items:
+            type: string
+
+    # -- Charts --
+    ChartDataPoint:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: number
+
+    ChartResponse:
+      type: object
+      properties:
+        chart_type:
+          type: string
+        title:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartDataPoint"
+
+    # -- OHLCV --
+    OHLCVData:
+      type: object
+      properties:
+        time:
+          type: string
+        open:
+          type: number
+        high:
+          type: number
+        low:
+          type: number
+        close:
+          type: number
+        volume:
+          type: number
+          nullable: true
+
+    StockOHLCVResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/OHLCVData"
+        source:
+          type: string
+          enum: [real, mock, cached]
+        last_updated:
+          type: string
+          format: date-time
+          nullable: true
+        symbol:
+          type: string
+        period:
+          type: string
+        count:
+          type: integer
+
+    TasiIndexResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/OHLCVData"
+        source:
+          type: string
+          enum: [real, mock, cached]
+        data_freshness:
+          type: string
+          enum: [real-time, cached, stale, mock]
+        cache_age_seconds:
+          type: number
+          nullable: true
+        last_updated:
+          type: string
+          format: date-time
+          nullable: true
+        symbol:
+          type: string
+        period:
+          type: string
+        count:
+          type: integer
+
+    # -- Market Analytics --
+    MarketMover:
+      type: object
+      properties:
+        ticker:
+          type: string
+        company_name_ar:
+          type: string
+        company_name_en:
+          type: string
+        current_price:
+          type: number
+        previous_close:
+          type: number
+        change_pct:
+          type: number
+        volume:
+          type: number
+        sector:
+          type: string
+
+    MarketSummary:
+      type: object
+      properties:
+        total_market_cap:
+          type: number
+        total_volume:
+          type: number
+        gainers_count:
+          type: integer
+        losers_count:
+          type: integer
+        unchanged_count:
+          type: integer
+        top_gainers:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketMover"
+        top_losers:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketMover"
+
+    SectorPerformance:
+      type: object
+      properties:
+        sector:
+          type: string
+        avg_change_pct:
+          type: number
+        total_volume:
+          type: number
+        total_market_cap:
+          type: number
+        company_count:
+          type: integer
+        gainers:
+          type: integer
+        losers:
+          type: integer
+
+    HeatmapItem:
+      type: object
+      properties:
+        ticker:
+          type: string
+        name:
+          type: string
+        sector:
+          type: string
+        market_cap:
+          type: number
+        change_pct:
+          type: number
+
+    # -- Stock Data --
+    StockDividends:
+      type: object
+      properties:
+        ticker:
+          type: string
+        dividend_rate:
+          type: number
+          nullable: true
+        dividend_yield:
+          type: number
+          nullable: true
+        payout_ratio:
+          type: number
+          nullable: true
+        five_year_avg_dividend_yield:
+          type: number
+          nullable: true
+        ex_dividend_date:
+          type: string
+          nullable: true
+        last_dividend_value:
+          type: number
+          nullable: true
+        last_dividend_date:
+          type: string
+          nullable: true
+        trailing_annual_dividend_rate:
+          type: number
+          nullable: true
+        trailing_annual_dividend_yield:
+          type: number
+          nullable: true
+
+    FinancialSummary:
+      type: object
+      properties:
+        ticker:
+          type: string
+        total_revenue:
+          type: number
+          nullable: true
+        revenue_per_share:
+          type: number
+          nullable: true
+        total_cash:
+          type: number
+          nullable: true
+        total_debt:
+          type: number
+          nullable: true
+        debt_to_equity:
+          type: number
+          nullable: true
+        current_ratio:
+          type: number
+          nullable: true
+        quick_ratio:
+          type: number
+          nullable: true
+        free_cashflow:
+          type: number
+          nullable: true
+        ebitda:
+          type: number
+          nullable: true
+        gross_profit:
+          type: number
+          nullable: true
+        operating_cashflow:
+          type: number
+          nullable: true
+
+    FinancialPeriod:
+      type: object
+      properties:
+        period_type:
+          type: string
+          nullable: true
+        period_index:
+          type: integer
+          nullable: true
+        period_date:
+          type: string
+          nullable: true
+        data:
+          type: object
+          additionalProperties: true
+
+    FinancialsResponse:
+      type: object
+      properties:
+        ticker:
+          type: string
+        statement:
+          type: string
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/FinancialPeriod"
+
+    StockComparison:
+      type: object
+      properties:
+        tickers:
+          type: array
+          items:
+            type: object
+            properties:
+              ticker:
+                type: string
+              name:
+                type: string
+              metrics:
+                type: object
+                additionalProperties:
+                  type: number
+                  nullable: true
+
+    BatchQuote:
+      type: object
+      properties:
+        ticker:
+          type: string
+        name:
+          type: string
+        short_name:
+          type: string
+          nullable: true
+        current_price:
+          type: number
+        previous_close:
+          type: number
+        change_pct:
+          type: number
+        volume:
+          type: number
+
+  responses:
+    BadRequest:
+      description: "Invalid request parameters"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: "Authentication required or token invalid"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: "Insufficient permissions"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: "Resource not found"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    RateLimited:
+      description: "Rate limit exceeded"
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: "Seconds until the rate limit resets"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ServiceUnavailable:
+      description: "Service unavailable (database down or backend not reachable)"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+paths:
+  # ---------- Health ----------
+  /health:
+    get:
+      tags: [health]
+      summary: "Full health report"
+      description: "Returns structured health status for all platform components."
+      responses:
+        "200":
+          description: "Healthy or degraded"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: "Unhealthy"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /health/live:
+    get:
+      tags: [health]
+      summary: "Liveness probe"
+      description: "Returns 200 if the process is running. Does not check external dependencies."
+      responses:
+        "200":
+          description: "Process is alive"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "alive"
+                  uptime_seconds:
+                    type: number
+
+  /health/ready:
+    get:
+      tags: [health]
+      summary: "Readiness probe"
+      description: "Returns 200 only when the database is reachable."
+      responses:
+        "200":
+          description: "Ready"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+        "503":
+          description: "Not ready"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "not_ready"
+                  reason:
+                    type: string
+
+  # ---------- Auth ----------
+  /api/auth/register:
+    post:
+      tags: [auth]
+      summary: "Register a new user"
+      description: "Creates a local auth user with bcrypt-hashed password. Requires PostgreSQL backend."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+      responses:
+        "201":
+          description: "User created"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          description: "Email already registered"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: "Login"
+      description: "Authenticate with email and password. Returns JWT tokens."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: "Login successful"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /api/auth/guest:
+    post:
+      tags: [auth]
+      summary: "Guest login"
+      description: "Generate a guest token for anonymous access. No credentials required."
+      responses:
+        "200":
+          description: "Guest token generated"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/auth/refresh:
+    post:
+      tags: [auth]
+      summary: "Refresh token"
+      description: "Exchange a valid refresh token for a new access/refresh token pair."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRefreshRequest"
+      responses:
+        "200":
+          description: "Tokens refreshed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: "Get current user profile"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: "User profile"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ---------- News ----------
+  /api/news:
+    get:
+      tags: [news]
+      summary: "List news articles"
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: language
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Paginated news articles"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsListResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/news/ticker/{ticker}:
+    get:
+      tags: [news]
+      summary: "News articles by ticker"
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+        - name: sentiment
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "News for ticker"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsListResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  # ---------- News Feed ----------
+  /api/v1/news/feed:
+    get:
+      tags: [news-feed]
+      summary: "Arabic news feed"
+      description: "Returns news scraped from 5 Arabic financial sources."
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: source
+          in: query
+          schema:
+            type: string
+          description: "Filter by source name"
+      responses:
+        "200":
+          description: "News feed items"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsFeedResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/v1/news/feed/{id}:
+    get:
+      tags: [news-feed]
+      summary: "Single news article"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "News article"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsFeedItem"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/news/search:
+    get:
+      tags: [news-feed]
+      summary: "Search news"
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Search query"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Search results"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsFeedResponse"
+
+  /api/v1/news/sources:
+    get:
+      tags: [news-feed]
+      summary: "List news sources"
+      responses:
+        "200":
+          description: "Available news sources with article counts"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsSourcesResponse"
+
+  # ---------- Reports ----------
+  /api/reports:
+    get:
+      tags: [reports]
+      summary: "List reports"
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+        - name: recommendation
+          in: query
+          schema:
+            type: string
+        - name: report_type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Paginated reports"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportListResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/reports/ticker/{ticker}:
+    get:
+      tags: [reports]
+      summary: "Reports by ticker"
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Reports for ticker"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportListResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  # ---------- Announcements ----------
+  /api/announcements:
+    get:
+      tags: [announcements]
+      summary: "List announcements"
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+        - name: ticker
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: source
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Paginated announcements"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnouncementListResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  # ---------- Entities ----------
+  /api/entities:
+    get:
+      tags: [entities]
+      summary: "List companies"
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+        - name: sector
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Company list"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityListResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/entities/{ticker}:
+    get:
+      tags: [entities]
+      summary: "Company detail"
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Company detail"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/entities/sectors:
+    get:
+      tags: [entities]
+      summary: "List sectors"
+      responses:
+        "200":
+          description: "Sector list with company counts"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SectorInfo"
+
+  # ---------- Watchlists ----------
+  /api/watchlists:
+    get:
+      tags: [watchlists]
+      summary: "List user watchlists"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: "User watchlists"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchlistItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [watchlists]
+      summary: "Create watchlist"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistCreate"
+      responses:
+        "201":
+          description: "Watchlist created"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /api/watchlists/{id}:
+    patch:
+      tags: [watchlists]
+      summary: "Update watchlist"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistCreate"
+      responses:
+        "200":
+          description: "Watchlist updated"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [watchlists]
+      summary: "Delete watchlist"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: "Watchlist deleted"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ---------- Charts ----------
+  /api/charts/sector-market-cap:
+    get:
+      tags: [charts]
+      summary: "Sector market cap chart"
+      responses:
+        "200":
+          description: "Chart data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartResponse"
+
+  /api/charts/top-companies:
+    get:
+      tags: [charts]
+      summary: "Top companies chart"
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: sector
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Chart data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartResponse"
+
+  /api/charts/sector-pe:
+    get:
+      tags: [charts]
+      summary: "Sector P/E ratio chart"
+      responses:
+        "200":
+          description: "Chart data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartResponse"
+
+  /api/charts/dividend-yield-top:
+    get:
+      tags: [charts]
+      summary: "Top dividend yield chart"
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Chart data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartResponse"
+
+  # ---------- OHLCV ----------
+  /api/v1/charts/{ticker}/ohlcv:
+    get:
+      tags: [ohlcv]
+      summary: "Stock OHLCV data"
+      description: "Returns candlestick (OHLCV) data for a stock."
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: "1y"
+          description: "Time period (e.g. 1d, 5d, 1mo, 3mo, 6mo, 1y, 5y, max)"
+      responses:
+        "200":
+          description: "OHLCV data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockOHLCVResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  # ---------- TASI Index ----------
+  /api/v1/charts/tasi/index:
+    get:
+      tags: [tasi-index]
+      summary: "TASI index data"
+      description: "Returns TASI index OHLCV data with freshness metadata."
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: "1y"
+      responses:
+        "200":
+          description: "TASI index data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TasiIndexResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  # ---------- Market Analytics ----------
+  /api/v1/market/movers:
+    get:
+      tags: [market]
+      summary: "Market movers"
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [gainers, losers]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Market movers"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketMover"
+
+  /api/v1/market/summary:
+    get:
+      tags: [market]
+      summary: "Market summary"
+      responses:
+        "200":
+          description: "Market summary"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketSummary"
+
+  /api/v1/market/sectors:
+    get:
+      tags: [market]
+      summary: "Sector performance"
+      responses:
+        "200":
+          description: "Sector performance data"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SectorPerformance"
+
+  /api/v1/market/heatmap:
+    get:
+      tags: [market]
+      summary: "Market heatmap"
+      responses:
+        "200":
+          description: "Heatmap data"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HeatmapItem"
+
+  # ---------- Stock Data ----------
+  /api/v1/stocks/{ticker}/dividends:
+    get:
+      tags: [stocks]
+      summary: "Stock dividends"
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Dividend data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockDividends"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/stocks/{ticker}/summary:
+    get:
+      tags: [stocks]
+      summary: "Stock financial summary"
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Financial summary"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialSummary"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/stocks/{ticker}/financials:
+    get:
+      tags: [stocks]
+      summary: "Stock financial statements"
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: statement
+          in: query
+          schema:
+            type: string
+          description: "Statement type (balance_sheet, income_statement, cash_flow)"
+        - name: period_type
+          in: query
+          schema:
+            type: string
+          description: "Period type (annual, quarterly, ttm)"
+      responses:
+        "200":
+          description: "Financial statements"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialsResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/stocks/compare:
+    get:
+      tags: [stocks]
+      summary: "Compare stocks"
+      parameters:
+        - name: tickers
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Comma-separated ticker list"
+        - name: metrics
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Comma-separated metric names"
+      responses:
+        "200":
+          description: "Stock comparison"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockComparison"
+
+  /api/v1/stocks/quotes:
+    get:
+      tags: [stocks]
+      summary: "Batch stock quotes"
+      parameters:
+        - name: tickers
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Comma-separated ticker list"
+      responses:
+        "200":
+          description: "Batch quotes"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BatchQuote"

@@ -1,0 +1,4 @@
+# Playwright generated files
+.auth/*-state.json
+test-results/
+playwright-report/
