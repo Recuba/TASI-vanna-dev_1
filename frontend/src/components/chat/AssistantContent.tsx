@@ -1,11 +1,20 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import type { ChatMessage, SSEEvent, SSEProgressData, SSECodeData, SSETableData, SSEChartData, SSETextData } from '@/lib/types';
-import { SQLBlock } from './SQLBlock';
 import { DataTable } from './DataTable';
-import { ChartBlock } from './ChartBlock';
 import { LoadingDots } from './LoadingDots';
-import ReactMarkdown from 'react-markdown';
+
+const SQLBlock = dynamic(() => import('./SQLBlock').then((m) => m.SQLBlock), {
+  loading: () => <div className="h-16 rounded-lg bg-[var(--bg-input)] animate-pulse" />,
+});
+const ChartBlock = dynamic(() => import('./ChartBlock').then((m) => m.ChartBlock), {
+  ssr: false,
+  loading: () => <div className="h-[400px] rounded-lg bg-[var(--bg-input)] animate-pulse" />,
+});
+const ReactMarkdown = dynamic(() => import('react-markdown'), {
+  loading: () => <div className="h-4 w-3/4 rounded bg-[var(--bg-input)] animate-pulse" />,
+});
 
 interface AssistantContentProps {
   message: ChatMessage;

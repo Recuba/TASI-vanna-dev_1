@@ -190,6 +190,32 @@ agent = Agent(
 server = VannaFastAPIServer(agent)
 app = server.create_app()
 
+# ---------------------------------------------------------------------------
+# 8.1. OpenAPI metadata
+# ---------------------------------------------------------------------------
+app.title = "Ra'd AI — TASI Market Analytics API"
+app.description = (
+    "AI-powered Saudi Stock Market analytics platform built on Vanna 2.0. "
+    "Provides natural-language SQL queries, chart generation, market analytics, "
+    "news aggregation, and stock data for ~500 TASI-listed companies."
+)
+app.version = "2.0.0"
+app.openapi_tags = [
+    {"name": "health", "description": "Platform health checks"},
+    {"name": "auth", "description": "Authentication and user management"},
+    {"name": "entities", "description": "Company/stock entity lookup and listing"},
+    {"name": "stock-data", "description": "Per-stock dividends, financials, comparison, and quotes"},
+    {"name": "market-analytics", "description": "Market movers, summary, sector analytics, heatmap"},
+    {"name": "charts-analytics", "description": "Pre-built chart data (sector market cap, P/E, dividends)"},
+    {"name": "tasi-index", "description": "TASI index OHLCV data and health"},
+    {"name": "stock-ohlcv", "description": "Per-stock OHLCV chart data"},
+    {"name": "news-feed", "description": "Live news feed from Arabic financial sources"},
+    {"name": "news", "description": "News articles (PostgreSQL-backed)"},
+    {"name": "reports", "description": "Technical/analyst reports (PostgreSQL-backed)"},
+    {"name": "announcements", "description": "CMA/Tadawul announcements (PostgreSQL-backed)"},
+    {"name": "watchlists", "description": "User watchlists and alerts (authenticated)"},
+]
+
 # Remove Vanna's default "/" route so our custom template takes precedence
 app.routes[:] = [
     r
@@ -214,7 +240,7 @@ app.user_middleware[:] = [
 # 8a. Middleware (outermost first: error_handler -> request_logging -> rate_limit -> CORS)
 # ---------------------------------------------------------------------------
 try:
-    from middleware.error_handler import ErrorHandlerMiddleware
+    from middleware.error_handler import ErrorHandlerMiddleware, install_exception_handlers
     from middleware.request_logging import RequestLoggingMiddleware
     from middleware.rate_limit import RateLimitMiddleware
     from middleware.cors import setup_cors
@@ -261,6 +287,11 @@ try:
             RateLimitMiddleware,
             requests_per_minute=_rate_limit,
             skip_paths=["/health"],
+            path_limits={
+                "/api/auth/login": 10,
+                "/api/auth/register": 10,
+                "/api/v1/charts": 30,
+            },
         )
 
     # Request logging
@@ -271,6 +302,10 @@ try:
 
     # Error handler (outermost -- catches everything)
     app.add_middleware(ErrorHandlerMiddleware)
+
+    # Register exception handlers for HTTPException and RequestValidationError
+    # so all error responses use the same {"error": {...}} shape.
+    install_exception_handlers(app)
 
     logger.info(
         "Middleware stack initialized (CORS, rate_limit, logging, error_handler)"
@@ -493,9 +528,25 @@ async def lifespan(app):
     """Initialize resources on startup and clean up on shutdown."""
     # Setup logging
     try:
-        from config.logging import setup_logging
+        from config.logging_config import setup_logging
 
         setup_logging()
+    except ImportError:
+        pass
+
+    # Initialize error tracking
+    try:
+        from config.error_tracking import init_error_tracking
+
+        init_error_tracking()
+    except ImportError:
+        pass
+
+    # Lifecycle startup diagnostics (version, env validation, backend info)
+    try:
+        from config.lifecycle import on_startup
+
+        on_startup()
     except ImportError:
         pass
 
@@ -622,6 +673,14 @@ async def lifespan(app):
         pass
     except Exception as exc:
         logger.warning("Error closing Redis: %s", exc)
+
+    # Lifecycle shutdown (flush logs, log uptime)
+    try:
+        from config.lifecycle import on_shutdown
+
+        on_shutdown()
+    except ImportError:
+        pass
 
 
 # Register the lifespan with the app

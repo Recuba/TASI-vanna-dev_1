@@ -153,7 +153,10 @@ class TestRateLimitMiddleware:
 
         if response.status_code == 429:
             data = response.json()
-            assert "detail" in data
+            assert "error" in data
+            assert data["error"]["code"] == "RATE_LIMITED"
+            assert "message" in data["error"]
+            assert "request_id" in data["error"]
             assert "Retry-After" in response.headers
 
     def test_skip_paths_bypass_rate_limit(self):

@@ -14,6 +14,7 @@ from typing import List, Literal
 from fastapi import APIRouter, HTTPException, Path, Query
 from pydantic import BaseModel
 
+from models.validators import validate_ticker
 from services.stock_ohlcv import (
     VALID_PERIODS,
     fetch_stock_ohlcv,
@@ -70,6 +71,7 @@ async def get_stock_ohlcv(
     Falls back to deterministic mock data if yfinance is unavailable.
     Saudi tickers get .SR suffix automatically.
     """
+    ticker = validate_ticker(ticker)
     if period not in VALID_PERIODS:
         raise HTTPException(
             status_code=400,
@@ -101,6 +103,7 @@ async def stock_ohlcv_health(
 
     Internal diagnostics are logged server-side but not exposed to clients.
     """
+    ticker = validate_ticker(ticker)
     yfinance_available = True
     try:
         import yfinance as yf  # noqa: F401

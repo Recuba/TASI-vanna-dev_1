@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from api.db_helper import get_conn, fetchall, fetchone
+from models.validators import validate_ticker, validate_ticker_list
 
 logger = logging.getLogger(__name__)
 
@@ -190,6 +191,7 @@ class QuoteItem(BaseModel):
 @router.get("/{ticker}/dividends", response_model=DividendData)
 async def get_dividends(ticker: str) -> DividendData:
     """Get dividend data for a specific stock."""
+    ticker = validate_ticker(ticker)
     conn = get_conn()
     try:
         if not _ticker_exists(conn, ticker):
@@ -219,6 +221,7 @@ async def get_dividends(ticker: str) -> DividendData:
 @router.get("/{ticker}/summary", response_model=FinancialSummaryData)
 async def get_financial_summary(ticker: str) -> FinancialSummaryData:
     """Get financial summary for a specific stock."""
+    ticker = validate_ticker(ticker)
     conn = get_conn()
     try:
         if not _ticker_exists(conn, ticker):
@@ -259,6 +262,7 @@ async def get_financials(
     period_type: str = Query("annual", description="annual, quarterly, or ttm"),
 ) -> FinancialsResponse:
     """Get financial statement periods for a specific stock."""
+    ticker = validate_ticker(ticker)
     if statement not in _STATEMENT_TABLES:
         raise HTTPException(
             status_code=400,
@@ -315,11 +319,8 @@ async def compare_stocks(
     ),
 ) -> CompareResponse:
     """Compare 2-5 stocks side-by-side on specified metrics."""
-    ticker_list = [t.strip() for t in tickers.split(",") if t.strip()]
+    ticker_list = validate_ticker_list(tickers, min_count=2, max_count=5)
     metric_list = [m.strip() for m in metrics.split(",") if m.strip()]
-
-    if len(ticker_list) < 2 or len(ticker_list) > 5:
-        raise HTTPException(status_code=400, detail="Provide 2-5 tickers")
 
     if not metric_list:
         raise HTTPException(status_code=400, detail="Provide at least one metric")
@@ -386,10 +387,7 @@ async def get_batch_quotes(
     ),
 ) -> List[QuoteItem]:
     """Get batch quotes for multiple tickers."""
-    ticker_list = [t.strip() for t in tickers.split(",") if t.strip()]
-
-    if not ticker_list or len(ticker_list) > 50:
-        raise HTTPException(status_code=400, detail="Provide 1-50 tickers")
+    ticker_list = validate_ticker_list(tickers, min_count=1, max_count=50)
 
     placeholders = ",".join("?" for _ in ticker_list)
     sql = f"""

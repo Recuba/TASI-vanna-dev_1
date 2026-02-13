@@ -3,12 +3,14 @@ Shared pytest fixtures for TASI AI Platform tests.
 
 Provides reusable fixtures for:
 - SQLite test databases with sample data
+- PostgreSQL live connections (when POSTGRES_HOST is set)
 - Mock Redis clients
 - JWT auth tokens
 - FastAPI TestClient
 - Mock PostgreSQL connection pools
 """
 
+import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -170,6 +172,107 @@ def test_db(tmp_path):
     conn.commit()
     yield {"conn": conn, "cursor": cursor, "path": db_path}
     conn.close()
+
+
+# ---------------------------------------------------------------------------
+# PostgreSQL availability & fixtures
+# ---------------------------------------------------------------------------
+
+
+def _pg_available() -> bool:
+    """Check if PostgreSQL is reachable via POSTGRES_HOST env var."""
+    if not os.environ.get("POSTGRES_HOST"):
+        return False
+    try:
+        import psycopg2
+
+        conn = psycopg2.connect(
+            host=os.environ.get("POSTGRES_HOST", "localhost"),
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
+            dbname=os.environ.get("POSTGRES_DB", "tasi_platform"),
+            user=os.environ.get("POSTGRES_USER", "tasi_user"),
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+            connect_timeout=3,
+        )
+        conn.close()
+        return True
+    except Exception:
+        return False
+
+
+PG_AVAILABLE = _pg_available()
+
+
+@pytest.fixture(scope="session")
+def pg_conn():
+    """Provide a live PostgreSQL connection for integration tests.
+
+    Skips the test automatically when PostgreSQL is not available.
+    The connection is shared across all tests in the session and closed at the end.
+    """
+    if not PG_AVAILABLE:
+        pytest.skip("PostgreSQL not available (set POSTGRES_HOST)")
+
+    import psycopg2
+
+    conn = psycopg2.connect(
+        host=os.environ.get("POSTGRES_HOST", "localhost"),
+        port=int(os.environ.get("POSTGRES_PORT", "5432")),
+        dbname=os.environ.get("POSTGRES_DB", "tasi_platform"),
+        user=os.environ.get("POSTGRES_USER", "tasi_user"),
+        password=os.environ.get("POSTGRES_PASSWORD", ""),
+    )
+    yield conn
+    conn.close()
+
+
+@pytest.fixture
+def pg_cursor(pg_conn):
+    """Provide a PostgreSQL cursor that rolls back after each test.
+
+    Uses SAVEPOINT/ROLLBACK TO isolate test side effects without
+    committing data. Requires the ``pg_conn`` fixture.
+    """
+    pg_conn.autocommit = False
+    cur = pg_conn.cursor()
+    cur.execute("SAVEPOINT test_savepoint")
+    yield cur
+    pg_conn.rollback()
+    cur.close()
+
+
+@pytest.fixture
+def pg_conn_factory():
+    """Provide a factory callable that returns new PostgreSQL connections.
+
+    Useful for services that accept a ``get_conn`` callable.
+    Skips when PostgreSQL is not available.
+    """
+    if not PG_AVAILABLE:
+        pytest.skip("PostgreSQL not available (set POSTGRES_HOST)")
+
+    import psycopg2
+
+    connections = []
+
+    def _factory():
+        conn = psycopg2.connect(
+            host=os.environ.get("POSTGRES_HOST", "localhost"),
+            port=int(os.environ.get("POSTGRES_PORT", "5432")),
+            dbname=os.environ.get("POSTGRES_DB", "tasi_platform"),
+            user=os.environ.get("POSTGRES_USER", "tasi_user"),
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+        )
+        connections.append(conn)
+        return conn
+
+    yield _factory
+
+    for conn in connections:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,84 @@
+# =============================================================================
+# Ra'd AI Platform -- Project Configuration
+# =============================================================================
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "test_database.py", "test_app_assembly_v2.py"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Custom markers for test taxonomy
+markers = [
+    "fast: Unit tests that run quickly with no external dependencies",
+    "slow: Tests that may take longer (network, heavy computation)",
+    "integration: Integration tests requiring app assembly or multiple components",
+    "pg_required: Tests requiring a running PostgreSQL instance (skip if unavailable)",
+]
+
+# Default: run all tests except pg_required (use -m to override)
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+
+# Filter common warnings
+filterwarnings = [
+    "ignore::DeprecationWarning:pkg_resources",
+    "ignore::DeprecationWarning:google.rpc",
+]
+
+[tool.pytest-cov]
+# Coverage configuration for pytest-cov
+source = [
+    "api",
+    "auth",
+    "config",
+    "services",
+    "middleware",
+    "chart_engine",
+    "database",
+    "cache",
+    "models",
+]
+
+[tool.coverage.run]
+source = [
+    "api",
+    "auth",
+    "config",
+    "services",
+    "middleware",
+    "chart_engine",
+    "database",
+    "cache",
+    "models",
+]
+omit = [
+    "*/test_*",
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+    "scripts/*",
+    "vanna-skill/*",
+    "vanna_docs/*",
+    "frontend/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+precision = 1
+fail_under = 0
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.",
+    "raise NotImplementedError",
+    "pass",
+    "\\.\\.\\.",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"

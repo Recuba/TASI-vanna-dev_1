@@ -219,20 +219,48 @@ def _sqlite_query(sql: str, db_path: Optional[Path] = None):
         conn.close()
 
 
+def _is_pg_backend() -> bool:
+    """Return True when the active backend is PostgreSQL."""
+    try:
+        settings = get_settings()
+        return settings.db.backend == "postgres"
+    except Exception:
+        return False
+
+
+def _scalar_query(sql: str) -> Any:
+    """Execute a scalar query against the active backend.
+
+    Uses the connection pool for PostgreSQL and direct SQLite otherwise.
+    """
+    if _is_pg_backend():
+        from services.db_compat import get_read_connection, scalar_compat
+
+        conn = get_read_connection()
+        try:
+            return scalar_compat(conn, sql)
+        finally:
+            conn.close()
+
+    db_path = _get_sqlite_path()
+    rows = _sqlite_query(sql, db_path)
+    return rows[0][0] if rows else None
+
+
 def check_entities() -> ComponentHealth:
     """Check if entities/companies data is accessible."""
     start = time.monotonic()
     try:
-        db_path = _get_sqlite_path()
-        if not db_path.exists():
-            return ComponentHealth(
-                name="entities",
-                status=HealthStatus.UNHEALTHY,
-                latency_ms=(time.monotonic() - start) * 1000,
-                message="Database file not found",
-            )
-        rows = _sqlite_query("SELECT COUNT(*) FROM companies", db_path)
-        count = rows[0][0] if rows else 0
+        if not _is_pg_backend():
+            db_path = _get_sqlite_path()
+            if not db_path.exists():
+                return ComponentHealth(
+                    name="entities",
+                    status=HealthStatus.UNHEALTHY,
+                    latency_ms=(time.monotonic() - start) * 1000,
+                    message="Database file not found",
+                )
+        count = _scalar_query("SELECT COUNT(*) FROM companies") or 0
         latency = (time.monotonic() - start) * 1000
         return ComponentHealth(
             name="entities",
@@ -250,35 +278,36 @@ def check_entities() -> ComponentHealth:
 
 
 def check_market_data() -> ComponentHealth:
-    """Check if market_data table has data with non-null change_pct."""
+    """Check if market_data table has data with non-null current_price."""
     start = time.monotonic()
     try:
-        db_path = _get_sqlite_path()
-        if not db_path.exists():
-            return ComponentHealth(
-                name="market_data",
-                status=HealthStatus.UNHEALTHY,
-                latency_ms=(time.monotonic() - start) * 1000,
-                message="Database file not found",
+        if not _is_pg_backend():
+            db_path = _get_sqlite_path()
+            if not db_path.exists():
+                return ComponentHealth(
+                    name="market_data",
+                    status=HealthStatus.UNHEALTHY,
+                    latency_ms=(time.monotonic() - start) * 1000,
+                    message="Database file not found",
+                )
+        total = _scalar_query("SELECT COUNT(*) FROM market_data") or 0
+        with_price = (
+            _scalar_query(
+                "SELECT COUNT(*) FROM market_data WHERE current_price IS NOT NULL"
             )
-        total_rows = _sqlite_query("SELECT COUNT(*) FROM market_data", db_path)
-        total = total_rows[0][0] if total_rows else 0
-        pct_rows = _sqlite_query(
-            "SELECT COUNT(*) FROM market_data WHERE change_pct IS NOT NULL",
-            db_path,
+            or 0
         )
-        with_pct = pct_rows[0][0] if pct_rows else 0
         latency = (time.monotonic() - start) * 1000
 
         if total == 0:
             status = HealthStatus.DEGRADED
             msg = "No market data rows"
-        elif with_pct == 0:
+        elif with_price == 0:
             status = HealthStatus.DEGRADED
-            msg = f"{total} rows but no change_pct data"
+            msg = f"{total} rows but no current_price data"
         else:
             status = HealthStatus.HEALTHY
-            msg = f"{total} rows, {with_pct} with change_pct"
+            msg = f"{total} rows, {with_price} with current_price"
         return ComponentHealth(
             name="market_data", status=status, latency_ms=latency, message=msg
         )
@@ -299,33 +328,64 @@ def check_news() -> ComponentHealth:
     """
     start = time.monotonic()
     try:
-        db_path = _get_sqlite_path()
-        if not db_path.exists():
-            return ComponentHealth(
-                name="news",
-                status=HealthStatus.UNHEALTHY,
-                latency_ms=(time.monotonic() - start) * 1000,
-                message="Database file not found",
+        if _is_pg_backend():
+            from services.db_compat import (
+                get_read_connection,
+                scalar_compat,
+                table_exists,
             )
-        # Check if table exists
-        table_check = _sqlite_query(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='news_articles'",
-            db_path,
-        )
-        if not table_check:
-            return ComponentHealth(
-                name="news",
-                status=HealthStatus.UNHEALTHY,
-                latency_ms=(time.monotonic() - start) * 1000,
-                message="news_articles table not found",
+
+            conn = get_read_connection()
+            try:
+                if not table_exists(conn, "news_articles"):
+                    return ComponentHealth(
+                        name="news",
+                        status=HealthStatus.UNHEALTHY,
+                        latency_ms=(time.monotonic() - start) * 1000,
+                        message="news_articles table not found",
+                    )
+                article_count = (
+                    scalar_compat(conn, "SELECT COUNT(*) FROM news_articles") or 0
+                )
+                source_count = (
+                    scalar_compat(
+                        conn,
+                        "SELECT COUNT(DISTINCT source_name) FROM news_articles",
+                    )
+                    or 0
+                )
+            finally:
+                conn.close()
+        else:
+            db_path = _get_sqlite_path()
+            if not db_path.exists():
+                return ComponentHealth(
+                    name="news",
+                    status=HealthStatus.UNHEALTHY,
+                    latency_ms=(time.monotonic() - start) * 1000,
+                    message="Database file not found",
+                )
+            # Check if table exists (SQLite)
+            table_check = _sqlite_query(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='news_articles'",
+                db_path,
             )
-        # Count articles and distinct sources
-        count_rows = _sqlite_query("SELECT COUNT(*) FROM news_articles", db_path)
-        article_count = count_rows[0][0] if count_rows else 0
-        source_rows = _sqlite_query(
-            "SELECT COUNT(DISTINCT source_name) FROM news_articles", db_path
-        )
-        source_count = source_rows[0][0] if source_rows else 0
+            if not table_check:
+                return ComponentHealth(
+                    name="news",
+                    status=HealthStatus.UNHEALTHY,
+                    latency_ms=(time.monotonic() - start) * 1000,
+                    message="news_articles table not found",
+                )
+            count_rows = _sqlite_query(
+                "SELECT COUNT(*) FROM news_articles", db_path
+            )
+            article_count = count_rows[0][0] if count_rows else 0
+            source_rows = _sqlite_query(
+                "SELECT COUNT(DISTINCT source_name) FROM news_articles", db_path
+            )
+            source_count = source_rows[0][0] if source_rows else 0
+
         latency = (time.monotonic() - start) * 1000
 
         if article_count == 0:
@@ -450,33 +510,67 @@ def check_news_scraper() -> ComponentHealth:
             scheduler_info = "unable to inspect"
 
         # Check recent scrape activity from the news_articles table
-        db_path = _get_sqlite_path()
         active_sources = 0
         last_scrape_age = None
 
-        if db_path.exists():
-            try:
-                # Check for most recent article (by created_at, which is insertion time)
-                rows = _sqlite_query(
-                    "SELECT MAX(created_at) FROM news_articles", db_path
-                )
-                last_created = rows[0][0] if rows and rows[0][0] else None
-                if last_created:
-                    try:
-                        last_dt = datetime.fromisoformat(last_created)
-                        last_scrape_age = (datetime.utcnow() - last_dt).total_seconds()
-                    except (ValueError, TypeError):
-                        pass
+        try:
+            if _is_pg_backend():
+                from services.db_compat import get_read_connection, scalar_compat
 
-                # Count distinct sources with articles from last 24 hours
-                source_rows = _sqlite_query(
-                    "SELECT COUNT(DISTINCT source_name) FROM news_articles "
-                    "WHERE created_at > datetime('now', '-1 day')",
-                    db_path,
-                )
-                active_sources = source_rows[0][0] if source_rows else 0
-            except Exception:
-                pass  # DB query failures are non-fatal here
+                conn = get_read_connection()
+                try:
+                    last_created = scalar_compat(
+                        conn, "SELECT MAX(created_at) FROM news_articles"
+                    )
+                    if last_created:
+                        try:
+                            if hasattr(last_created, "timestamp"):
+                                # PG returns datetime objects
+                                last_scrape_age = (
+                                    datetime.utcnow() - last_created
+                                ).total_seconds()
+                            else:
+                                last_dt = datetime.fromisoformat(str(last_created))
+                                last_scrape_age = (
+                                    datetime.utcnow() - last_dt
+                                ).total_seconds()
+                        except (ValueError, TypeError):
+                            pass
+
+                    active_sources = (
+                        scalar_compat(
+                            conn,
+                            "SELECT COUNT(DISTINCT source_name) FROM news_articles "
+                            "WHERE created_at > NOW() - INTERVAL '1 day'",
+                        )
+                        or 0
+                    )
+                finally:
+                    conn.close()
+            else:
+                db_path = _get_sqlite_path()
+                if db_path.exists():
+                    rows = _sqlite_query(
+                        "SELECT MAX(created_at) FROM news_articles", db_path
+                    )
+                    last_created = rows[0][0] if rows and rows[0][0] else None
+                    if last_created:
+                        try:
+                            last_dt = datetime.fromisoformat(last_created)
+                            last_scrape_age = (
+                                datetime.utcnow() - last_dt
+                            ).total_seconds()
+                        except (ValueError, TypeError):
+                            pass
+
+                    source_rows = _sqlite_query(
+                        "SELECT COUNT(DISTINCT source_name) FROM news_articles "
+                        "WHERE created_at > datetime('now', '-1 day')",
+                        db_path,
+                    )
+                    active_sources = source_rows[0][0] if source_rows else 0
+        except Exception:
+            pass  # DB query failures are non-fatal here
 
         latency = (time.monotonic() - start) * 1000
 

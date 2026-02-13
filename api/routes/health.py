@@ -1,12 +1,22 @@
 """
 Health check API routes.
+
+Provides three endpoints:
+  /health        - Full health report with all component checks
+  /health/live   - Lightweight liveness probe (always 200 if process is running)
+  /health/ready  - Readiness probe (200 only if database is reachable)
 """
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from api.schemas.health import ComponentHealthResponse, HealthResponse
-from services.health_service import get_health, HealthStatus
+from services.health_service import (
+    check_database,
+    get_health,
+    get_uptime_seconds,
+    HealthStatus,
+)
 
 router = APIRouter(tags=["health"])
 
@@ -36,3 +46,24 @@ async def health_check() -> HealthResponse:
     if status_code == 503:
         return JSONResponse(content=response.model_dump(), status_code=status_code)
     return response
+
+
+@router.get("/health/live")
+async def liveness():
+    """Liveness probe for load balancers and orchestrators.
+
+    Returns 200 if the process is running. Does not check external dependencies.
+    """
+    return {"status": "alive", "uptime_seconds": round(get_uptime_seconds(), 1)}
+
+
+@router.get("/health/ready")
+async def readiness():
+    """Readiness probe — returns 200 only when the database is reachable."""
+    db = check_database()
+    if db.status == HealthStatus.HEALTHY:
+        return {"status": "ready"}
+    return JSONResponse(
+        status_code=503,
+        content={"status": "not_ready", "reason": db.message},
+    )

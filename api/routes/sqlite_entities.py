@@ -182,7 +182,7 @@ async def list_entities(
         raise
     except Exception as exc:
         logger.error("Error listing entities: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     items = [
         CompanySummary(
@@ -223,7 +223,7 @@ async def list_sectors() -> List[SectorInfo]:
         raise
     except Exception as exc:
         logger.error("Error listing sectors: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return [
         SectorInfo(sector=r["sector"], company_count=r["company_count"]) for r in rows
@@ -287,7 +287,7 @@ async def get_entity(ticker: str) -> CompanyFullDetail:
         raise
     except Exception as exc:
         logger.error("Error fetching entity %s: %s", ticker, exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     if row_dict is None:
         raise HTTPException(status_code=404, detail="Company not found")

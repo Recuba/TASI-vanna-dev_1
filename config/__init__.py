@@ -9,6 +9,7 @@ Usage:
     print(settings.get_llm_api_key())  # effective API key
 """
 
+from config.logging_config import get_logger, setup_logging
 from config.settings import (
     AuthSettings,
     CacheSettings,
@@ -30,5 +31,7 @@ __all__ = [
     "PoolSettings",
     "ServerSettings",
     "Settings",
+    "get_logger",
     "get_settings",
+    "setup_logging",
 ]

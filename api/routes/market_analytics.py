@@ -131,7 +131,7 @@ async def get_movers(
         raise
     except Exception as exc:
         logger.error("Error fetching movers: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     items = [_row_to_mover(r) for r in rows]
     return MoversResponse(items=items, type=type, count=len(items))
@@ -169,7 +169,7 @@ async def get_market_summary() -> MarketSummary:
         raise
     except Exception as exc:
         logger.error("Error fetching market summary: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return MarketSummary(
         total_market_cap=float(agg["total_market_cap"])
@@ -214,7 +214,7 @@ async def get_sector_analytics() -> List[SectorAnalytics]:
         raise
     except Exception as exc:
         logger.error("Error fetching sector analytics: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return [
         SectorAnalytics(
@@ -264,7 +264,7 @@ async def get_heatmap() -> List[HeatmapItem]:
         raise
     except Exception as exc:
         logger.error("Error fetching heatmap data: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return [
         HeatmapItem(

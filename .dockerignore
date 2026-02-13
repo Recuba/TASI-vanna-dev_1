@@ -1,21 +1,27 @@
 # Secrets and VCS
 .env
+.env.*
+!.env.example
 .git
 .gitignore
 
-# Python bytecode
+# Python bytecode and caches
 __pycache__
 *.pyc
 *.pyo
+.mypy_cache
+.ruff_cache
+.pytest_cache
 
-# Data files (allow specific exceptions)
+# Data files (generated at runtime or during build)
 *.db
 *.csv
-!saudi_stocks.db
 !saudi_stocks_yahoo_data.csv
 
-# Documentation
+# Documentation and planning
 *.md
+.planning/
+.claude/
 
 # Reference docs (read-only, not needed at runtime)
 vanna_docs/
@@ -25,7 +31,7 @@ vanna-skill/
 test_*.py
 tests/
 pytest.ini
-.pytest_cache/
+conftest.py
 
 # Frontend (built separately, not in Python container)
 frontend/
@@ -33,6 +39,7 @@ node_modules/
 vitest.config.ts
 *.test.ts
 *.test.tsx
+package*.json
 
 # Scripts (deployment helpers, not runtime)
 scripts/
@@ -40,5 +47,22 @@ scripts/
 # CI/CD
 .github/
 
-# Windows artifacts
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS artifacts
+.DS_Store
+Thumbs.db
 nul
+
+# Docker (avoid recursive context)
+docker-compose*.yml
+
+# Misc
+*.log
+*.jsonl
+plan.md
+repo.md

@@ -69,7 +69,7 @@ async def sector_market_cap() -> ChartResponse:
         raise
     except Exception as exc:
         logger.error("Error fetching sector market cap: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return ChartResponse(
         chart_type="bar",
@@ -113,7 +113,7 @@ async def top_companies_by_market_cap(
         raise
     except Exception as exc:
         logger.error("Error fetching top companies: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return ChartResponse(
         chart_type="bar",
@@ -150,7 +150,7 @@ async def sector_avg_pe() -> ChartResponse:
         raise
     except Exception as exc:
         logger.error("Error fetching sector PE: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return ChartResponse(
         chart_type="bar",
@@ -185,7 +185,7 @@ async def top_dividend_yields(
         raise
     except Exception as exc:
         logger.error("Error fetching dividend yields: %s", exc)
-        raise HTTPException(status_code=503, detail=f"Database query failed: {exc}")
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return ChartResponse(
         chart_type="bar",
