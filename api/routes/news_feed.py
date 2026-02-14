@@ -79,11 +79,20 @@ async def get_news_feed(
     limit: int = Query(20, ge=1, le=100, description="Articles per page"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     source: Optional[str] = Query(None, description="Filter by source name"),
+    sentiment: Optional[str] = Query(None, description="Filter by sentiment label"),
+    date_from: Optional[str] = Query(None, description="Filter from date (ISO format)"),
+    date_to: Optional[str] = Query(None, description="Filter to date (ISO format)"),
 ) -> NewsFeedResponse:
-    """Get latest news articles with optional source filtering and pagination."""
+    """Get latest news articles with optional filtering and pagination."""
     store = get_store()
-    articles = store.get_latest_news(limit=limit, offset=offset, source=source)
-    total = store.count_articles(source=source)
+    articles = await store.aget_latest_news(
+        limit=limit, offset=offset, source=source,
+        sentiment_label=sentiment, date_from=date_from, date_to=date_to,
+    )
+    total = await store.acount_articles(
+        source=source, sentiment_label=sentiment,
+        date_from=date_from, date_to=date_to,
+    )
     page = (offset // limit) + 1 if limit > 0 else 1
 
     return NewsFeedResponse(
@@ -94,11 +103,29 @@ async def get_news_feed(
     )
 
 
+@router.get("/feed/batch", response_model=NewsFeedResponse)
+async def get_articles_batch(
+    ids: str = Query(..., description="Comma-separated article IDs"),
+) -> NewsFeedResponse:
+    """Get multiple articles by their IDs."""
+    id_list = [i.strip() for i in ids.split(",") if i.strip()]
+    if not id_list:
+        return NewsFeedResponse(items=[], total=0, page=1, limit=0)
+    store = get_store()
+    articles = await store.aget_articles_by_ids(id_list)
+    return NewsFeedResponse(
+        items=[NewsArticle(**a) for a in articles],
+        total=len(articles),
+        page=1,
+        limit=len(id_list),
+    )
+
+
 @router.get("/feed/{article_id}", response_model=NewsArticle)
 async def get_article(article_id: str) -> NewsArticle:
     """Get a single article by ID."""
     store = get_store()
-    article = store.get_article_by_id(article_id)
+    article = await store.aget_article_by_id(article_id)
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
     return NewsArticle(**article)
@@ -109,15 +136,27 @@ async def search_articles(
     q: str = Query(..., min_length=1, description="Search query"),
     limit: int = Query(20, ge=1, le=100, description="Articles per page"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
+    source: Optional[str] = Query(None, description="Filter by source name"),
+    sentiment: Optional[str] = Query(None, description="Filter by sentiment label"),
+    date_from: Optional[str] = Query(None, description="Filter from date (ISO format)"),
+    date_to: Optional[str] = Query(None, description="Filter to date (ISO format)"),
 ) -> NewsFeedResponse:
-    """Search articles by title or body text."""
+    """Search articles by title or body text with optional filters."""
     store = get_store()
-    articles = store.search_articles(query=q, limit=limit, offset=offset)
+    articles = await store.asearch_articles(
+        query=q, limit=limit, offset=offset,
+        source=source, sentiment_label=sentiment,
+        date_from=date_from, date_to=date_to,
+    )
+    total = await store.acount_search(
+        query=q, source=source, sentiment_label=sentiment,
+        date_from=date_from, date_to=date_to,
+    )
     page = (offset // limit) + 1 if limit > 0 else 1
 
     return NewsFeedResponse(
         items=[NewsArticle(**a) for a in articles],
-        total=len(articles),
+        total=total,
         page=page,
         limit=limit,
     )
@@ -127,5 +166,5 @@ async def search_articles(
 async def get_sources() -> NewsSourcesResponse:
     """Get available news sources with article counts."""
     store = get_store()
-    sources = store.get_sources()
+    sources = await store.aget_sources()
     return NewsSourcesResponse(sources=[NewsSourceInfo(**s) for s in sources])

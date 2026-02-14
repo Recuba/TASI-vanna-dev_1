@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
@@ -90,22 +90,33 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [httpStatus, setHttpStatus] = useState<number | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     setLoading(true);
     setError(null);
     setHttpStatus(null);
     let status: number | null = null;
     try {
-      const res = await fetch(`${API_BASE}${config.endpoint}`);
+      const res = await fetch(`${API_BASE}${config.endpoint}`, {
+        signal: controller.signal,
+      });
       if (!res.ok) {
         status = res.status;
         setHttpStatus(status);
         throw new Error(`HTTP ${res.status}`);
       }
       const json: ChartResponse = await res.json();
-      setData(json.data ?? []);
+      if (!controller.signal.aborted) setData(json.data ?? []);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (controller.signal.aborted) return;
       if (err instanceof TypeError && err.message === 'Failed to fetch') {
         setError(t('تعذر الاتصال بالخادم', 'Could not connect to server'));
       } else if (status === 404) {
@@ -114,12 +125,15 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
         setError(t('فشل التحميل', 'Failed to load'));
       }
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [config.endpoint, t]);
 
   useEffect(() => {
     fetchData();
+    return () => {
+      controllerRef.current?.abort();
+    };
   }, [fetchData]);
 
   const maxVal = data ? Math.max(...data.map((d) => d.value), 1) : 1;
@@ -196,7 +210,7 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
         )}
 
         {!loading && !error && data && data.length > 0 && (
-          <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-[280px] overflow-y-auto pe-1">
             {data.map((item) => {
               const pct = Math.max((item.value / maxVal) * 100, 2);
               return (
@@ -208,7 +222,7 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
                     >
                       {item.label}
                     </span>
-                    <span className="text-[11px] font-medium text-[var(--text-primary)] shrink-0 ml-2">
+                    <span className="text-[11px] font-medium text-[var(--text-primary)] shrink-0 ms-2">
                       {formatLargeNumber(item.value, config.suffix)}
                     </span>
                   </div>

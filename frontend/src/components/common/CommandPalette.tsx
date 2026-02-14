@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector, matchesSearch } from '@/lib/stock-translations';
+import { getMarketHeatmap, getEntities } from '@/lib/api-client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -148,10 +149,11 @@ export function CommandPalette() {
       return;
     }
 
-    // Fetch stock list from heatmap endpoint
-    fetch('/api/market/heatmap')
-      .then((r) => r.json())
-      .then((data: Array<{ ticker: string; name: string; sector: string }>) => {
+    const controller = new AbortController();
+
+    getMarketHeatmap(controller.signal)
+      .then((data) => {
+        if (controller.signal.aborted) return;
         if (Array.isArray(data)) {
           const mapped = data.map((d) => ({
             ticker: d.ticker,
@@ -163,10 +165,10 @@ export function CommandPalette() {
         }
       })
       .catch(() => {
-        // Also try /api/entities as fallback
-        fetch('/api/entities?limit=600')
-          .then((r) => r.json())
-          .then((res: { items: Array<{ ticker: string; short_name: string | null; sector: string | null }> }) => {
+        if (controller.signal.aborted) return;
+        getEntities({ limit: 600 }, controller.signal)
+          .then((res) => {
+            if (controller.signal.aborted) return;
             if (res.items) {
               const mapped = res.items.map((d) => ({
                 ticker: d.ticker,
@@ -179,6 +181,10 @@ export function CommandPalette() {
           })
           .catch(() => {});
       });
+
+    return () => {
+      controller.abort();
+    };
   }, [open]);
 
   // Keyboard shortcut: Ctrl+K / Cmd+K

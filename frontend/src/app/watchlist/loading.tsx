@@ -37,7 +37,7 @@ export default function WatchlistLoading() {
               <div className="h-4 w-16 bg-[var(--bg-input)] rounded animate-pulse" />
               <div className="h-4 w-24 bg-[var(--bg-input)] rounded animate-pulse hidden sm:block" />
               <div className="h-4 w-16 bg-[var(--bg-input)] rounded animate-pulse hidden sm:block" />
-              <div className="h-4 w-12 bg-[var(--bg-input)] rounded animate-pulse ml-auto" />
+              <div className="h-4 w-12 bg-[var(--bg-input)] rounded animate-pulse ms-auto" />
               <div className="h-4 w-14 bg-[var(--bg-input)] rounded animate-pulse" />
             </div>
           ))}

@@ -194,10 +194,27 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
-async function request<T>(path: string, init?: RequestInit, timeoutMs: number = 15000): Promise<T> {
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  timeoutMs: number = 15000,
+  externalSignal?: AbortSignal,
+): Promise<T> {
   const url = `${API_BASE}${path}`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  // If an external signal is provided, abort our controller when it fires.
+  let onExternalAbort: (() => void) | undefined;
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      clearTimeout(timeoutId);
+      controller.abort();
+    } else {
+      onExternalAbort = () => controller.abort();
+      externalSignal.addEventListener('abort', onExternalAbort);
+    }
+  }
 
   try {
     const res = await fetch(url, {
@@ -220,6 +237,8 @@ async function request<T>(path: string, init?: RequestInit, timeoutMs: number = 
   } catch (err) {
     if (err instanceof ApiError) throw err;
     if (err instanceof DOMException && err.name === 'AbortError') {
+      // Re-throw as-is if cancelled by external signal (not a timeout)
+      if (externalSignal?.aborted) throw err;
       throw new ApiError(0, 'Request timed out', 'The request took too long to complete.');
     }
     if (err instanceof TypeError && err.message.includes('fetch')) {
@@ -228,6 +247,9 @@ async function request<T>(path: string, init?: RequestInit, timeoutMs: number = 
     throw err;
   } finally {
     clearTimeout(timeoutId);
+    if (onExternalAbort && externalSignal) {
+      externalSignal.removeEventListener('abort', onExternalAbort);
+    }
   }
 }
 
@@ -245,13 +267,13 @@ function qs(params: Record<string, string | number | undefined | null>): string 
 
 const _cache = new Map<string, { data: unknown; expiry: number }>();
 
-async function cachedRequest<T>(path: string, ttlMs: number = 60000): Promise<T> {
+async function cachedRequest<T>(path: string, ttlMs: number = 60000, signal?: AbortSignal): Promise<T> {
   const now = Date.now();
   const cached = _cache.get(path);
   if (cached && cached.expiry > now) {
     return cached.data as T;
   }
-  const result = await request<T>(path);
+  const result = await request<T>(path, undefined, 15000, signal);
   _cache.set(path, { data: result, expiry: now + ttlMs });
   return result;
 }
@@ -261,8 +283,8 @@ async function cachedRequest<T>(path: string, ttlMs: number = 60000): Promise<T>
 // ---------------------------------------------------------------------------
 
 // -- Health --
-export function getHealth(): Promise<HealthResponse> {
-  return request('/health');
+export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
+  return request('/health', undefined, 15000, signal);
 }
 
 // -- News --
@@ -270,15 +292,16 @@ export function getNews(params?: {
   page?: number;
   page_size?: number;
   language?: string;
-}): Promise<NewsListResponse> {
-  return request(`/api/news${qs(params ?? {})}`);
+}, signal?: AbortSignal): Promise<NewsListResponse> {
+  return request(`/api/news${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
 export function getNewsByTicker(
   ticker: string,
   params?: { page?: number; page_size?: number; sentiment?: string },
+  signal?: AbortSignal,
 ): Promise<NewsListResponse> {
-  return request(`/api/news/ticker/${encodeURIComponent(ticker)}${qs(params ?? {})}`);
+  return request(`/api/news/ticker/${encodeURIComponent(ticker)}${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
 // -- Reports --
@@ -287,15 +310,17 @@ export function getReports(params?: {
   page_size?: number;
   recommendation?: string;
   report_type?: string;
-}): Promise<ReportListResponse> {
-  return request(`/api/reports${qs(params ?? {})}`);
+  search?: string;
+}, signal?: AbortSignal): Promise<ReportListResponse> {
+  return request(`/api/reports${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
 export function getReportsByTicker(
   ticker: string,
   params?: { page?: number; page_size?: number },
+  signal?: AbortSignal,
 ): Promise<ReportListResponse> {
-  return request(`/api/reports/ticker/${encodeURIComponent(ticker)}${qs(params ?? {})}`);
+  return request(`/api/reports/ticker/${encodeURIComponent(ticker)}${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
 // -- Announcements --
@@ -305,8 +330,8 @@ export function getAnnouncements(params?: {
   ticker?: string;
   category?: string;
   source?: string;
-}): Promise<AnnouncementListResponse> {
-  return request(`/api/announcements${qs(params ?? {})}`);
+}, signal?: AbortSignal): Promise<AnnouncementListResponse> {
+  return request(`/api/announcements${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
 // -- Entities --
@@ -315,21 +340,21 @@ export function getEntities(params?: {
   offset?: number;
   sector?: string;
   search?: string;
-}): Promise<EntityListResponse> {
-  return request(`/api/entities${qs(params ?? {})}`);
+}, signal?: AbortSignal): Promise<EntityListResponse> {
+  return request(`/api/entities${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
-export function getEntityDetail(ticker: string): Promise<CompanyDetail> {
-  return request(`/api/entities/${encodeURIComponent(ticker)}`);
+export function getEntityDetail(ticker: string, signal?: AbortSignal): Promise<CompanyDetail> {
+  return request(`/api/entities/${encodeURIComponent(ticker)}`, undefined, 15000, signal);
 }
 
-export function getSectors(): Promise<SectorInfo[]> {
-  return cachedRequest('/api/entities/sectors', 60000);
+export function getSectors(signal?: AbortSignal): Promise<SectorInfo[]> {
+  return cachedRequest('/api/entities/sectors', 60000, signal);
 }
 
 // -- Watchlists --
-export function getWatchlists(): Promise<WatchlistItem[]> {
-  return request('/api/watchlists');
+export function getWatchlists(signal?: AbortSignal): Promise<WatchlistItem[]> {
+  return request('/api/watchlists', undefined, 15000, signal);
 }
 
 export function createWatchlist(body: {
@@ -359,25 +384,25 @@ export function deleteWatchlist(id: string): Promise<void> {
 }
 
 // -- Charts --
-export function getChartSectorMarketCap(): Promise<ChartResponse> {
-  return request('/api/charts/sector-market-cap');
+export function getChartSectorMarketCap(signal?: AbortSignal): Promise<ChartResponse> {
+  return request('/api/charts/sector-market-cap', undefined, 15000, signal);
 }
 
 export function getChartTopCompanies(params?: {
   limit?: number;
   sector?: string;
-}): Promise<ChartResponse> {
-  return request(`/api/charts/top-companies${qs(params ?? {})}`);
+}, signal?: AbortSignal): Promise<ChartResponse> {
+  return request(`/api/charts/top-companies${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
-export function getChartSectorPE(): Promise<ChartResponse> {
-  return request('/api/charts/sector-pe');
+export function getChartSectorPE(signal?: AbortSignal): Promise<ChartResponse> {
+  return request('/api/charts/sector-pe', undefined, 15000, signal);
 }
 
 export function getChartDividendYieldTop(params?: {
   limit?: number;
-}): Promise<ChartResponse> {
-  return request(`/api/charts/dividend-yield-top${qs(params ?? {})}`);
+}, signal?: AbortSignal): Promise<ChartResponse> {
+  return request(`/api/charts/dividend-yield-top${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
 // -- OHLCV --
@@ -402,8 +427,9 @@ export interface StockOHLCVResponse {
 export async function getOHLCVData(
   ticker: string,
   params?: { period?: string },
+  signal?: AbortSignal,
 ): Promise<StockOHLCVResponse> {
-  return request(`/api/v1/charts/${encodeURIComponent(ticker)}/ohlcv${qs(params ?? {})}`);
+  return request(`/api/v1/charts/${encodeURIComponent(ticker)}/ohlcv${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
 // -- TASI Index --
@@ -418,18 +444,21 @@ export interface TasiIndexResponse {
   count: number;
 }
 
-export function getTasiIndex(period: string = '1y'): Promise<TasiIndexResponse> {
-  return request(`/api/v1/charts/tasi/index${qs({ period })}`);
+export function getTasiIndex(period: string = '1y', signal?: AbortSignal): Promise<TasiIndexResponse> {
+  return request(`/api/v1/charts/tasi/index${qs({ period })}`, undefined, 15000, signal);
 }
 
 // -- News Feed --
 export interface NewsFeedItem {
   id: string;
+  ticker: string | null;
   title: string;
   body: string | null;
   source_name: string;
   source_url: string | null;
   published_at: string | null;
+  sentiment_score: number | null;
+  sentiment_label: string | null;
   priority: number;
   language: string;
   created_at: string | null;
@@ -446,20 +475,37 @@ export function getNewsFeed(params?: {
   limit?: number;
   offset?: number;
   source?: string;
-}): Promise<NewsFeedResponse> {
-  return request(`/api/v1/news/feed${qs(params ?? {})}`);
+  sentiment?: string;
+  date_from?: string;
+  date_to?: string;
+}, signal?: AbortSignal): Promise<NewsFeedResponse> {
+  return request(`/api/v1/news/feed${qs(params ?? {})}`, undefined, 15000, signal);
 }
 
-export function getNewsArticle(id: string): Promise<NewsFeedItem> {
-  return request(`/api/v1/news/feed/${encodeURIComponent(id)}`);
+export function getNewsArticle(id: string, signal?: AbortSignal): Promise<NewsFeedItem> {
+  return request(`/api/v1/news/feed/${encodeURIComponent(id)}`, undefined, 15000, signal);
 }
 
-export function searchNewsFeed(params: {
-  q: string;
-  limit?: number;
-  offset?: number;
-}): Promise<NewsFeedResponse> {
-  return request(`/api/v1/news/search${qs(params)}`);
+export function searchNewsFeed(
+  params: {
+    q: string;
+    limit?: number;
+    offset?: number;
+    source?: string;
+    sentiment?: string;
+    date_from?: string;
+    date_to?: string;
+  },
+  signal?: AbortSignal,
+): Promise<NewsFeedResponse> {
+  return request(`/api/v1/news/search${qs(params)}`, undefined, 15000, signal);
+}
+
+export function getNewsFeedByIds(ids: string[], signal?: AbortSignal): Promise<NewsFeedResponse> {
+  if (ids.length === 0) {
+    return Promise.resolve({ items: [], total: 0, page: 1, limit: 0 });
+  }
+  return request(`/api/v1/news/feed/batch${qs({ ids: ids.join(',') })}`, undefined, 15000, signal);
 }
 
 export interface NewsSourceInfo {
@@ -471,8 +517,8 @@ export interface NewsSourcesResponse {
   sources: NewsSourceInfo[];
 }
 
-export function getNewsSources(): Promise<NewsSourcesResponse> {
-  return request('/api/v1/news/sources');
+export function getNewsSources(signal?: AbortSignal): Promise<NewsSourcesResponse> {
+  return cachedRequest('/api/v1/news/sources', 60000, signal);
 }
 
 // ---------------------------------------------------------------------------
@@ -593,50 +639,54 @@ export interface BatchQuote {
 export function getMarketMovers(
   type: 'gainers' | 'losers',
   limit?: number,
+  signal?: AbortSignal,
 ): Promise<MarketMover[]> {
-  return request(`/api/v1/market/movers${qs({ type, limit })}`);
+  return request(`/api/v1/market/movers${qs({ type, limit })}`, undefined, 15000, signal);
 }
 
-export function getMarketSummary(): Promise<MarketSummary> {
-  return request('/api/v1/market/summary');
+export function getMarketSummary(signal?: AbortSignal): Promise<MarketSummary> {
+  return request('/api/v1/market/summary', undefined, 15000, signal);
 }
 
-export function getSectorPerformance(): Promise<SectorPerformance[]> {
-  return request('/api/v1/market/sectors');
+export function getSectorPerformance(signal?: AbortSignal): Promise<SectorPerformance[]> {
+  return request('/api/v1/market/sectors', undefined, 15000, signal);
 }
 
-export function getMarketHeatmap(): Promise<HeatmapItem[]> {
-  return request('/api/v1/market/heatmap');
+export function getMarketHeatmap(signal?: AbortSignal): Promise<HeatmapItem[]> {
+  return request('/api/v1/market/heatmap', undefined, 15000, signal);
 }
 
 // ---------------------------------------------------------------------------
 // Stock Data API
 // ---------------------------------------------------------------------------
 
-export function getStockDividends(ticker: string): Promise<StockDividends> {
-  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/dividends`);
+export function getStockDividends(ticker: string, signal?: AbortSignal): Promise<StockDividends> {
+  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/dividends`, undefined, 15000, signal);
 }
 
-export function getStockFinancialSummary(ticker: string): Promise<FinancialSummary> {
-  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/summary`);
+export function getStockFinancialSummary(ticker: string, signal?: AbortSignal): Promise<FinancialSummary> {
+  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/summary`, undefined, 15000, signal);
 }
 
 export function getStockFinancials(
   ticker: string,
   params?: { statement?: string; period_type?: string },
+  signal?: AbortSignal,
 ): Promise<FinancialsResponse> {
   return request(
     `/api/v1/stocks/${encodeURIComponent(ticker)}/financials${qs(params ?? {})}`,
+    undefined, 15000, signal,
   );
 }
 
 export function compareStocks(
   tickers: string[],
   metrics: string[],
+  signal?: AbortSignal,
 ): Promise<StockComparison> {
-  return request(`/api/v1/stocks/compare${qs({ tickers: tickers.join(','), metrics: metrics.join(',') })}`);
+  return request(`/api/v1/stocks/compare${qs({ tickers: tickers.join(','), metrics: metrics.join(',') })}`, undefined, 15000, signal);
 }
 
-export function getBatchQuotes(tickers: string[]): Promise<BatchQuote[]> {
-  return request(`/api/v1/stocks/quotes${qs({ tickers: tickers.join(',') })}`);
+export function getBatchQuotes(tickers: string[], signal?: AbortSignal): Promise<BatchQuote[]> {
+  return request(`/api/v1/stocks/quotes${qs({ tickers: tickers.join(',') })}`, undefined, 15000, signal);
 }

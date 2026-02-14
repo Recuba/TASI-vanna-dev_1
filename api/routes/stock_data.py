@@ -8,13 +8,14 @@ Works with both SQLite and PostgreSQL backends via db_helper.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from api.db_helper import get_conn, fetchall, fetchone
+from api.db_helper import afetchall, afetchone, get_conn, fetchall, fetchone
 from models.validators import validate_ticker, validate_ticker_list
 
 logger = logging.getLogger(__name__)
@@ -112,11 +113,6 @@ for _col in [
     _METRIC_MAP[_col] = ("analyst_data", _col)
 
 
-def _ticker_exists(conn, ticker: str) -> bool:
-    row = fetchone(conn, "SELECT 1 FROM companies WHERE ticker = ?", (ticker,))
-    return row is not None
-
-
 # ---------------------------------------------------------------------------
 # Response models
 # ---------------------------------------------------------------------------
@@ -192,14 +188,11 @@ class QuoteItem(BaseModel):
 async def get_dividends(ticker: str) -> DividendData:
     """Get dividend data for a specific stock."""
     ticker = validate_ticker(ticker)
-    conn = get_conn()
-    try:
-        if not _ticker_exists(conn, ticker):
-            raise HTTPException(status_code=404, detail="Company not found")
+    exists = await afetchone("SELECT 1 FROM companies WHERE ticker = ?", (ticker,))
+    if not exists:
+        raise HTTPException(status_code=404, detail="Company not found")
 
-        row = fetchone(conn, "SELECT * FROM dividend_data WHERE ticker = ?", (ticker,))
-    finally:
-        conn.close()
+    row = await afetchone("SELECT * FROM dividend_data WHERE ticker = ?", (ticker,))
 
     if row is None:
         return DividendData(ticker=ticker)
@@ -222,16 +215,13 @@ async def get_dividends(ticker: str) -> DividendData:
 async def get_financial_summary(ticker: str) -> FinancialSummaryData:
     """Get financial summary for a specific stock."""
     ticker = validate_ticker(ticker)
-    conn = get_conn()
-    try:
-        if not _ticker_exists(conn, ticker):
-            raise HTTPException(status_code=404, detail="Company not found")
+    exists = await afetchone("SELECT 1 FROM companies WHERE ticker = ?", (ticker,))
+    if not exists:
+        raise HTTPException(status_code=404, detail="Company not found")
 
-        row = fetchone(
-            conn, "SELECT * FROM financial_summary WHERE ticker = ?", (ticker,)
-        )
-    finally:
-        conn.close()
+    row = await afetchone(
+        "SELECT * FROM financial_summary WHERE ticker = ?", (ticker,)
+    )
 
     if row is None:
         return FinancialSummaryData(ticker=ticker)
@@ -275,19 +265,15 @@ async def get_financials(
             detail="Invalid period_type. Must be one of: annual, quarterly, ttm",
         )
 
-    conn = get_conn()
-    try:
-        if not _ticker_exists(conn, ticker):
-            raise HTTPException(status_code=404, detail="Company not found")
+    exists = await afetchone("SELECT 1 FROM companies WHERE ticker = ?", (ticker,))
+    if not exists:
+        raise HTTPException(status_code=404, detail="Company not found")
 
-        # Table name is validated above against _STATEMENT_TABLES whitelist
-        rows = fetchall(
-            conn,
-            f"SELECT * FROM {statement} WHERE ticker = ? AND period_type = ? ORDER BY period_index ASC",
-            (ticker, period_type),
-        )
-    finally:
-        conn.close()
+    # Table name is validated above against _STATEMENT_TABLES whitelist
+    rows = await afetchall(
+        f"SELECT * FROM {statement} WHERE ticker = ? AND period_type = ? ORDER BY period_index ASC",
+        (ticker, period_type),
+    )
 
     periods = []
     for row_dict in rows:
@@ -339,33 +325,35 @@ async def compare_stocks(
         table, col = _METRIC_MAP[metric]
         table_columns.setdefault(table, []).append(col)
 
-    conn = get_conn()
-    try:
-        # Get company names
-        placeholders = ",".join("?" for _ in ticker_list)
-        name_rows = fetchall(
-            conn,
-            f"SELECT ticker, short_name FROM companies WHERE ticker IN ({placeholders})",
-            tuple(ticker_list),
-        )
-        name_map = {r["ticker"]: r["short_name"] for r in name_rows}
-
-        # Fetch metrics per table
-        result_data: Dict[str, Dict[str, Any]] = {t: {} for t in ticker_list}
-
-        for table, columns in table_columns.items():
-            col_list = ", ".join(["ticker"] + columns)
-            rows = fetchall(
+    def _sync_compare():
+        conn = get_conn()
+        try:
+            placeholders = ",".join("?" for _ in ticker_list)
+            name_rows = fetchall(
                 conn,
-                f"SELECT {col_list} FROM {table} WHERE ticker IN ({placeholders})",
+                f"SELECT ticker, short_name FROM companies WHERE ticker IN ({placeholders})",
                 tuple(ticker_list),
             )
-            for row_dict in rows:
-                tk = row_dict.pop("ticker")
-                for col in columns:
-                    result_data[tk][col] = row_dict.get(col)
-    finally:
-        conn.close()
+            name_map = {r["ticker"]: r["short_name"] for r in name_rows}
+
+            result_data: Dict[str, Dict[str, Any]] = {t: {} for t in ticker_list}
+
+            for table, columns in table_columns.items():
+                col_list = ", ".join(["ticker"] + columns)
+                rows = fetchall(
+                    conn,
+                    f"SELECT {col_list} FROM {table} WHERE ticker IN ({placeholders})",
+                    tuple(ticker_list),
+                )
+                for row_dict in rows:
+                    tk = row_dict.pop("ticker")
+                    for col in columns:
+                        result_data[tk][col] = row_dict.get(col)
+            return name_map, result_data
+        finally:
+            conn.close()
+
+    name_map, result_data = await asyncio.to_thread(_sync_compare)
 
     items = []
     for tk in ticker_list:
@@ -406,11 +394,7 @@ async def get_batch_quotes(
         WHERE c.ticker IN ({placeholders})
     """
 
-    conn = get_conn()
-    try:
-        rows = fetchall(conn, sql, tuple(ticker_list))
-    finally:
-        conn.close()
+    rows = await afetchall(sql, tuple(ticker_list))
 
     return [
         QuoteItem(

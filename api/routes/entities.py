@@ -7,7 +7,8 @@ tables directly via psycopg2 for company lookup and listing.
 
 from __future__ import annotations
 
-from typing import List, Optional
+import asyncio
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -22,6 +23,27 @@ from api.schemas.entities import (
 )
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
+
+
+def _pg_fetchall(sql: str, params=None) -> List[Dict[str, Any]]:
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, params or {})
+            return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def _pg_fetchone(sql: str, params=None) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, params or {})
+            row = cur.fetchone()
+            return dict(row) if row else None
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -71,15 +93,19 @@ async def list_entities(
         LIMIT %(limit)s OFFSET %(offset)s
     """
 
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(count_sql, params)
-            total = cur.fetchone()["cnt"]
-            cur.execute(sql, params)
-            rows = cur.fetchall()
-    finally:
-        conn.close()
+    def _sync_query():
+        conn = get_db_connection()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(count_sql, params)
+                total = cur.fetchone()["cnt"]
+                cur.execute(sql, params)
+                rows = [dict(r) for r in cur.fetchall()]
+            return total, rows
+        finally:
+            conn.close()
+
+    total, rows = await asyncio.to_thread(_sync_query)
 
     items = [
         CompanySummary(
@@ -114,13 +140,7 @@ async def list_sectors() -> List[SectorInfo]:
         GROUP BY c.sector
         ORDER BY company_count DESC
     """
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql)
-            rows = cur.fetchall()
-    finally:
-        conn.close()
+    rows = await asyncio.to_thread(_pg_fetchall, sql)
 
     return [
         SectorInfo(sector=r["sector"], company_count=r["company_count"]) for r in rows
@@ -166,13 +186,7 @@ async def get_entity(ticker: str) -> CompanyDetail:
         LEFT JOIN analyst_data a ON a.ticker = c.ticker
         WHERE c.ticker = %(ticker)s
     """
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql, {"ticker": ticker})
-            row = cur.fetchone()
-    finally:
-        conn.close()
+    row = await asyncio.to_thread(_pg_fetchone, sql, {"ticker": ticker})
 
     if row is None:
         raise HTTPException(status_code=404, detail="Company not found")

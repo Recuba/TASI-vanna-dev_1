@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from api.db_helper import get_conn, fetchall, fetchone
+from api.db_helper import afetchall, afetchone
 
 logger = logging.getLogger(__name__)
 
@@ -122,11 +122,7 @@ async def get_movers(
     sql = _MOVERS_SQL + f" ORDER BY change_pct {order} LIMIT ?"
 
     try:
-        conn = get_conn()
-        try:
-            rows = fetchall(conn, sql, (limit,))
-        finally:
-            conn.close()
+        rows = await afetchall(sql, (limit,))
     except HTTPException:
         raise
     except Exception as exc:
@@ -141,30 +137,21 @@ async def get_movers(
 async def get_market_summary() -> MarketSummary:
     """Get overall market summary with totals and top 5 movers."""
     try:
-        conn = get_conn()
-        try:
-            # Aggregates
-            agg = fetchone(
-                conn,
-                """
-                SELECT
-                    COALESCE(SUM(m.market_cap), 0) AS total_market_cap,
-                    COALESCE(SUM(m.volume), 0) AS total_volume,
-                    SUM(CASE WHEN m.previous_close > 0 AND m.current_price > m.previous_close THEN 1 ELSE 0 END) AS gainers_count,
-                    SUM(CASE WHEN m.previous_close > 0 AND m.current_price < m.previous_close THEN 1 ELSE 0 END) AS losers_count,
-                    SUM(CASE WHEN m.previous_close > 0 AND m.current_price = m.previous_close THEN 1 ELSE 0 END) AS unchanged_count
-                FROM market_data m
-                WHERE m.current_price IS NOT NULL
-            """,
-            )
+        agg = await afetchone(
+            """
+            SELECT
+                COALESCE(SUM(m.market_cap), 0) AS total_market_cap,
+                COALESCE(SUM(m.volume), 0) AS total_volume,
+                SUM(CASE WHEN m.previous_close > 0 AND m.current_price > m.previous_close THEN 1 ELSE 0 END) AS gainers_count,
+                SUM(CASE WHEN m.previous_close > 0 AND m.current_price < m.previous_close THEN 1 ELSE 0 END) AS losers_count,
+                SUM(CASE WHEN m.previous_close > 0 AND m.current_price = m.previous_close THEN 1 ELSE 0 END) AS unchanged_count
+            FROM market_data m
+            WHERE m.current_price IS NOT NULL
+        """,
+        )
 
-            # Top 5 gainers
-            gainers = fetchall(conn, _MOVERS_SQL + " ORDER BY change_pct DESC LIMIT 5")
-
-            # Top 5 losers
-            losers = fetchall(conn, _MOVERS_SQL + " ORDER BY change_pct ASC LIMIT 5")
-        finally:
-            conn.close()
+        gainers = await afetchall(_MOVERS_SQL + " ORDER BY change_pct DESC LIMIT 5")
+        losers = await afetchall(_MOVERS_SQL + " ORDER BY change_pct ASC LIMIT 5")
     except HTTPException:
         raise
     except Exception as exc:
@@ -205,11 +192,7 @@ async def get_sector_analytics() -> List[SectorAnalytics]:
         ORDER BY total_market_cap DESC
     """
     try:
-        conn = get_conn()
-        try:
-            rows = fetchall(conn, sql)
-        finally:
-            conn.close()
+        rows = await afetchall(sql)
     except HTTPException:
         raise
     except Exception as exc:
@@ -255,11 +238,7 @@ async def get_heatmap() -> List[HeatmapItem]:
         ORDER BY m.market_cap DESC
     """
     try:
-        conn = get_conn()
-        try:
-            rows = fetchall(conn, sql)
-        finally:
-            conn.close()
+        rows = await afetchall(sql)
     except HTTPException:
         raise
     except Exception as exc:

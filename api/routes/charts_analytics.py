@@ -20,7 +20,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from api.db_helper import get_conn, fetchall
+from api.db_helper import afetchall
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +60,7 @@ async def sector_market_cap() -> ChartResponse:
         ORDER BY value DESC
     """
     try:
-        conn = get_conn()
-        try:
-            rows = fetchall(conn, sql)
-        finally:
-            conn.close()
+        rows = await afetchall(sql)
     except HTTPException:
         raise
     except Exception as exc:
@@ -104,11 +100,7 @@ async def top_companies_by_market_cap(
     params.append(limit)
 
     try:
-        conn = get_conn()
-        try:
-            rows = fetchall(conn, sql, params)
-        finally:
-            conn.close()
+        rows = await afetchall(sql, params)
     except HTTPException:
         raise
     except Exception as exc:
@@ -141,11 +133,7 @@ async def sector_avg_pe() -> ChartResponse:
         ORDER BY value DESC
     """
     try:
-        conn = get_conn()
-        try:
-            rows = fetchall(conn, sql)
-        finally:
-            conn.close()
+        rows = await afetchall(sql)
     except HTTPException:
         raise
     except Exception as exc:
@@ -176,11 +164,7 @@ async def top_dividend_yields(
         LIMIT ?
     """
     try:
-        conn = get_conn()
-        try:
-            rows = fetchall(conn, sql, (limit,))
-        finally:
-            conn.close()
+        rows = await afetchall(sql, (limit,))
     except HTTPException:
         raise
     except Exception as exc:

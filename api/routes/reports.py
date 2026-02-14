@@ -6,6 +6,7 @@ Provides read endpoints (public) and a write endpoint (authenticated).
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -61,14 +62,15 @@ async def list_reports(
     svc: TechnicalReportsService = Depends(get_reports_service),
 ) -> PaginatedResponse[ReportResponse]:
     """Return the latest technical reports."""
-    reports = svc.get_reports(
+    reports = await asyncio.to_thread(
+        svc.get_reports,
         limit=pagination.limit,
         offset=pagination.offset,
         recommendation=recommendation,
         report_type=report_type,
         since=since,
     )
-    total = svc.count_reports(recommendation=recommendation)
+    total = await asyncio.to_thread(svc.count_reports, recommendation=recommendation)
     return PaginatedResponse.build(
         items=[_to_response(r) for r in reports],
         total=total,
@@ -86,14 +88,15 @@ async def reports_by_ticker(
     svc: TechnicalReportsService = Depends(get_reports_service),
 ) -> PaginatedResponse[ReportResponse]:
     """Return technical reports for a specific ticker."""
-    reports = svc.get_reports_by_ticker(
+    reports = await asyncio.to_thread(
+        svc.get_reports_by_ticker,
         ticker=ticker,
         limit=pagination.limit,
         offset=pagination.offset,
         recommendation=recommendation,
         since=since,
     )
-    total = svc.count_reports(ticker=ticker, recommendation=recommendation)
+    total = await asyncio.to_thread(svc.count_reports, ticker=ticker, recommendation=recommendation)
     return PaginatedResponse.build(
         items=[_to_response(r) for r in reports],
         total=total,
@@ -108,7 +111,7 @@ async def get_report(
     svc: TechnicalReportsService = Depends(get_reports_service),
 ) -> ReportResponse:
     """Return a single technical report by ID."""
-    report = svc.get_report_by_id(report_id)
+    report = await asyncio.to_thread(svc.get_report_by_id, report_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
     return _to_response(report)
@@ -137,5 +140,5 @@ async def create_report(
         current_price_at_report=body.current_price_at_report,
         report_type=body.report_type,
     )
-    svc.store_report(report)
+    await asyncio.to_thread(svc.store_report, report)
     return _to_response(report)

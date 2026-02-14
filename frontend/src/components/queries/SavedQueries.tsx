@@ -219,7 +219,7 @@ export function SavedQueries({ onRerun, className }: SavedQueriesProps) {
                   </button>
                   <button
                     onClick={() => handleRemoveFavorite(record.id)}
-                    className="text-[10px] px-2 py-1 rounded text-accent-red/70 hover:text-accent-red hover:bg-accent-red/10 transition-colors ml-auto"
+                    className="text-[10px] px-2 py-1 rounded text-accent-red/70 hover:text-accent-red hover:bg-accent-red/10 transition-colors ms-auto"
                   >
                     Remove
                   </button>

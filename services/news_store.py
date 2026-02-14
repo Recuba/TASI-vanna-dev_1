@@ -16,6 +16,7 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import sqlite3
 import uuid
@@ -131,30 +132,55 @@ class NewsStore:
             conn.close()
         return inserted
 
+    def _build_filters(
+        self,
+        source: Optional[str] = None,
+        sentiment_label: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+    ) -> tuple:
+        """Build WHERE clause fragments and params for common filters.
+
+        Returns (clauses: list[str], params: list).
+        """
+        clauses: List[str] = []
+        params: list = []
+        if source:
+            clauses.append("source_name = ?")
+            params.append(source)
+        if sentiment_label:
+            clauses.append("sentiment_label = ?")
+            params.append(sentiment_label)
+        if date_from:
+            clauses.append("created_at >= ?")
+            params.append(date_from)
+        if date_to:
+            # Include the full day by comparing with the next day boundary
+            clauses.append("created_at <= ?")
+            params.append(date_to + "T23:59:59")
+        return clauses, params
+
     def get_latest_news(
         self,
         limit: int = 20,
         offset: int = 0,
         source: Optional[str] = None,
+        sentiment_label: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> List[Dict]:
-        """Get latest news, optionally filtered by source_name."""
+        """Get latest news, optionally filtered by source, sentiment, and date range."""
         conn = self._connect()
         try:
-            if source:
-                rows = conn.execute(
-                    """SELECT * FROM news_articles
-                       WHERE source_name = ?
-                       ORDER BY priority ASC, created_at DESC
-                       LIMIT ? OFFSET ?""",
-                    (source, limit, offset),
-                ).fetchall()
-            else:
-                rows = conn.execute(
-                    """SELECT * FROM news_articles
-                       ORDER BY priority ASC, created_at DESC
-                       LIMIT ? OFFSET ?""",
-                    (limit, offset),
-                ).fetchall()
+            clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
+            where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+            params.extend([limit, offset])
+            rows = conn.execute(
+                f"""SELECT * FROM news_articles{where}
+                    ORDER BY created_at DESC, priority ASC
+                    LIMIT ? OFFSET ?""",
+                params,
+            ).fetchall()
             return [dict(row) for row in rows]
         finally:
             conn.close()
@@ -170,17 +196,37 @@ class NewsStore:
         finally:
             conn.close()
 
-    def count_articles(self, source: Optional[str] = None) -> int:
-        """Count articles, optionally filtered by source."""
+    def get_articles_by_ids(self, ids: List[str]) -> List[Dict]:
+        """Get multiple articles by their IDs."""
+        if not ids:
+            return []
         conn = self._connect()
         try:
-            if source:
-                row = conn.execute(
-                    "SELECT COUNT(*) FROM news_articles WHERE source_name = ?",
-                    (source,),
-                ).fetchone()
-            else:
-                row = conn.execute("SELECT COUNT(*) FROM news_articles").fetchone()
+            placeholders = ",".join("?" for _ in ids)
+            rows = conn.execute(
+                f"SELECT * FROM news_articles WHERE id IN ({placeholders})"
+                " ORDER BY created_at DESC",
+                ids,
+            ).fetchall()
+            return [dict(row) for row in rows]
+        finally:
+            conn.close()
+
+    def count_articles(
+        self,
+        source: Optional[str] = None,
+        sentiment_label: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+    ) -> int:
+        """Count articles, optionally filtered by source, sentiment, and date range."""
+        conn = self._connect()
+        try:
+            clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
+            where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+            row = conn.execute(
+                f"SELECT COUNT(*) FROM news_articles{where}", params
+            ).fetchone()
             return row[0] if row else 0
         finally:
             conn.close()
@@ -190,21 +236,61 @@ class NewsStore:
         query: str,
         limit: int = 20,
         offset: int = 0,
+        source: Optional[str] = None,
+        sentiment_label: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> List[Dict]:
-        """Search articles by title or body text (case-insensitive LIKE)."""
+        """Search articles by title or body text, with optional filters."""
         conn = self._connect()
         try:
-            # Escape LIKE wildcards in user input to prevent pattern injection
             escaped = query.replace("%", "\\%").replace("_", "\\_")
             pattern = f"%{escaped}%"
+            extra_clauses, extra_params = self._build_filters(
+                source, sentiment_label, date_from, date_to
+            )
+            where = "(title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\')"
+            params: list = [pattern, pattern]
+            if extra_clauses:
+                where += " AND " + " AND ".join(extra_clauses)
+                params.extend(extra_params)
+            params.extend([limit, offset])
             rows = conn.execute(
-                """SELECT * FROM news_articles
-                   WHERE title LIKE ? OR body LIKE ?
-                   ORDER BY priority ASC, created_at DESC
-                   LIMIT ? OFFSET ?""",
-                (pattern, pattern, limit, offset),
+                f"""SELECT * FROM news_articles
+                    WHERE {where}
+                    ORDER BY created_at DESC, priority ASC
+                    LIMIT ? OFFSET ?""",
+                params,
             ).fetchall()
             return [dict(row) for row in rows]
+        finally:
+            conn.close()
+
+    def count_search(
+        self,
+        query: str,
+        source: Optional[str] = None,
+        sentiment_label: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+    ) -> int:
+        """Count total articles matching a search query with optional filters."""
+        conn = self._connect()
+        try:
+            escaped = query.replace("%", "\\%").replace("_", "\\_")
+            pattern = f"%{escaped}%"
+            extra_clauses, extra_params = self._build_filters(
+                source, sentiment_label, date_from, date_to
+            )
+            where = "(title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\')"
+            params: list = [pattern, pattern]
+            if extra_clauses:
+                where += " AND " + " AND ".join(extra_clauses)
+                params.extend(extra_params)
+            row = conn.execute(
+                f"SELECT COUNT(*) FROM news_articles WHERE {where}", params
+            ).fetchone()
+            return row[0] if row else 0
         finally:
             conn.close()
 
@@ -239,3 +325,28 @@ class NewsStore:
             raise
         finally:
             conn.close()
+
+    # ------------------------------------------------------------------
+    # Async wrappers (run sync I/O in a thread)
+    # ------------------------------------------------------------------
+
+    async def aget_latest_news(self, **kwargs) -> List[Dict]:
+        return await asyncio.to_thread(self.get_latest_news, **kwargs)
+
+    async def acount_articles(self, **kwargs) -> int:
+        return await asyncio.to_thread(self.count_articles, **kwargs)
+
+    async def aget_article_by_id(self, article_id: str) -> Optional[Dict]:
+        return await asyncio.to_thread(self.get_article_by_id, article_id)
+
+    async def asearch_articles(self, **kwargs) -> List[Dict]:
+        return await asyncio.to_thread(self.search_articles, **kwargs)
+
+    async def acount_search(self, **kwargs) -> int:
+        return await asyncio.to_thread(self.count_search, **kwargs)
+
+    async def aget_sources(self) -> List[Dict]:
+        return await asyncio.to_thread(self.get_sources)
+
+    async def aget_articles_by_ids(self, ids: List[str]) -> List[Dict]:
+        return await asyncio.to_thread(self.get_articles_by_ids, ids)

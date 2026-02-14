@@ -14,7 +14,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from api.db_helper import get_conn, fetchall, fetchone
+from api.db_helper import afetchall, afetchone
 
 logger = logging.getLogger(__name__)
 
@@ -147,37 +147,30 @@ async def list_entities(
     where = "WHERE " + " AND ".join(clauses)
 
     try:
-        conn = get_conn()
-        try:
-            # Total count (with market_data join for the null filter)
-            count_row = fetchone(
-                conn,
-                f"""SELECT COUNT(*) AS cnt
-                    FROM companies c
-                    LEFT JOIN market_data m ON m.ticker = c.ticker
-                    {where}""",
-                params,
-            )
-            total = count_row["cnt"] if count_row else 0
-
-            # Data
-            sql = f"""
-                SELECT
-                    c.ticker, c.short_name, c.sector, c.industry,
-                    m.current_price, m.market_cap,
-                    CASE WHEN m.previous_close > 0
-                         THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
-                         ELSE NULL
-                    END AS change_pct
+        count_row = await afetchone(
+            f"""SELECT COUNT(*) AS cnt
                 FROM companies c
                 LEFT JOIN market_data m ON m.ticker = c.ticker
-                {where}
-                ORDER BY m.market_cap DESC
-                LIMIT ? OFFSET ?
-            """
-            rows = fetchall(conn, sql, params + [limit, offset])
-        finally:
-            conn.close()
+                {where}""",
+            params,
+        )
+        total = count_row["cnt"] if count_row else 0
+
+        sql = f"""
+            SELECT
+                c.ticker, c.short_name, c.sector, c.industry,
+                m.current_price, m.market_cap,
+                CASE WHEN m.previous_close > 0
+                     THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
+                     ELSE NULL
+                END AS change_pct
+            FROM companies c
+            LEFT JOIN market_data m ON m.ticker = c.ticker
+            {where}
+            ORDER BY m.market_cap DESC
+            LIMIT ? OFFSET ?
+        """
+        rows = await afetchall(sql, params + [limit, offset])
     except HTTPException:
         raise
     except Exception as exc:
@@ -214,11 +207,7 @@ async def list_sectors() -> List[SectorInfo]:
         ORDER BY company_count DESC
     """
     try:
-        conn = get_conn()
-        try:
-            rows = fetchall(conn, sql)
-        finally:
-            conn.close()
+        rows = await afetchall(sql)
     except HTTPException:
         raise
     except Exception as exc:
@@ -278,11 +267,7 @@ async def get_entity(ticker: str) -> CompanyFullDetail:
         WHERE c.ticker = ?
     """
     try:
-        conn = get_conn()
-        try:
-            row_dict = fetchone(conn, sql, (ticker,))
-        finally:
-            conn.close()
+        row_dict = await afetchone(sql, (ticker,))
     except HTTPException:
         raise
     except Exception as exc:

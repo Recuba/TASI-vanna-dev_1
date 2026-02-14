@@ -6,6 +6,7 @@ All endpoints require JWT authentication. Unauthenticated requests receive 401.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -34,7 +35,7 @@ async def list_watchlists(
     svc: UserService = Depends(get_user_service),
 ) -> List[WatchlistResponse]:
     """Return all watchlists for the authenticated user. Returns 401 if not authenticated."""
-    wls = svc.get_watchlists(user_id=current_user["id"])
+    wls = await asyncio.to_thread(svc.get_watchlists, user_id=current_user["id"])
     return [
         WatchlistResponse(id=w.id, user_id=w.user_id, name=w.name, tickers=w.tickers)
         for w in wls
@@ -51,8 +52,9 @@ async def create_watchlist(
     svc: UserService = Depends(get_user_service),
 ) -> WatchlistResponse:
     """Create a new watchlist for the authenticated user."""
-    wl = svc.create_watchlist(
-        user_id=current_user["id"], name=body.name, tickers=body.tickers
+    wl = await asyncio.to_thread(
+        svc.create_watchlist,
+        user_id=current_user["id"], name=body.name, tickers=body.tickers,
     )
     return WatchlistResponse(
         id=wl.id, user_id=wl.user_id, name=wl.name, tickers=wl.tickers
@@ -68,7 +70,7 @@ async def add_ticker_to_watchlist(
 ) -> WatchlistResponse:
     """Add a single ticker to an existing watchlist. Requires authentication."""
     # Fetch current watchlist to get existing tickers
-    wls = svc.get_watchlists(user_id=current_user["id"])
+    wls = await asyncio.to_thread(svc.get_watchlists, user_id=current_user["id"])
     wl = next((w for w in wls if w.id == watchlist_id), None)
     if wl is None:
         raise HTTPException(status_code=404, detail="Watchlist not found")
@@ -77,7 +79,8 @@ async def add_ticker_to_watchlist(
     if body.ticker not in tickers:
         tickers.append(body.ticker)
 
-    updated = svc.update_watchlist(
+    updated = await asyncio.to_thread(
+        svc.update_watchlist,
         watchlist_id=watchlist_id,
         user_id=current_user["id"],
         tickers=tickers,
@@ -100,7 +103,8 @@ async def update_watchlist(
     svc: UserService = Depends(get_user_service),
 ) -> WatchlistResponse:
     """Update a watchlist's name and/or tickers. Requires authentication."""
-    wl = svc.update_watchlist(
+    wl = await asyncio.to_thread(
+        svc.update_watchlist,
         watchlist_id=watchlist_id,
         user_id=current_user["id"],
         name=body.name,
@@ -120,8 +124,9 @@ async def delete_watchlist(
     svc: UserService = Depends(get_user_service),
 ):
     """Delete a watchlist. Requires authentication."""
-    deleted = svc.delete_watchlist(
-        watchlist_id=watchlist_id, user_id=current_user["id"]
+    deleted = await asyncio.to_thread(
+        svc.delete_watchlist,
+        watchlist_id=watchlist_id, user_id=current_user["id"],
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="Watchlist not found")
@@ -137,7 +142,7 @@ async def list_alerts(
     svc: UserService = Depends(get_user_service),
 ) -> List[AlertResponse]:
     """Return active alerts for the authenticated user. Returns 401 if not authenticated."""
-    alerts = svc.get_active_alerts(user_id=current_user["id"], ticker=ticker)
+    alerts = await asyncio.to_thread(svc.get_active_alerts, user_id=current_user["id"], ticker=ticker)
     return [
         AlertResponse(
             id=a.id,
@@ -161,7 +166,8 @@ async def create_alert(
     svc: UserService = Depends(get_user_service),
 ) -> AlertResponse:
     """Create a new alert for the authenticated user."""
-    alert = svc.create_alert(
+    alert = await asyncio.to_thread(
+        svc.create_alert,
         user_id=current_user["id"],
         ticker=body.ticker,
         alert_type=body.alert_type,
@@ -184,6 +190,6 @@ async def deactivate_alert(
     svc: UserService = Depends(get_user_service),
 ):
     """Deactivate an alert (soft-delete). Requires authentication."""
-    updated = svc.deactivate_alert(alert_id=alert_id, user_id=current_user["id"])
+    updated = await asyncio.to_thread(svc.deactivate_alert, alert_id=alert_id, user_id=current_user["id"])
     if not updated:
         raise HTTPException(status_code=404, detail="Alert not found")

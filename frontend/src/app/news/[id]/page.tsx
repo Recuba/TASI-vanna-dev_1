@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useNewsArticle, useNewsFeed } from '@/lib/hooks/use-api';
+import { searchNewsFeed, type NewsFeedItem } from '@/lib/api-client';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { getSourceColor, timeAgo } from '../utils';
 
 // Extended type for extra API fields
 type ArticleExtras = {
@@ -15,24 +17,7 @@ type ArticleExtras = {
 };
 
 // ---------------------------------------------------------------------------
-// Source color map (matches news list page)
-// ---------------------------------------------------------------------------
-
-const SOURCE_COLORS: Record<string, string> = {
-  'العربية': '#C4302B',
-  'الشرق': '#1A73E8',
-  'الشرق بلومبرغ': '#1A73E8',
-  'أرقام': '#00A650',
-  'معال': '#FF6B00',
-  'مباشر': '#6B21A8',
-};
-
-function getSourceColor(name: string): string {
-  return SOURCE_COLORS[name] ?? '#D4A84B';
-}
-
-// ---------------------------------------------------------------------------
-// Arabic date formatter
+// Arabic date formatter (detail page specific)
 // ---------------------------------------------------------------------------
 
 function formatDate(dateStr: string | null, language: string): string {
@@ -46,35 +31,6 @@ function formatDate(dateStr: string | null, language: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-// ---------------------------------------------------------------------------
-// Arabic "time ago" formatter
-// ---------------------------------------------------------------------------
-
-function timeAgo(dateStr: string | null, t: (ar: string, en: string) => string, language: string): string {
-  if (!dateStr) return '';
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  if (isNaN(then)) return '';
-
-  const diffMs = now - then;
-  const minutes = Math.floor(diffMs / 60_000);
-  const hours = Math.floor(diffMs / 3_600_000);
-  const days = Math.floor(diffMs / 86_400_000);
-
-  if (minutes < 1) return t('الآن', 'just now');
-  if (minutes === 1) return t('منذ دقيقة', '1 minute ago');
-  if (minutes === 2) return t('منذ دقيقتين', '2 minutes ago');
-  if (minutes < 11) return t(`منذ ${minutes} دقائق`, `${minutes} minutes ago`);
-  if (minutes < 60) return t(`منذ ${minutes} دقيقة`, `${minutes} minutes ago`);
-  if (hours === 1) return t('منذ ساعة', '1 hour ago');
-  if (hours === 2) return t('منذ ساعتين', '2 hours ago');
-  if (hours < 11) return t(`منذ ${hours} ساعات`, `${hours} hours ago`);
-  if (hours < 24) return t(`منذ ${hours} ساعة`, `${hours} hours ago`);
-  if (days === 1) return t('منذ يوم', 'yesterday');
-  if (days < 7) return t(`منذ ${days} أيام`, `${days} days ago`);
-  return new Date(dateStr).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US');
 }
 
 // ---------------------------------------------------------------------------
@@ -213,7 +169,7 @@ function ReadingProgressBar() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent">
+    <div className="fixed top-14 left-0 right-0 z-50 h-1 bg-transparent">
       <div
         className="h-full transition-[width] duration-100 ease-out"
         style={{
@@ -229,17 +185,27 @@ function ReadingProgressBar() {
 // Share button with toast
 // ---------------------------------------------------------------------------
 
-function ShareButton() {
+function ShareButton({ title }: { title?: string }) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = useCallback(async () => {
+  const handleShare = useCallback(async () => {
+    // Use native share on mobile if available
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: title ?? document.title, url: window.location.href });
+        return;
+      } catch {
+        // User cancelled or share failed -- fall through to clipboard copy
+      }
+    }
+
+    // Clipboard copy fallback
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const input = document.createElement('input');
       input.value = window.location.href;
       document.body.appendChild(input);
@@ -249,12 +215,12 @@ function ShareButton() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, []);
+  }, [title]);
 
   return (
     <div className="relative">
       <button
-        onClick={handleCopy}
+        onClick={handleShare}
         className={cn(
           'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
           'bg-[var(--bg-input)] border border-[#2A2A2A]',
@@ -331,7 +297,7 @@ function RelatedArticleCard({
         'hover:border-[#D4A84B]/30 hover:shadow-md hover:shadow-[#D4A84B]/5',
         'transition-all duration-200 group',
       )}
-      style={{ borderRightWidth: '3px', borderRightColor: color }}
+      style={{ borderInlineEndWidth: '3px', borderInlineEndColor: color }}
     >
       <h4 className="text-sm font-bold text-[var(--text-primary)] leading-tight mb-2 line-clamp-2 group-hover:text-gold transition-colors">
         {title}
@@ -363,15 +329,41 @@ export default function ArticleDetailPage() {
   const id = typeof params.id === 'string' ? params.id : '';
   const { data: article, loading, error, refetch } = useNewsArticle(id);
 
-  // Fetch related articles from same source
+  // Fetch related articles: by ticker if available, otherwise by source
+  const ticker = (article as (typeof article & ArticleExtras) | undefined)?.ticker;
+  const [tickerRelated, setTickerRelated] = useState<NewsFeedItem[]>([]);
+
+  // Search by ticker when article has one
+  useEffect(() => {
+    if (!ticker || !article) {
+      setTickerRelated([]);
+      return;
+    }
+    const controller = new AbortController();
+    searchNewsFeed({ q: ticker, limit: 6 })
+      .then((res) => {
+        if (!controller.signal.aborted) {
+          setTickerRelated(res.items.filter((a) => a.id !== id).slice(0, 4));
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setTickerRelated([]);
+      });
+    return () => controller.abort();
+  }, [ticker, article, id]);
+
+  // Fallback: same-source articles (only fetched when no ticker)
   const { data: relatedData } = useNewsFeed({
     limit: 6,
     offset: 0,
-    source: article?.source_name ?? undefined,
+    source: !ticker ? (article?.source_name ?? undefined) : undefined,
   });
 
-  // Filter out current article from related
-  const relatedArticles = (relatedData?.items ?? []).filter((a) => a.id !== id).slice(0, 4);
+  // Use ticker-based results if available, otherwise same-source
+  const relatedArticles = ticker && tickerRelated.length > 0
+    ? tickerRelated
+    : (relatedData?.items ?? []).filter((a) => a.id !== id).slice(0, 4);
+  const relatedByTicker = ticker && tickerRelated.length > 0;
 
   const readTime = article ? readingTime(article.body, t) : null;
   const extras = article as (typeof article & ArticleExtras) | undefined;
@@ -468,7 +460,7 @@ export default function ArticleDetailPage() {
                   </span>
                 )}
               </div>
-              <ShareButton />
+              <ShareButton title={article.title} />
             </div>
 
             {/* Title */}
@@ -572,8 +564,6 @@ export default function ArticleDetailPage() {
             {/* Language info */}
             <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] pt-2 border-t border-gold/10">
               <span>{t('اللغة', 'Language')}: {article.language === 'ar' ? t('العربية', 'Arabic') : article.language}</span>
-              <span>&middot;</span>
-              <span>{t('الأولوية', 'Priority')}: {article.priority}</span>
             </div>
 
             {/* Related articles */}
@@ -581,7 +571,9 @@ export default function ArticleDetailPage() {
               <section className="pt-4 space-y-4">
                 <hr className="border-gold/10" />
                 <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                  {t(`أخبار ذات صلة من ${article.source_name}`, `Related news from ${article.source_name}`)}
+                  {relatedByTicker
+                    ? t(`أخبار ذات صلة عن ${ticker}`, `Related news about ${ticker}`)
+                    : t(`أخبار ذات صلة من ${article.source_name}`, `Related news from ${article.source_name}`)}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {relatedArticles.map((related) => (

@@ -250,11 +250,11 @@ function SearchResultItem({
     >
       <div>
         <span className="text-sm font-medium text-gold">{ticker}</span>
-        <span className="text-sm text-[var(--text-primary)] ml-2">
+        <span className="text-sm text-[var(--text-primary)] ms-2">
           {name || ticker}
         </span>
         {sector && (
-          <span className="text-xs text-[var(--text-muted)] ml-2">{sector}</span>
+          <span className="text-xs text-[var(--text-muted)] ms-2">{sector}</span>
         )}
       </div>
       {price != null && (
@@ -311,7 +311,7 @@ function CompareTickerSelector({
                 {t}
                 <button
                   onClick={() => onRemove(t)}
-                  className="hover:opacity-70 transition-opacity ml-0.5"
+                  className="hover:opacity-70 transition-opacity ms-0.5"
                   aria-label={`Remove ${t}`}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -352,7 +352,7 @@ function CompareTickerSelector({
               placeholder={t(`أضف سهم للمقارنة (${selectedTickers.length}/5)...`, `Add stock to compare (${selectedTickers.length}/5)...`)}
               className={cn(
                 'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
-                'border gold-border rounded-md pl-9 pr-3 py-2.5 text-sm',
+                'border gold-border rounded-md ps-9 pe-3 py-2.5 text-sm',
                 'placeholder:text-[var(--text-muted)]',
                 'focus:outline-none focus:border-gold transition-colors',
               )}
@@ -381,7 +381,7 @@ function CompareTickerSelector({
                   >
                     <div>
                       <span className="text-sm font-medium text-gold">{stock.ticker}</span>
-                      <span className="text-sm text-[var(--text-primary)] ml-2">
+                      <span className="text-sm text-[var(--text-primary)] ms-2">
                         {stock.short_name || stock.ticker}
                       </span>
                     </div>
@@ -627,7 +627,7 @@ export default function ChartsPage() {
                     placeholder={t('البحث بالرمز أو اسم الشركة...', 'Search by ticker or company name...')}
                     className={cn(
                       'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
-                      'border gold-border rounded-md pl-9 pr-3 py-2.5 text-sm',
+                      'border gold-border rounded-md ps-9 pe-3 py-2.5 text-sm',
                       'placeholder:text-[var(--text-muted)]',
                       'focus:outline-none focus:border-gold transition-colors',
                     )}

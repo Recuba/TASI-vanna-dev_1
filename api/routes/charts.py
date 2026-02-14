@@ -8,7 +8,8 @@ TradingView Lightweight Charts or Plotly.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+import asyncio
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Query
 
@@ -18,6 +19,17 @@ from api.dependencies import get_db_connection
 from api.schemas.charts import ChartDataPoint, ChartResponse
 
 router = APIRouter(prefix="/api/charts", tags=["charts"])
+
+
+def _pg_fetchall(sql: str, params=None) -> List[Dict[str, Any]]:
+    """Run a PG query synchronously, returning list of dicts."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, params or {})
+            return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -34,13 +46,7 @@ async def sector_market_cap() -> ChartResponse:
         GROUP BY c.sector
         ORDER BY value DESC
     """
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql)
-            rows = cur.fetchall()
-    finally:
-        conn.close()
+    rows = await asyncio.to_thread(_pg_fetchall, sql)
 
     return ChartResponse(
         chart_type="bar",
@@ -72,13 +78,7 @@ async def top_companies_by_market_cap(
         ORDER BY m.market_cap DESC
         LIMIT %(limit)s
     """
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql, params)
-            rows = cur.fetchall()
-    finally:
-        conn.close()
+    rows = await asyncio.to_thread(_pg_fetchall, sql, params)
 
     return ChartResponse(
         chart_type="bar",
@@ -105,13 +105,7 @@ async def sector_avg_pe() -> ChartResponse:
         GROUP BY c.sector
         ORDER BY value DESC
     """
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql)
-            rows = cur.fetchall()
-    finally:
-        conn.close()
+    rows = await asyncio.to_thread(_pg_fetchall, sql)
 
     return ChartResponse(
         chart_type="bar",
@@ -136,13 +130,7 @@ async def top_dividend_yields(
         ORDER BY d.dividend_yield DESC
         LIMIT %(limit)s
     """
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql, {"limit": limit})
-            rows = cur.fetchall()
-    finally:
-        conn.close()
+    rows = await asyncio.to_thread(_pg_fetchall, sql, {"limit": limit})
 
     return ChartResponse(
         chart_type="bar",

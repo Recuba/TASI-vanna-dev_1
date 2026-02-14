@@ -22,9 +22,10 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import sqlite3
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from functools import lru_cache
 from typing import Any, Generator, Optional
 
@@ -118,6 +119,29 @@ class DatabaseManager:
             raise
         finally:
             conn.close()
+
+    @asynccontextmanager
+    async def aconnection(self):
+        """Async context manager that runs the sync connection in a thread.
+
+        Usage::
+
+            async with db_manager.aconnection() as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT 1")
+        """
+        conn = await asyncio.to_thread(self._get_raw_connection)
+        try:
+            yield conn
+            await asyncio.to_thread(conn.commit)
+        except Exception:
+            try:
+                await asyncio.to_thread(conn.rollback)
+            except Exception:
+                pass
+            raise
+        finally:
+            await asyncio.to_thread(conn.close)
 
     def get_connection_dependency(self) -> Generator:
         """FastAPI-compatible generator dependency.

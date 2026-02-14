@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { metricsCollector, type FrontendMetrics } from '@/lib/monitoring/metrics-collector';
+import { getHealth } from '@/lib/api-client';
 
 interface HealthStatus {
   status: string;
@@ -12,35 +13,41 @@ interface HealthStatus {
   [key: string]: unknown;
 }
 
-function useAutoRefresh<T>(fetcher: () => Promise<T>, intervalMs: number) {
+function useAutoRefresh<T>(fetcher: (signal: AbortSignal) => Promise<T>, intervalMs: number) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const mountedRef = useRef(true);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const execute = useCallback(() => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     setLoading(true);
-    fetcher()
+    fetcher(controller.signal)
       .then((result) => {
-        if (mountedRef.current) {
+        if (!controller.signal.aborted) {
           setData(result);
           setError(null);
         }
       })
       .catch((err: Error) => {
-        if (mountedRef.current) setError(err.message);
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        if (!controller.signal.aborted) setError(err.message);
       })
       .finally(() => {
-        if (mountedRef.current) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
   }, [fetcher]);
 
   useEffect(() => {
-    mountedRef.current = true;
     execute();
     const id = window.setInterval(execute, intervalMs);
     return () => {
-      mountedRef.current = false;
+      controllerRef.current?.abort();
       window.clearInterval(id);
     };
   }, [execute, intervalMs]);
@@ -71,11 +78,12 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 
 function AdminDashboardContent() {
   const fetchHealth = useCallback(
-    () => fetch('/health').then((r) => r.json()) as Promise<HealthStatus>,
+    (signal: AbortSignal) => getHealth(signal) as Promise<HealthStatus>,
     [],
   );
   const fetchReady = useCallback(
-    () => fetch('/health/ready').then((r) => r.json()) as Promise<HealthStatus>,
+    (signal: AbortSignal) =>
+      fetch('/health/ready', { signal }).then((r) => r.json()) as Promise<HealthStatus>,
     [],
   );
 

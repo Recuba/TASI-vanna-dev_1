@@ -53,36 +53,42 @@ interface UseAsyncResult<T> {
 }
 
 function useAsync<T>(
-  fetcher: () => Promise<T>,
+  fetcher: (signal: AbortSignal) => Promise<T>,
   deps: unknown[] = [],
   autoRefreshMs?: number,
 ): UseAsyncResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const mountedRef = useRef(false);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const execute = useCallback(() => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     setLoading(true);
     setError(null);
-    fetcher()
+    fetcher(controller.signal)
       .then((result) => {
-        if (mountedRef.current) setData(result);
+        if (!controller.signal.aborted) setData(result);
       })
       .catch((err) => {
-        if (mountedRef.current) setError((err as Error).message);
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        if (!controller.signal.aborted) setError((err as Error).message);
       })
       .finally(() => {
-        if (mountedRef.current) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   useEffect(() => {
-    mountedRef.current = true;
     execute();
     return () => {
-      mountedRef.current = false;
+      controllerRef.current?.abort();
     };
   }, [execute]);
 
@@ -102,7 +108,7 @@ function useAsync<T>(
 
 export function useNews(params?: { page?: number; page_size?: number; language?: string }) {
   return useAsync<NewsListResponse>(
-    () => getNews(params),
+    (signal) => getNews(params, signal),
     [params?.page, params?.page_size, params?.language],
   );
 }
@@ -114,7 +120,7 @@ export function useReports(params?: {
   report_type?: string;
 }) {
   return useAsync<ReportListResponse>(
-    () => getReports(params),
+    (signal) => getReports(params, signal),
     [params?.page, params?.page_size, params?.recommendation, params?.report_type],
   );
 }
@@ -126,17 +132,17 @@ export function useEntities(params?: {
   search?: string;
 }) {
   return useAsync<EntityListResponse>(
-    () => getEntities(params),
+    (signal) => getEntities(params, signal),
     [params?.limit, params?.offset, params?.sector, params?.search],
   );
 }
 
 export function useEntityDetail(ticker: string) {
-  return useAsync<CompanyDetail>(() => getEntityDetail(ticker), [ticker]);
+  return useAsync<CompanyDetail>((signal) => getEntityDetail(ticker, signal), [ticker]);
 }
 
 export function useSectors() {
-  return useAsync<SectorInfo[]>(() => getSectors(), []);
+  return useAsync<SectorInfo[]>((signal) => getSectors(signal), []);
 }
 
 export function useAnnouncements(params?: {
@@ -146,7 +152,7 @@ export function useAnnouncements(params?: {
   category?: string;
 }) {
   return useAsync<AnnouncementListResponse>(
-    () => getAnnouncements(params),
+    (signal) => getAnnouncements(params, signal),
     [params?.page, params?.page_size, params?.ticker, params?.category],
   );
 }
@@ -154,37 +160,43 @@ export function useAnnouncements(params?: {
 /** Market data with 30-second auto-refresh */
 export function useMarketData(params?: { limit?: number; sector?: string }) {
   return useAsync<EntityListResponse>(
-    () => getEntities({ limit: params?.limit ?? 50, sector: params?.sector }),
+    (signal) => getEntities({ limit: params?.limit ?? 50, sector: params?.sector }, signal),
     [params?.limit, params?.sector],
     30_000,
   );
 }
 
 export function useStockDetail(ticker: string) {
-  return useAsync<CompanyDetail>(() => getEntityDetail(ticker), [ticker]);
+  return useAsync<CompanyDetail>((signal) => getEntityDetail(ticker, signal), [ticker]);
 }
 
-export function useNewsFeed(params?: { limit?: number; offset?: number; source?: string }) {
+export function useNewsFeed(params?: {
+  limit?: number;
+  offset?: number;
+  source?: string;
+  sentiment?: string;
+  date_from?: string;
+  date_to?: string;
+}) {
   return useAsync<NewsFeedResponse>(
-    () => getNewsFeed(params),
-    [params?.limit, params?.offset, params?.source],
-    300000,
+    (signal) => getNewsFeed(params, signal),
+    [params?.limit, params?.offset, params?.source, params?.sentiment, params?.date_from, params?.date_to],
   );
 }
 
 export function useNewsArticle(id: string) {
-  return useAsync<NewsFeedItem>(() => getNewsArticle(id), [id]);
+  return useAsync<NewsFeedItem>((signal) => getNewsArticle(id, signal), [id]);
 }
 
 export function useNewsSearch(params: { q: string; limit?: number; offset?: number }) {
   return useAsync<NewsFeedResponse>(
-    () => searchNewsFeed(params),
+    (signal) => searchNewsFeed(params, signal),
     [params.q, params.limit, params.offset],
   );
 }
 
 export function useNewsSources() {
-  return useAsync<NewsSourcesResponse>(() => getNewsSources(), []);
+  return useAsync<NewsSourcesResponse>((signal) => getNewsSources(signal), []);
 }
 
 // ---------------------------------------------------------------------------
@@ -194,7 +206,7 @@ export function useNewsSources() {
 /** Top gainers or losers with 30-second auto-refresh */
 export function useMarketMovers(type: 'gainers' | 'losers', limit?: number) {
   return useAsync<MarketMover[]>(
-    () => getMarketMovers(type, limit),
+    (signal) => getMarketMovers(type, limit, signal),
     [type, limit],
     30_000,
   );
@@ -202,17 +214,17 @@ export function useMarketMovers(type: 'gainers' | 'losers', limit?: number) {
 
 /** Full market summary with 30-second auto-refresh */
 export function useMarketSummary() {
-  return useAsync<MarketSummary>(() => getMarketSummary(), [], 30_000);
+  return useAsync<MarketSummary>((signal) => getMarketSummary(signal), [], 30_000);
 }
 
 /** Sector performance breakdown */
 export function useSectorPerformance() {
-  return useAsync<SectorPerformance[]>(() => getSectorPerformance(), []);
+  return useAsync<SectorPerformance[]>((signal) => getSectorPerformance(signal), []);
 }
 
 /** Market heatmap data */
 export function useMarketHeatmap() {
-  return useAsync<HeatmapItem[]>(() => getMarketHeatmap(), []);
+  return useAsync<HeatmapItem[]>((signal) => getMarketHeatmap(signal), []);
 }
 
 // ---------------------------------------------------------------------------
@@ -221,13 +233,13 @@ export function useMarketHeatmap() {
 
 /** Dividend data for a single stock */
 export function useStockDividends(ticker: string) {
-  return useAsync<StockDividends>(() => getStockDividends(ticker), [ticker]);
+  return useAsync<StockDividends>((signal) => getStockDividends(ticker, signal), [ticker]);
 }
 
 /** Financial summary for a single stock */
 export function useStockFinancialSummary(ticker: string) {
   return useAsync<FinancialSummary>(
-    () => getStockFinancialSummary(ticker),
+    (signal) => getStockFinancialSummary(ticker, signal),
     [ticker],
   );
 }
@@ -239,7 +251,7 @@ export function useStockFinancials(
   period_type?: string,
 ) {
   return useAsync<FinancialsResponse>(
-    () => getStockFinancials(ticker, { statement, period_type }),
+    (signal) => getStockFinancials(ticker, { statement, period_type }, signal),
     [ticker, statement, period_type],
   );
 }
@@ -247,7 +259,7 @@ export function useStockFinancials(
 /** Compare multiple stocks across metrics */
 export function useStockComparison(tickers: string[], metrics: string[]) {
   return useAsync<StockComparison>(
-    () => compareStocks(tickers, metrics),
+    (signal) => compareStocks(tickers, metrics, signal),
     [tickers.join(','), metrics.join(',')],
   );
 }
@@ -255,7 +267,7 @@ export function useStockComparison(tickers: string[], metrics: string[]) {
 /** Batch quotes for multiple tickers with 30-second auto-refresh */
 export function useBatchQuotes(tickers: string[]) {
   return useAsync<BatchQuote[]>(
-    () => getBatchQuotes(tickers),
+    (signal) => getBatchQuotes(tickers, signal),
     [tickers.join(',')],
     30_000,
   );

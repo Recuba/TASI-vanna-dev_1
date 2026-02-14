@@ -6,6 +6,7 @@ Provides read endpoints (public) and a write endpoint (authenticated).
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -62,7 +63,8 @@ async def list_announcements(
     svc: AnnouncementService = Depends(get_announcement_service),
 ) -> PaginatedResponse[AnnouncementResponse]:
     """Return announcements with optional filters."""
-    items = svc.get_announcements(
+    items = await asyncio.to_thread(
+        svc.get_announcements,
         limit=pagination.limit,
         offset=pagination.offset,
         ticker=ticker,
@@ -70,7 +72,7 @@ async def list_announcements(
         source=source,
         since=since,
     )
-    total = svc.count_announcements(ticker=ticker)
+    total = await asyncio.to_thread(svc.count_announcements, ticker=ticker)
     return PaginatedResponse.build(
         items=[_to_response(a) for a in items],
         total=total,
@@ -87,13 +89,14 @@ async def material_events(
     svc: AnnouncementService = Depends(get_announcement_service),
 ) -> PaginatedResponse[AnnouncementResponse]:
     """Return only material announcements."""
-    items = svc.get_material_events(
+    items = await asyncio.to_thread(
+        svc.get_material_events,
         limit=pagination.limit,
         offset=pagination.offset,
         ticker=ticker,
         since=since,
     )
-    total = svc.count_announcements(ticker=ticker, is_material=True)
+    total = await asyncio.to_thread(svc.count_announcements, ticker=ticker, is_material=True)
     return PaginatedResponse.build(
         items=[_to_response(a) for a in items],
         total=total,
@@ -110,13 +113,14 @@ async def announcements_by_sector(
     svc: AnnouncementService = Depends(get_announcement_service),
 ) -> PaginatedResponse[AnnouncementResponse]:
     """Return announcements for all companies in a sector."""
-    items = svc.get_announcements_by_sector(
+    items = await asyncio.to_thread(
+        svc.get_announcements_by_sector,
         sector=sector,
         limit=pagination.limit,
         offset=pagination.offset,
         since=since,
     )
-    total = svc.count_announcements()
+    total = await asyncio.to_thread(svc.count_announcements)
     return PaginatedResponse.build(
         items=[_to_response(a) for a in items],
         total=total,
@@ -131,7 +135,7 @@ async def get_announcement(
     svc: AnnouncementService = Depends(get_announcement_service),
 ) -> AnnouncementResponse:
     """Return a single announcement by ID."""
-    item = svc.get_announcement_by_id(announcement_id)
+    item = await asyncio.to_thread(svc.get_announcement_by_id, announcement_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Announcement not found")
     return _to_response(item)
@@ -160,5 +164,5 @@ async def create_announcement(
         is_material=body.is_material,
         source_url=body.source_url,
     )
-    svc.store_announcements([announcement])
+    await asyncio.to_thread(svc.store_announcements, [announcement])
     return _to_response(announcement)

@@ -125,6 +125,7 @@ export function RBACAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
 
+    const controller = new AbortController();
     const config = getAuthConfig();
     const interval = setInterval(async () => {
       const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
@@ -135,6 +136,7 @@ export function RBACAuthProvider({ children }: { children: ReactNode }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: refreshToken }),
+          signal: controller.signal,
         });
         if (res.ok) {
           const data = (await res.json()) as AuthApiResponse;
@@ -151,7 +153,10 @@ export function RBACAuthProvider({ children }: { children: ReactNode }) {
       }
     }, config.refreshInterval * 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, [user]);
 
   const persistAuth = useCallback((accessToken: string, refreshToken: string, u: AuthUser) => {

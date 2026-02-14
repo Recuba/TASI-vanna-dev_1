@@ -154,7 +154,7 @@ export function QueryHistory({ onRerun, onSave, className }: QueryHistoryProps) 
               >
                 {labels[field]}
                 {isActive && (
-                  <span className="ml-0.5">
+                  <span className="ms-0.5">
                     {sortDirection === 'desc' ? '\u2193' : '\u2191'}
                   </span>
                 )}

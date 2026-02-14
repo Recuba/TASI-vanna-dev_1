@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { type ReportItem } from '@/lib/api-client';
+import { getReports, type ReportItem } from '@/lib/api-client';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -26,7 +26,6 @@ const typeColors: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 const PAGE_SIZE = 20;
-const API_BASE = '';
 
 // ---------------------------------------------------------------------------
 // Paginated response from backend (matches PaginatedResponse[ReportResponse])
@@ -52,7 +51,7 @@ export default function ReportsPage() {
   const [data, setData] = useState<PaginatedReportResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const mountedRef = useRef(true);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const reportTypes: { label: string; value: TypeFilter }[] = [
     { label: t('الكل', 'All'), value: 'all' },
@@ -78,34 +77,38 @@ export default function ReportsPage() {
   };
 
   const fetchReports = useCallback(async () => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({
-        page: String(page),
-        page_size: String(PAGE_SIZE),
-      });
-      if (filter !== 'all') {
-        params.set('report_type', filter);
-      }
-      if (search.trim()) {
-        params.set('search', search.trim());
-      }
-      const res = await fetch(`${API_BASE}/api/reports?${params}`);
-      if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-      const json: PaginatedReportResponse = await res.json();
-      if (mountedRef.current) setData(json);
+      const json = await getReports(
+        {
+          page,
+          page_size: PAGE_SIZE,
+          report_type: filter !== 'all' ? filter : undefined,
+          search: search.trim() || undefined,
+        },
+        controller.signal,
+      );
+      if (!controller.signal.aborted) setData(json);
     } catch (err) {
-      if (mountedRef.current) setError((err as Error).message);
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (!controller.signal.aborted) setError((err as Error).message);
     } finally {
-      if (mountedRef.current) setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [page, filter, search]);
 
   useEffect(() => {
-    mountedRef.current = true;
     fetchReports();
-    return () => { mountedRef.current = false; };
+    return () => {
+      controllerRef.current?.abort();
+    };
   }, [fetchReports]);
 
   const reports = data?.items ?? [];
@@ -140,7 +143,7 @@ export default function ReportsPage() {
             className={cn(
               'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
               'border gold-border rounded-md px-3 py-2 text-sm',
-              isRTL ? 'pr-10' : 'pl-10',
+              'ps-10',
               'placeholder:text-[var(--text-muted)]',
               'focus:outline-none focus:border-gold transition-colors',
             )}
@@ -289,7 +292,7 @@ export default function ReportsPage() {
                 </button>
                 <span className="text-sm font-medium text-[var(--text-secondary)]">
                   {t(`صفحة ${page} من ${totalPages}`, `Page ${page} of ${totalPages}`)}
-                  <span className={cn('text-[var(--text-muted)]', isRTL ? 'mr-1' : 'ml-1')}>({total} {t('تقرير', 'reports')})</span>
+                  <span className="text-[var(--text-muted)] ms-1">({total} {t('تقرير', 'reports')})</span>
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

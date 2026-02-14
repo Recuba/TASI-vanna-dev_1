@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { getAnnouncements, type AnnouncementListResponse } from '@/lib/api-client';
 
 // ---------------------------------------------------------------------------
 // Types (matches AnnouncementItem in api-client.ts)
@@ -22,14 +23,6 @@ interface Announcement {
   is_material: boolean;
   source_url: string | null;
   created_at: string | null;
-}
-
-interface PaginatedResponse {
-  items: Announcement[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -195,57 +188,47 @@ export default function AnnouncementsPage() {
     { key: 'general', label: t('عام', 'General') },
   ] as const;
 
+  const controllerRef = useRef<AbortController | null>(null);
+
   const fetchAnnouncements = useCallback(async () => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     setLoading(true);
     setError(null);
     setPgRequired(false);
     try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('page_size', String(PAGE_SIZE));
-      if (filter === 'material') {
-        params.set('category', 'material');
-      } else if (filter === 'general') {
-        params.set('category', 'general');
+      const category = filter === 'material' ? 'material' : filter === 'general' ? 'general' : undefined;
+      const data: AnnouncementListResponse = await getAnnouncements(
+        { page, page_size: PAGE_SIZE, category },
+        controller.signal,
+      );
+      if (!controller.signal.aborted) {
+        setAnnouncements(data.items);
+        setTotal(data.total);
       }
-
-      const res = await fetch(`/api/announcements?${params.toString()}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(typeof window !== 'undefined' && localStorage.getItem('rad-ai-token')
-            ? { Authorization: `Bearer ${localStorage.getItem('rad-ai-token')}` }
-            : {}),
-        },
-      });
-
-      if (res.status === 503 || res.status === 501) {
-        setPgRequired(true);
-        setLoading(false);
-        return;
-      }
-
-      if (!res.ok) {
-        throw new Error(`${res.status} ${res.statusText}`);
-      }
-
-      const data: PaginatedResponse = await res.json();
-      setAnnouncements(data.items);
-      setTotal(data.total);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (controller.signal.aborted) return;
       const msg = err instanceof Error ? err.message : t('خطأ غير متوقع', 'Unexpected error');
-      // Check if it's a connection error that likely means no PG
-      if (msg.includes('503') || msg.includes('Failed to fetch')) {
+      if (msg.includes('503') || msg.includes('501') || msg.includes('Failed to fetch') || msg.includes('Network error')) {
         setPgRequired(true);
       } else {
         setError(msg);
       }
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [page, filter, t]);
 
   useEffect(() => {
     fetchAnnouncements();
+    return () => {
+      controllerRef.current?.abort();
+    };
   }, [fetchAnnouncements]);
 
   const handleFilterChange = (key: string | null) => {

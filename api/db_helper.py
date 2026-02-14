@@ -12,6 +12,7 @@ to ``%s`` before execution.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import sqlite3
@@ -113,3 +114,36 @@ def fetchone(conn: Any, sql: str, params: Params = None) -> Optional[Dict[str, A
 
     row = conn.execute(sql, params or ()).fetchone()
     return dict(row) if row else None
+
+
+# ---------------------------------------------------------------------------
+# Async wrappers (run sync DB I/O in a thread)
+# ---------------------------------------------------------------------------
+
+
+def _sync_fetchall(sql: str, params: Params = None) -> List[Dict[str, Any]]:
+    """Open a connection, run fetchall, close. Designed for asyncio.to_thread."""
+    conn = get_conn()
+    try:
+        return fetchall(conn, sql, params)
+    finally:
+        conn.close()
+
+
+def _sync_fetchone(sql: str, params: Params = None) -> Optional[Dict[str, Any]]:
+    """Open a connection, run fetchone, close. Designed for asyncio.to_thread."""
+    conn = get_conn()
+    try:
+        return fetchone(conn, sql, params)
+    finally:
+        conn.close()
+
+
+async def afetchall(sql: str, params: Params = None) -> List[Dict[str, Any]]:
+    """Async wrapper: run a fetchall query in a background thread."""
+    return await asyncio.to_thread(_sync_fetchall, sql, params)
+
+
+async def afetchone(sql: str, params: Params = None) -> Optional[Dict[str, Any]]:
+    """Async wrapper: run a fetchone query in a background thread."""
+    return await asyncio.to_thread(_sync_fetchone, sql, params)

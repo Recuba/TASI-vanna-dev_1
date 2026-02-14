@@ -224,7 +224,7 @@ export function QueryHistoryItem({
             )}
             <button
               onClick={() => onDelete(record.id)}
-              className="flex items-center gap-1 text-xs px-2 py-1 rounded text-accent-red/70 hover:text-accent-red hover:bg-accent-red/10 transition-colors ml-auto"
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded text-accent-red/70 hover:text-accent-red hover:bg-accent-red/10 transition-colors ms-auto"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />

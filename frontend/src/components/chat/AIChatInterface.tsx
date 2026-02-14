@@ -219,7 +219,7 @@ export function AIChatInterface() {
 
             {/* Follow-up suggestions */}
             {followUps.length > 0 && (
-              <div className="flex flex-wrap gap-2 justify-start pr-11 animate-fade-in-up">
+              <div className="flex flex-wrap gap-2 justify-start pe-11 animate-fade-in-up">
                 {followUps.map((text, i) => (
                   <button
                     key={i}

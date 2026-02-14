@@ -218,7 +218,7 @@ export default function MarketPage() {
               className={cn(
                 'w-full bg-[var(--bg-input)] text-[var(--text-primary)]',
                 'border border-[#2A2A2A] rounded-xl px-3 py-2.5 text-sm',
-                language === 'ar' ? 'pr-10' : 'pl-10',
+                'ps-10',
                 'placeholder:text-[var(--text-muted)]',
                 'focus:outline-none focus:border-gold transition-colors',
               )}
@@ -278,7 +278,7 @@ export default function MarketPage() {
                 )}
               >
                 {translateSector(s.sector, language)}
-                <span className={cn("text-[10px] opacity-70", language === 'ar' ? 'mr-1' : 'ml-1')}>({s.company_count})</span>
+                <span className="text-[10px] opacity-70 ms-1">({s.company_count})</span>
               </button>
             ))}
           </div>
@@ -288,7 +288,7 @@ export default function MarketPage() {
         <section>
           <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
             {selectedSector ? translateSector(selectedSector, language) : t('\u062C\u0645\u064A\u0639 \u0627\u0644\u0634\u0631\u0643\u0627\u062A', 'All Companies')}
-            {entities && <span className={cn("text-[var(--text-muted)] font-normal", language === 'ar' ? 'mr-2' : 'ml-2')}>({totalCount})</span>}
+            {entities && <span className="text-[var(--text-muted)] font-normal ms-2">({totalCount})</span>}
           </h2>
 
           {entitiesLoading ? (
@@ -339,7 +339,7 @@ export default function MarketPage() {
                             </p>
                             <p className="text-xs text-[var(--text-muted)]">
                               {stock.ticker}
-                              {stock.sector && <span className={language === 'ar' ? 'mr-1' : 'ml-1'}> &middot; {translateSector(stock.sector, language)}</span>}
+                              {stock.sector && <span className="ms-1"> &middot; {translateSector(stock.sector, language)}</span>}
                             </p>
                           </Link>
                         </td>
@@ -396,7 +396,7 @@ export default function MarketPage() {
                       `\u0635\u0641\u062D\u0629 ${page} \u0645\u0646 ${totalPages}`,
                       `Page ${page} of ${totalPages}`
                     )}
-                    <span className={cn("text-[var(--text-muted)]", language === 'ar' ? 'mr-1' : 'ml-1')}>
+                    <span className="text-[var(--text-muted)] ms-1">
                       ({totalCount} {t('\u0634\u0631\u0643\u0629', 'companies')})
                     </span>
                   </span>

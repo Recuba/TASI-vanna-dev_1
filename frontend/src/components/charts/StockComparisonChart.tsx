@@ -13,6 +13,7 @@ import {
 import { RAID_CHART_OPTIONS } from './chart-config';
 import { ChartSkeleton } from './ChartSkeleton';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { getOHLCVData } from '@/lib/api-client';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -25,8 +26,6 @@ const PERIODS = [
   { label: '6M', value: '6mo' },
   { label: '1Y', value: '1y' },
 ] as const;
-
-const API_BASE = '';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,12 +50,13 @@ interface StockComparisonChartProps {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function fetchOHLCV(ticker: string, period: string): Promise<OHLCVItem[]> {
-  const url = `${API_BASE}/api/v1/charts/${encodeURIComponent(ticker)}/ohlcv?period=${encodeURIComponent(period)}`;
-  const res = await fetch(url);
-  if (!res.ok) return [];
-  const json = await res.json();
-  return json.data ?? [];
+async function fetchOHLCV(ticker: string, period: string, signal?: AbortSignal): Promise<OHLCVItem[]> {
+  try {
+    const json = await getOHLCVData(ticker, { period }, signal);
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /** Normalize close prices to base 100 (first close = 100). */
@@ -92,10 +92,18 @@ function StockComparisonChartInner({
 
   // Track which tickers actually have data
   const [loadedTickers, setLoadedTickers] = useState<string[]>([]);
+  const fetchControllerRef = useRef<AbortController | null>(null);
 
   const buildChart = useCallback(async () => {
     const container = containerRef.current;
     if (!container || tickers.length === 0) return;
+
+    // Abort previous fetch
+    if (fetchControllerRef.current) {
+      fetchControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    fetchControllerRef.current = controller;
 
     // Clean up previous chart
     if (observerRef.current) {
@@ -111,28 +119,13 @@ function StockComparisonChartInner({
     setLoading(true);
     setError(null);
 
-    // Race the fetch against a 15-second timeout
-    const timeoutPromise = new Promise<'timeout'>((resolve) =>
-      setTimeout(() => resolve('timeout'), 15000),
-    );
-
     try {
-      // Fetch all tickers in parallel, with timeout
-      const raceResult = await Promise.race([
-        Promise.all(tickers.map((ticker) => fetchOHLCV(ticker, period))),
-        timeoutPromise,
-      ]);
+      // Fetch all tickers in parallel
+      const results = await Promise.all(
+        tickers.map((ticker) => fetchOHLCV(ticker, period, controller.signal)),
+      );
 
-      if (raceResult === 'timeout') {
-        setError(t(
-          'انتهت مهلة التحميل. تحقق من اتصالك بالإنترنت وأعد المحاولة.',
-          'Loading timed out. Check your connection and try again.',
-        ));
-        setLoading(false);
-        return;
-      }
-
-      const results = raceResult as OHLCVItem[][];
+      if (controller.signal.aborted) return;
 
       const validTickers: string[] = [];
       const normalizedSets: LineData[][] = [];
@@ -189,7 +182,9 @@ function StockComparisonChartInner({
 
       setLoading(false);
       requestAnimationFrame(() => setChartVisible(true));
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (controller.signal.aborted) return;
       setError(t('فشل تحميل بيانات المقارنة.', 'Failed to load comparison data.'));
       setLoading(false);
     }
@@ -198,6 +193,7 @@ function StockComparisonChartInner({
   useEffect(() => {
     buildChart();
     return () => {
+      fetchControllerRef.current?.abort();
       if (observerRef.current) {
         observerRef.current.disconnect();
         observerRef.current = null;

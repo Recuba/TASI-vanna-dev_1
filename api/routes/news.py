@@ -6,6 +6,7 @@ Provides read endpoints (public) and a write endpoint (authenticated).
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -59,10 +60,11 @@ async def list_news(
     svc: NewsAggregationService = Depends(get_news_service),
 ) -> PaginatedResponse[NewsResponse]:
     """Return the latest news articles across all tickers."""
-    articles = svc.get_latest_news(
-        limit=pagination.limit, offset=pagination.offset, language=language
+    articles = await asyncio.to_thread(
+        svc.get_latest_news,
+        limit=pagination.limit, offset=pagination.offset, language=language,
     )
-    total = svc.count_articles()
+    total = await asyncio.to_thread(svc.count_articles)
     return PaginatedResponse.build(
         items=[_to_response(a) for a in articles],
         total=total,
@@ -80,14 +82,15 @@ async def news_by_ticker(
     svc: NewsAggregationService = Depends(get_news_service),
 ) -> PaginatedResponse[NewsResponse]:
     """Return news articles for a specific ticker."""
-    articles = svc.get_news_by_ticker(
+    articles = await asyncio.to_thread(
+        svc.get_news_by_ticker,
         ticker=ticker,
         limit=pagination.limit,
         offset=pagination.offset,
         sentiment_label=sentiment,
         since=since,
     )
-    total = svc.count_articles(ticker=ticker)
+    total = await asyncio.to_thread(svc.count_articles, ticker=ticker)
     return PaginatedResponse.build(
         items=[_to_response(a) for a in articles],
         total=total,
@@ -104,13 +107,14 @@ async def news_by_sector(
     svc: NewsAggregationService = Depends(get_news_service),
 ) -> PaginatedResponse[NewsResponse]:
     """Return news articles for all companies in a sector."""
-    articles = svc.get_news_by_sector(
+    articles = await asyncio.to_thread(
+        svc.get_news_by_sector,
         sector=sector,
         limit=pagination.limit,
         offset=pagination.offset,
         since=since,
     )
-    total = svc.count_articles(sector=sector)
+    total = await asyncio.to_thread(svc.count_articles, sector=sector)
     return PaginatedResponse.build(
         items=[_to_response(a) for a in articles],
         total=total,
@@ -125,7 +129,7 @@ async def get_article(
     svc: NewsAggregationService = Depends(get_news_service),
 ) -> NewsResponse:
     """Return a single news article by ID."""
-    article = svc.get_article_by_id(article_id)
+    article = await asyncio.to_thread(svc.get_article_by_id, article_id)
     if article is None:
         raise HTTPException(status_code=404, detail="Article not found")
     return _to_response(article)
@@ -152,5 +156,5 @@ async def create_article(
         sentiment_label=body.sentiment_label,
         published_at=datetime.now(timezone.utc),
     )
-    svc.store_articles([article])
+    await asyncio.to_thread(svc.store_articles, [article])
     return _to_response(article)
