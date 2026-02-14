@@ -290,7 +290,7 @@ try:
             path_limits={
                 "/api/auth/login": 10,
                 "/api/auth/register": 10,
-                "/api/v1/charts": 30,
+                "/api/v1/charts": 120,
             },
         )
 
@@ -515,7 +515,11 @@ except ImportError as exc:
 @app.get("/", response_class=HTMLResponse)
 async def custom_index():
     template_path = _HERE / "templates" / "index.html"
-    return template_path.read_text(encoding="utf-8")
+    html = template_path.read_text(encoding="utf-8")
+    # Inject the actual frontend URL (env-driven, default to local dev)
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
+    html = html.replace("{{FRONTEND_URL}}", frontend_url)
+    return html
 
 
 # Serve static assets (logo, favicon, etc.)
