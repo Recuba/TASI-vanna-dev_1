@@ -20,21 +20,7 @@ export const LazyPreBuiltCharts = dynamic(
   () => import('@/components/charts/PreBuiltCharts'),
   {
     ssr: false,
-    loading: () => {
-      // Inline minimal skeleton to avoid circular dependency with Skeletons
-      const el = require('react').createElement;
-      return el('div', {
-        role: 'progressbar',
-        'aria-label': 'Loading charts',
-        'aria-busy': 'true',
-        style: {
-          height: 400,
-          background: '#1A1A1A',
-          borderRadius: 12,
-          border: '1px solid rgba(212, 168, 75, 0.1)',
-        },
-      });
-    },
+    loading: () => null,
   },
 );
 
@@ -46,19 +32,6 @@ export const LazyStockComparisonChart = dynamic(
   () => import('@/components/charts/StockComparisonChart'),
   {
     ssr: false,
-    loading: () => {
-      const el = require('react').createElement;
-      return el('div', {
-        role: 'progressbar',
-        'aria-label': 'Loading comparison chart',
-        'aria-busy': 'true',
-        style: {
-          height: 500,
-          background: '#1A1A1A',
-          borderRadius: 12,
-          border: '1px solid rgba(212, 168, 75, 0.1)',
-        },
-      });
-    },
+    loading: () => null,
   },
 );

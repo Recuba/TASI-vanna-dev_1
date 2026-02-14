@@ -12,8 +12,9 @@ import { metricsCollector } from './metrics-collector';
 
 const RATE_LIMIT_WARN_THRESHOLD = 5;
 
-export const metricsMiddleware: Middleware = (useSWRNext) => {
-  return (key, fetcher, config) => {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export const metricsMiddleware: Middleware = (useSWRNext: any) => {
+  return (key: any, fetcher: any, config: any) => {
     const wrappedFetcher = fetcher
       ? (...args: unknown[]) => {
           const start = performance.now();

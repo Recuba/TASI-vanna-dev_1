@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import type { Role } from '@/types/auth';
-import { hasRole, ROLE_HIERARCHY } from '@/types/auth';
+import { hasRole } from '@/types/auth';
 import { getAuthConfig } from '@/config/auth';
 
 // ---------------------------------------------------------------------------

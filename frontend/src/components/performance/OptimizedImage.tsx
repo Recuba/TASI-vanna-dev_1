@@ -24,10 +24,12 @@ export function OptimizedImage({
   quality = 80,
   priority = false,
   sizes,
+  alt,
   ...props
 }: OptimizedImageProps) {
   return (
     <Image
+      alt={alt}
       quality={quality}
       loading={priority ? 'eager' : 'lazy'}
       priority={priority}
