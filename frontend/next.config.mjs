@@ -48,6 +48,14 @@ const nextConfig = {
         ],
       },
       {
+        // Disable buffering for news SSE stream
+        source: '/api/v1/news/stream',
+        headers: [
+          { key: 'X-Accel-Buffering', value: 'no' },
+          { key: 'Cache-Control', value: 'no-cache, no-transform' },
+        ],
+      },
+      {
         source: '/_next/static/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },

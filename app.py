@@ -451,6 +451,17 @@ try:
 except ImportError as exc:
     logger.warning("News feed route not available: %s", exc)
 
+# ---------------------------------------------------------------------------
+# 9d-2. News SSE stream route (real-time push via Server-Sent Events)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.news_stream import router as news_stream_router
+
+    app.include_router(news_stream_router)
+    logger.info("News stream route registered at /api/v1/news/stream")
+except ImportError as exc:
+    logger.warning("News stream route not available: %s", exc)
+
 
 # ---------------------------------------------------------------------------
 # 9e. Market analytics routes (Dual-backend (SQLite/PostgreSQL) -- works with any backend)
