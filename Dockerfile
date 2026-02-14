@@ -40,6 +40,7 @@ COPY chart_engine/ chart_engine/
 COPY services/ services/
 COPY database/ database/
 COPY api/ api/
+COPY models/ models/
 COPY auth/ auth/
 COPY cache/ cache/
 COPY middleware/ middleware/
