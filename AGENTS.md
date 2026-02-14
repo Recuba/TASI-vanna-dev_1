@@ -24,7 +24,7 @@ These are non-negotiable prerequisites. Do not skip them, even for "small" chang
 - **Database:** SQLite (dev) / PostgreSQL 16 (prod), controlled by `DB_BACKEND` env var
 - **Configuration:** `pydantic-settings` (`config/settings.py`)
 - **Frontend (legacy):** Single-page HTML (`templates/index.html`) using `<vanna-chat>` web component
-- **Frontend (new):** Next.js 14 + TypeScript + Tailwind CSS (`frontend/`)
+- **Frontend (production):** Next.js 14 + TypeScript + Tailwind CSS (`frontend/`) — 15 pages, RTL Arabic, SSE news feed
 - **Server:** Uvicorn on port 8084
 - **Container:** Docker Compose (PostgreSQL + app + optional pgAdmin)
 - **Data Pipeline:** pandas + numpy for CSV normalization
@@ -37,7 +37,7 @@ When working in a team, respect file ownership boundaries:
 |---|---|
 | **database-architect** | `database/`, `csv_to_sqlite.py`, `ingestion/` |
 | **backend-services** | `app.py`, `services/` (except `health_service.py`) |
-| **frontend-dev** | `frontend/`, `templates/` |
+| **frontend-dev** | `frontend/` (incl. `src/app/news/components/`, `src/app/news/hooks/`), `templates/` |
 | **infra-testing** | `config/`, `tests/`, `.github/`, `docker-compose.yml`, `Dockerfile`, `requirements.txt`, `services/health_service.py`, `CLAUDE.md`, `AGENTS.md`, `README.md` |
 
 Do NOT modify files owned by other agents unless coordinating with them.
@@ -58,10 +58,20 @@ Do NOT modify files owned by other agents unless coordinating with them.
 │   └── csv_to_postgres.py          # CSV -> PostgreSQL pipeline
 ├── services/
 │   ├── health_service.py           # Health checks (DB, LLM)
-│   ├── news_service.py             # News article CRUD
+│   ├── news_store.py               # SQLite news storage (sync + async)
+│   ├── news_scraper.py             # 5-source Arabic news scraper
+│   ├── news_scheduler.py           # Background news fetch scheduler
+│   ├── news_service.py             # News CRUD (PostgreSQL only)
 │   ├── reports_service.py          # Technical reports CRUD
 │   └── announcement_service.py     # Announcement CRUD
-├── frontend/                       # Next.js 14 app (in progress)
+├── api/
+│   ├── routes/                     # FastAPI async route handlers
+│   └── db_helper.py                # Async DB wrappers
+├── frontend/                       # Next.js 14 app (production)
+│   ├── src/app/news/               # News module (decomposed)
+│   │   ├── components/             # ArticleCard, FilterBar, etc.
+│   │   ├── hooks/                  # useNewsFilters
+│   │   └── utils.ts                # Shared constants & helpers
 ├── templates/index.html            # Legacy vanna-chat UI
 ├── docker-compose.yml              # PostgreSQL + app + pgAdmin
 ├── Dockerfile                      # Python 3.11 container
@@ -136,8 +146,9 @@ python database/csv_to_postgres.py            # CSV -> PostgreSQL directly
 ## Testing
 
 ```bash
-python -m unittest test_database.py -v        # 20 DB integrity tests
-python test_app_assembly_v2.py                # 24 Vanna assembly tests
+python -m pytest tests/ -q                    # 573 backend tests
+cd frontend && npx vitest run                 # 139 frontend tests
+cd frontend && npx next build                 # 15-page build verification
 ```
 
 All tests must pass before merging changes.
@@ -180,5 +191,7 @@ These are critical patterns specific to Vanna 2.0. Getting them wrong causes run
 - When modifying `csv_to_sqlite.py` column mappings, verify against the actual CSV headers.
 - ALWAYS read `AGENTS.md` and `CLAUDE.md` at the start of every session before making changes.
 - ALWAYS invoke the `/vanna` skill and follow its best practices before writing or modifying any Vanna 2.0 code.
-- Services in `services/` use `psycopg2` and require PostgreSQL. They do not work with SQLite.
+- Services in `services/` that use `psycopg2` require PostgreSQL. Use `news_store.py` for SQLite news operations.
 - Configuration changes should go through `config/settings.py`, not raw `os.environ.get()` calls.
+- In FastAPI route handlers, use `aget_*` async methods (never sync `get_*` methods) to avoid blocking the event loop.
+- Frontend must use Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`), never physical (`ml-*`, `mr-*`, `pl-*`, `pr-*`).

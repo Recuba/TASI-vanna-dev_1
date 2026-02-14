@@ -41,16 +41,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── services/
 │   ├── __init__.py
 │   ├── health_service.py           # Health checks (DB connectivity, LLM status)
-│   ├── news_service.py             # CRUD for news_articles table
+│   ├── news_store.py               # SQLite news storage (sync + async wrappers)
+│   ├── news_scraper.py             # 5-source Arabic news scraper
+│   ├── news_scheduler.py           # Background news fetch scheduler
+│   ├── news_paraphraser.py         # Arabic synonym substitution
+│   ├── news_service.py             # News CRUD (PostgreSQL only)
 │   ├── reports_service.py          # CRUD for technical_reports table
-│   └── announcement_service.py     # CRUD for announcements table
-├── frontend/                       # Next.js 14 app (Ra'd AI portal, in progress)
+│   ├── announcement_service.py     # CRUD for announcements table
+│   ├── auth_service.py             # JWT authentication service
+│   ├── db_compat.py                # SQLite/PostgreSQL abstraction layer
+│   ├── stock_ohlcv.py              # OHLCV data service
+│   └── tasi_index.py               # TASI index data service
+├── api/
+│   ├── routes/                     # FastAPI route handlers (async)
+│   │   ├── news_feed.py            # /api/v1/news/feed (SQLite news API)
+│   │   ├── news_stream.py          # /api/v1/news/stream (SSE endpoint)
+│   │   ├── charts_analytics.py     # Chart data endpoints
+│   │   ├── market_analytics.py     # Market analytics endpoints
+│   │   ├── stock_data.py           # Stock data endpoints
+│   │   ├── sqlite_entities.py      # Entity search (SQLite)
+│   │   └── ...                     # auth, health, reports, announcements
+│   └── db_helper.py                # Async DB query wrappers (asyncio.to_thread)
+├── frontend/                       # Next.js 14 app (production)
 │   ├── src/
 │   │   ├── app/                    # Next.js app router pages
-│   │   ├── components/layout/      # Header, Footer, Sidebar
-│   │   ├── providers/              # ThemeProvider
-│   │   ├── styles/design-system.ts # Gold/dark design tokens
-│   │   └── lib/utils.ts            # Utility functions
+│   │   │   ├── news/               # News feed (decomposed)
+│   │   │   │   ├── page.tsx        # Main news page (~500 lines)
+│   │   │   │   ├── utils.ts        # Shared constants & helpers
+│   │   │   │   ├── hooks/
+│   │   │   │   │   └── useNewsFilters.ts
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── ArticleCard.tsx
+│   │   │   │   │   ├── FilterBar.tsx
+│   │   │   │   │   ├── NewArticlesBanner.tsx
+│   │   │   │   │   ├── SearchInput.tsx
+│   │   │   │   │   ├── SkeletonCard.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── [id]/page.tsx   # Article detail page
+│   │   │   ├── charts/             # TradingView + TASI charts
+│   │   │   ├── market/             # Market overview
+│   │   │   ├── chat/               # AI chat interface
+│   │   │   └── ...                 # admin, login, reports, etc.
+│   │   ├── components/             # Shared components
+│   │   │   ├── layout/             # Header, Footer, Sidebar
+│   │   │   ├── charts/             # Chart wrappers
+│   │   │   ├── chat/               # AI chat components
+│   │   │   └── common/             # Command palette, etc.
+│   │   ├── lib/
+│   │   │   ├── api-client.ts       # API functions with AbortController
+│   │   │   ├── config.ts           # Runtime config (env-driven)
+│   │   │   ├── hooks/use-api.ts    # Data fetching hooks
+│   │   │   └── utils.ts            # Utility functions
+│   │   ├── providers/              # ThemeProvider, LanguageProvider
+│   │   └── styles/design-system.ts # Gold/dark design tokens
 │   └── package.json
 ├── templates/
 │   └── index.html                  # Legacy frontend UI (vanna-chat web component)
@@ -84,12 +127,14 @@ docker compose up -d
 # Start with pgAdmin included
 docker compose --profile tools up -d
 
-# Run all tests
-python -m unittest discover -s . -p "test_*.py"
+# Run backend tests (573 tests)
+python -m pytest tests/ -q
 
-# Run specific test suites
-python test_database.py              # 20 database integrity tests
-python test_app_assembly_v2.py       # 24 Vanna assembly tests
+# Run frontend tests (139 tests)
+cd frontend && npx vitest run
+
+# Frontend production build (15 pages)
+cd frontend && npx next build
 
 # Rebuild SQLite database from CSV
 python csv_to_sqlite.py
@@ -101,7 +146,7 @@ python database/migrate_sqlite_to_pg.py
 python database/csv_to_postgres.py
 ```
 
-**Environment setup:** Copy `.env.example` to `.env` and configure. At minimum set `ANTHROPIC_API_KEY`. See `.env.example` for all available settings.
+**Environment setup:** Copy `.env.example` to `.env` and configure. At minimum set `GEMINI_API_KEY`. See `.env.example` for all available settings. For the frontend, copy `frontend/.env.local.example` to `frontend/.env.local`.
 
 ## Architecture
 
@@ -138,15 +183,35 @@ Assembles a Vanna 2.0 `Agent` with 5 components:
 The `VannaFastAPIServer.create_app()` creates the FastAPI app. Vanna's default "/" route is **explicitly removed** before registering the custom template route, because FastAPI uses first-match routing.
 
 ### Services (`services/`)
-PostgreSQL-backed CRUD services using `psycopg2`:
-- `news_service.py` - News article aggregation and retrieval
+
+**SQLite services** (work with both backends):
+- `news_store.py` - SQLite news storage with sync methods + async wrappers (`aget_*` via `asyncio.to_thread`). The sync methods are deprecated in favor of their async counterparts for use in FastAPI handlers.
+- `news_scraper.py` - Scrapes 5 Arabic news sources (config-driven via `ScraperSettings`)
+- `news_scheduler.py` - Background daemon thread for periodic news fetching
+- `news_paraphraser.py` - Arabic synonym substitution for content diversity
+- `db_compat.py` - SQLite/PostgreSQL abstraction layer
+- `health_service.py` - Structured health checks (database connectivity, LLM availability)
+
+**PostgreSQL-only CRUD services** (using `psycopg2`):
+- `news_service.py` - News article aggregation and retrieval (PostgreSQL)
 - `reports_service.py` - Technical/analyst report management
 - `announcement_service.py` - CMA/Tadawul announcement tracking
-- `health_service.py` - Structured health checks (database connectivity, LLM availability)
+
+### Async I/O Layer
+
+All route handlers are `async def`. Synchronous database calls (sqlite3, psycopg2) are wrapped in `asyncio.to_thread()` to prevent blocking the event loop:
+- `api/db_helper.py` - `afetchall()` and `afetchone()` async wrappers
+- `services/news_store.py` - `aget_latest_news()`, `acount_articles()`, etc.
+- `database/manager.py` - `aconnection()` async context manager
 
 ### Frontend
 - **Legacy** (`templates/index.html`): Custom Ra'd AI design with gold palette (#D4A84B), dark background (#0E0E0E), Tajawal font. Embeds `<vanna-chat>` web component loaded as ES module from CDN.
-- **New** (`frontend/`): Next.js 14 app with TypeScript, Tailwind CSS, gold/dark design system. In progress.
+- **Production** (`frontend/`): Next.js 14 app with TypeScript, Tailwind CSS, gold/dark design system. 15 pages, 139 vitest tests. Features include:
+  - Full Arabic RTL support via Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`)
+  - Real-time news feed via SSE (`/api/v1/news/stream`)
+  - AbortController on all fetch calls (race-condition-safe)
+  - Virtual scrolling for large lists
+  - Env-driven runtime config (`frontend/src/lib/config.ts`)
 
 ### Docker (`docker-compose.yml`)
 - **postgres**: PostgreSQL 16 Alpine, auto-initialized with `database/schema.sql`, health-checked
@@ -168,5 +233,7 @@ PostgreSQL-backed CRUD services using `psycopg2`:
 - Test files have hardcoded Windows paths for the database -- they will fail on other machines without path adjustment.
 - The `<vanna-chat>` component requires internet (loaded from CDN).
 - Database path in app.py is script-relative via `Path(__file__).resolve().parent / "saudi_stocks.db"`.
-- Services in `services/` require PostgreSQL (`psycopg2`) -- they are not available when running with SQLite backend.
+- PostgreSQL-only services (`news_service.py`, `reports_service.py`, `announcement_service.py`) use `psycopg2` and are not available with SQLite backend. Use `news_store.py` for SQLite news operations.
 - `config/settings.py` uses `validation_alias` for POSTGRES_* env vars so the same `.env` file works for both Docker Compose and the config module.
+- In FastAPI route handlers, always use `aget_*` async methods from `news_store.py`, never the sync `get_*` methods (they block the event loop).
+- Frontend uses Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`) for RTL. Do NOT use `ml-*`, `mr-*`, `pl-*`, `pr-*` for horizontal spacing.

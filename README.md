@@ -11,8 +11,12 @@ Built on [Vanna 2.0](https://vanna.ai/) with Google Gemini, supporting dual SQLi
 - Comprehensive data for ~500 Saudi-listed companies
 - Financial statements (balance sheet, income statement, cash flow) with multi-period history
 - Market data, valuation metrics, analyst consensus, dividends
-- News aggregation, announcement tracking, technical reports (PostgreSQL)
+- Real-time news feed with Server-Sent Events (SSE) from 5 Arabic sources
+- Full Arabic RTL support with Tailwind CSS logical properties
+- Virtual scrolling for high-performance list rendering
+- News aggregation, announcement tracking, technical reports
 - Dual database backend: SQLite for development, PostgreSQL for production
+- Async I/O wrappers (`asyncio.to_thread`) for non-blocking database access
 
 ## Quick Start
 
@@ -51,31 +55,42 @@ Services:
 ## Architecture
 
 ```
-                    +------------------+
-                    |   Browser/User   |
-                    +--------+---------+
-                             |
-                    +--------v---------+
-                    |  FastAPI (8084)   |
-                    |  - Chat SSE      |
-                    |  - Static files  |
-                    +--------+---------+
-                             |
-                    +--------v---------+
-                    |  Vanna 2.0 Agent |
-                    |  - Gemini LLM    |
-                    |  - RunSqlTool    |
-                    |  - VisualizeTool |
-                    +--------+---------+
-                             |
-              +--------------+--------------+
-              |                             |
-     +--------v--------+          +--------v--------+
-     |     SQLite       |          |   PostgreSQL    |
-     | (saudi_stocks.db)|          |  (tasi_platform)|
-     |  10 core tables  |          |  10 core + 14   |
-     +-----------------+          |  extended tables |
-                                  +-----------------+
+        +-------------------+          +-------------------+
+        |  Next.js 14 (3000)|          |   Browser/User    |
+        |  - RTL Arabic UI  |          |   (Legacy UI)     |
+        |  - SSE News Feed  |          +--------+----------+
+        |  - Virtual Scroll |                   |
+        +--------+----------+                   |
+                 |                              |
+                 +----------+  +----------------+
+                            |  |
+                   +--------v--v-------+
+                   |  FastAPI (8084)    |
+                   |  - Chat SSE       |
+                   |  - News Stream    |
+                   |  - REST API       |
+                   +--------+----------+
+                            |
+                   +--------v----------+
+                   |  Vanna 2.0 Agent  |
+                   |  - Gemini LLM     |
+                   |  - RunSqlTool     |
+                   |  - VisualizeTool  |
+                   +--------+----------+
+                            |
+                   +--------v----------+
+                   |  Async I/O Layer  |
+                   |  asyncio.to_thread|
+                   +--------+----------+
+                            |
+             +--------------+--------------+
+             |                             |
+    +--------v--------+          +--------v--------+
+    |     SQLite       |          |   PostgreSQL    |
+    | (saudi_stocks.db)|          |  (tasi_platform)|
+    |  10 core tables  |          |  10 core + 14   |
+    +-----------------+          |  extended tables |
+                                 +-----------------+
 ```
 
 ## Database
@@ -120,14 +135,14 @@ All settings via environment variables. See `.env.example` for the complete refe
 ## Testing
 
 ```bash
-# All tests
-python -m unittest discover -s . -p "test_*.py"
+# Backend tests (573 tests)
+python -m pytest tests/ -q
 
-# Database integrity (20 tests)
-python test_database.py
+# Frontend tests (139 tests)
+cd frontend && npx vitest run
 
-# Vanna assembly (24 tests)
-python test_app_assembly_v2.py
+# Frontend build verification (15 pages)
+cd frontend && npx next build
 ```
 
 ## Project Structure
