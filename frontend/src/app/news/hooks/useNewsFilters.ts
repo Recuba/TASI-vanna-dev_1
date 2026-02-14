@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { NewsFeedItem } from '@/lib/api-client';
 
-export interface NewsFiltersState {
+interface NewsFiltersState {
   page: number;
   activeSource: string | null;
   searchQuery: string;
@@ -15,7 +15,7 @@ export interface NewsFiltersState {
   advancedFilterCount: number;
 }
 
-export interface NewsFiltersActions {
+interface NewsFiltersActions {
   setPage: (p: number | ((prev: number) => number)) => void;
   setSearchQuery: (q: string) => void;
   setShowSaved: (v: boolean) => void;
@@ -25,7 +25,6 @@ export interface NewsFiltersActions {
   handleSentimentChange: (sentiment: string) => void;
   handleDateFromChange: (value: string) => void;
   handleDateToChange: (value: string) => void;
-  resetPagination: () => void;
 }
 
 export function useNewsFilters(
@@ -44,11 +43,6 @@ export function useNewsFilters(
     () => (activeSentiment ? 1 : 0) + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0),
     [activeSentiment, dateFrom, dateTo],
   );
-
-  const resetPagination = useCallback(() => {
-    setPage(1);
-    setAllArticles(() => []);
-  }, [setAllArticles]);
 
   const handleSourceChange = useCallback((source: string | null) => {
     setActiveSource(source);
@@ -102,6 +96,5 @@ export function useNewsFilters(
     handleSentimentChange,
     handleDateFromChange,
     handleDateToChange,
-    resetPagination,
   };
 }

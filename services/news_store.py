@@ -169,7 +169,10 @@ class NewsStore:
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
     ) -> List[Dict]:
-        """Get latest news, optionally filtered by source, sentiment, and date range."""
+        """Get latest news, optionally filtered by source, sentiment, and date range.
+
+        .. deprecated:: Use :meth:`aget_latest_news` in async contexts.
+        """
         conn = self._connect()
         try:
             clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
@@ -186,7 +189,10 @@ class NewsStore:
             conn.close()
 
     def get_article_by_id(self, article_id: str) -> Optional[Dict]:
-        """Get a single article by ID."""
+        """Get a single article by ID.
+
+        .. deprecated:: Use :meth:`aget_article_by_id` in async contexts.
+        """
         conn = self._connect()
         try:
             row = conn.execute(
@@ -197,7 +203,10 @@ class NewsStore:
             conn.close()
 
     def get_articles_by_ids(self, ids: List[str]) -> List[Dict]:
-        """Get multiple articles by their IDs."""
+        """Get multiple articles by their IDs.
+
+        .. deprecated:: Use :meth:`aget_articles_by_ids` in async contexts.
+        """
         if not ids:
             return []
         conn = self._connect()
@@ -219,7 +228,10 @@ class NewsStore:
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
     ) -> int:
-        """Count articles, optionally filtered by source, sentiment, and date range."""
+        """Count articles, optionally filtered by source, sentiment, and date range.
+
+        .. deprecated:: Use :meth:`acount_articles` in async contexts.
+        """
         conn = self._connect()
         try:
             clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
@@ -241,7 +253,10 @@ class NewsStore:
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
     ) -> List[Dict]:
-        """Search articles by title or body text, with optional filters."""
+        """Search articles by title or body text, with optional filters.
+
+        .. deprecated:: Use :meth:`asearch_articles` in async contexts.
+        """
         conn = self._connect()
         try:
             escaped = query.replace("%", "\\%").replace("_", "\\_")
@@ -274,7 +289,10 @@ class NewsStore:
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
     ) -> int:
-        """Count total articles matching a search query with optional filters."""
+        """Count total articles matching a search query with optional filters.
+
+        .. deprecated:: Use :meth:`acount_search` in async contexts.
+        """
         conn = self._connect()
         try:
             escaped = query.replace("%", "\\%").replace("_", "\\_")
@@ -295,7 +313,10 @@ class NewsStore:
             conn.close()
 
     def get_sources(self) -> List[Dict]:
-        """Get list of sources with article counts."""
+        """Get list of sources with article counts.
+
+        .. deprecated:: Use :meth:`aget_sources` in async contexts.
+        """
         conn = self._connect()
         try:
             rows = conn.execute(

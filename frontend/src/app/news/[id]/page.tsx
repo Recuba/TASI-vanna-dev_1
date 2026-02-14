@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { useNewsArticle, useNewsFeed } from '@/lib/hooks/use-api';
 import { searchNewsFeed, type NewsFeedItem } from '@/lib/api-client';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { getSourceColor, timeAgo } from '../utils';
+import { getSourceColor, timeAgo, readingTime } from '../utils';
 
 // Extended type for extra API fields
 type ArticleExtras = {
@@ -31,19 +31,6 @@ function formatDate(dateStr: string | null, language: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-// ---------------------------------------------------------------------------
-// Reading time estimate
-// ---------------------------------------------------------------------------
-
-function readingTime(body: string | null, t: (ar: string, en: string) => string): string | null {
-  if (!body || body.length < 50) return null;
-  const words = body.split(/\s+/).length;
-  const mins = Math.max(1, Math.ceil(words / 200));
-  if (mins === 1) return t('قراءة دقيقة واحدة', '1 min read');
-  if (mins === 2) return t('قراءة دقيقتين', '2 min read');
-  return t(`قراءة ${mins} دقائق`, `${mins} min read`);
 }
 
 // ---------------------------------------------------------------------------

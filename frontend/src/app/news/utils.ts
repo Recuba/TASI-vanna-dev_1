@@ -15,7 +15,7 @@ export const SOURCE_FILTERS = [
 ] as const;
 
 /** Map source names to their brand colors (includes alternate names) */
-export const SOURCE_COLORS: Record<string, string> = {
+const SOURCE_COLORS: Record<string, string> = {
   'العربية': '#C4302B',
   'الشرق': '#1A73E8',
   'الشرق بلومبرغ': '#1A73E8',
@@ -24,7 +24,7 @@ export const SOURCE_COLORS: Record<string, string> = {
   'مباشر': '#6B21A8',
 };
 
-export const BOOKMARKS_KEY = 'rad-ai-bookmarks';
+const BOOKMARKS_KEY = 'rad-ai-bookmarks';
 
 // ---------------------------------------------------------------------------
 // Utility functions
@@ -65,9 +65,11 @@ export function timeAgo(dateStr: string | null, t: (ar: string, en: string) => s
 }
 
 export function readingTime(body: string | null, t: (ar: string, en: string) => string): string | null {
-  if (!body || body.length < 100) return null;
+  if (!body || body.length < 50) return null;
   const words = body.split(/\s+/).length;
   const mins = Math.max(1, Math.ceil(words / 200));
+  if (mins === 1) return t('قراءة دقيقة واحدة', '1 min read');
+  if (mins === 2) return t('قراءة دقيقتين', '2 min read');
   return t(`قراءة ${mins} دقائق`, `${mins} min read`);
 }
 
