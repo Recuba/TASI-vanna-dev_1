@@ -18,24 +18,30 @@ Usage:
 from __future__ import annotations
 
 import logging
+import sqlite3
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
 from difflib import SequenceMatcher
-from typing import List, Optional
+from pathlib import Path
+from typing import Dict, List, Optional
 from urllib.parse import quote_plus
 
 import requests
 from bs4 import BeautifulSoup
 
+from config import get_settings
 from services.news_paraphraser import paraphrase_article
 
 logger = logging.getLogger(__name__)
+
+_scraper_cfg = get_settings().scraper
 
 # ---------------------------------------------------------------------------
 # Sentiment Analysis
 # ---------------------------------------------------------------------------
 
+# Regular positive keywords (weight 1)
 POSITIVE_KEYWORDS = [
     "ارتفاع",
     "صعود",
@@ -49,8 +55,39 @@ POSITIVE_KEYWORDS = [
     "زيادة",
     "توزيعات",
     "فائض",
+    "توزيع",
+    "عائد",
+    "استحواذ",
+    "شراكة",
+    "ترقية",
+    "ابتكار",
+    "توسع",
+    "تفوق",
+    "سجّل",
+    "حقق",
+    "تجاوز",
+    "إنجاز",
+    "ربحية",
+    "عقد",
+    "تعاون",
+    "نجاح",
+    "تحول",
+    "طفرة",
+    "اتفاقية",
+    "تمويل",
 ]
 
+# Strong positive keywords (weight 2)
+STRONG_POSITIVE_KEYWORDS = [
+    "قياسي",
+    "قفز",
+    "طفرة",
+    "تاريخي",
+    "استثنائي",
+    "قفزة",
+]
+
+# Regular negative keywords (weight 1)
 NEGATIVE_KEYWORDS = [
     "هبوط",
     "تراجع",
@@ -62,21 +99,54 @@ NEGATIVE_KEYWORDS = [
     "تراجعت",
     "عجز",
     "ديون",
+    "تخفيض",
+    "غرامة",
+    "مخالفة",
+    "تصحيح",
+    "ركود",
+    "تضخم",
+    "فقاعة",
+    "سحب",
+    "تعليق",
+    "إيقاف",
+    "تصفية",
+    "عقوبة",
+    "مديونية",
+    "تعثر",
+    "تقليص",
+    "تخارج",
+    "انكماش",
+    "تحذير",
+    "مقاضاة",
+    "تراجعات",
+    "خفض",
+    "عقوبات",
+]
+
+# Strong negative keywords (weight 2)
+STRONG_NEGATIVE_KEYWORDS = [
     "إفلاس",
+    "انهيار",
+    "كارثة",
+    "أزمة",
+    "احتيال",
+    "تلاعب",
 ]
 
 
 def analyze_sentiment(title: str, body: str) -> tuple[float, str]:
-    """Analyze Arabic text sentiment using keyword matching.
+    """Analyze Arabic text sentiment using weighted keyword matching.
 
-    Returns (score, label) where:
+    Strong keywords contribute 2x weight. Returns (score, label) where:
     - score: float in [-1, 1]
     - label: "إيجابي" / "سلبي" / "محايد"
     """
-    text = f"{title} {body}".lower()
-    positive_count = sum(1 for kw in POSITIVE_KEYWORDS if kw in text)
-    negative_count = sum(1 for kw in NEGATIVE_KEYWORDS if kw in text)
-    score = (positive_count - negative_count) / (positive_count + negative_count + 1)
+    text = f"{title} {body}"
+    pos = sum(1 for kw in POSITIVE_KEYWORDS if kw in text)
+    pos += sum(2 for kw in STRONG_POSITIVE_KEYWORDS if kw in text)
+    neg = sum(1 for kw in NEGATIVE_KEYWORDS if kw in text)
+    neg += sum(2 for kw in STRONG_NEGATIVE_KEYWORDS if kw in text)
+    score = (pos - neg) / (pos + neg + 1)
     if score > 0.1:
         label = "إيجابي"
     elif score < -0.1:
@@ -90,8 +160,8 @@ def analyze_sentiment(title: str, body: str) -> tuple[float, str]:
 # Ticker Extraction
 # ---------------------------------------------------------------------------
 
-# Arabic company name -> ticker mapping (most traded TASI stocks)
-COMPANY_TICKER_MAP: dict[str, str] = {
+# Hardcoded fallback mapping (most traded TASI stocks)
+_FALLBACK_TICKER_MAP: Dict[str, str] = {
     "أرامكو": "2222",
     "الراجحي": "1120",
     "الأهلي": "1180",
@@ -129,6 +199,54 @@ COMPANY_TICKER_MAP: dict[str, str] = {
 }
 
 
+def _load_ticker_map_from_db(db_path: str) -> Dict[str, str]:
+    """Load company name -> ticker map from the SQLite companies table.
+
+    Returns an empty dict on failure (caller should fall back to hardcoded map).
+    """
+    try:
+        conn = sqlite3.connect(db_path)
+        rows = conn.execute(
+            "SELECT ticker, short_name FROM companies WHERE short_name IS NOT NULL"
+        ).fetchall()
+        conn.close()
+
+        ticker_map: Dict[str, str] = {}
+        for ticker, name in rows:
+            if not name:
+                continue
+            name = name.strip()
+            ticker_map[name] = ticker
+            # Also index the first word as a shortcut for multi-word names
+            words = name.split()
+            if len(words) > 1:
+                ticker_map[words[0]] = ticker
+        logger.info(
+            "Loaded %d company names from DB for ticker extraction", len(ticker_map)
+        )
+        return ticker_map
+    except Exception:
+        logger.warning(
+            "Could not load ticker map from DB (%s), using fallback",
+            db_path,
+            exc_info=True,
+        )
+        return {}
+
+
+def _init_ticker_map() -> Dict[str, str]:
+    """Build the ticker map: DB entries merged with the hardcoded fallback."""
+    db_path = str(Path(__file__).resolve().parent.parent / "saudi_stocks.db")
+    db_map = _load_ticker_map_from_db(db_path)
+    # Start with DB entries, then overlay hardcoded map (higher precision)
+    merged = {**db_map, **_FALLBACK_TICKER_MAP}
+    return merged
+
+
+# Loaded once at module import time
+COMPANY_TICKER_MAP: Dict[str, str] = _init_ticker_map()
+
+
 def extract_ticker(title: str, body: str) -> str | None:
     """Extract a stock ticker from article text by matching company names.
 
@@ -142,20 +260,16 @@ def extract_ticker(title: str, body: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants (loaded from config/settings.py ScraperSettings)
 # ---------------------------------------------------------------------------
-REQUEST_TIMEOUT = 10  # seconds
-ARTICLE_FETCH_TIMEOUT = 5  # seconds for individual article fetches
-INTER_REQUEST_DELAY = 1.5  # seconds between requests
-MAX_ARTICLES_PER_SOURCE = 10
-MAX_FULL_ARTICLE_FETCHES = 5  # limit full-article fetches per source
+REQUEST_TIMEOUT = _scraper_cfg.request_timeout
+ARTICLE_FETCH_TIMEOUT = _scraper_cfg.article_fetch_timeout
+INTER_REQUEST_DELAY = _scraper_cfg.inter_request_delay
+MAX_ARTICLES_PER_SOURCE = _scraper_cfg.max_articles_per_source
+MAX_FULL_ARTICLE_FETCHES = _scraper_cfg.max_full_article_fetches
 
 DEFAULT_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/125.0.0.0 Safari/537.36"
-    ),
+    "User-Agent": _scraper_cfg.user_agent,
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "ar,en;q=0.5",
     "Accept-Encoding": "gzip, deflate",
@@ -850,7 +964,7 @@ def _title_word_overlap(title_a: str, title_b: str) -> float:
     return len(intersection) / len(union)
 
 
-def _deduplicate(articles: List[dict], threshold: float = 0.55) -> List[dict]:
+def _deduplicate(articles: List[dict], threshold: float = _scraper_cfg.dedup_threshold) -> List[dict]:
     """Remove near-duplicate articles based on title similarity.
 
     Two-pass deduplication:

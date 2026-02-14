@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { HEALTH_POLL_INTERVAL_MS } from '@/lib/config';
 
 interface HeaderProps {
   onToggleMobileSidebar?: () => void;
@@ -35,7 +36,7 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
       }
     };
     checkHealth();
-    const interval = setInterval(checkHealth, 30000);
+    const interval = setInterval(checkHealth, HEALTH_POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
 

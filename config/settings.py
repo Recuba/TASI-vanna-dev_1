@@ -165,6 +165,26 @@ class MiddlewareSettings(BaseSettings):
         return [p.strip() for p in self.log_skip_paths.split(",") if p.strip()]
 
 
+class ScraperSettings(BaseSettings):
+    """News scraper settings. All env vars prefixed with SCRAPER_."""
+
+    model_config = SettingsConfigDict(env_prefix="SCRAPER_")
+
+    request_timeout: int = 10
+    article_fetch_timeout: int = 5
+    inter_request_delay: float = 1.5
+    max_articles_per_source: int = 10
+    max_full_article_fetches: int = 5
+    fetch_interval_seconds: int = 1800
+    cleanup_age_days: int = 7
+    user_agent: str = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/125.0.0.0 Safari/537.36"
+    )
+    dedup_threshold: float = 0.55
+
+
 class ServerSettings(BaseSettings):
     """FastAPI server settings. All env vars prefixed with SERVER_."""
 
@@ -204,6 +224,7 @@ class Settings(BaseSettings):
     cache: CacheSettings = CacheSettings()
     auth: AuthSettings = AuthSettings()
     middleware: MiddlewareSettings = MiddlewareSettings()
+    scraper: ScraperSettings = ScraperSettings()
 
     def get_llm_api_key(self) -> str:
         """Return the effective LLM API key (LLM_API_KEY > ANTHROPIC_API_KEY)."""

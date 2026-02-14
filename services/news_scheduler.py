@@ -21,11 +21,13 @@ import logging
 import threading
 import time
 
+from config import get_settings
 from services.news_store import NewsStore
 
 logger = logging.getLogger(__name__)
 
-FETCH_INTERVAL_SECONDS = 1800  # 30 minutes
+_scraper_cfg = get_settings().scraper
+FETCH_INTERVAL_SECONDS = _scraper_cfg.fetch_interval_seconds
 
 
 class NewsScheduler:
@@ -86,8 +88,7 @@ class NewsScheduler:
             else:
                 logger.info("News fetch cycle complete: no articles returned")
 
-            # Clean up articles older than 7 days
-            self.store.cleanup_old(days=7)
+            self.store.cleanup_old(days=_scraper_cfg.cleanup_age_days)
 
         except Exception:
             logger.warning("News fetch cycle failed", exc_info=True)
