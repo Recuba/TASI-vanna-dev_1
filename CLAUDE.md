@@ -213,8 +213,10 @@ The `VannaFastAPIServer.create_app()` creates the FastAPI app. Vanna's default "
 
 **PostgreSQL-only CRUD services** (using `psycopg2`):
 - `news_service.py` - News article aggregation and retrieval (PostgreSQL)
-- `reports_service.py` - Technical/analyst report management
 - `announcement_service.py` - CMA/Tadawul announcement tracking
+
+**Dual-backend CRUD services** (SQLite + PostgreSQL):
+- `reports_service.py` - Technical/analyst report management. Auto-creates the `technical_reports` table in SQLite.
 
 ### Async I/O Layer
 
@@ -281,7 +283,7 @@ The hub is started as a background task during FastAPI lifespan and its route is
 - Test files have hardcoded Windows paths for the database -- they will fail on other machines without path adjustment.
 - The `<vanna-chat>` component requires internet (loaded from CDN).
 - Database path in app.py is script-relative via `Path(__file__).resolve().parent / "saudi_stocks.db"`.
-- PostgreSQL-only services (`news_service.py`, `reports_service.py`, `announcement_service.py`) use `psycopg2` and are not available with SQLite backend. Use `news_store.py` for SQLite news operations.
+- PostgreSQL-only services (`news_service.py`, `announcement_service.py`) use `psycopg2` and are not available with SQLite backend. Use `news_store.py` for SQLite news operations. `reports_service.py` supports both backends.
 - `config/settings.py` uses `validation_alias` for POSTGRES_* env vars so the same `.env` file works for both Docker Compose and the config module.
 - In FastAPI route handlers, always use `aget_*` async methods from `news_store.py`, never the sync `get_*` methods (they block the event loop).
 - Frontend uses Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`) for RTL. Do NOT use `ml-*`, `mr-*`, `pl-*`, `pr-*` for horizontal spacing. Run `npm run lint:rtl` to check.

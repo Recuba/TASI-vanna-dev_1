@@ -214,7 +214,7 @@ app.openapi_tags = [
     {"name": "stock-ohlcv", "description": "Per-stock OHLCV chart data"},
     {"name": "news-feed", "description": "Live news feed from Arabic financial sources"},
     {"name": "news", "description": "News articles (PostgreSQL-backed)"},
-    {"name": "reports", "description": "Technical/analyst reports (PostgreSQL-backed)"},
+    {"name": "reports", "description": "Technical/analyst reports (dual-backend)"},
     {"name": "announcements", "description": "CMA/Tadawul announcements (PostgreSQL-backed)"},
     {"name": "watchlists", "description": "User watchlists and alerts (authenticated)"},
 ]
@@ -355,36 +355,41 @@ try:
 except ImportError as exc:
     logger.warning("Health route not available: %s", exc)
 
-# PG-backed service routes: register in postgres mode for news, reports,
+# Reports route works with both SQLite and PostgreSQL backends.
+try:
+    from api.routes.reports import router as reports_router
+    app.include_router(reports_router)
+    logger.info("Reports route registered (dual-backend)")
+except ImportError as exc:
+    logger.warning("Reports route not available: %s", exc)
+
+# PG-backed service routes: register in postgres mode for news,
 # announcements, watchlists. Entities and charts have SQLite fallbacks
 # registered below (section 9g/9h), so PG versions are optional.
 if DB_BACKEND == "postgres":
     try:
         from api.routes.news import router as news_router
-        from api.routes.reports import router as reports_router
         from api.routes.announcements import router as announcements_router
         from api.routes.watchlists import router as watchlists_router
         from api.routes.entities import router as pg_entities_router
 
         app.include_router(news_router)
-        app.include_router(reports_router)
         app.include_router(announcements_router)
         app.include_router(watchlists_router)
         app.include_router(pg_entities_router)
         logger.info(
-            "PG-backed service routes registered (news, reports, announcements, watchlists, entities)"
+            "PG-backed service routes registered (news, announcements, watchlists, entities)"
         )
     except ImportError as exc:
         logger.warning("PG service routes not available: %s", exc)
 else:
     # SQLite mode: register stub routers that return 503 for PG-only endpoints
-    # (news, reports, announcements, watchlists). Entities and charts have
+    # (news, announcements, watchlists). Entities and charts have
     # real SQLite handlers registered in sections 9g/9h below.
     from fastapi import APIRouter as _APIRouter
 
     _pg_stub_configs = [
         ("/api/news", "news"),
-        ("/api/reports", "reports"),
         ("/api/announcements", "announcements"),
         ("/api/watchlists", "watchlists"),
     ]
