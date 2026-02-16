@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { getNewsArticle } from '@/lib/api-client';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getSourceColor, timeAgo, readingTime } from '../utils';
 
@@ -10,13 +12,35 @@ import { getSourceColor, timeAgo, readingTime } from '../utils';
 // Sub-components
 // ---------------------------------------------------------------------------
 
+function HighlightText({ text, query }: { text: string; query?: string }) {
+  if (!query || !query.trim()) return <>{text}</>;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark key={i} className="bg-gold/25 text-inherit rounded-sm px-0.5">{part}</mark>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
+
 function PriorityIndicator({ priority }: { priority: number }) {
   if (priority < 4) return null;
-  const stars = priority >= 5 ? 2 : 1;
+  if (priority >= 5) {
+    return (
+      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent-red/15 text-accent-red">
+        <span className="w-1.5 h-1.5 rounded-full bg-accent-red animate-pulse" />
+        عاجل
+      </span>
+    );
+  }
   return (
-    <span className="text-gold text-xs" title={`أولوية ${priority}`}>
-      {'★'.repeat(stars)}
-    </span>
+    <span className="text-gold text-xs" title={`أولوية ${priority}`}>★</span>
   );
 }
 
@@ -55,6 +79,7 @@ function StockBadge({ ticker }: { ticker: string | null | undefined }) {
       className={cn(
         'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium',
         'border border-[#D4A84B]/30 text-[#D4A84B] hover:bg-[#D4A84B]/10',
+        'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
         'transition-colors',
       )}
     >
@@ -98,7 +123,9 @@ function BookmarkButton({
         onToggle(id);
       }}
       className={cn(
-        'p-1 rounded transition-colors',
+        'p-2 rounded transition-colors',
+        'min-w-[44px] min-h-[44px] flex items-center justify-center',
+        'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
         bookmarked
           ? 'text-gold hover:text-gold-light'
           : 'text-[var(--text-muted)] hover:text-gold/60',
@@ -127,6 +154,7 @@ export interface ArticleCardProps {
   onToggleBookmark: (id: string) => void;
   sentimentLabel?: string | null;
   ticker?: string | null;
+  highlightQuery?: string;
 }
 
 export function ArticleCard({
@@ -140,27 +168,72 @@ export function ArticleCard({
   onToggleBookmark,
   sentimentLabel,
   ticker,
+  highlightQuery,
 }: ArticleCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { t, language } = useLanguage();
+  const router = useRouter();
   const sourceColor = getSourceColor(sourceName);
   const readTime = readingTime(body, t);
 
+  const prefetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    prefetchTimer.current = setTimeout(() => {
+      getNewsArticle(id).catch(() => {});
+    }, 200);
+  }, [id]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (prefetchTimer.current) {
+      clearTimeout(prefetchTimer.current);
+      prefetchTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (prefetchTimer.current) {
+        clearTimeout(prefetchTimer.current);
+      }
+    };
+  }, []);
+
+  const handleCardClick = () => {
+    router.push(`/news/${id}`);
+  };
+
   return (
     <article
+      role="link"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
       className={cn(
-        'rounded-md overflow-hidden',
+        'rounded-md overflow-hidden cursor-pointer',
         'bg-[var(--bg-card)] border border-[#2A2A2A]',
-        'hover:border-[#D4A84B]/30 hover:shadow-lg hover:shadow-[#D4A84B]/5',
-        'hover:scale-[1.005]',
+        'hover:border-[#D4A84B]/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#D4A84B]/8',
+        'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
         'transition-all duration-200',
+        'animate-fade-in-up',
         'group',
+        priority >= 5 && 'ring-1 ring-accent-red/20',
       )}
       style={{
         borderInlineEndWidth: '4px',
         borderInlineEndColor: sourceColor,
       }}
     >
+      {priority >= 5 && (
+        <div className="h-0.5 w-full bg-gradient-to-r from-accent-red/60 via-accent-red to-accent-red/60" />
+      )}
       <div className="p-5 flex gap-4">
         {/* Main content */}
         <div className="flex-1 min-w-0">
@@ -174,19 +247,14 @@ export function ArticleCard({
             />
           </div>
 
-          {/* Title -- clickable link to detail page */}
+          {/* Title */}
           <div className="mb-2">
-            <Link
-              href={`/news/${id}`}
-              className="block group/title"
-            >
-              <h3 className={cn(
-                'text-base font-bold text-[var(--text-primary)] leading-tight',
-                'group-hover/title:text-gold transition-colors',
-              )}>
-                {title}
-              </h3>
-            </Link>
+            <h3 className={cn(
+              'text-base font-bold text-[var(--text-primary)] leading-tight',
+              'group-hover:text-gold transition-colors',
+            )}>
+              <HighlightText text={title} query={highlightQuery} />
+            </h3>
           </div>
 
           {/* Body */}
@@ -199,7 +267,7 @@ export function ArticleCard({
                     !expanded && 'line-clamp-3',
                   )}
                 >
-                  {body}
+                  <HighlightText text={body} query={highlightQuery} />
                 </p>
               </div>
               {body.length > 150 && (
@@ -211,7 +279,7 @@ export function ArticleCard({
                   }}
                   aria-expanded={expanded}
                   aria-controls={`body-${id}`}
-                  className="text-xs text-gold hover:text-gold-light mt-1 transition-colors"
+                  className="text-xs text-gold hover:text-gold-light hover:underline mt-1 py-2 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none rounded"
                 >
                   {expanded ? t('إغلاق', 'Close') : t('اقرأ المزيد', 'Read More')}
                 </button>
@@ -234,12 +302,12 @@ export function ArticleCard({
                 {readTime}
               </span>
             )}
-            <Link
-              href={`/news/${id}`}
-              className="text-xs text-gold hover:text-gold-light ms-auto transition-colors"
-            >
-              {t('عرض التفاصيل', 'View Details')}
-            </Link>
+            {/* Chevron hint — the whole card is clickable */}
+            <span className="ms-auto text-[var(--text-muted)] group-hover:text-gold transition-colors" aria-hidden="true">
+              <svg className="w-4 h-4 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
           </div>
         </div>
 

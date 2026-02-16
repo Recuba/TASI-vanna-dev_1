@@ -36,6 +36,18 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    label: 'World 360°',
+    labelAr: 'الأسواق العالمية',
+    href: '/markets',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+    ),
+  },
+  {
     label: 'Charts',
     labelAr: 'الرسوم البيانية',
     href: '/charts',
@@ -108,7 +120,7 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -120,7 +132,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   }, [pathname]);
 
   const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
 
   const navContent = (
     <>
@@ -153,7 +165,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
                   )}
                 />
               )}
-              <span className="flex-shrink-0">{item.icon}</span>
+              <span className="flex-shrink-0" suppressHydrationWarning>{item.icon}</span>
               {!collapsed && <span>{language === 'ar' ? item.labelAr : item.label}</span>}
             </Link>
           );
@@ -177,7 +189,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             'hover:bg-[var(--bg-card-hover)]',
             'transition-colors duration-200'
           )}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? t('توسيع القائمة', 'Expand sidebar') : t('طي القائمة', 'Collapse sidebar')}
         >
           <svg
             width="18"
@@ -203,7 +215,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       {/* Desktop sidebar */}
       <aside
         role="navigation"
-        aria-label="Main navigation"
+        aria-label={t('التنقل الرئيسي', 'Main navigation')}
         className={cn(
           'hidden lg:flex flex-col flex-shrink-0',
           'h-[calc(100vh-64px)]',
@@ -229,7 +241,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       {/* Mobile sidebar */}
       <aside
         role="navigation"
-        aria-label="Mobile navigation"
+        aria-label={t('التنقل للجوال', 'Mobile navigation')}
         aria-hidden={!mobileOpen}
         className={cn(
           'fixed top-[64px] end-0 z-50',

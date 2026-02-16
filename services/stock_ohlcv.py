@@ -13,26 +13,23 @@ import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
+from services.yfinance_base import CircuitBreaker, YFinanceCache
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# In-memory cache keyed by (ticker, period)
+# Shared cache & circuit breaker instances
 # ---------------------------------------------------------------------------
-_cache: Dict[Tuple[str, str], Dict[str, Any]] = {}
-_CACHE_TTL = 300  # seconds
+_cache = YFinanceCache(ttl=300, max_entries=500, name="stock_ohlcv")
 _fetch_lock = threading.Lock()
 
 VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 
-# ---------------------------------------------------------------------------
-# Circuit breaker state (independent from TASI index circuit breaker)
-# ---------------------------------------------------------------------------
-CIRCUIT_BREAKER_THRESHOLD = 5  # consecutive failures before opening
-CIRCUIT_BREAKER_TIMEOUT = 900  # seconds to keep circuit open (15 min)
-
-_consecutive_failures: int = 0
-_circuit_open_until: float = 0.0
-_circuit_lock = threading.Lock()
+_breaker = CircuitBreaker(
+    threshold=5,
+    timeout=900,  # 15 min
+    name="stock_ohlcv",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -49,84 +46,52 @@ def _normalize_ticker(ticker: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Cache helpers
+# Cache helpers (thin wrappers over YFinanceCache)
 # ---------------------------------------------------------------------------
 
 
 def _get_cached(ticker: str, period: str) -> Optional[Dict[str, Any]]:
     """Return cached data if still fresh."""
-    entry = _cache.get((ticker, period))
-    if entry is None:
-        return None
-    age = time.monotonic() - entry["fetched_at"]
-    if age < _CACHE_TTL:
-        return entry["payload"]
-    return None
+    return _cache.get((ticker, period))
 
 
 def _get_stale_cached(ticker: str, period: str) -> Optional[Dict[str, Any]]:
     """Return stale cache entry (for fallback on fetch failure)."""
-    entry = _cache.get((ticker, period))
-    if entry is None:
+    payload = _cache.get_stale((ticker, period))
+    if payload is None:
         return None
-    payload = dict(entry["payload"])
-    payload["source"] = "cached"
-    return payload
+    result = dict(payload)
+    result["source"] = "cached"
+    return result
 
 
 def _set_cache(ticker: str, period: str, payload: Dict[str, Any]) -> None:
-    _cache[(ticker, period)] = {"payload": payload, "fetched_at": time.monotonic()}
+    _cache.put((ticker, period), payload)
 
 
 # ---------------------------------------------------------------------------
-# Circuit breaker helpers
+# Circuit breaker helpers (delegates to shared CircuitBreaker)
 # ---------------------------------------------------------------------------
 
 
 def _is_circuit_open() -> bool:
     """Return True if the circuit breaker is currently open."""
-    return time.monotonic() < _circuit_open_until
+    return _breaker.is_open()
 
 
 def _record_failure() -> None:
     """Increment consecutive failure count; open circuit if threshold reached."""
-    global _consecutive_failures, _circuit_open_until
-    with _circuit_lock:
-        _consecutive_failures += 1
-        if (
-            _consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD
-            and not _is_circuit_open()
-        ):
-            _circuit_open_until = time.monotonic() + CIRCUIT_BREAKER_TIMEOUT
-            logger.warning(
-                "stock_ohlcv circuit breaker OPEN -- serving cached/mock for next %d seconds "
-                "(consecutive_failures=%d)",
-                CIRCUIT_BREAKER_TIMEOUT,
-                _consecutive_failures,
-            )
+    _breaker.record_failure()
 
 
 def _record_success() -> None:
     """Reset circuit breaker on a successful fetch."""
-    global _consecutive_failures, _circuit_open_until
-    with _circuit_lock:
-        was_open = _is_circuit_open()
-        _consecutive_failures = 0
-        _circuit_open_until = 0.0
-        if was_open:
-            logger.info("stock_ohlcv circuit breaker CLOSED -- live data restored")
+    _breaker.record_success()
 
 
 def get_circuit_breaker_status() -> Dict[str, Any]:
     """Return circuit breaker diagnostics for the health endpoint."""
-    with _circuit_lock:
-        is_open = _is_circuit_open()
-        remaining = max(0.0, _circuit_open_until - time.monotonic()) if is_open else 0.0
-        return {
-            "circuit_state": "open" if is_open else "closed",
-            "consecutive_failures": _consecutive_failures,
-            "open_remaining_seconds": round(remaining) if is_open else None,
-        }
+    return _breaker.get_status()
 
 
 # ---------------------------------------------------------------------------
@@ -165,8 +130,8 @@ def _generate_mock_data(ticker: str, period: str) -> List[Dict[str, Any]]:
     count = 0
 
     while count < days and current <= end_date:
-        # Skip weekends
-        if current.weekday() >= 5:
+        # Skip weekends (Tadawul operates Sun-Thu; Friday=4, Saturday=5)
+        if current.weekday() in (4, 5):
             current += timedelta(days=1)
             continue
 
@@ -329,7 +294,7 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
                     exc_type,
                     error_category,
                     exc_msg,
-                    _consecutive_failures,
+                    _breaker.get_status()["consecutive_failures"],
                 )
 
     # Fallback: stale cache
@@ -368,6 +333,10 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
     return payload
 
 
+# Convenience alias used by the verification command
+get_stock_ohlcv = fetch_stock_ohlcv
+
+
 def get_cache_status() -> Dict[str, Any]:
     """Return cache diagnostic information for the health endpoint."""
     if not _cache:
@@ -377,10 +346,16 @@ def get_cache_status() -> Dict[str, Any]:
             "cache_age_seconds": None,
             "last_updated": None,
         }
-    newest_key = max(_cache, key=lambda k: _cache[k]["fetched_at"])
-    entry = _cache[newest_key]
+    entry = _cache.newest_entry()
+    if entry is None:
+        return {
+            "cache_status": "empty",
+            "cached_tickers": 0,
+            "cache_age_seconds": None,
+            "last_updated": None,
+        }
     age = time.monotonic() - entry["fetched_at"]
-    fresh = age < _CACHE_TTL
+    fresh = age < _cache.ttl
     return {
         "cache_status": "fresh" if fresh else "stale",
         "cached_tickers": len(_cache),

@@ -9,12 +9,14 @@ const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL ||
 
 const cspReportUri = process.env.NEXT_PUBLIC_CSP_REPORT_URI || '';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 const cspDirectives = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com https://s3.tradingview.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://api.anthropic.com https://*.railway.app wss://*.railway.app https://*.sentry.io",
+  `connect-src 'self' https://api.anthropic.com https://*.railway.app wss://*.railway.app https://*.sentry.io${isDev ? ' http://localhost:* ws://localhost:*' : ''}`,
   "font-src 'self' data:",
   "frame-src https://s3.tradingview.com https://www.tradingview.com",
   "frame-ancestors 'none'",
@@ -68,6 +70,10 @@ const nextConfig = {
       {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`,
+      },
+      {
+        source: '/health/:path*',
+        destination: `${backendUrl}/health/:path*`,
       },
       {
         source: '/health',

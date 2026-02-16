@@ -5,7 +5,7 @@ SQLite-compatible news storage service. Schema mirrors the PostgreSQL
 ``news_articles`` table from ``database/schema.sql`` so the same data
 model works in both development (SQLite) and production (PostgreSQL).
 
-Thread-safe: creates a new connection per operation.
+Thread-safe: reuses one SQLite connection per thread via threading.local().
 
 Usage:
     from services.news_store import NewsStore
@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import sqlite3
+import threading
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -56,14 +57,40 @@ class NewsStore:
 
     def __init__(self, db_path: str):
         self.db_path = db_path
+        self._local = threading.local()
         self._ensure_table()
 
     def _connect(self) -> sqlite3.Connection:
-        """Create a new connection (thread-safe pattern)."""
+        """Return a per-thread cached connection.
+
+        Reuses the same connection within a thread to avoid the overhead of
+        opening/closing SQLite connections on every operation. Each thread
+        still gets its own connection (via threading.local), so there is no
+        cross-thread contention.
+        """
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            try:
+                conn.execute("SELECT 1")
+                return conn
+            except sqlite3.ProgrammingError:
+                # Connection was closed externally
+                pass
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA journal_mode=WAL")
+        self._local.conn = conn
         return conn
+
+    def close(self) -> None:
+        """Close the current thread's cached connection, if any."""
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            self._local.conn = None
 
     def _ensure_table(self) -> None:
         """Create the news_articles table and indexes if they don't exist."""
@@ -82,8 +109,6 @@ class NewsStore:
                 exc_info=True,
             )
             raise
-        finally:
-            conn.close()
 
     def store_articles(self, articles: List[Dict]) -> int:
         """Insert articles, skipping duplicates. Returns count of newly inserted."""
@@ -128,8 +153,6 @@ class NewsStore:
             conn.rollback()
             logger.error("Failed to store articles", exc_info=True)
             raise
-        finally:
-            conn.close()
         return inserted
 
     def _build_filters(
@@ -174,19 +197,16 @@ class NewsStore:
         .. deprecated:: Use :meth:`aget_latest_news` in async contexts.
         """
         conn = self._connect()
-        try:
-            clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
-            where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
-            params.extend([limit, offset])
-            rows = conn.execute(
-                f"""SELECT * FROM news_articles{where}
-                    ORDER BY created_at DESC, priority ASC
-                    LIMIT ? OFFSET ?""",
-                params,
-            ).fetchall()
-            return [dict(row) for row in rows]
-        finally:
-            conn.close()
+        clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        params.extend([limit, offset])
+        rows = conn.execute(
+            f"""SELECT * FROM news_articles{where}
+                ORDER BY created_at DESC, priority ASC
+                LIMIT ? OFFSET ?""",
+            params,
+        ).fetchall()
+        return [dict(row) for row in rows]
 
     def get_article_by_id(self, article_id: str) -> Optional[Dict]:
         """Get a single article by ID.
@@ -194,13 +214,10 @@ class NewsStore:
         .. deprecated:: Use :meth:`aget_article_by_id` in async contexts.
         """
         conn = self._connect()
-        try:
-            row = conn.execute(
-                "SELECT * FROM news_articles WHERE id = ?", (article_id,)
-            ).fetchone()
-            return dict(row) if row else None
-        finally:
-            conn.close()
+        row = conn.execute(
+            "SELECT * FROM news_articles WHERE id = ?", (article_id,)
+        ).fetchone()
+        return dict(row) if row else None
 
     def get_articles_by_ids(self, ids: List[str]) -> List[Dict]:
         """Get multiple articles by their IDs.
@@ -210,16 +227,13 @@ class NewsStore:
         if not ids:
             return []
         conn = self._connect()
-        try:
-            placeholders = ",".join("?" for _ in ids)
-            rows = conn.execute(
-                f"SELECT * FROM news_articles WHERE id IN ({placeholders})"
-                " ORDER BY created_at DESC",
-                ids,
-            ).fetchall()
-            return [dict(row) for row in rows]
-        finally:
-            conn.close()
+        placeholders = ",".join("?" for _ in ids)
+        rows = conn.execute(
+            f"SELECT * FROM news_articles WHERE id IN ({placeholders})"
+            " ORDER BY created_at DESC",
+            ids,
+        ).fetchall()
+        return [dict(row) for row in rows]
 
     def count_articles(
         self,
@@ -233,15 +247,12 @@ class NewsStore:
         .. deprecated:: Use :meth:`acount_articles` in async contexts.
         """
         conn = self._connect()
-        try:
-            clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
-            where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
-            row = conn.execute(
-                f"SELECT COUNT(*) FROM news_articles{where}", params
-            ).fetchone()
-            return row[0] if row else 0
-        finally:
-            conn.close()
+        clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        row = conn.execute(
+            f"SELECT COUNT(*) FROM news_articles{where}", params
+        ).fetchone()
+        return row[0] if row else 0
 
     def search_articles(
         self,
@@ -258,28 +269,25 @@ class NewsStore:
         .. deprecated:: Use :meth:`asearch_articles` in async contexts.
         """
         conn = self._connect()
-        try:
-            escaped = query.replace("%", "\\%").replace("_", "\\_")
-            pattern = f"%{escaped}%"
-            extra_clauses, extra_params = self._build_filters(
-                source, sentiment_label, date_from, date_to
-            )
-            where = "(title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\')"
-            params: list = [pattern, pattern]
-            if extra_clauses:
-                where += " AND " + " AND ".join(extra_clauses)
-                params.extend(extra_params)
-            params.extend([limit, offset])
-            rows = conn.execute(
-                f"""SELECT * FROM news_articles
-                    WHERE {where}
-                    ORDER BY created_at DESC, priority ASC
-                    LIMIT ? OFFSET ?""",
-                params,
-            ).fetchall()
-            return [dict(row) for row in rows]
-        finally:
-            conn.close()
+        escaped = query.replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{escaped}%"
+        extra_clauses, extra_params = self._build_filters(
+            source, sentiment_label, date_from, date_to
+        )
+        where = "(title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\')"
+        params: list = [pattern, pattern]
+        if extra_clauses:
+            where += " AND " + " AND ".join(extra_clauses)
+            params.extend(extra_params)
+        params.extend([limit, offset])
+        rows = conn.execute(
+            f"""SELECT * FROM news_articles
+                WHERE {where}
+                ORDER BY created_at DESC, priority ASC
+                LIMIT ? OFFSET ?""",
+            params,
+        ).fetchall()
+        return [dict(row) for row in rows]
 
     def count_search(
         self,
@@ -294,23 +302,20 @@ class NewsStore:
         .. deprecated:: Use :meth:`acount_search` in async contexts.
         """
         conn = self._connect()
-        try:
-            escaped = query.replace("%", "\\%").replace("_", "\\_")
-            pattern = f"%{escaped}%"
-            extra_clauses, extra_params = self._build_filters(
-                source, sentiment_label, date_from, date_to
-            )
-            where = "(title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\')"
-            params: list = [pattern, pattern]
-            if extra_clauses:
-                where += " AND " + " AND ".join(extra_clauses)
-                params.extend(extra_params)
-            row = conn.execute(
-                f"SELECT COUNT(*) FROM news_articles WHERE {where}", params
-            ).fetchone()
-            return row[0] if row else 0
-        finally:
-            conn.close()
+        escaped = query.replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{escaped}%"
+        extra_clauses, extra_params = self._build_filters(
+            source, sentiment_label, date_from, date_to
+        )
+        where = "(title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\')"
+        params: list = [pattern, pattern]
+        if extra_clauses:
+            where += " AND " + " AND ".join(extra_clauses)
+            params.extend(extra_params)
+        row = conn.execute(
+            f"SELECT COUNT(*) FROM news_articles WHERE {where}", params
+        ).fetchone()
+        return row[0] if row else 0
 
     def get_sources(self) -> List[Dict]:
         """Get list of sources with article counts.
@@ -318,16 +323,13 @@ class NewsStore:
         .. deprecated:: Use :meth:`aget_sources` in async contexts.
         """
         conn = self._connect()
-        try:
-            rows = conn.execute(
-                """SELECT source_name, COUNT(*) as count
-                   FROM news_articles
-                   GROUP BY source_name
-                   ORDER BY count DESC"""
-            ).fetchall()
-            return [dict(row) for row in rows]
-        finally:
-            conn.close()
+        rows = conn.execute(
+            """SELECT source_name, COUNT(*) as count
+               FROM news_articles
+               GROUP BY source_name
+               ORDER BY count DESC"""
+        ).fetchall()
+        return [dict(row) for row in rows]
 
     def cleanup_old(self, days: int = 7) -> int:
         """Delete articles older than N days. Returns count deleted."""
@@ -344,8 +346,6 @@ class NewsStore:
             conn.rollback()
             logger.error("Failed to cleanup old articles", exc_info=True)
             raise
-        finally:
-            conn.close()
 
     # ------------------------------------------------------------------
     # Async wrappers (run sync I/O in a thread)

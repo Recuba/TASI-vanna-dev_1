@@ -9,6 +9,7 @@ Set DB_BACKEND=postgres (with POSTGRES_* env vars) to use PostgreSQL.
 Default is SQLite.
 """
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -29,6 +30,7 @@ from vanna.integrations.anthropic import AnthropicLlmService
 from vanna.integrations.sqlite import SqliteRunner
 from vanna.integrations.postgres import PostgresRunner
 from vanna.servers.fastapi import VannaFastAPIServer
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from vanna.tools import RunSqlTool, VisualizeDataTool
@@ -207,6 +209,7 @@ app.openapi_tags = [
     {"name": "stock-data", "description": "Per-stock dividends, financials, comparison, and quotes"},
     {"name": "market-analytics", "description": "Market movers, summary, sector analytics, heatmap"},
     {"name": "charts-analytics", "description": "Pre-built chart data (sector market cap, P/E, dividends)"},
+    {"name": "market-overview", "description": "World 360 global market overview (10 instruments)"},
     {"name": "tasi-index", "description": "TASI index OHLCV data and health"},
     {"name": "stock-ohlcv", "description": "Per-stock OHLCV chart data"},
     {"name": "news-feed", "description": "Live news feed from Arabic financial sources"},
@@ -280,6 +283,9 @@ try:
 
     # CORS is applied via FastAPI's add_middleware (innermost)
     setup_cors(app, _cors_origins)
+
+    # GZip compression (after CORS, before rate limiter)
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     # Rate limiter (skip in debug mode)
     if not _debug_mode:
@@ -400,9 +406,10 @@ else:
 
             return _stub_handler
 
-        _stub.add_api_route("", _make_stub_handler(_prefix), methods=["GET"])
+        _all_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+        _stub.add_api_route("", _make_stub_handler(_prefix), methods=_all_methods)
         _stub.add_api_route(
-            "/{path:path}", _make_stub_handler(_prefix), methods=["GET"]
+            "/{path:path}", _make_stub_handler(_prefix), methods=_all_methods
         )
         app.include_router(_stub)
 
@@ -464,6 +471,28 @@ except ImportError as exc:
 
 
 # ---------------------------------------------------------------------------
+# 9d-3. Live market widgets SSE stream (Redis-backed)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.widgets_stream import router as widgets_stream_router
+
+    app.include_router(widgets_stream_router)
+    logger.info("Widgets stream route registered at /api/v1/widgets/quotes/stream")
+except ImportError as exc:
+    logger.warning("Widgets stream route not available: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 9d-4. Market overview route (World 360 page -- no database dependency)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.market_overview import router as market_overview_router
+
+    app.include_router(market_overview_router)
+    logger.info("Market overview route registered at /api/v1/market-overview")
+except ImportError as exc:
+    logger.warning("Market overview route not available: %s", exc)
+
+# ---------------------------------------------------------------------------
 # 9e. Market analytics routes (Dual-backend (SQLite/PostgreSQL) -- works with any backend)
 # ---------------------------------------------------------------------------
 try:
@@ -512,13 +541,14 @@ except ImportError as exc:
 # ---------------------------------------------------------------------------
 # 10. Custom routes and static files
 # ---------------------------------------------------------------------------
+_TEMPLATE_RAW = (_HERE / "templates" / "index.html").read_text(encoding="utf-8")
+
+
 @app.get("/", response_class=HTMLResponse)
 async def custom_index():
-    template_path = _HERE / "templates" / "index.html"
-    html = template_path.read_text(encoding="utf-8")
     # Inject the actual frontend URL (env-driven, default to local dev)
     frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
-    html = html.replace("{{FRONTEND_URL}}", frontend_url)
+    html = _TEMPLATE_RAW.replace("{{FRONTEND_URL}}", frontend_url)
     return html
 
 
@@ -610,10 +640,15 @@ async def lifespan(app):
     logger.info("Routes registered: %d", len(app.routes))
     logger.info("Redis: %s", _redis_status)
 
-    # SA-04: Warn if JWT secret is not explicitly configured in production
+    # SA-04: Enforce JWT secret in production (postgres + non-debug)
     if DB_BACKEND == "postgres" and _settings:
         _jwt_secret_env = os.environ.get("AUTH_JWT_SECRET", "")
         if not _jwt_secret_env:
+            if not _settings.server.debug:
+                raise RuntimeError(
+                    "AUTH_JWT_SECRET must be set in production "
+                    "(DB_BACKEND=postgres, SERVER_DEBUG=false)"
+                )
             logger.warning(
                 "AUTH_JWT_SECRET not configured -- JWT tokens will not persist across restarts"
             )
@@ -638,6 +673,24 @@ async def lifespan(app):
     except Exception as exc:
         logger.warning("Failed to start news scheduler: %s", exc)
 
+    # Start quotes hub background task (Redis or in-memory fallback)
+    _quotes_hub_task = None
+    try:
+        from services.widgets.quotes_hub import run_quotes_hub
+
+        _redis_for_hub = None
+        if _redis_status == "connected":
+            from cache import get_redis as _get_redis_client
+            _redis_for_hub = _get_redis_client()
+
+        _quotes_hub_task = asyncio.create_task(run_quotes_hub(_redis_for_hub))
+        _hub_mode = "Redis" if _redis_for_hub else "in-memory"
+        logger.info("Quotes hub background task started (mode: %s)", _hub_mode)
+    except ImportError as exc:
+        logger.warning("Quotes hub not available: %s", exc)
+    except Exception as exc:
+        logger.warning("Failed to start quotes hub: %s", exc)
+
     # Non-blocking yfinance reachability check
     import threading as _th
 
@@ -659,6 +712,15 @@ async def lifespan(app):
     _th.Thread(target=_check_yfinance, daemon=True).start()
 
     yield
+
+    # Shutdown: cancel quotes hub background task
+    if _quotes_hub_task is not None:
+        _quotes_hub_task.cancel()
+        try:
+            await _quotes_hub_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Quotes hub background task stopped")
 
     # Shutdown: stop news scheduler
     if _news_scheduler is not None:

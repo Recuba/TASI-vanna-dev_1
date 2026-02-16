@@ -58,7 +58,8 @@ export function SearchInput({
           'bg-[var(--bg-input)] border border-[#2A2A2A]',
           'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]',
           'focus:outline-none focus:border-[#D4A84B]/50 focus:ring-1 focus:ring-[#D4A84B]/20',
-          'transition-colors',
+          'focus:shadow-[0_0_0_3px_rgba(212,168,75,0.1)]',
+          'transition-all duration-200',
         )}
         dir={isRTL ? 'rtl' : 'ltr'}
       />

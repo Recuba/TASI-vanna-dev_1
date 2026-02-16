@@ -15,6 +15,7 @@ interface HeaderProps {
 const navLinks = [
   { href: '/', labelAr: 'الرئيسية', labelEn: 'Home' },
   { href: '/market', labelAr: 'السوق', labelEn: 'Market' },
+  { href: '/markets', labelAr: 'الأسواق العالمية', labelEn: 'World 360°' },
   { href: '/charts', labelAr: 'الرسوم البيانية', labelEn: 'Charts' },
   { href: '/news', labelAr: 'الأخبار', labelEn: 'News' },
   { href: '/chat', labelAr: 'المحادثة', labelEn: 'AI Chat' },
@@ -27,17 +28,22 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
 
   useEffect(() => {
+    const controller = new AbortController();
     const checkHealth = async () => {
       try {
-        const res = await fetch('/health', { signal: AbortSignal.timeout(5000) });
+        const res = await fetch('/health', { signal: controller.signal });
         setBackendStatus(res.ok ? 'online' : 'offline');
-      } catch {
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         setBackendStatus('offline');
       }
     };
     checkHealth();
     const interval = setInterval(checkHealth, HEALTH_POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, []);
 
   return (

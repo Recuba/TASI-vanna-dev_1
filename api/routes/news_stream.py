@@ -13,7 +13,7 @@ import json
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import StreamingResponse
 
 from api.routes.news_feed import get_store
@@ -25,6 +25,7 @@ router = APIRouter(prefix="/api/v1/news", tags=["news-stream"])
 
 @router.get("/stream")
 async def news_stream(
+    request: Request,
     source: Optional[str] = Query(None, description="Filter by source name"),
 ) -> StreamingResponse:
     """SSE endpoint that emits events when new articles appear.
@@ -42,6 +43,10 @@ async def news_stream(
         yield ": connected\n\n"
 
         while True:
+            if await request.is_disconnected():
+                logger.debug("SSE client disconnected, closing stream")
+                return
+
             try:
                 articles = await store.aget_latest_news(
                     limit=10, offset=0, source=source

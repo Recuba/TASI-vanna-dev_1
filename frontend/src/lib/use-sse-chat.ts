@@ -45,8 +45,23 @@ function saveMessages(messages: ChatMessage[]) {
         isError: m.isError,
       }));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-  } catch {
-    // localStorage full or unavailable - silently ignore
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      // Trim to last 50 messages and retry once
+      const trimmed = messages
+        .filter((m) => !m.isStreaming)
+        .slice(-50)
+        .map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          timestamp: m.timestamp.toISOString(),
+          components: m.components,
+          isError: m.isError,
+        }));
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed)); } catch { /* give up */ }
+    }
+    // Other errors (unavailable, security) - silently ignore
   }
 }
 
@@ -54,7 +69,9 @@ function loadMessages(): ChatMessage[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const stored: StoredMessage[] = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const stored = parsed as StoredMessage[];
     return stored.map((m) => ({
       ...m,
       timestamp: new Date(m.timestamp),

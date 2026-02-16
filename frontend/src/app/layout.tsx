@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/common/error-boundary';
 import { GlobalKeyboardShortcuts } from '@/components/common/GlobalKeyboardShortcuts';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { AppShell } from '@/components/layout/AppShell';
+import NextTopLoader from 'nextjs-toploader';
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   subsets: ['arabic', 'latin'],
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body
         className={`${ibmPlexArabic.variable} ${inter.variable} font-english antialiased`}
       >
+        <NextTopLoader color="#D4A84B" showSpinner={false} />
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>

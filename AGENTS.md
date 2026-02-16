@@ -35,9 +35,9 @@ When working in a team, respect file ownership boundaries:
 
 | Owner | Files |
 |---|---|
-| **database-architect** | `database/`, `csv_to_sqlite.py`, `ingestion/` |
-| **backend-services** | `app.py`, `services/` (except `health_service.py`) |
-| **frontend-dev** | `frontend/` (incl. `src/app/news/components/`, `src/app/news/hooks/`), `templates/` |
+| **database-architect** | `database/` (incl. `queries.py`), `csv_to_sqlite.py`, `ingestion/` |
+| **backend-services** | `app.py`, `services/` (except `health_service.py`), `api/models/`, `api/routes/widgets_stream.py` |
+| **frontend-dev** | `frontend/` (incl. `src/app/news/components/`, `src/app/news/hooks/`, `src/components/widgets/`, `src/components/common/`), `templates/` |
 | **infra-testing** | `config/`, `tests/`, `.github/`, `docker-compose.yml`, `Dockerfile`, `requirements.txt`, `services/health_service.py`, `CLAUDE.md`, `AGENTS.md`, `README.md` |
 
 Do NOT modify files owned by other agents unless coordinating with them.
@@ -54,6 +54,7 @@ Do NOT modify files owned by other agents unless coordinating with them.
 │   └── logging.py                  # JSON/pretty log formatters
 ├── database/
 │   ├── schema.sql                  # PostgreSQL DDL (all tables + indexes + views)
+│   ├── queries.py                  # Centralized SQL query strings
 │   ├── migrate_sqlite_to_pg.py     # SQLite -> PostgreSQL migration
 │   └── csv_to_postgres.py          # CSV -> PostgreSQL pipeline
 ├── services/
@@ -63,15 +64,41 @@ Do NOT modify files owned by other agents unless coordinating with them.
 │   ├── news_scheduler.py           # Background news fetch scheduler
 │   ├── news_service.py             # News CRUD (PostgreSQL only)
 │   ├── reports_service.py          # Technical reports CRUD
-│   └── announcement_service.py     # Announcement CRUD
+│   ├── announcement_service.py     # Announcement CRUD
+│   ├── yfinance_base.py            # Shared yfinance cache + circuit breaker
+│   ├── cache_utils.py              # Unified @cache_response decorator
+│   └── widgets/
+│       ├── __init__.py
+│       ├── quotes_hub.py           # QuotesHub orchestrator (Redis pub/sub)
+│       └── providers/
+│           ├── __init__.py
+│           ├── crypto.py           # Cryptocurrency quotes
+│           ├── metals.py           # Precious metals quotes
+│           ├── oil.py              # Oil & energy quotes
+│           └── indices.py          # Global market indices
 ├── api/
+│   ├── models/
+│   │   └── widgets.py              # QuoteItem Pydantic model
 │   ├── routes/                     # FastAPI async route handlers
+│   │   ├── widgets_stream.py       # /api/v1/widgets/stream (SSE)
+│   │   └── ...
 │   └── db_helper.py                # Async DB wrappers
 ├── frontend/                       # Next.js 14 app (production)
-│   ├── src/app/news/               # News module (decomposed)
-│   │   ├── components/             # ArticleCard, FilterBar, etc.
-│   │   ├── hooks/                  # useNewsFilters
-│   │   └── utils.ts                # Shared constants & helpers
+│   ├── scripts/
+│   │   └── lint-rtl.js             # RTL direction class linter
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── widgets/
+│   │   │   │   └── LiveMarketWidgets.tsx  # SSE-powered market ticker
+│   │   │   └── common/
+│   │   │       └── ConnectionStatusBadge.tsx  # Live/offline indicator
+│   │   └── app/
+│   │       ├── news/               # News module (decomposed)
+│   │       │   ├── components/     # ArticleCard, FilterBar, etc.
+│   │       │   ├── hooks/          # useNewsFilters
+│   │       │   └── utils.ts        # Shared constants & helpers
+│   │       ├── */loading.tsx       # Route loading states (news, market, charts, chat)
+│   │       └── */error.tsx         # Route error boundaries (news, market, charts, chat)
 ├── templates/index.html            # Legacy vanna-chat UI
 ├── docker-compose.yml              # PostgreSQL + app + pgAdmin
 ├── Dockerfile                      # Python 3.11 container
@@ -194,4 +221,8 @@ These are critical patterns specific to Vanna 2.0. Getting them wrong causes run
 - Services in `services/` that use `psycopg2` require PostgreSQL. Use `news_store.py` for SQLite news operations.
 - Configuration changes should go through `config/settings.py`, not raw `os.environ.get()` calls.
 - In FastAPI route handlers, use `aget_*` async methods (never sync `get_*` methods) to avoid blocking the event loop.
-- Frontend must use Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`), never physical (`ml-*`, `mr-*`, `pl-*`, `pr-*`).
+- Frontend must use Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`), never physical (`ml-*`, `mr-*`, `pl-*`, `pr-*`). Run `npm run lint:rtl` in `frontend/` to verify.
+- All SSE endpoints MUST include `request.is_disconnected()` checks to prevent orphaned generators.
+- New SQL queries should use `database/queries.py` constants instead of inline strings where practical.
+- Use `services/cache_utils.py` `@cache_response` for caching; do not roll custom LRU cache implementations.
+- Tadawul trading week is Sunday-Thursday. Friday and Saturday are weekends (not Saturday/Sunday).

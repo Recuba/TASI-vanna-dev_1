@@ -56,14 +56,18 @@ export function FilterBar({
     <div
       className={cn(
         'sticky top-0 z-20 space-y-3 pb-3 -mx-4 sm:-mx-6 px-4 sm:px-6 transition-shadow duration-200',
-        isSticky && 'pt-3 bg-[#0E0E0E]/95 backdrop-blur-sm shadow-md shadow-black/30',
+        isSticky && 'pt-3 bg-[#0E0E0E]/95 backdrop-blur-sm shadow-md shadow-black/30 border-b border-[#D4A84B]/10',
       )}
     >
       {/* Search input */}
       <SearchInput value={searchQuery} onChange={onSearchChange} placeholder={t('ابحث في الأخبار...', 'Search news...')} />
 
       {/* Source filter chips + saved tab */}
-      <div className="flex flex-wrap gap-2" role="group" aria-label={t('تصفية المصادر', 'Filter by source')}>
+      <div
+        className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        role="group"
+        aria-label={t('تصفية المصادر', 'Filter by source')}
+      >
         {SOURCE_FILTERS.map((source) => {
           const isActive = !showSaved && !isSearching && activeSource === source.key;
           const count = source.key ? sourceCounts[source.key] : undefined;
@@ -76,8 +80,10 @@ export function FilterBar({
               }}
               aria-pressed={isActive}
               className={cn(
-                'px-3.5 py-1.5 rounded-full text-xs font-medium',
-                'border transition-all duration-200',
+                'px-3.5 py-2 min-h-[44px] rounded-full text-xs font-medium snap-start shrink-0',
+                'border transition-all duration-200 active:scale-95',
+                'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
+                isActive && 'scale-[1.02] ring-1 ring-offset-1 ring-offset-[#0E0E0E]',
               )}
               style={
                 isActive
@@ -85,6 +91,7 @@ export function FilterBar({
                       backgroundColor: `${source.color}20`,
                       borderColor: source.color,
                       color: source.color,
+                      ['--tw-ring-color' as string]: `${source.color}60`,
                     }
                   : {
                       backgroundColor: 'var(--bg-input)',
@@ -106,8 +113,10 @@ export function FilterBar({
           onClick={onShowSaved}
           aria-pressed={showSaved}
           className={cn(
-            'px-3.5 py-1.5 rounded-full text-xs font-medium',
-            'border transition-all duration-200',
+            'px-3.5 py-2 min-h-[44px] rounded-full text-xs font-medium snap-start shrink-0',
+            'border transition-all duration-200 active:scale-95',
+            'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
+            showSaved && 'scale-[1.02] ring-1 ring-offset-1 ring-offset-[#0E0E0E] ring-[#D4A84B]/60',
           )}
           style={
             showSaved
@@ -138,9 +147,11 @@ export function FilterBar({
           aria-expanded={showAdvancedFilters}
           aria-controls="advanced-filters-panel"
           className={cn(
-            'px-3.5 py-1.5 rounded-full text-xs font-medium',
-            'border transition-all duration-200',
+            'px-3.5 py-2 min-h-[44px] rounded-full text-xs font-medium snap-start shrink-0',
+            'border transition-all duration-200 active:scale-95',
             'flex items-center gap-1',
+            'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
+            (showAdvancedFilters || advancedFilterCount > 0) && 'scale-[1.02] ring-1 ring-offset-1 ring-offset-[#0E0E0E] ring-[#D4A84B]/60',
           )}
           style={
             showAdvancedFilters || advancedFilterCount > 0
@@ -172,8 +183,10 @@ export function FilterBar({
       <div
         id="advanced-filters-panel"
         className={cn(
-          'overflow-hidden transition-all duration-300 ease-in-out',
-          showAdvancedFilters ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0',
+          'overflow-hidden transition-all duration-300',
+          showAdvancedFilters
+            ? 'max-h-48 opacity-100 translate-y-0 ease-out'
+            : 'max-h-0 opacity-0 -translate-y-2 ease-in',
         )}
       >
         <div className="rounded-lg border border-[#2A2A2A] bg-[var(--bg-card)] p-4 space-y-3">
@@ -194,8 +207,9 @@ export function FilterBar({
                   onClick={() => onSentimentChange(s.key)}
                   aria-pressed={isActive}
                   className={cn(
-                    'px-3 py-1 rounded-full text-xs font-medium',
+                    'px-3 py-2 min-h-[44px] rounded-full text-xs font-medium',
                     'border transition-all duration-200',
+                    'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
                   )}
                   style={
                     isActive
@@ -224,7 +238,7 @@ export function FilterBar({
                   'px-2 py-1 rounded text-xs',
                   'bg-[var(--bg-input)] border border-[#2A2A2A]',
                   'text-[var(--text-primary)]',
-                  'focus:outline-none focus:border-[#D4A84B]/50',
+                  'focus-visible:outline-none focus-visible:border-[#D4A84B]/50 focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40',
                   '[color-scheme:dark]',
                 )}
               />
@@ -239,7 +253,7 @@ export function FilterBar({
                   'px-2 py-1 rounded text-xs',
                   'bg-[var(--bg-input)] border border-[#2A2A2A]',
                   'text-[var(--text-primary)]',
-                  'focus:outline-none focus:border-[#D4A84B]/50',
+                  'focus-visible:outline-none focus-visible:border-[#D4A84B]/50 focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40',
                   '[color-scheme:dark]',
                 )}
               />
@@ -251,7 +265,7 @@ export function FilterBar({
             <div className="flex justify-end">
               <button
                 onClick={onClearAdvancedFilters}
-                className="text-xs text-gold hover:text-gold-light transition-colors"
+                className="text-xs text-gold hover:text-gold-light hover:underline transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none rounded py-1"
               >
                 {t('مسح الفلاتر', 'Clear filters')}
               </button>

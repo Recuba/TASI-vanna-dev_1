@@ -11,12 +11,19 @@ Built on [Vanna 2.0](https://vanna.ai/) with Google Gemini, supporting dual SQLi
 - Comprehensive data for ~500 Saudi-listed companies
 - Financial statements (balance sheet, income statement, cash flow) with multi-period history
 - Market data, valuation metrics, analyst consensus, dividends
+- **Live Market Widgets**: Real-time crypto, metals, oil, and global indices via SSE with auto-reconnection
 - Real-time news feed with Server-Sent Events (SSE) from 5 Arabic sources
-- Full Arabic RTL support with Tailwind CSS logical properties
+- **Connection status indicators**: Live/reconnecting/offline badge on SSE streams
+- Full Arabic RTL support with Tailwind CSS logical properties and lint enforcement
+- **Navigation progress bar**: Gold-themed top-loading indicator for page transitions
 - Virtual scrolling for high-performance list rendering
+- **Mobile-responsive market view**: Card layout for small screens
+- **GZip compression**: Automatic response compression for payloads >1KB
+- **Route-level loading/error states**: Dedicated loading skeletons and error boundaries per route
 - News aggregation, announcement tracking, technical reports
 - Dual database backend: SQLite for development, PostgreSQL for production
 - Async I/O wrappers (`asyncio.to_thread`) for non-blocking database access
+- JWT authentication with production secret enforcement
 
 ## Quick Start
 
@@ -59,6 +66,7 @@ Services:
         |  Next.js 14 (3000)|          |   Browser/User    |
         |  - RTL Arabic UI  |          |   (Legacy UI)     |
         |  - SSE News Feed  |          +--------+----------+
+        |  - Market Widgets |                   |
         |  - Virtual Scroll |                   |
         +--------+----------+                   |
                  |                              |
@@ -66,31 +74,35 @@ Services:
                             |  |
                    +--------v--v-------+
                    |  FastAPI (8084)    |
+                   |  - GZip Middleware |
                    |  - Chat SSE       |
                    |  - News Stream    |
+                   |  - Widgets Stream |
                    |  - REST API       |
-                   +--------+----------+
-                            |
-                   +--------v----------+
-                   |  Vanna 2.0 Agent  |
-                   |  - Gemini LLM     |
-                   |  - RunSqlTool     |
-                   |  - VisualizeTool  |
-                   +--------+----------+
-                            |
-                   +--------v----------+
-                   |  Async I/O Layer  |
-                   |  asyncio.to_thread|
-                   +--------+----------+
-                            |
-             +--------------+--------------+
-             |                             |
-    +--------v--------+          +--------v--------+
-    |     SQLite       |          |   PostgreSQL    |
-    | (saudi_stocks.db)|          |  (tasi_platform)|
-    |  10 core tables  |          |  10 core + 14   |
-    +-----------------+          |  extended tables |
-                                 +-----------------+
+                   +----+--------+-----+
+                        |        |
+           +------------+        +------------+
+           |                                  |
+  +--------v----------+            +----------v--------+
+  |  Vanna 2.0 Agent  |            |   QuotesHub       |
+  |  - Gemini LLM     |            |   - 4 Providers   |
+  |  - RunSqlTool     |            |   (crypto, metals,|
+  |  - VisualizeTool  |            |   oil, indices)   |
+  +--------+----------+            |   - Redis pub/sub |
+           |                       +-------------------+
+  +--------v----------+
+  |  Async I/O Layer  |
+  |  asyncio.to_thread|
+  +--------+----------+
+           |
+  +--------+--------------+
+  |                        |
+  +--------v--------+  +--v--------------+
+  |     SQLite       |  |   PostgreSQL    |
+  | (saudi_stocks.db)|  |  (tasi_platform)|
+  |  10 core tables  |  |  10 core + 14   |
+  +-----------------+  |  extended tables |
+                        +-----------------+
 ```
 
 ## Database
@@ -131,18 +143,24 @@ All settings via environment variables. See `.env.example` for the complete refe
 | `POSTGRES_PASSWORD` | (required for PG) | PostgreSQL password |
 | `SERVER_PORT` | `8084` | FastAPI server port |
 | `LOG_LEVEL` | `INFO` | Logging level |
+| `REDIS_URL` | `redis://localhost:6379/0` | Redis URL (optional, for widgets pub/sub) |
+| `CACHE_ENABLED` | `false` | Enable Redis-based caching |
+| `JWT_SECRET_KEY` | (required in prod) | JWT signing secret (enforced in PG mode) |
 
 ## Testing
 
 ```bash
-# Backend tests (573 tests)
+# Backend tests
 python -m pytest tests/ -q
 
-# Frontend tests (139 tests)
+# Frontend tests
 cd frontend && npx vitest run
 
 # Frontend build verification (15 pages)
 cd frontend && npx next build
+
+# RTL lint check (catch physical direction classes)
+cd frontend && npm run lint:rtl
 ```
 
 ## Project Structure

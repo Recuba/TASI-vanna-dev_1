@@ -316,7 +316,7 @@ export default function AnnouncementsPage() {
                 <summary className="cursor-pointer hover:text-[var(--text-secondary)] transition-colors">
                   {t('تفاصيل الخطأ', 'Error details')}
                 </summary>
-                <p className="mt-2 font-mono bg-[var(--bg-input)] p-2 rounded text-left" dir="ltr">
+                <p className="mt-2 font-mono bg-[var(--bg-input)] p-2 rounded text-start" dir="ltr">
                   {error}
                 </p>
               </details>

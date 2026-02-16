@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useNewsArticle, useNewsFeed } from '@/lib/hooks/use-api';
 import { searchNewsFeed, type NewsFeedItem } from '@/lib/api-client';
@@ -156,7 +156,7 @@ function ReadingProgressBar() {
   }, []);
 
   return (
-    <div className="fixed top-14 left-0 right-0 z-50 h-1 bg-transparent">
+    <div className="fixed top-14 left-0 right-0 z-50 h-1 bg-transparent pointer-events-none">
       <div
         className="h-full transition-[width] duration-100 ease-out"
         style={{
@@ -165,6 +165,46 @@ function ReadingProgressBar() {
         }}
       />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Floating back-to-top button
+// ---------------------------------------------------------------------------
+
+function BackToTopButton() {
+  const { t } = useLanguage();
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setVisible(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label={t('العودة للأعلى', 'Back to top')}
+      className={cn(
+        'fixed bottom-6 end-6 z-40',
+        'w-11 h-11 rounded-full',
+        'bg-gold/90 hover:bg-gold text-black',
+        'shadow-lg shadow-gold/20',
+        'flex items-center justify-center',
+        'focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:outline-none',
+        'transition-all duration-300',
+        'animate-fade-in',
+      )}
+    >
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+      </svg>
+    </button>
   );
 }
 
@@ -210,8 +250,10 @@ function ShareButton({ title }: { title?: string }) {
         onClick={handleShare}
         className={cn(
           'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
+          'min-h-[44px]',
           'bg-[var(--bg-input)] border border-[#2A2A2A]',
           'text-[var(--text-secondary)] hover:text-gold hover:border-[#D4A84B]/30',
+          'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
           'transition-all duration-200',
         )}
       >
@@ -237,15 +279,29 @@ function ShareButton({ title }: { title?: string }) {
 
 function ArticleSkeleton() {
   return (
-    <div className="animate-pulse space-y-4">
-      <div className="h-4 bg-[var(--bg-input)] rounded w-24" />
-      <div className="h-8 bg-[var(--bg-input)] rounded w-3/4" />
+    <div className="relative overflow-hidden space-y-4">
+      {/* Badges row */}
+      <div className="flex items-center gap-2">
+        <div className="h-6 bg-[var(--bg-input)] rounded-full w-16" />
+        <div className="h-6 bg-[var(--bg-input)] rounded-full w-20" />
+      </div>
+      {/* Title */}
+      <div className="space-y-2">
+        <div className="h-8 bg-[var(--bg-input)] rounded w-full" />
+        <div className="h-8 bg-[var(--bg-input)] rounded w-3/4" />
+      </div>
+      {/* Meta row: source badge + date */}
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 bg-[var(--bg-input)] rounded-full" />
-        <div className="h-4 bg-[var(--bg-input)] rounded w-28" />
-        <div className="h-4 bg-[var(--bg-input)] rounded w-36" />
+        <div className="h-5 bg-[var(--bg-input)] rounded-full w-24" />
+        <div className="ms-auto space-y-1.5">
+          <div className="h-4 bg-[var(--bg-input)] rounded w-36" />
+          <div className="h-3 bg-[var(--bg-input)] rounded w-24" />
+        </div>
       </div>
+      {/* Divider */}
       <div className="h-px bg-[var(--bg-input)]" />
+      {/* Body lines */}
       <div className="space-y-3">
         <div className="h-5 bg-[var(--bg-input)] rounded w-full" />
         <div className="h-5 bg-[var(--bg-input)] rounded w-full" />
@@ -254,6 +310,11 @@ function ArticleSkeleton() {
         <div className="h-5 bg-[var(--bg-input)] rounded w-full" />
         <div className="h-5 bg-[var(--bg-input)] rounded w-3/4" />
       </div>
+      {/* Shimmer overlay */}
+      <div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(212,168,75,0.05)] to-transparent"
+        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+      />
     </div>
   );
 }
@@ -267,11 +328,13 @@ function RelatedArticleCard({
   title,
   publishedAt,
   sourceName,
+  index = 0,
 }: {
   id: string;
   title: string;
   publishedAt: string | null;
   sourceName: string;
+  index?: number;
 }) {
   const { t, language } = useLanguage();
   const color = getSourceColor(sourceName);
@@ -282,9 +345,17 @@ function RelatedArticleCard({
         'block p-4 rounded-md',
         'bg-[var(--bg-card)] border border-[#2A2A2A]',
         'hover:border-[#D4A84B]/30 hover:shadow-md hover:shadow-[#D4A84B]/5',
+        'hover:-translate-y-0.5',
+        'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
         'transition-all duration-200 group',
+        'opacity-0 animate-fade-in',
       )}
-      style={{ borderInlineEndWidth: '3px', borderInlineEndColor: color }}
+      style={{
+        borderInlineEndWidth: '3px',
+        borderInlineEndColor: color,
+        animationDelay: `${index * 100}ms`,
+        animationFillMode: 'forwards',
+      }}
     >
       <h4 className="text-sm font-bold text-[var(--text-primary)] leading-tight mb-2 line-clamp-2 group-hover:text-gold transition-colors">
         {title}
@@ -307,14 +378,68 @@ function RelatedArticleCard({
 }
 
 // ---------------------------------------------------------------------------
+// URL validation helper
+// ---------------------------------------------------------------------------
+
+function isValidUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Article detail page
 // ---------------------------------------------------------------------------
 
 export default function ArticleDetailPage() {
   const { t, language } = useLanguage();
   const params = useParams();
+  const router = useRouter();
   const id = typeof params.id === 'string' ? params.id : '';
   const { data: article, loading, error, refetch } = useNewsArticle(id);
+
+  // Escape key navigates back to news list
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') router.push('/news');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [router]);
+
+  // Auto-retry once on non-404 network errors
+  const [hasAutoRetried, setHasAutoRetried] = useState(false);
+
+  useEffect(() => {
+    if (error && !hasAutoRetried && !error.includes('404')) {
+      setHasAutoRetried(true);
+      const timer = setTimeout(() => refetch(), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, hasAutoRetried, refetch]);
+
+  // Minimum loading duration to prevent skeleton flash
+  const [showLoading, setShowLoading] = useState(true);
+  const loadStartRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (!loading) {
+      const elapsed = Date.now() - loadStartRef.current;
+      const remaining = Math.max(0, 200 - elapsed);
+      if (remaining > 0) {
+        const timer = setTimeout(() => setShowLoading(false), remaining);
+        return () => clearTimeout(timer);
+      }
+      setShowLoading(false);
+    } else {
+      loadStartRef.current = Date.now();
+      setShowLoading(true);
+    }
+  }, [loading]);
 
   // Fetch related articles: by ticker if available, otherwise by source
   const ticker = (article as (typeof article & ArticleExtras) | undefined)?.ticker;
@@ -360,7 +485,10 @@ export default function ArticleDetailPage() {
       {/* Reading progress bar */}
       <ReadingProgressBar />
 
-      <div className="max-w-content-lg mx-auto space-y-5">
+      {/* Back to top floating button */}
+      <BackToTopButton />
+
+      <div className="max-w-content-lg mx-auto space-y-5 animate-fade-in">
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm">
@@ -380,12 +508,12 @@ export default function ArticleDetailPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
           <span className="text-[var(--text-muted)] truncate max-w-[300px]">
-            {loading ? '...' : article?.title ?? t('المقال', 'Article')}
+            {showLoading ? '...' : article?.title ?? t('المقال', 'Article')}
           </span>
         </nav>
 
         {/* Content */}
-        {loading ? (
+        {showLoading ? (
           <ArticleSkeleton />
         ) : error ? (
           <div className="text-center py-16 space-y-4">
@@ -446,6 +574,11 @@ export default function ArticleDetailPage() {
                     {readTime}
                   </span>
                 )}
+                {article.body && (
+                  <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-input)] px-2.5 py-1 rounded-full">
+                    {t(`${article.body.split(/\s+/).length} كلمة`, `${article.body.split(/\s+/).length} words`)}
+                  </span>
+                )}
               </div>
               <ShareButton title={article.title} />
             </div>
@@ -459,7 +592,7 @@ export default function ArticleDetailPage() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <LargeSourceBadge name={article.source_name} />
               {(article.published_at || article.created_at) && (
-                <div className="text-left">
+                <div className="text-start">
                   <p className="text-sm text-[var(--text-secondary)]">
                     {formatDate(article.published_at || article.created_at, language)}
                   </p>
@@ -476,58 +609,64 @@ export default function ArticleDetailPage() {
             {/* Divider */}
             <hr className="border-gold/10" />
 
-            {/* Body -- improved typography */}
+            {/* Body -- improved typography with drop cap */}
             {article.body ? (
               <div
                 className={cn(
                   'text-lg leading-[1.9] text-[var(--text-secondary)]',
                   'whitespace-pre-wrap',
                   'max-w-prose',
+                  'first-letter:text-3xl first-letter:font-bold first-letter:text-gold',
+                  'first-letter:float-start first-letter:me-2 first-letter:leading-none',
                 )}
               >
                 {article.body}
               </div>
             ) : (
-              <div className="rounded-xl border border-[#2A2A2A] bg-[var(--bg-input)] p-6 space-y-3">
-                <div className="flex items-center gap-2 text-[var(--text-muted)]">
-                  <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                  </svg>
-                  <p className="text-sm font-medium">
-                    {t('النص الكامل غير متوفر', 'Full text not available')}
-                  </p>
-                </div>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                  {t(
-                    'لم يتم استخراج النص الكامل لهذا المقال من المصدر. يمكنك الاطلاع على المقال الأصلي من خلال رابط المصدر أدناه.',
-                    'The full text could not be retrieved from the source. You can read the original article via the source link below.'
-                  )}
-                </p>
-                {article.source_url && (
-                  <a
-                    href={article.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      'inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
-                      'bg-gold/10 text-gold border border-gold/20',
-                      'hover:bg-gold/20 transition-colors',
-                    )}
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <div className="relative rounded-xl border border-[#2A2A2A] bg-[var(--bg-input)] overflow-hidden">
+                {/* Gold gradient top accent */}
+                <div className="h-1 w-full bg-gradient-to-r from-gold/60 via-gold to-gold/60" />
+                <div className="p-6 space-y-3">
+                  <div className="flex items-center gap-3 text-gold">
+                    <svg className="w-8 h-8 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                     </svg>
-                    {t('قراءة من المصدر الأصلي', 'Read from original source')}
-                  </a>
-                )}
+                    <p className="text-base font-semibold">
+                      {t('النص الكامل غير متوفر', 'Full text not available')}
+                    </p>
+                  </div>
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                    {t(
+                      'لم يتم استخراج النص الكامل لهذا المقال من المصدر. يمكنك الاطلاع على المقال الأصلي من خلال رابط المصدر أدناه.',
+                      'The full text could not be retrieved from the source. You can read the original article via the source link below.'
+                    )}
+                  </p>
+                  {isValidUrl(article.source_url) && (
+                    <a
+                      href={article.source_url!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium',
+                        'bg-gold/10 text-gold border border-gold/20',
+                        'hover:bg-gold/20 transition-colors',
+                      )}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      {t('قراءة من المصدر الأصلي', 'Read from original source')}
+                    </a>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Source link -- only show when body exists (when no body, link is inside the alert box above) */}
-            {article.body && article.source_url && (
+            {article.body && isValidUrl(article.source_url) && (
               <div className="pt-2">
                 <a
-                  href={article.source_url}
+                  href={article.source_url!}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(
@@ -548,28 +687,46 @@ export default function ArticleDetailPage() {
               </div>
             )}
 
-            {/* Language info */}
-            <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] pt-2 border-t border-gold/10">
-              <span>{t('اللغة', 'Language')}: {article.language === 'ar' ? t('العربية', 'Arabic') : article.language}</span>
+            {/* Enhanced metadata footer */}
+            <div className="flex items-center gap-4 flex-wrap text-xs text-[var(--text-muted)] pt-3 border-t border-gold/10">
+              <span className="flex items-center gap-1">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                </svg>
+                {article.language === 'ar' ? t('العربية', 'Arabic') : article.language}
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+                </svg>
+                ID: {id}
+              </span>
+              <span className="hidden sm:flex items-center gap-1 text-[var(--text-muted)] opacity-60">
+                <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-input)] border border-[#2A2A2A] text-[10px] font-mono">Esc</kbd>
+                {t('للعودة', 'to go back')}
+              </span>
             </div>
 
             {/* Related articles */}
             {relatedArticles.length > 0 && (
               <section className="pt-4 space-y-4">
                 <hr className="border-gold/10" />
-                <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                  {relatedByTicker
-                    ? t(`أخبار ذات صلة عن ${ticker}`, `Related news about ${ticker}`)
-                    : t(`أخبار ذات صلة من ${article.source_name}`, `Related news from ${article.source_name}`)}
-                </h2>
+                <div className="border-s-2 border-gold/40 ps-4">
+                  <h2 className="text-lg font-bold text-[var(--text-primary)]">
+                    {relatedByTicker
+                      ? t(`أخبار ذات صلة عن ${ticker}`, `Related news about ${ticker}`)
+                      : t(`أخبار ذات صلة من ${article.source_name}`, `Related news from ${article.source_name}`)}
+                  </h2>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {relatedArticles.map((related) => (
+                  {relatedArticles.map((related, idx) => (
                     <RelatedArticleCard
                       key={related.id}
                       id={related.id}
                       title={related.title}
                       publishedAt={related.published_at || related.created_at}
                       sourceName={related.source_name}
+                      index={idx}
                     />
                   ))}
                 </div>

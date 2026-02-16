@@ -7,6 +7,8 @@ Provides three endpoints:
   /health/ready  - Readiness probe (200 only if database is reachable)
 """
 
+import asyncio
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
@@ -24,7 +26,7 @@ router = APIRouter(tags=["health"])
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
     """Return structured health status for all platform components."""
-    report = get_health()
+    report = await asyncio.to_thread(get_health)
     status_code = 200 if report.status != HealthStatus.UNHEALTHY else 503
 
     response = HealthResponse(
@@ -60,7 +62,7 @@ async def liveness():
 @router.get("/health/ready")
 async def readiness():
     """Readiness probe — returns 200 only when the database is reachable."""
-    db = check_database()
+    db = await asyncio.to_thread(check_database)
     if db.status == HealthStatus.HEALTHY:
         return {"status": "ready"}
     return JSONResponse(

@@ -12,42 +12,56 @@ import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
+from services.yfinance_base import CircuitBreaker, YFinanceCache
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# In-memory cache
+# Shared cache & circuit breaker instances
 # ---------------------------------------------------------------------------
-_cache: Dict[str, Dict[str, Any]] = {}
-_CACHE_TTL = 300  # seconds
+_cache = YFinanceCache(ttl=300, max_entries=500, name="tasi_index")
+_CACHE_TTL = _cache.ttl  # backward-compatible alias for tests
 _fetch_lock = threading.Lock()
 
 VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 
-# ---------------------------------------------------------------------------
-# Circuit breaker state
-# ---------------------------------------------------------------------------
-CIRCUIT_BREAKER_THRESHOLD = 5  # consecutive failures before opening
-CIRCUIT_BREAKER_TIMEOUT = 300  # seconds to keep circuit open (5 min)
+_breaker = CircuitBreaker(
+    threshold=5,
+    timeout=300,  # 5 min
+    name="tasi_index",
+)
+
 SYMBOL_RETRY_DELAY = 0.5  # seconds between symbol retries
 
+# Backward-compatible module-level circuit breaker state
+# (used by test fixtures that reset state via ``mod._consecutive_failures = 0``)
+CIRCUIT_BREAKER_THRESHOLD = _breaker.threshold
+CIRCUIT_BREAKER_TIMEOUT = _breaker.timeout
 _consecutive_failures: int = 0
 _circuit_open_until: float = 0.0
 _circuit_lock = threading.Lock()
 
 
+# ---------------------------------------------------------------------------
+# Cache helpers (thin wrappers with TASI-specific metadata enrichment)
+# ---------------------------------------------------------------------------
+
+
 def _get_cached(period: str) -> Optional[Dict[str, Any]]:
     """Return cached data if still fresh, enriched with freshness metadata."""
-    entry = _cache.get(period)
+    payload = _cache.get(period)
+    if payload is None:
+        return None
+    # Get entry for age calculation
+    with _cache._lock:
+        entry = _cache._store.get(period)
     if entry is None:
         return None
     age = time.monotonic() - entry["fetched_at"]
-    if age < _CACHE_TTL:
-        payload = dict(entry["payload"])
-        payload["data_freshness"] = "cached"
-        payload["cache_age_seconds"] = round(age)
-        return payload
-    # Stale -- caller can use it as fallback
-    return None
+    result = dict(payload)
+    result["data_freshness"] = "cached"
+    result["cache_age_seconds"] = round(age)
+    return result
 
 
 def _get_stale_cached(period: str) -> Optional[Dict[str, Any]]:
@@ -56,70 +70,65 @@ def _get_stale_cached(period: str) -> Optional[Dict[str, Any]]:
     Enriches the payload with staleness metadata so consumers (especially
     the frontend) can display an appropriate warning about data age.
     """
-    entry = _cache.get(period)
-    if entry is None:
+    payload = _cache.get_stale(period)
+    if payload is None:
         return None
-    age_seconds = round(time.monotonic() - entry["fetched_at"])
-    payload = dict(entry["payload"])
-    payload["source"] = "cached"
-    payload["data_freshness"] = "stale"
-    payload["cache_age_seconds"] = age_seconds
-    return payload
+    with _cache._lock:
+        entry = _cache._store.get(period)
+    age_seconds = round(time.monotonic() - entry["fetched_at"]) if entry else 0
+    result = dict(payload)
+    result["source"] = "cached"
+    result["data_freshness"] = "stale"
+    result["cache_age_seconds"] = age_seconds
+    return result
 
 
 def _set_cache(period: str, payload: Dict[str, Any]) -> None:
-    _cache[period] = {"payload": payload, "fetched_at": time.monotonic()}
+    _cache.put(period, payload)
 
 
 # ---------------------------------------------------------------------------
 # Circuit breaker helpers
+# Uses shared CircuitBreaker internally but keeps module-level state
+# in sync for backward compatibility with test fixtures.
 # ---------------------------------------------------------------------------
+
+
+def _sync_to_breaker() -> None:
+    """Push module-level state into the CircuitBreaker instance."""
+    _breaker._consecutive_failures = _consecutive_failures
+    _breaker._open_until = _circuit_open_until
 
 
 def _is_circuit_open() -> bool:
     """Return True if the circuit breaker is currently open (yfinance skipped)."""
-    return time.monotonic() < _circuit_open_until
+    _sync_to_breaker()
+    return _breaker.is_open()
 
 
 def _record_failure() -> None:
     """Increment consecutive failure count; open circuit if threshold reached."""
     global _consecutive_failures, _circuit_open_until
-    with _circuit_lock:
-        _consecutive_failures += 1
-        if (
-            _consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD
-            and not _is_circuit_open()
-        ):
-            _circuit_open_until = time.monotonic() + CIRCUIT_BREAKER_TIMEOUT
-            logger.warning(
-                "yfinance circuit breaker OPEN — serving cached/mock for next %d seconds "
-                "(consecutive_failures=%d)",
-                CIRCUIT_BREAKER_TIMEOUT,
-                _consecutive_failures,
-            )
+    _sync_to_breaker()
+    _breaker.record_failure()
+    # Sync back
+    _consecutive_failures = _breaker._consecutive_failures
+    _circuit_open_until = _breaker._open_until
 
 
 def _record_success() -> None:
     """Reset circuit breaker on a successful fetch."""
     global _consecutive_failures, _circuit_open_until
-    with _circuit_lock:
-        was_open = _is_circuit_open()
-        _consecutive_failures = 0
-        _circuit_open_until = 0.0
-        if was_open:
-            logger.info("yfinance circuit breaker CLOSED — live data restored")
+    _sync_to_breaker()
+    _breaker.record_success()
+    _consecutive_failures = _breaker._consecutive_failures
+    _circuit_open_until = _breaker._open_until
 
 
 def get_circuit_breaker_status() -> Dict[str, Any]:
     """Return circuit breaker diagnostics for the health endpoint."""
-    with _circuit_lock:
-        is_open = _is_circuit_open()
-        remaining = max(0.0, _circuit_open_until - time.monotonic()) if is_open else 0.0
-        return {
-            "circuit_state": "open" if is_open else "closed",
-            "consecutive_failures": _consecutive_failures,
-            "open_remaining_seconds": round(remaining) if is_open else None,
-        }
+    _sync_to_breaker()
+    return _breaker.get_status()
 
 
 # ---------------------------------------------------------------------------
@@ -150,8 +159,8 @@ def _generate_mock_data(period: str) -> List[Dict[str, Any]]:
     count = 0
 
     while count < days and current <= end_date:
-        # Skip weekends (Saudi market: Sun-Thu, but yfinance reports Mon-Fri style)
-        if current.weekday() >= 5:
+        # Skip weekends (Tadawul operates Sun-Thu; Friday=4, Saturday=5)
+        if current.weekday() in (4, 5):
             current += timedelta(days=1)
             continue
 
@@ -226,7 +235,7 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
             )
             return cached
 
-        # Check circuit breaker — skip yfinance entirely if open
+        # Check circuit breaker -- skip yfinance entirely if open
         if _is_circuit_open():
             logger.info(
                 "TASI fetch: circuit_breaker=open, skipping yfinance, period=%s",
@@ -314,7 +323,7 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
                         exc_type,
                         error_category,
                         exc_msg,
-                        _consecutive_failures,
+                        _breaker.get_status()["consecutive_failures"],
                     )
                     # Add delay between symbol retries (but not after the last symbol)
                     if idx < len(symbols) - 1:
@@ -356,6 +365,10 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
     return payload
 
 
+# Convenience alias used by the verification command
+get_tasi_data = fetch_tasi_index
+
+
 def get_cache_status() -> Dict[str, Any]:
     """Return cache diagnostic information for the health endpoint."""
     if not _cache:
@@ -364,11 +377,15 @@ def get_cache_status() -> Dict[str, Any]:
             "cache_age_seconds": None,
             "last_updated": None,
         }
-    # Use the most recently fetched entry
-    newest_key = max(_cache, key=lambda k: _cache[k]["fetched_at"])
-    entry = _cache[newest_key]
+    entry = _cache.newest_entry()
+    if entry is None:
+        return {
+            "cache_status": "empty",
+            "cache_age_seconds": None,
+            "last_updated": None,
+        }
     age = time.monotonic() - entry["fetched_at"]
-    fresh = age < _CACHE_TTL
+    fresh = age < _cache.ttl
     return {
         "cache_status": "fresh" if fresh else "stale",
         "cache_age_seconds": round(age),

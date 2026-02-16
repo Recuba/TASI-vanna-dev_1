@@ -258,3 +258,148 @@ import { API_TIMEOUT_MS, HEALTH_POLL_INTERVAL_MS } from '@/lib/config';
 ```
 
 See `frontend/.env.local.example` for all available variables.
+
+## Live Market Widgets
+
+The widgets system provides live-updating market quotes (crypto, metals, oil, global indices) via Server-Sent Events.
+
+### Architecture
+
+```
+QuotesHub (services/widgets/quotes_hub.py)
+  ├── CryptoProvider     (providers/crypto.py)
+  ├── MetalsProvider     (providers/metals.py)
+  ├── OilProvider        (providers/oil.py)
+  └── IndicesProvider    (providers/indices.py)
+         │
+         v
+  SSE endpoint (/api/v1/widgets/stream)
+         │
+         v
+  LiveMarketWidgets (React component)
+    └── EventSource with reconnection backoff
+```
+
+### Adding a New Provider
+
+1. Create a new file in `services/widgets/providers/`:
+
+```python
+from api.models.widgets import QuoteItem
+
+async def fetch_my_quotes() -> list[QuoteItem]:
+    """Fetch quotes from your data source."""
+    # ... fetch logic
+    return [
+        QuoteItem(
+            symbol="XYZ",
+            name="My Asset",
+            price=100.0,
+            change=2.5,
+            change_pct=2.56,
+            category="my_category",
+        )
+    ]
+```
+
+2. Register the provider in `services/widgets/providers/__init__.py`.
+
+3. Add the category to the `LiveMarketWidgets` component's category filter tabs.
+
+### Redis Pub/Sub (Optional)
+
+The `QuotesHub` supports Redis pub/sub for multi-instance deployments. Configure via:
+
+| Env Variable | Default | Description |
+|---|---|---|
+| `REDIS_URL` | `redis://localhost:6379/0` | Redis connection URL |
+| `CACHE_ENABLED` | `false` | Enable Redis-based caching |
+
+Without Redis, the hub operates in single-process mode with in-memory state.
+
+## Cache Utilities
+
+### Unified Caching Decorator (`services/cache_utils.py`)
+
+Use `@cache_response` for caching service method results:
+
+```python
+from services.cache_utils import cache_response
+
+@cache_response(ttl=300, max_size=500)
+def get_expensive_data(ticker: str) -> dict:
+    # ... expensive computation
+    return result
+```
+
+The decorator provides:
+- **TTL-based expiration**: Entries expire after `ttl` seconds
+- **LRU eviction**: Cache is capped at `max_size` entries (default 500)
+- **Thread-safe**: Uses `threading.Lock` internally
+
+### YFinance Shared Utilities (`services/yfinance_base.py`)
+
+Common patterns for yfinance API calls are centralized in `yfinance_base.py`:
+
+- **`YFinanceCache`**: Shared LRU cache with configurable TTL and max entries (default 500)
+- **`CircuitBreaker`**: Prevents repeated calls to a failing yfinance endpoint; auto-resets after a cooldown period
+
+```python
+from services.yfinance_base import YFinanceCache, CircuitBreaker
+
+cache = YFinanceCache(max_size=500, ttl=300)
+breaker = CircuitBreaker(failure_threshold=5, reset_timeout=60)
+```
+
+## Connection Status Patterns
+
+### SSE Disconnect Detection (Backend)
+
+All SSE endpoints must check for client disconnection to avoid orphaned generators:
+
+```python
+@router.get("/stream")
+async def stream(request: Request):
+    async def event_generator():
+        while True:
+            if await request.is_disconnected():
+                break
+            yield {"data": json.dumps(payload)}
+            await asyncio.sleep(interval)
+    return EventSourceResponse(event_generator())
+```
+
+### EventSource Reconnection (Frontend)
+
+The `ConnectionStatusBadge` component (`frontend/src/components/common/ConnectionStatusBadge.tsx`) provides a reusable connection state indicator. SSE consumers should implement exponential backoff on reconnection:
+
+```typescript
+const reconnect = useCallback(() => {
+  const delay = Math.min(1000 * 2 ** attempt, 30000);
+  setTimeout(() => {
+    const es = new EventSource(url);
+    es.onopen = () => setAttempt(0);
+    es.onerror = () => { es.close(); reconnect(); };
+  }, delay);
+}, [attempt]);
+```
+
+States: `live` (connected), `reconnecting` (attempting), `offline` (failed).
+
+### Header Health Polling
+
+The site header polls `/health/live` with AbortController to show a connection indicator. The polling interval is configurable via `HEALTH_POLL_INTERVAL_MS` in `frontend/src/lib/config.ts`.
+
+## Async I/O Notes
+
+In addition to database calls and news store methods, health check routes in `app.py` are also wrapped in `asyncio.to_thread()` to prevent blocking when the database driver performs I/O during health probes.
+
+## RTL Lint Enforcement
+
+Run the RTL lint check to catch physical direction properties (`ml-*`, `mr-*`, `pl-*`, `pr-*`) that should use logical equivalents:
+
+```bash
+cd frontend && npm run lint:rtl
+```
+
+This runs `scripts/lint-rtl.js`, which scans `.tsx` and `.ts` files for Tailwind physical direction classes and reports violations. The check is also integrated into CI.

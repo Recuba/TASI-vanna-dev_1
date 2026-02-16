@@ -14,6 +14,7 @@ from typing import List, Literal
 from fastapi import APIRouter, HTTPException, Path, Query
 from pydantic import BaseModel
 
+from models.api_responses import STANDARD_ERRORS
 from models.validators import validate_ticker
 from services.stock_ohlcv import (
     VALID_PERIODS,
@@ -60,7 +61,7 @@ class StockHealthResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-@router.get("/{ticker}/ohlcv", response_model=StockOHLCVResponse)
+@router.get("/{ticker}/ohlcv", response_model=StockOHLCVResponse, responses=STANDARD_ERRORS)
 async def get_stock_ohlcv(
     ticker: str = Path(..., description="Stock ticker (e.g. 2222 or 2222.SR)"),
     period: str = Query("1y", description="Data period"),

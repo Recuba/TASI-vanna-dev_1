@@ -16,6 +16,13 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from api.db_helper import afetchall, afetchone, get_conn, fetchall, fetchone
+from database.queries import (
+    COMPANY_EXISTS,
+    COMPANY_NAMES_BY_TICKERS,
+    DIVIDEND_DATA_BY_TICKER,
+    FINANCIAL_SUMMARY_BY_TICKER,
+)
+from models.api_responses import STANDARD_ERRORS
 from models.validators import validate_ticker, validate_ticker_list
 
 logger = logging.getLogger(__name__)
@@ -184,15 +191,15 @@ class QuoteItem(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-@router.get("/{ticker}/dividends", response_model=DividendData)
+@router.get("/{ticker}/dividends", response_model=DividendData, responses=STANDARD_ERRORS)
 async def get_dividends(ticker: str) -> DividendData:
     """Get dividend data for a specific stock."""
     ticker = validate_ticker(ticker)
-    exists = await afetchone("SELECT 1 FROM companies WHERE ticker = ?", (ticker,))
+    exists = await afetchone(COMPANY_EXISTS, (ticker,))
     if not exists:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    row = await afetchone("SELECT * FROM dividend_data WHERE ticker = ?", (ticker,))
+    row = await afetchone(DIVIDEND_DATA_BY_TICKER, (ticker,))
 
     if row is None:
         return DividendData(ticker=ticker)
@@ -211,17 +218,15 @@ async def get_dividends(ticker: str) -> DividendData:
     )
 
 
-@router.get("/{ticker}/summary", response_model=FinancialSummaryData)
+@router.get("/{ticker}/summary", response_model=FinancialSummaryData, responses=STANDARD_ERRORS)
 async def get_financial_summary(ticker: str) -> FinancialSummaryData:
     """Get financial summary for a specific stock."""
     ticker = validate_ticker(ticker)
-    exists = await afetchone("SELECT 1 FROM companies WHERE ticker = ?", (ticker,))
+    exists = await afetchone(COMPANY_EXISTS, (ticker,))
     if not exists:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    row = await afetchone(
-        "SELECT * FROM financial_summary WHERE ticker = ?", (ticker,)
-    )
+    row = await afetchone(FINANCIAL_SUMMARY_BY_TICKER, (ticker,))
 
     if row is None:
         return FinancialSummaryData(ticker=ticker)
@@ -243,7 +248,7 @@ async def get_financial_summary(ticker: str) -> FinancialSummaryData:
     )
 
 
-@router.get("/{ticker}/financials", response_model=FinancialsResponse)
+@router.get("/{ticker}/financials", response_model=FinancialsResponse, responses=STANDARD_ERRORS)
 async def get_financials(
     ticker: str,
     statement: str = Query(
@@ -265,11 +270,15 @@ async def get_financials(
             detail="Invalid period_type. Must be one of: annual, quarterly, ttm",
         )
 
-    exists = await afetchone("SELECT 1 FROM companies WHERE ticker = ?", (ticker,))
+    exists = await afetchone(COMPANY_EXISTS, (ticker,))
     if not exists:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    # Table name is validated above against _STATEMENT_TABLES whitelist
+    # Table name is validated above against _STATEMENT_TABLES whitelist.
+    # SELECT * is intentional here: financial statement tables have dynamic
+    # columns that vary by statement type, and the handler strips metadata
+    # fields (id, ticker, period_type, period_index, period_date) below,
+    # returning everything else in the generic `data` dict.
     rows = await afetchall(
         f"SELECT * FROM {statement} WHERE ticker = ? AND period_type = ? ORDER BY period_index ASC",
         (ticker, period_type),
@@ -295,7 +304,7 @@ async def get_financials(
     return FinancialsResponse(ticker=ticker, statement=statement, periods=periods)
 
 
-@router.get("/compare", response_model=CompareResponse)
+@router.get("/compare", response_model=CompareResponse, responses=STANDARD_ERRORS)
 async def compare_stocks(
     tickers: str = Query(
         ..., description="Comma-separated tickers (2-5), e.g. 2222,1120"
@@ -326,12 +335,13 @@ async def compare_stocks(
         table_columns.setdefault(table, []).append(col)
 
     def _sync_compare():
-        conn = get_conn()
-        try:
+        from contextlib import closing
+
+        with closing(get_conn()) as conn:
             placeholders = ",".join("?" for _ in ticker_list)
             name_rows = fetchall(
                 conn,
-                f"SELECT ticker, short_name FROM companies WHERE ticker IN ({placeholders})",
+                COMPANY_NAMES_BY_TICKERS.format(placeholders=placeholders),
                 tuple(ticker_list),
             )
             name_map = {r["ticker"]: r["short_name"] for r in name_rows}
@@ -350,8 +360,6 @@ async def compare_stocks(
                     for col in columns:
                         result_data[tk][col] = row_dict.get(col)
             return name_map, result_data
-        finally:
-            conn.close()
 
     name_map, result_data = await asyncio.to_thread(_sync_compare)
 
@@ -368,7 +376,7 @@ async def compare_stocks(
     return CompareResponse(tickers=items)
 
 
-@router.get("/quotes", response_model=List[QuoteItem])
+@router.get("/quotes", response_model=List[QuoteItem], responses=STANDARD_ERRORS)
 async def get_batch_quotes(
     tickers: str = Query(
         ..., description="Comma-separated tickers, e.g. 2222,1120,2010"

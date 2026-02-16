@@ -297,7 +297,8 @@ export default function MarketPage() {
             <ErrorDisplay message={entitiesError} onRetry={refetchEntities} />
           ) : sortedItems.length > 0 ? (
             <ChartErrorBoundary fallbackHeight={200}>
-            <div className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl overflow-hidden">
+            {/* Desktop table */}
+            <div className="hidden md:block bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -375,10 +376,64 @@ export default function MarketPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Mobile card layout */}
+            <div className="block md:hidden space-y-3" dir={dir}>
+              {sortedItems.map((stock) => (
+                <Link
+                  key={stock.ticker}
+                  href={`/stock/${encodeURIComponent(stock.ticker)}`}
+                  className="block bg-black/20 border border-[#2A2A2A] rounded-2xl px-4 py-3 active:bg-white/5 transition-colors"
+                >
+                  {/* Top row: name + price */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">
+                        {stock.short_name || stock.ticker}
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                        {stock.ticker}
+                        {stock.sector && (
+                          <span className="ms-1">&middot; {translateSector(stock.sector, language)}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="text-end shrink-0">
+                      <p className="text-sm font-bold text-[var(--text-primary)]">
+                        {stock.current_price !== null ? stock.current_price.toFixed(2) : '-'}
+                      </p>
+                      {stock.change_pct !== null && stock.change_pct !== undefined ? (
+                        <span className={cn(
+                          'inline-block text-xs font-bold px-2 py-0.5 rounded-full mt-0.5',
+                          stock.change_pct >= 0
+                            ? 'text-accent-green bg-accent-green/10'
+                            : 'text-accent-red bg-accent-red/10'
+                        )}>
+                          {stock.change_pct >= 0 ? '+' : ''}{stock.change_pct.toFixed(2)}%
+                        </span>
+                      ) : (
+                        <span className="text-xs text-[var(--text-muted)]">-</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bottom row: metrics */}
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#2A2A2A]/50">
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {t('\u0627\u0644\u0642\u064A\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064A\u0629', 'Market Cap')}
+                    </span>
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
+                      {stock.market_cap !== null ? `SAR ${fmtCap(stock.market_cap)}` : '-'}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-4 py-3 border-t border-[#2A2A2A]" dir={dir}>
+                <div className="flex items-center justify-center gap-4 py-3 border-t border-[#2A2A2A] mt-3" dir={dir}>
                   <button
                     onClick={() => handlePageChange(Math.max(1, page - 1))}
                     disabled={page === 1}
@@ -414,7 +469,6 @@ export default function MarketPage() {
                   </button>
                 </div>
               )}
-            </div>
             </ChartErrorBoundary>
           ) : (
             <div className="text-center py-12">

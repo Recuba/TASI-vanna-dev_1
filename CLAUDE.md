@@ -36,6 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   └── logging.py                  # JSON (prod) / pretty (dev) logging configuration
 ├── database/
 │   ├── schema.sql                  # Full PostgreSQL schema (DDL for all tables + indexes + views)
+│   ├── queries.py                  # Centralized SQL query strings
 │   ├── migrate_sqlite_to_pg.py     # SQLite -> PostgreSQL data migration
 │   └── csv_to_postgres.py          # CSV -> PostgreSQL direct pipeline
 ├── services/
@@ -51,11 +52,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── auth_service.py             # JWT authentication service
 │   ├── db_compat.py                # SQLite/PostgreSQL abstraction layer
 │   ├── stock_ohlcv.py              # OHLCV data service
-│   └── tasi_index.py               # TASI index data service
+│   ├── tasi_index.py               # TASI index data service
+│   ├── yfinance_base.py            # Shared yfinance cache + circuit breaker
+│   ├── cache_utils.py              # Unified @cache_response decorator (LRU + TTL)
+│   └── widgets/
+│       ├── __init__.py
+│       ├── quotes_hub.py           # QuotesHub: market quote orchestrator (Redis pub/sub)
+│       └── providers/
+│           ├── __init__.py
+│           ├── crypto.py           # Cryptocurrency quotes
+│           ├── metals.py           # Precious metals quotes
+│           ├── oil.py              # Oil & energy quotes
+│           └── indices.py          # Global market indices
 ├── api/
+│   ├── models/
+│   │   └── widgets.py              # QuoteItem Pydantic model
 │   ├── routes/                     # FastAPI route handlers (async)
 │   │   ├── news_feed.py            # /api/v1/news/feed (SQLite news API)
 │   │   ├── news_stream.py          # /api/v1/news/stream (SSE endpoint)
+│   │   ├── widgets_stream.py       # /api/v1/widgets/stream (SSE market quotes)
 │   │   ├── charts_analytics.py     # Chart data endpoints
 │   │   ├── market_analytics.py     # Market analytics endpoints
 │   │   ├── stock_data.py           # Stock data endpoints
@@ -86,7 +101,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   │   ├── layout/             # Header, Footer, Sidebar
 │   │   │   ├── charts/             # Chart wrappers
 │   │   │   ├── chat/               # AI chat components
-│   │   │   └── common/             # Command palette, etc.
+│   │   │   ├── widgets/            # LiveMarketWidgets (SSE market ticker)
+│   │   │   └── common/             # Command palette, ConnectionStatusBadge, etc.
 │   │   ├── lib/
 │   │   │   ├── api-client.ts       # API functions with AbortController
 │   │   │   ├── config.ts           # Runtime config (env-driven)
@@ -144,6 +160,9 @@ python database/migrate_sqlite_to_pg.py
 
 # Load CSV directly into PostgreSQL
 python database/csv_to_postgres.py
+
+# Lint frontend for RTL violations (physical direction classes)
+cd frontend && npm run lint:rtl
 ```
 
 **Environment setup:** Copy `.env.example` to `.env` and configure. At minimum set `GEMINI_API_KEY`. See `.env.example` for all available settings. For the frontend, copy `frontend/.env.local.example` to `frontend/.env.local`.
@@ -206,12 +225,41 @@ All route handlers are `async def`. Synchronous database calls (sqlite3, psycopg
 
 ### Frontend
 - **Legacy** (`templates/index.html`): Custom Ra'd AI design with gold palette (#D4A84B), dark background (#0E0E0E), Tajawal font. Embeds `<vanna-chat>` web component loaded as ES module from CDN.
-- **Production** (`frontend/`): Next.js 14 app with TypeScript, Tailwind CSS, gold/dark design system. 15 pages, 139 vitest tests. Features include:
-  - Full Arabic RTL support via Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`)
+- **Production** (`frontend/`): Next.js 14 app with TypeScript, Tailwind CSS, gold/dark design system. 15 pages. Features include:
+  - Full Arabic RTL support via Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`) with lint enforcement (`npm run lint:rtl`)
   - Real-time news feed via SSE (`/api/v1/news/stream`)
-  - AbortController on all fetch calls (race-condition-safe)
+  - Live market widgets via SSE (`/api/v1/widgets/stream`) with reconnection backoff
+  - Navigation progress bar (NextTopLoader, gold #D4A84B)
+  - Connection status badge (live/reconnecting/offline)
+  - AbortController on all fetch calls (race-condition-safe), including header health polling
   - Virtual scrolling for large lists
+  - Mobile-responsive card view for market data tables
+  - Route-level `loading.tsx` and `error.tsx` for news, market, charts, and chat
+  - localStorage quota resilience in chat hook
   - Env-driven runtime config (`frontend/src/lib/config.ts`)
+
+### Live Market Widgets (`services/widgets/`)
+
+Real-time market quotes delivered via SSE:
+- **`QuotesHub`** (`quotes_hub.py`): Orchestrates 4 provider fetchers and broadcasts updates. Supports optional Redis pub/sub for multi-instance deployments.
+- **Providers** (`providers/`): Modular fetchers for crypto, precious metals, oil, and global indices.
+- **`QuoteItem`** (`api/models/widgets.py`): Pydantic model for quote data (symbol, price, change, category).
+- **SSE endpoint** (`api/routes/widgets_stream.py`): Streams quote updates to the frontend at `/api/v1/widgets/stream`.
+- **Frontend** (`frontend/src/components/widgets/LiveMarketWidgets.tsx`): React component with EventSource, exponential backoff reconnection, and category filter tabs.
+- **`ConnectionStatusBadge`** (`frontend/src/components/common/ConnectionStatusBadge.tsx`): Reusable live/reconnecting/offline indicator used by both the widgets ticker and the header.
+
+The hub is started as a background task during FastAPI lifespan and its route is registered in `app.py`.
+
+### Caching & Shared Utilities
+
+- **`@cache_response`** (`services/cache_utils.py`): Unified caching decorator with TTL expiration and LRU eviction (max 500 entries by default).
+- **`YFinanceCache`** (`services/yfinance_base.py`): Shared LRU cache for yfinance API calls with configurable TTL.
+- **`CircuitBreaker`** (`services/yfinance_base.py`): Prevents cascading failures when yfinance endpoints are down.
+
+### Middleware
+
+- **GZipMiddleware**: Compresses responses larger than 1000 bytes (added in `app.py`).
+- **X-Request-ID**: Added to all response headers for request tracing.
 
 ### Docker (`docker-compose.yml`)
 - **postgres**: PostgreSQL 16 Alpine, auto-initialized with `database/schema.sql`, health-checked
@@ -236,4 +284,12 @@ All route handlers are `async def`. Synchronous database calls (sqlite3, psycopg
 - PostgreSQL-only services (`news_service.py`, `reports_service.py`, `announcement_service.py`) use `psycopg2` and are not available with SQLite backend. Use `news_store.py` for SQLite news operations.
 - `config/settings.py` uses `validation_alias` for POSTGRES_* env vars so the same `.env` file works for both Docker Compose and the config module.
 - In FastAPI route handlers, always use `aget_*` async methods from `news_store.py`, never the sync `get_*` methods (they block the event loop).
-- Frontend uses Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`) for RTL. Do NOT use `ml-*`, `mr-*`, `pl-*`, `pr-*` for horizontal spacing.
+- Frontend uses Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`) for RTL. Do NOT use `ml-*`, `mr-*`, `pl-*`, `pr-*` for horizontal spacing. Run `npm run lint:rtl` to check.
+- The Live Market Widgets system works without Redis (single-process mode). Redis (`REDIS_URL`, `CACHE_ENABLED=true`) is only needed for multi-instance deployments.
+- All SSE endpoints must include `request.is_disconnected()` checks in their generator loops to avoid orphaned server-side generators.
+- The `QuotesHub` background task is started during FastAPI lifespan. If you add new SSE producers, register them similarly in `app.py`'s lifespan handler.
+- Tadawul trading days are Sunday-Thursday. Friday and Saturday are weekends (not the Western Saturday/Sunday).
+- Health check routes are wrapped in `asyncio.to_thread()` to prevent blocking during database health probes.
+- JWT secret is enforced at startup in production PostgreSQL mode -- missing `JWT_SECRET_KEY` raises `RuntimeError`.
+- SQL query strings are centralized in `database/queries.py`. Prefer using these constants over inline SQL in route handlers.
+- Pagination `limit` parameters have an upper bound of 100 (`le=100`) across all list endpoints.

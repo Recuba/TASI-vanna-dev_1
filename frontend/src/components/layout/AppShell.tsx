@@ -7,6 +7,8 @@ import { Footer } from './Footer';
 import { CommandPalette } from '@/components/common/CommandPalette';
 import { MobileBottomNav } from '@/components/common/MobileBottomNav';
 import { ToastProvider } from '@/components/common/Toast';
+import { LiveMarketWidgets } from '@/components/widgets/LiveMarketWidgets';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -14,6 +16,7 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { language } = useLanguage();
 
   const toggleMobileSidebar = useCallback(() => {
     setMobileSidebarOpen((prev) => !prev);
@@ -27,6 +30,7 @@ export function AppShell({ children }: AppShellProps) {
     <ToastProvider>
       <div className="min-h-screen flex flex-col">
         <Header onToggleMobileSidebar={toggleMobileSidebar} />
+        <LiveMarketWidgets lang={language} />
         <div className="flex flex-1">
           <Sidebar
             mobileOpen={mobileSidebarOpen}

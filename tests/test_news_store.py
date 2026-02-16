@@ -88,6 +88,7 @@ class TestStoreArticles(unittest.TestCase):
         self.store = NewsStore(self.db_path)
 
     def tearDown(self):
+        self.store.close()
         os.unlink(self.db_path)
 
     def test_store_returns_inserted_count(self):
@@ -123,6 +124,7 @@ class TestGetLatestNews(unittest.TestCase):
         self.store = NewsStore(self.db_path)
 
     def tearDown(self):
+        self.store.close()
         os.unlink(self.db_path)
 
     def _seed(self, n=5):
@@ -181,6 +183,7 @@ class TestGetArticleById(unittest.TestCase):
         self.store = NewsStore(self.db_path)
 
     def tearDown(self):
+        self.store.close()
         os.unlink(self.db_path)
 
     def test_returns_correct_article(self):
@@ -205,6 +208,7 @@ class TestCountArticles(unittest.TestCase):
         self.store = NewsStore(self.db_path)
 
     def tearDown(self):
+        self.store.close()
         os.unlink(self.db_path)
 
     def test_count_total(self):
@@ -237,6 +241,7 @@ class TestGetSources(unittest.TestCase):
         self.store = NewsStore(self.db_path)
 
     def tearDown(self):
+        self.store.close()
         os.unlink(self.db_path)
 
     def test_returns_sources(self):
@@ -280,6 +285,7 @@ class TestCleanupOld(unittest.TestCase):
         self.store = NewsStore(self.db_path)
 
     def tearDown(self):
+        self.store.close()
         os.unlink(self.db_path)
 
     def test_cleanup_removes_old_articles(self):
@@ -316,6 +322,7 @@ class TestSearchArticles(unittest.TestCase):
         self.store = NewsStore(self.db_path)
 
     def tearDown(self):
+        self.store.close()
         os.unlink(self.db_path)
 
     def test_search_by_title(self):

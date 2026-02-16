@@ -14,6 +14,13 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from api.db_helper import afetchall, afetchone
+from database.queries import (
+    HEATMAP,
+    MARKET_SUMMARY_AGGREGATES,
+    MOVERS_BASE,
+    SECTOR_ANALYTICS,
+)
+from models.api_responses import STANDARD_ERRORS
 
 logger = logging.getLogger(__name__)
 
@@ -69,26 +76,8 @@ class HeatmapItem(BaseModel):
     change_pct: Optional[float] = None
 
 
-# ---------------------------------------------------------------------------
-# Shared SQL for movers
-# ---------------------------------------------------------------------------
-
-_MOVERS_SQL = """
-    SELECT
-        c.ticker,
-        c.short_name,
-        m.current_price,
-        m.previous_close,
-        CASE WHEN m.previous_close > 0
-             THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
-             ELSE NULL
-        END AS change_pct,
-        m.volume,
-        c.sector
-    FROM companies c
-    JOIN market_data m ON m.ticker = c.ticker
-    WHERE m.current_price IS NOT NULL AND m.previous_close IS NOT NULL AND m.previous_close > 0
-"""
+# Alias for backward compatibility within this module
+_MOVERS_SQL = MOVERS_BASE
 
 
 def _row_to_mover(row: Dict[str, Any]) -> MoverItem:
@@ -110,7 +99,7 @@ def _row_to_mover(row: Dict[str, Any]) -> MoverItem:
 # ---------------------------------------------------------------------------
 
 
-@router.get("/movers", response_model=MoversResponse)
+@router.get("/movers", response_model=MoversResponse, responses=STANDARD_ERRORS)
 async def get_movers(
     type: str = Query(
         "gainers", pattern="^(gainers|losers)$", description="Type: gainers or losers"
@@ -133,22 +122,11 @@ async def get_movers(
     return MoversResponse(items=items, type=type, count=len(items))
 
 
-@router.get("/summary", response_model=MarketSummary)
+@router.get("/summary", response_model=MarketSummary, responses=STANDARD_ERRORS)
 async def get_market_summary() -> MarketSummary:
     """Get overall market summary with totals and top 5 movers."""
     try:
-        agg = await afetchone(
-            """
-            SELECT
-                COALESCE(SUM(m.market_cap), 0) AS total_market_cap,
-                COALESCE(SUM(m.volume), 0) AS total_volume,
-                SUM(CASE WHEN m.previous_close > 0 AND m.current_price > m.previous_close THEN 1 ELSE 0 END) AS gainers_count,
-                SUM(CASE WHEN m.previous_close > 0 AND m.current_price < m.previous_close THEN 1 ELSE 0 END) AS losers_count,
-                SUM(CASE WHEN m.previous_close > 0 AND m.current_price = m.previous_close THEN 1 ELSE 0 END) AS unchanged_count
-            FROM market_data m
-            WHERE m.current_price IS NOT NULL
-        """,
-        )
+        agg = await afetchone(MARKET_SUMMARY_AGGREGATES)
 
         gainers = await afetchall(_MOVERS_SQL + " ORDER BY change_pct DESC LIMIT 5")
         losers = await afetchall(_MOVERS_SQL + " ORDER BY change_pct ASC LIMIT 5")
@@ -171,28 +149,11 @@ async def get_market_summary() -> MarketSummary:
     )
 
 
-@router.get("/sectors", response_model=List[SectorAnalytics])
+@router.get("/sectors", response_model=List[SectorAnalytics], responses=STANDARD_ERRORS)
 async def get_sector_analytics() -> List[SectorAnalytics]:
     """Get per-sector analytics: avg change, volumes, market cap, gainers/losers."""
-    sql = """
-        SELECT
-            c.sector,
-            AVG(CASE WHEN m.previous_close > 0
-                 THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
-                 ELSE NULL END) AS avg_change_pct,
-            COALESCE(SUM(m.volume), 0) AS total_volume,
-            COALESCE(SUM(m.market_cap), 0) AS total_market_cap,
-            COUNT(*) AS company_count,
-            SUM(CASE WHEN m.previous_close > 0 AND m.current_price > m.previous_close THEN 1 ELSE 0 END) AS gainers,
-            SUM(CASE WHEN m.previous_close > 0 AND m.current_price < m.previous_close THEN 1 ELSE 0 END) AS losers
-        FROM companies c
-        JOIN market_data m ON m.ticker = c.ticker
-        WHERE c.sector IS NOT NULL AND m.current_price IS NOT NULL
-        GROUP BY c.sector
-        ORDER BY total_market_cap DESC
-    """
     try:
-        rows = await afetchall(sql)
+        rows = await afetchall(SECTOR_ANALYTICS)
     except HTTPException:
         raise
     except Exception as exc:
@@ -219,26 +180,11 @@ async def get_sector_analytics() -> List[SectorAnalytics]:
     ]
 
 
-@router.get("/heatmap", response_model=List[HeatmapItem])
+@router.get("/heatmap", response_model=List[HeatmapItem], responses=STANDARD_ERRORS)
 async def get_heatmap() -> List[HeatmapItem]:
     """Get all stocks with data suitable for treemap/heatmap visualization."""
-    sql = """
-        SELECT
-            c.ticker,
-            c.short_name AS name,
-            c.sector,
-            m.market_cap,
-            CASE WHEN m.previous_close > 0
-                 THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
-                 ELSE NULL
-            END AS change_pct
-        FROM companies c
-        JOIN market_data m ON m.ticker = c.ticker
-        WHERE m.current_price IS NOT NULL AND m.market_cap IS NOT NULL
-        ORDER BY m.market_cap DESC
-    """
     try:
-        rows = await afetchall(sql)
+        rows = await afetchall(HEATMAP)
     except HTTPException:
         raise
     except Exception as exc:

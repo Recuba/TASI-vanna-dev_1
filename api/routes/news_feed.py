@@ -14,6 +14,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from models.api_responses import STANDARD_ERRORS
 from services.news_store import NewsStore
 
 logger = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ class NewsSourcesResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-@router.get("/feed", response_model=NewsFeedResponse)
+@router.get("/feed", response_model=NewsFeedResponse, responses=STANDARD_ERRORS)
 async def get_news_feed(
     limit: int = Query(20, ge=1, le=100, description="Articles per page"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
@@ -103,7 +104,7 @@ async def get_news_feed(
     )
 
 
-@router.get("/feed/batch", response_model=NewsFeedResponse)
+@router.get("/feed/batch", response_model=NewsFeedResponse, responses=STANDARD_ERRORS)
 async def get_articles_batch(
     ids: str = Query(..., description="Comma-separated article IDs"),
 ) -> NewsFeedResponse:
@@ -121,7 +122,7 @@ async def get_articles_batch(
     )
 
 
-@router.get("/feed/{article_id}", response_model=NewsArticle)
+@router.get("/feed/{article_id}", response_model=NewsArticle, responses=STANDARD_ERRORS)
 async def get_article(article_id: str) -> NewsArticle:
     """Get a single article by ID."""
     store = get_store()
@@ -131,7 +132,7 @@ async def get_article(article_id: str) -> NewsArticle:
     return NewsArticle(**article)
 
 
-@router.get("/search", response_model=NewsFeedResponse)
+@router.get("/search", response_model=NewsFeedResponse, responses=STANDARD_ERRORS)
 async def search_articles(
     q: str = Query(..., min_length=1, description="Search query"),
     limit: int = Query(20, ge=1, le=100, description="Articles per page"),
@@ -162,7 +163,7 @@ async def search_articles(
     )
 
 
-@router.get("/sources", response_model=NewsSourcesResponse)
+@router.get("/sources", response_model=NewsSourcesResponse, responses=STANDARD_ERRORS)
 async def get_sources() -> NewsSourcesResponse:
     """Get available news sources with article counts."""
     store = get_store()

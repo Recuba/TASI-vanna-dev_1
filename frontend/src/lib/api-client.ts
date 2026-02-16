@@ -483,7 +483,7 @@ export function getNewsFeed(params?: {
 }
 
 export function getNewsArticle(id: string, signal?: AbortSignal): Promise<NewsFeedItem> {
-  return request(`/api/v1/news/feed/${encodeURIComponent(id)}`, undefined, undefined, signal);
+  return cachedRequest(`/api/v1/news/feed/${encodeURIComponent(id)}`, 30_000, signal);
 }
 
 export function searchNewsFeed(

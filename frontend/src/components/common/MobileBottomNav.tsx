@@ -93,7 +93,7 @@ export function MobileBottomNav() {
   if (keyboardOpen) return null;
 
   const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
 
   return (
     <nav
@@ -138,7 +138,7 @@ export function MobileBottomNav() {
                 {item.icon}
               </span>
             ) : (
-              <span className="flex-shrink-0">{item.icon}</span>
+              <span className="flex-shrink-0" suppressHydrationWarning>{item.icon}</span>
             )}
             <span className={cn(
               'text-[10px] font-medium',

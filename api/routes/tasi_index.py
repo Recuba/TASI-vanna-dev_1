@@ -14,6 +14,7 @@ from typing import List, Literal, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from models.api_responses import STANDARD_ERRORS
 from services.tasi_index import (
     VALID_PERIODS,
     fetch_tasi_index,
@@ -54,7 +55,7 @@ class TASIIndexResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-@router.get("/index", response_model=TASIIndexResponse)
+@router.get("/index", response_model=TASIIndexResponse, responses=STANDARD_ERRORS)
 async def get_tasi_index(
     period: str = Query("1y", description="Data period"),
 ) -> TASIIndexResponse:

@@ -59,6 +59,7 @@ class NewsFeedAPITestCase(unittest.TestCase):
 
     def tearDown(self):
         self._patcher.stop()
+        self.store.close()
         os.unlink(self.db_path)
 
 
