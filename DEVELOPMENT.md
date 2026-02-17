@@ -403,3 +403,109 @@ cd frontend && npm run lint:rtl
 ```
 
 This runs `scripts/lint-rtl.js`, which scans `.tsx` and `.ts` files for Tailwind physical direction classes and reports violations. The check is also integrated into CI.
+
+## Backend Module (`backend/`)
+
+The `backend/` package contains enterprise-grade infrastructure organized into four subsystems:
+
+### Security Pipeline (`backend/security/`)
+
+SQL injection prevention and query validation for AI-generated SQL:
+
+- **`sanitizer.py`**: Input sanitization for natural-language queries and SQL identifiers. Strips dangerous characters and normalizes whitespace.
+- **`allowlist.py`**: Table and column allowlist enforcement (`QueryAllowlist`). Only permits queries against known schema objects.
+- **`sql_validator.py`**: Multi-pass SQL query validation (`SqlQueryValidator`). Checks for prohibited keywords, subquery depth, statement type restrictions.
+- **`vanna_hook.py`**: Integration hook (`validate_vanna_output`) that intercepts Vanna-generated SQL before execution and runs it through the full validation pipeline.
+- **`config.py`**: `SecurityConfig` with tunable thresholds and feature flags.
+- **`models.py`**: `ValidationResult` and `ValidatedQuery` Pydantic models.
+
+### Middleware (`backend/middleware/`)
+
+Request-level controls for rate limiting and cost management:
+
+- **`rate_limiter.py`**: Redis-backed sliding window rate limiter (`RateLimiter`) with automatic in-memory fallback when Redis is unavailable.
+- **`rate_limit_middleware.py`**: FastAPI middleware (`RateLimitMiddleware`) that enforces per-endpoint rate limits with standard `X-RateLimit-*` response headers.
+- **`rate_limit_config.py`**: `RateLimitConfig` and `EndpointRateLimit` for per-route limit customization.
+- **`cost_controller.py`**: LLM spend tracking (`CostController`) with configurable daily/monthly limits (`CostLimitConfig`) and usage summaries (`UsageSummary`).
+- **`register.py`**: One-call middleware registration (`register_middleware`) and accessors (`get_rate_limiter`, `get_cost_controller`, `shutdown_middleware`).
+
+### Audit & Logging (`backend/services/audit/`)
+
+Structured observability for query lifecycle and security events:
+
+- **`structured_logger.py`**: JSON-formatted logging (`JSONFormatter`, `configure_logging`, `get_logger`) with automatic request-ID injection.
+- **`correlation.py`**: `CorrelationMiddleware` for end-to-end request tracing via `X-Request-ID` headers. `get_current_request_id()` accessor for any code path.
+- **`query_audit.py`**: `QueryAuditLogger` tracks the full NL-to-SQL lifecycle (query received, SQL generated, executed, results returned).
+- **`security_events.py`**: `SecurityEventLogger` records auth failures, SQL injection attempts, rate limit violations, and other security-relevant events.
+- **`config.py`**: `AuditConfig` for log levels, output paths, and feature toggles.
+- **`models.py`**: `QueryAuditEvent`, `SecurityEvent`, `SecurityEventType`, `SecuritySeverity` Pydantic models.
+
+### Cache Layer (`backend/services/cache/`)
+
+Redis-based caching with compression and connection pooling:
+
+- **`query_cache.py`**: Tiered query cache (`QueryCache`) with configurable TTL per query complexity.
+- **`compression.py`**: `GZipCacheMiddleware` for transparent response compression. `compress_bytes` / `decompress_bytes` utilities, `compress_large_response` for threshold-based compression.
+- **`redis_client.py`**: `RedisManager` for async Redis connection lifecycle with connection pooling.
+- **`db_pool.py`**: `DatabasePoolManager` for database connection pooling with health checks.
+- **`maintenance.py`**: `CacheMaintenance` for periodic cache cleanup, stats collection, and eviction.
+- **`config.py`**: `CacheConfig` for Redis URLs, pool sizes, TTL tiers, and compression thresholds.
+- **`models.py`**: `CachedResult`, `PoolConfig`, `PoolStats`, `TTLTier` Pydantic models.
+
+### Resilience (`backend/services/resilience/`)
+
+Fault tolerance for external service calls (yfinance, LLM APIs, Redis):
+
+- **`circuit_breaker.py`**: `CircuitBreaker` with configurable failure thresholds, half-open probing, and a global registry (`get_or_create`, `get_all_stats`).
+- **`retry.py`**: `with_retry` decorator for exponential backoff retries. `with_timeout` decorator for deadline enforcement.
+- **`timeout_manager.py`**: `QueryTimeoutManager` with per-query-type timeout configuration (`QueryTimeoutConfig`).
+- **`degradation.py`**: `DegradationManager` for graceful feature degradation when dependencies fail. `create_default_manager()` factory.
+- **`config.py`**: `ResilienceConfig` with `get_resilience_config()` accessor.
+
+## Running Test Coverage
+
+Generate an HTML coverage report for the backend:
+
+```bash
+# Run tests with coverage collection
+python -m pytest tests/ --cov=api --cov=services --cov=backend --cov-report=html --cov-report=term-missing
+
+# Open the HTML report
+# Windows:
+start htmlcov/index.html
+# macOS:
+open htmlcov/index.html
+# Linux:
+xdg-open htmlcov/index.html
+```
+
+For a quick terminal summary without HTML:
+
+```bash
+python -m pytest tests/ --cov=api --cov=services --cov=backend --cov-report=term-missing -q
+```
+
+## Test Organization
+
+| Directory | Purpose | Marker |
+|---|---|---|
+| `tests/` | Unit tests (services, routes, schemas, middleware) | `@pytest.mark.fast` |
+| `tests/integration/` | Integration tests (API chains, auth flows, health, PG path) | `@pytest.mark.integration` |
+| `tests/security/` | Security tests (SQL injection, auth bypass) | - |
+| `tests/performance/` | Load and concurrency tests | `@pytest.mark.performance` |
+
+Run specific test categories:
+
+```bash
+# Unit tests only
+python -m pytest tests/ --ignore=tests/integration --ignore=tests/security --ignore=tests/performance -q
+
+# Integration tests only
+python -m pytest tests/integration/ -q
+
+# Security tests only
+python -m pytest tests/security/ -q
+
+# Performance tests only
+python -m pytest tests/performance/ -q
+```

@@ -1,3 +1,5 @@
+[![CI](https://github.com/Recuba/TASI-vanna-dev_1/actions/workflows/ci.yml/badge.svg)](https://github.com/Recuba/TASI-vanna-dev_1/actions/workflows/ci.yml)
+
 # Ra'd AI - TASI Saudi Stock Market Platform
 
 AI-powered financial analyst for the Saudi stock market (TASI - Tadawul All Share Index). Ask questions in natural language, get SQL-backed answers with interactive Plotly charts.
@@ -24,6 +26,11 @@ Built on [Vanna 2.0](https://vanna.ai/) with Google Gemini, supporting dual SQLi
 - Dual database backend: SQLite for development, PostgreSQL for production
 - Async I/O wrappers (`asyncio.to_thread`) for non-blocking database access
 - JWT authentication with production secret enforcement
+- **SQL security pipeline**: Input sanitization, table/column allowlisting, query validation with Vanna integration hook
+- **Resilience**: Circuit breaker, retry with backoff, timeout management, graceful degradation for external services
+- **Query caching**: Tiered Redis cache with GZip compression and connection pooling
+- **Audit logging**: Structured JSON logging, correlation IDs, query audit trail, security event tracking
+- **Cost control**: LLM spend tracking middleware with configurable limits
 
 ## Quick Start
 
@@ -91,6 +98,15 @@ Services:
   +--------+----------+            |   - Redis pub/sub |
            |                       +-------------------+
   +--------v----------+
+  | backend/ module   |
+  | - SQL validation  |
+  | - Cost controller |
+  | - Circuit breaker |
+  | - Query cache     |
+  | - Audit logging   |
+  +--------+----------+
+           |
+  +--------v----------+
   |  Async I/O Layer  |
   |  asyncio.to_thread|
   +--------+----------+
@@ -104,6 +120,18 @@ Services:
   +-----------------+  |  extended tables |
                         +-----------------+
 ```
+
+### Backend Module (`backend/`)
+
+Enterprise-grade infrastructure providing security, resilience, caching, and observability:
+
+| Package | Purpose |
+|---|---|
+| `backend/security/` | SQL validation pipeline: input sanitizer, table/column allowlist, SQL query validator, Vanna output hook |
+| `backend/middleware/` | Cost controller (LLM spend tracking), Redis-backed sliding window rate limiter, FastAPI middleware registration |
+| `backend/services/audit/` | Query audit logging, security event tracking, structured JSON logger, correlation ID middleware |
+| `backend/services/cache/` | Tiered query cache, GZip compression, Redis connection management, database connection pooling, cache maintenance |
+| `backend/services/resilience/` | Circuit breaker, retry with backoff, timeout manager, graceful degradation |
 
 ## Database
 
@@ -149,9 +177,14 @@ All settings via environment variables. See `.env.example` for the complete refe
 
 ## Testing
 
+820+ backend tests (unit, integration, security, performance) and 139 frontend tests.
+
 ```bash
-# Backend tests
+# Backend tests (all)
 python -m pytest tests/ -q
+
+# Backend tests with coverage
+python -m pytest tests/ --cov=api --cov=services --cov=backend --cov-report=term-missing
 
 # Frontend tests
 cd frontend && npx vitest run
