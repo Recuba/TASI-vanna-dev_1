@@ -16,6 +16,15 @@ const config: Config = {
         foreground: 'var(--foreground)',
       },
       borderRadius: tailwindTokens.borderRadius,
+      borderColor: {
+        ...tailwindTokens.borderColor,
+      },
+      boxShadow: {
+        'gold-sm': '0 1px 3px rgba(212, 168, 75, 0.12)',
+        'gold-md': '0 4px 12px rgba(212, 168, 75, 0.15)',
+        'gold-lg': '0 8px 24px rgba(212, 168, 75, 0.2)',
+        elevated: '0 4px 16px rgba(0, 0, 0, 0.4)',
+      },
       fontFamily: {
         arabic: [...tailwindTokens.fontFamily.arabic],
         english: [...tailwindTokens.fontFamily.english],

@@ -8,6 +8,7 @@ import { CommandPalette } from '@/components/common/CommandPalette';
 import { MobileBottomNav } from '@/components/common/MobileBottomNav';
 import { ToastProvider } from '@/components/common/Toast';
 import { LiveMarketWidgets } from '@/components/widgets/LiveMarketWidgets';
+import { OfflineBanner } from '@/components/common/OfflineBanner';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 interface AppShellProps {
@@ -36,7 +37,8 @@ export function AppShell({ children }: AppShellProps) {
             mobileOpen={mobileSidebarOpen}
             onMobileClose={closeMobileSidebar}
           />
-          <main className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
+          <main id="main-content" className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
+            <OfflineBanner />
             {children}
           </main>
         </div>

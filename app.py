@@ -181,7 +181,10 @@ agent = Agent(
     llm_service=llm,
     tool_registry=tools,
     user_resolver=JWTUserResolver(),
-    agent_memory=DemoAgentMemory(max_items=10000),
+    # Production-safe memory limit: each item can contain large SQL results
+    # or Plotly chart JSON. 500 items ~= 50 conversations * 10 turns each.
+    # For persistent storage, replace with a database-backed AgentMemory.
+    agent_memory=DemoAgentMemory(max_items=500),
     system_prompt_builder=SaudiStocksSystemPromptBuilder(),
     config=config,
 )

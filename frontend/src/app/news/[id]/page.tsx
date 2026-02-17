@@ -156,7 +156,7 @@ function ReadingProgressBar() {
   }, []);
 
   return (
-    <div className="fixed top-14 left-0 right-0 z-50 h-1 bg-transparent pointer-events-none">
+    <div className="fixed top-14 inset-x-0 z-50 h-1 bg-transparent pointer-events-none">
       <div
         className="h-full transition-[width] duration-100 ease-out"
         style={{
@@ -165,46 +165,6 @@ function ReadingProgressBar() {
         }}
       />
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Floating back-to-top button
-// ---------------------------------------------------------------------------
-
-function BackToTopButton() {
-  const { t } = useLanguage();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setVisible(window.scrollY > 300);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  if (!visible) return null;
-
-  return (
-    <button
-      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      aria-label={t('العودة للأعلى', 'Back to top')}
-      className={cn(
-        'fixed bottom-6 end-6 z-40',
-        'w-11 h-11 rounded-full',
-        'bg-gold/90 hover:bg-gold text-black',
-        'shadow-lg shadow-gold/20',
-        'flex items-center justify-center',
-        'focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:outline-none',
-        'transition-all duration-300',
-        'animate-fade-in',
-      )}
-    >
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-      </svg>
-    </button>
   );
 }
 
@@ -484,9 +444,6 @@ export default function ArticleDetailPage() {
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       {/* Reading progress bar */}
       <ReadingProgressBar />
-
-      {/* Back to top floating button */}
-      <BackToTopButton />
 
       <div className="max-w-content-lg mx-auto space-y-5 animate-fade-in">
 

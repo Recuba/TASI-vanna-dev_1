@@ -48,7 +48,11 @@ import {
 interface UseAsyncResult<T> {
   data: T | null;
   loading: boolean;
+  /** True when data already exists and a background refresh is in progress. */
+  isRefreshing: boolean;
   error: string | null;
+  /** Timestamp of the last successful data fetch. */
+  lastUpdated: Date | null;
   refetch: () => void;
 }
 
@@ -59,8 +63,11 @@ function useAsync<T>(
 ): UseAsyncResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const dataRef = useRef<T | null>(null);
 
   const execute = useCallback(() => {
     if (controllerRef.current) {
@@ -69,18 +76,31 @@ function useAsync<T>(
     const controller = new AbortController();
     controllerRef.current = controller;
 
-    setLoading(true);
+    // First fetch (no data yet) -> show loading skeleton
+    // Subsequent fetches (data exists) -> show subtle refreshing indicator
+    if (dataRef.current !== null) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     fetcher(controller.signal)
       .then((result) => {
-        if (!controller.signal.aborted) setData(result);
+        if (!controller.signal.aborted) {
+          setData(result);
+          dataRef.current = result;
+          setLastUpdated(new Date());
+        }
       })
       .catch((err) => {
         if (err instanceof DOMException && err.name === 'AbortError') return;
         if (!controller.signal.aborted) setError((err as Error).message);
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          setIsRefreshing(false);
+        }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
@@ -99,7 +119,7 @@ function useAsync<T>(
     return () => window.clearInterval(id);
   }, [execute, autoRefreshMs]);
 
-  return { data, loading, error, refetch: execute };
+  return { data, loading, isRefreshing, error, lastUpdated, refetch: execute };
 }
 
 // ---------------------------------------------------------------------------

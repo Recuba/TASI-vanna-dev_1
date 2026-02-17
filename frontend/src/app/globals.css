@@ -36,7 +36,7 @@
   --border-color: #2A2A2A;
   --text-primary: #FFFFFF;
   --text-secondary: #B0B0B0;
-  --text-muted: #707070;
+  --text-muted: #8A8A8A;
 }
 
 /* ===================================================================
@@ -172,6 +172,13 @@ body {
   .animate-fade-in {
     animation: fade-in 0.2s ease-out both;
   }
+  .press-feedback {
+    @apply active:scale-[0.97] transition-transform;
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 168, 75, 0.06) 50%, transparent 100%);
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
 }
 
 /* ===================================================================
@@ -276,5 +283,18 @@ body {
   a[href^="/"]:after {
     content: "";
   }
+}
+
+/* ===================================================================
+   Scrollbar Hide Utility
+   =================================================================== */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 

@@ -61,10 +61,10 @@ function StatusDot({ ok }: { ok: boolean }) {
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="p-4 rounded-xl bg-[#1A1A1A] border border-gold/10">
-      <div className="text-xs text-[#707070] uppercase tracking-wider mb-1">{label}</div>
+    <div className="p-4 rounded-xl bg-dark-card border border-gold/10">
+      <div className="text-xs text-text-muted uppercase tracking-wider mb-1">{label}</div>
       <div className="text-2xl font-bold text-gold">{value}</div>
-      {sub && <div className="text-xs text-[#B0B0B0] mt-1">{sub}</div>}
+      {sub && <div className="text-xs text-text-secondary mt-1">{sub}</div>}
     </div>
   );
 }
@@ -101,7 +101,7 @@ function AdminDashboardContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">Admin Dashboard</h1>
-        <span className="text-xs text-[#707070]">Auto-refresh: 30s</span>
+        <span className="text-xs text-text-muted">Auto-refresh: 30s</span>
       </div>
 
       {/* System Health */}
@@ -110,12 +110,12 @@ function AdminDashboardContent() {
           System Health
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-[#1A1A1A] border border-gold/10">
+          <div className="p-4 rounded-xl bg-dark-card border border-gold/10">
             <div className="flex items-center gap-2 mb-2">
               <StatusDot ok={isHealthy} />
               <span className="text-sm text-white">Health Check</span>
             </div>
-            <div className="text-xs text-[#707070]">
+            <div className="text-xs text-text-muted">
               {health.loading
                 ? 'Checking...'
                 : health.error
@@ -124,12 +124,12 @@ function AdminDashboardContent() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#1A1A1A] border border-gold/10">
+          <div className="p-4 rounded-xl bg-dark-card border border-gold/10">
             <div className="flex items-center gap-2 mb-2">
               <StatusDot ok={isReady} />
               <span className="text-sm text-white">Readiness</span>
             </div>
-            <div className="text-xs text-[#707070]">
+            <div className="text-xs text-text-muted">
               {ready.loading
                 ? 'Checking...'
                 : ready.error
@@ -138,22 +138,22 @@ function AdminDashboardContent() {
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#1A1A1A] border border-gold/10">
+          <div className="p-4 rounded-xl bg-dark-card border border-gold/10">
             <div className="flex items-center gap-2 mb-2">
               <StatusDot ok={!health.error && isHealthy} />
               <span className="text-sm text-white">Database</span>
             </div>
-            <div className="text-xs text-[#707070]">
+            <div className="text-xs text-text-muted">
               {dbComponent?.status ?? 'N/A'}
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#1A1A1A] border border-gold/10">
+          <div className="p-4 rounded-xl bg-dark-card border border-gold/10">
             <div className="flex items-center gap-2 mb-2">
               <StatusDot ok={!health.error && isHealthy} />
               <span className="text-sm text-white">LLM Service</span>
             </div>
-            <div className="text-xs text-[#707070]">
+            <div className="text-xs text-text-muted">
               {llmComponent?.status ?? 'N/A'}
             </div>
           </div>
@@ -205,9 +205,9 @@ function AdminDashboardContent() {
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {metrics.webVitals.map((vital) => (
-              <div key={vital.name} className="p-4 rounded-xl bg-[#1A1A1A] border border-gold/10">
+              <div key={vital.name} className="p-4 rounded-xl bg-dark-card border border-gold/10">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-[#707070] uppercase">{vital.name}</span>
+                  <span className="text-xs text-text-muted uppercase">{vital.name}</span>
                   <span
                     className={cn(
                       'text-xs px-1.5 py-0.5 rounded',
@@ -238,7 +238,7 @@ function AdminDashboardContent() {
           <div className="rounded-xl border border-gold/10 overflow-hidden">
             <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-[#2A2A2A]">
+                <thead className="sticky top-0 bg-dark-input">
                   <tr>
                     <th className="px-3 py-2 text-start text-xs text-gold uppercase border-b border-gold/10">URL</th>
                     <th className="px-3 py-2 text-start text-xs text-gold uppercase border-b border-gold/10">Status</th>
@@ -248,8 +248,8 @@ function AdminDashboardContent() {
                 </thead>
                 <tbody>
                   {[...metrics.apiCallDurations].reverse().slice(0, 20).map((call, i) => (
-                    <tr key={i} className="border-b border-[#2A2A2A] hover:bg-gold/5">
-                      <td className="px-3 py-2 text-[#B0B0B0] text-xs truncate max-w-[300px]">{call.url}</td>
+                    <tr key={i} className="border-b border-dark-input hover:bg-gold/5">
+                      <td className="px-3 py-2 text-text-secondary text-xs truncate max-w-[300px]">{call.url}</td>
                       <td className="px-3 py-2">
                         <span
                           className={cn(
@@ -260,8 +260,8 @@ function AdminDashboardContent() {
                           {call.status}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-xs text-[#B0B0B0]">{call.duration.toFixed(0)}ms</td>
-                      <td className="px-3 py-2 text-xs text-[#707070]">
+                      <td className="px-3 py-2 text-xs text-text-secondary">{call.duration.toFixed(0)}ms</td>
+                      <td className="px-3 py-2 text-xs text-text-muted">
                         {new Date(call.timestamp).toLocaleTimeString()}
                       </td>
                     </tr>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getAnnouncements, type AnnouncementListResponse } from '@/lib/api-client';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 
 // ---------------------------------------------------------------------------
 // Types (matches AnnouncementItem in api-client.ts)
@@ -54,7 +55,7 @@ function formatDate(dateStr: string | null, locale: string): string {
 
 function SkeletonCard() {
   return (
-    <div className="p-5 rounded-md bg-[var(--bg-card)] border border-[#2A2A2A] animate-pulse space-y-3">
+    <div className="p-5 rounded-md bg-[var(--bg-card)] border border-dark-input animate-pulse space-y-3">
       <div className="flex items-center gap-2">
         <div className="h-5 bg-[var(--bg-input)] rounded w-16" />
         <div className="h-5 bg-[var(--bg-input)] rounded w-12" />
@@ -89,8 +90,8 @@ function AnnouncementCard({ item }: { item: Announcement }) {
     <article
       className={cn(
         'rounded-md overflow-hidden',
-        'bg-[var(--bg-card)] border border-[#2A2A2A]',
-        'hover:border-[#D4A84B]/30 hover:shadow-lg hover:shadow-[#D4A84B]/5',
+        'bg-[var(--bg-card)] border border-dark-input',
+        'hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5',
         'transition-all duration-200',
       )}
     >
@@ -98,17 +99,17 @@ function AnnouncementCard({ item }: { item: Announcement }) {
         {/* Badges row */}
         <div className="flex items-center gap-2 flex-wrap">
           {item.is_material && (
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#FF6B6B]/10 text-[#FF6B6B] border border-[#FF6B6B]/20">
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-accent-red/10 text-accent-red border border-accent-red/20">
               {t('جوهري', 'Material')}
             </span>
           )}
           {!item.is_material && (
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#4A9FFF]/10 text-[#4A9FFF] border border-[#4A9FFF]/20">
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-accent-blue/10 text-accent-blue border border-accent-blue/20">
               {t('عام', 'General')}
             </span>
           )}
           {item.ticker && (
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#D4A84B]/10 text-[#D4A84B] border border-[#D4A84B]/20">
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gold/10 text-gold border border-gold/20">
               {item.ticker}
             </span>
           )}
@@ -241,6 +242,9 @@ export default function AnnouncementsPage() {
   return (
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       <div className="max-w-content-lg mx-auto space-y-5">
+        {/* Breadcrumb */}
+        <Breadcrumb items={[{ label: t('\u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A', 'Announcements') }]} />
+
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-[var(--text-primary)]">
@@ -263,8 +267,8 @@ export default function AnnouncementsPage() {
                   'px-3.5 py-1.5 rounded-full text-xs font-medium',
                   'border transition-all duration-200',
                   isActive
-                    ? 'bg-[#D4A84B]/10 border-[#D4A84B] text-[#D4A84B]'
-                    : 'bg-[var(--bg-input)] border-[var(--bg-input)] text-[var(--text-secondary)] hover:border-[#2A2A2A]',
+                    ? 'bg-gold/10 border-gold text-gold'
+                    : 'bg-[var(--bg-input)] border-[var(--bg-input)] text-[var(--text-secondary)] hover:border-dark-input',
                 )}
               >
                 {tab.label}
@@ -365,8 +369,8 @@ export default function AnnouncementsPage() {
                   className={cn(
                     'px-3 py-1.5 rounded-md text-sm border transition-colors',
                     page <= 1
-                      ? 'border-[#2A2A2A] text-[var(--text-muted)] cursor-not-allowed'
-                      : 'border-[#D4A84B]/30 text-[#D4A84B] hover:bg-[#D4A84B]/10',
+                      ? 'border-dark-input text-[var(--text-muted)] cursor-not-allowed'
+                      : 'border-gold/30 text-gold hover:bg-gold/10',
                   )}
                 >
                   {t('السابق', 'Previous')}
@@ -380,8 +384,8 @@ export default function AnnouncementsPage() {
                   className={cn(
                     'px-3 py-1.5 rounded-md text-sm border transition-colors',
                     page >= totalPages
-                      ? 'border-[#2A2A2A] text-[var(--text-muted)] cursor-not-allowed'
-                      : 'border-[#D4A84B]/30 text-[#D4A84B] hover:bg-[#D4A84B]/10',
+                      ? 'border-dark-input text-[var(--text-muted)] cursor-not-allowed'
+                      : 'border-gold/30 text-gold hover:bg-gold/10',
                   )}
                 >
                   {t('التالي', 'Next')}

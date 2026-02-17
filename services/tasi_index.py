@@ -21,7 +21,21 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _cache = YFinanceCache(ttl=300, max_entries=500, name="tasi_index")
 _CACHE_TTL = _cache.ttl  # backward-compatible alias for tests
-_fetch_lock = threading.Lock()
+
+# Per-period locks: allow concurrent fetches for different periods
+_period_locks: Dict[str, threading.Lock] = {}
+_locks_guard = threading.Lock()  # Protects _period_locks dict itself
+_MAX_LOCKS = 100  # Prevent unbounded growth
+
+
+def _get_period_lock(period: str) -> threading.Lock:
+    """Return a per-period lock, creating one if needed."""
+    with _locks_guard:
+        if period not in _period_locks:
+            if len(_period_locks) >= _MAX_LOCKS:
+                _period_locks.pop(next(iter(_period_locks)))
+            _period_locks[period] = threading.Lock()
+        return _period_locks[period]
 
 VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 
@@ -220,8 +234,8 @@ def fetch_tasi_index(period: str = "1y") -> Dict[str, Any]:
         )
         return cached
 
-    # Serialize yfinance fetches so only one thread hits the API at a time
-    with _fetch_lock:
+    # Serialize yfinance fetches per period (different periods fetch concurrently)
+    with _get_period_lock(period):
         # Double-check cache inside the lock (another thread may have filled it)
         cached = _get_cached(period)
         if cached is not None:

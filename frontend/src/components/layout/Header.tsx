@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { HEALTH_POLL_INTERVAL_MS } from '@/lib/config';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { prefetchRoute } from '@/lib/performance/utils';
 
 interface HeaderProps {
   onToggleMobileSidebar?: () => void;
@@ -121,6 +123,8 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
               <Link
                 key={link.href}
                 href={link.href}
+                onMouseEnter={() => prefetchRoute(link.href)}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'px-3 py-1.5 rounded-md text-sm font-medium',
                   'transition-colors duration-200',
@@ -159,30 +163,33 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
           </button>
 
           {/* Language toggle */}
-          <button
-            onClick={toggleLanguage}
-            className={cn(
-              'px-2.5 py-1.5 rounded-md transition-colors',
-              'text-xs font-semibold',
-              'text-[var(--text-muted)] hover:text-gold',
-              'hover:bg-[var(--bg-card-hover)]',
-              'border border-[#2A2A2A] hover:border-[#D4A84B]/30'
-            )}
-            aria-label={language === 'ar' ? 'Switch to English' : 'Switch to Arabic'}
-          >
-            {language === 'ar' ? 'EN' : 'عربي'}
-          </button>
+          <Tooltip text={language === 'ar' ? 'Switch to English' : 'التبديل للعربية'} position="bottom">
+            <button
+              onClick={toggleLanguage}
+              className={cn(
+                'px-2.5 py-1.5 rounded-md transition-colors',
+                'text-xs font-semibold',
+                'text-[var(--text-muted)] hover:text-gold',
+                'hover:bg-[var(--bg-card-hover)]',
+                'border border-[#2A2A2A] hover:border-[#D4A84B]/30'
+              )}
+              aria-label={language === 'ar' ? 'Switch to English' : 'Switch to Arabic'}
+            >
+              {language === 'ar' ? 'EN' : 'عربي'}
+            </button>
+          </Tooltip>
 
           {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className={cn(
-              'p-2 rounded-md transition-colors',
-              'text-[var(--text-muted)] hover:text-gold',
-              'hover:bg-[var(--bg-card-hover)]'
-            )}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
+          <Tooltip text={theme === 'dark' ? 'Light mode' : 'Dark mode'} position="bottom">
+            <button
+              onClick={toggleTheme}
+              className={cn(
+                'p-2 rounded-md transition-colors',
+                'text-[var(--text-muted)] hover:text-gold',
+                'hover:bg-[var(--bg-card-hover)]'
+              )}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
             {theme === 'dark' ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="5" />
@@ -201,6 +208,7 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
               </svg>
             )}
           </button>
+          </Tooltip>
 
           {/* Status indicator */}
           <div className="flex items-center gap-1.5">

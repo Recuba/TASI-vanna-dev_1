@@ -113,6 +113,7 @@ export function MobileBottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={active ? 'page' : undefined}
             className={cn(
               'flex flex-col items-center justify-center gap-0.5',
               'flex-1 h-full',

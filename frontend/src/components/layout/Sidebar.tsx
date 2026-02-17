@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { prefetchRoute } from '@/lib/performance/utils';
 
 interface NavItem {
   label: string;
@@ -121,6 +123,8 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { language, t } = useLanguage();
+  const mobileSidebarRef = useRef<HTMLElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -130,6 +134,47 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
     // Only trigger on pathname change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  // Focus trapping for mobile sidebar
+  useEffect(() => {
+    if (!mobileOpen) return;
+    previousFocusRef.current = document.activeElement as HTMLElement;
+    // Focus first link in mobile sidebar
+    const timer = setTimeout(() => {
+      const firstLink = mobileSidebarRef.current?.querySelector<HTMLElement>('a, button');
+      firstLink?.focus();
+    }, 100);
+    return () => {
+      clearTimeout(timer);
+      previousFocusRef.current?.focus();
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !mobileSidebarRef.current) return;
+      const focusable = mobileSidebarRef.current.querySelectorAll<HTMLElement>(
+        'a, button, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [mobileOpen]);
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
@@ -144,6 +189,8 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? 'page' : undefined}
+              onMouseEnter={() => prefetchRoute(item.href)}
               className={cn(
                 'flex items-center gap-3',
                 'px-3 py-2.5 rounded-md',
@@ -180,32 +227,34 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             <span className="mx-1">v2.0</span>
           </div>
         )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn(
-            'w-full flex items-center justify-center',
-            'p-2 rounded-md',
-            'text-[var(--text-muted)] hover:text-gold',
-            'hover:bg-[var(--bg-card-hover)]',
-            'transition-colors duration-200'
-          )}
-          aria-label={collapsed ? t('توسيع القائمة', 'Expand sidebar') : t('طي القائمة', 'Collapse sidebar')}
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={cn('transition-transform duration-300', collapsed ? 'rotate-180 flip-rtl' : 'flip-rtl')}
+        <Tooltip text={collapsed ? t('توسيع القائمة', 'Expand sidebar') : t('طي القائمة', 'Collapse sidebar')} position="top">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className={cn(
+              'w-full flex items-center justify-center',
+              'p-2 rounded-md',
+              'text-[var(--text-muted)] hover:text-gold',
+              'hover:bg-[var(--bg-card-hover)]',
+              'transition-colors duration-200'
+            )}
+            aria-label={collapsed ? t('توسيع القائمة', 'Expand sidebar') : t('طي القائمة', 'Collapse sidebar')}
           >
-            <polyline points="11 17 6 12 11 7" />
-            <polyline points="18 17 13 12 18 7" />
-          </svg>
-        </button>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={cn('transition-transform duration-300', collapsed ? 'rotate-180 flip-rtl' : 'flip-rtl')}
+            >
+              <polyline points="11 17 6 12 11 7" />
+              <polyline points="18 17 13 12 18 7" />
+            </svg>
+          </button>
+        </Tooltip>
       </div>
     </>
   );
@@ -221,7 +270,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           'h-[calc(100vh-64px)]',
           'sticky top-[64px]',
           'border-e gold-border',
-          'dark:bg-[#141414] bg-white',
+          'dark:bg-dark-surface bg-white',
           'transition-all duration-300',
           collapsed ? 'w-sidebar-collapsed' : 'w-sidebar'
         )}
@@ -240,6 +289,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
 
       {/* Mobile sidebar */}
       <aside
+        ref={mobileSidebarRef}
         role="navigation"
         aria-label={t('التنقل للجوال', 'Mobile navigation')}
         aria-hidden={!mobileOpen}
@@ -248,7 +298,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           'h-[calc(100vh-64px)] w-[260px]',
           'flex flex-col overflow-x-hidden',
           'border-s gold-border',
-          'dark:bg-[#141414] bg-white',
+          'dark:bg-dark-surface bg-white',
           'transition-transform duration-300 ease-in-out',
           'lg:hidden',
           mobileOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full'

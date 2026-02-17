@@ -33,7 +33,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -46,6 +45,12 @@ export default function RootLayout({
       <body
         className={`${ibmPlexArabic.variable} ${inter.variable} font-english antialiased`}
       >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:start-4 focus:z-[9999] focus:bg-gold focus:text-dark-bg focus:px-4 focus:py-2 focus:rounded-lg focus:font-medium"
+        >
+          Skip to main content
+        </a>
         <NextTopLoader color="#D4A84B" showSpinner={false} />
         <ThemeProvider>
           <LanguageProvider>

@@ -8,21 +8,8 @@
 export { ChartSkeleton } from '@/components/charts/ChartSkeleton';
 
 // ---------------------------------------------------------------------------
-// Shared styles
+// Shared shimmer class from globals.css: .animate-shimmer
 // ---------------------------------------------------------------------------
-
-const shimmerStyle = {
-  background:
-    'linear-gradient(90deg, transparent 0%, rgba(212, 168, 75, 0.06) 50%, transparent 100%)',
-  animation: 'skeleton-shimmer 1.5s ease-in-out infinite',
-} as const;
-
-const shimmerKeyframes = `
-  @keyframes skeleton-shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-`;
 
 // ---------------------------------------------------------------------------
 // TableSkeleton
@@ -45,7 +32,7 @@ export function TableSkeleton({ rows = 8, columns = 5 }: TableSkeletonProps) {
         background: '#1A1A1A',
       }}
     >
-      <div className="absolute inset-0" style={shimmerStyle} />
+      <div className="absolute inset-0 animate-shimmer" />
 
       {/* Header row */}
       <div
@@ -92,7 +79,6 @@ export function TableSkeleton({ rows = 8, columns = 5 }: TableSkeletonProps) {
         </div>
       ))}
 
-      <style>{shimmerKeyframes}</style>
     </div>
   );
 }
@@ -120,7 +106,7 @@ export function DashboardSkeleton() {
               border: '1px solid rgba(212, 168, 75, 0.1)',
             }}
           >
-            <div className="absolute inset-0" style={shimmerStyle} />
+            <div className="absolute inset-0 animate-shimmer" />
             <div
               className="rounded mb-2"
               style={{
@@ -150,7 +136,7 @@ export function DashboardSkeleton() {
           border: '1px solid rgba(212, 168, 75, 0.1)',
         }}
       >
-        <div className="absolute inset-0" style={shimmerStyle} />
+        <div className="absolute inset-0 animate-shimmer" />
         <div className="flex items-end justify-center gap-2 h-full pb-8 px-8">
           {Array.from({ length: 12 }).map((_, i) => {
             const h = 30 + Math.sin(i * 0.8) * 20;
@@ -172,7 +158,6 @@ export function DashboardSkeleton() {
       {/* Table placeholder */}
       <TableSkeleton rows={5} columns={4} />
 
-      <style>{shimmerKeyframes}</style>
     </div>
   );
 }

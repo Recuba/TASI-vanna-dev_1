@@ -2,7 +2,7 @@
 
 export default function ChatLoading() {
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-64px)]">
+    <div className="flex-1 flex flex-col h-[calc(100dvh-128px)] lg:h-[calc(100dvh-64px)]">
       {/* Chat area */}
       <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 animate-fade-in-up">

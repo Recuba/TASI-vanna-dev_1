@@ -29,12 +29,15 @@ import { DataSourceBadge } from './DataSourceBadge';
 import { useStockOHLCV } from '@/lib/hooks/use-chart-data';
 import type { OHLCVData } from './chart-types';
 import dynamic from 'next/dynamic';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // ---------------------------------------------------------------------------
 // Period options
 // ---------------------------------------------------------------------------
 
 const PERIODS = [
+  { label: '1D', value: '1d', intraday: true },
+  { label: '1W', value: '5d', intraday: true },
   { label: '3M', value: '3mo' },
   { label: '6M', value: '6mo' },
   { label: '1Y', value: '1y' },
@@ -102,6 +105,7 @@ function StockOHLCVChartInner({
   height = 550,
   className,
 }: StockOHLCVChartProps) {
+  const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -127,6 +131,34 @@ function StockOHLCVChartInner({
   } | null>(null);
 
   const { data, loading, error, source, refetch } = useStockOHLCV(ticker, period);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Auto-refresh every 5 min during Tadawul trading hours (Sun-Thu, 10:00-15:00 AST/UTC+3)
+  useEffect(() => {
+    function isTradingHours(): boolean {
+      const now = new Date();
+      const utcHour = now.getUTCHours();
+      const utcDay = now.getUTCDay(); // 0=Sun
+      const isTradingDay = utcDay >= 0 && utcDay <= 4;
+      const isTradingTime = utcHour >= 7 && utcHour < 12;
+      return isTradingDay && isTradingTime;
+    }
+
+    const intervalId = setInterval(() => {
+      if (isTradingHours()) {
+        refetch();
+        setLastUpdated(new Date());
+      }
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [refetch]);
+
+  useEffect(() => {
+    if (data && data.length > 0 && !lastUpdated) {
+      setLastUpdated(new Date());
+    }
+  }, [data, lastUpdated]);
 
   // Period % change
   const periodChange = useMemo(() => {
@@ -380,22 +412,14 @@ function StockOHLCVChartInner({
     <div
       dir="ltr"
       className={cn(
-        'rounded-xl overflow-hidden transition-opacity duration-500',
+        'rounded-xl overflow-hidden transition-opacity duration-500 dark:bg-dark-card bg-white border border-gold/10',
         chartVisible ? 'opacity-100' : 'opacity-0',
         className,
       )}
-      style={{
-        border: '1px solid rgba(212, 168, 75, 0.1)',
-        background: '#1A1A1A',
-      }}
     >
       {/* Toolbar */}
       <div
-        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2"
-        style={{
-          background: '#2A2A2A',
-          borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
-        }}
+        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-[#2A2A2A] bg-gray-100 border-b border-gold/10"
       >
         {/* Left: Title + source badge + period change */}
         <div className="flex items-center gap-2">
@@ -407,7 +431,7 @@ function StockOHLCVChartInner({
               {stockName}
             </span>
           )}
-          <DataSourceBadge source={source} />
+          <DataSourceBadge source={source} lastUpdated={lastUpdated?.toISOString()} />
           {periodChange !== null && (
             <span
               className="text-xs font-semibold px-1.5 py-0.5 rounded"
@@ -432,7 +456,9 @@ function StockOHLCVChartInner({
           >
             <button
               onClick={() => setShowMA20((v) => !v)}
-              title="Moving Average 20"
+              title={t('المتوسط المتحرك 20', 'Moving Average 20')}
+              aria-label={t('تبديل المتوسط المتحرك 20', 'Toggle Moving Average 20')}
+              aria-pressed={showMA20}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium"
               style={{
                 background: showMA20 ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
@@ -444,7 +470,9 @@ function StockOHLCVChartInner({
             </button>
             <button
               onClick={() => setShowMA50((v) => !v)}
-              title="Moving Average 50"
+              title={t('المتوسط المتحرك 50', 'Moving Average 50')}
+              aria-label={t('تبديل المتوسط المتحرك 50', 'Toggle Moving Average 50')}
+              aria-pressed={showMA50}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium"
               style={{
                 background: showMA50 ? 'rgba(74, 159, 255, 0.2)' : 'transparent',
@@ -463,7 +491,9 @@ function StockOHLCVChartInner({
           >
             <button
               onClick={() => setChartType('candlestick')}
-              title="Candlestick"
+              title={t('شموع يابانية', 'Candlestick')}
+              aria-label={t('رسم بياني شمعي', 'Candlestick chart')}
+              aria-pressed={chartType === 'candlestick'}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
               style={{
                 background: chartType === 'candlestick' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
@@ -471,8 +501,7 @@ function StockOHLCVChartInner({
                 border: chartType === 'candlestick' ? '1px solid #D4A84B' : '1px solid transparent',
               }}
             >
-              {/* Candlestick icon */}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <line x1="9" y1="2" x2="9" y2="22" />
                 <rect x="5" y="7" width="8" height="10" fill="currentColor" opacity="0.3" />
                 <line x1="17" y1="4" x2="17" y2="20" />
@@ -481,7 +510,9 @@ function StockOHLCVChartInner({
             </button>
             <button
               onClick={() => setChartType('line')}
-              title="Line Chart"
+              title={t('رسم خطي', 'Line Chart')}
+              aria-label={t('رسم بياني خطي', 'Line chart')}
+              aria-pressed={chartType === 'line'}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
               style={{
                 background: chartType === 'line' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
@@ -489,13 +520,15 @@ function StockOHLCVChartInner({
                 border: chartType === 'line' ? '1px solid #D4A84B' : '1px solid transparent',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <polyline points="3,17 8,11 13,15 21,5" />
               </svg>
             </button>
             <button
               onClick={() => setChartType('area')}
-              title="Area Chart"
+              title={t('رسم مساحي', 'Area Chart')}
+              aria-label={t('رسم بياني مساحي', 'Area chart')}
+              aria-pressed={chartType === 'area'}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
               style={{
                 background: chartType === 'area' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
@@ -503,7 +536,7 @@ function StockOHLCVChartInner({
                 border: chartType === 'area' ? '1px solid #D4A84B' : '1px solid transparent',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M3,17 L8,11 L13,15 L21,5 L21,21 L3,21 Z" fill="currentColor" opacity="0.2" />
                 <polyline points="3,17 8,11 13,15 21,5" />
               </svg>
@@ -517,7 +550,8 @@ function StockOHLCVChartInner({
           >
             <button
               onClick={handleScreenshot}
-              title="Download PNG"
+              title={t('تحميل PNG', 'Download PNG')}
+              aria-label={t('تحميل صورة الرسم البياني', 'Download chart image')}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block"
               style={{ color: '#707070' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#D4A84B'; }}
@@ -531,7 +565,8 @@ function StockOHLCVChartInner({
             </button>
             <button
               onClick={handleCSVExport}
-              title="Export CSV"
+              title={t('تصدير CSV', 'Export CSV')}
+              aria-label={t('تصدير بيانات الرسم البياني كملف CSV', 'Export chart data as CSV')}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block"
               style={{ color: '#707070' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#D4A84B'; }}
@@ -561,6 +596,8 @@ function StockOHLCVChartInner({
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
+                title={'intraday' in p && p.intraday ? t('قريبا', 'Coming soon') : undefined}
+                aria-label={`${t('فترة', 'Period')} ${p.label}`}
                 className={cn(
                   'text-xs px-2.5 py-1 rounded-md font-medium transition-all duration-200',
                   period === p.value
@@ -581,12 +618,7 @@ function StockOHLCVChartInner({
 
       {/* Crosshair tooltip bar */}
       <div
-        className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px]"
-        style={{
-          background: '#1A1A1A',
-          borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
-          color: '#808080',
-        }}
+        className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px] dark:bg-dark-card bg-gray-50 border-b border-gold/10 text-gray-500 dark:text-[#808080]"
       >
         {tooltipData ? (
           <>
@@ -617,12 +649,12 @@ function StockOHLCVChartInner({
             </span>
           </>
         ) : (
-          <span style={{ color: '#505050' }}>Hover over chart for details</span>
+          <span style={{ color: '#505050' }}>{t('مرر المؤشر فوق الرسم البياني لعرض التفاصيل', 'Hover over chart for details')}</span>
         )}
       </div>
 
       {/* Chart container */}
-      <div ref={containerRef} style={{ height: chartHeight }} />
+      <div ref={containerRef} role="img" aria-label={t('رسم بياني للسهم', 'Stock chart') + ` ${ticker}`} className="dark:bg-dark-card bg-white" style={{ height: chartHeight }} />
     </div>
   );
 }

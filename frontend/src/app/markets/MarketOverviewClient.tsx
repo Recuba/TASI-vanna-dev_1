@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useFormatters } from '@/lib/hooks/useFormatters';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 import type {
   MarketGraphModel,
   Instrument,
@@ -15,9 +17,9 @@ import { toPosMap, CANVAS_W, CANVAS_H, CX, CY, HUB_RADIUS } from '@/lib/market-g
 // Format helpers
 // ---------------------------------------------------------------------------
 
-const fmt = (v: number | null | undefined) =>
+const fmt = (v: number | null | undefined, locale = 'en-US') =>
   v != null
-    ? v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    ? v.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : '—';
 const pctFmt = (v: number | null | undefined) =>
   v != null ? (v * 100).toFixed(1) + '%' : '—';
@@ -514,6 +516,7 @@ export default function MarketOverviewClient({
   onRefresh?: () => void;
 }) {
   const { language, t, isRTL } = useLanguage();
+  const { formatTime, formatDate } = useFormatters();
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [hoveredEdge, setHoveredEdge] = useState<EdgeLabel | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -612,6 +615,11 @@ export default function MarketOverviewClient({
 
       <div className="py-4">
         <div className="max-w-content-lg mx-auto px-4 sm:px-6">
+          {/* Breadcrumb */}
+          <div className="mb-3">
+            <Breadcrumb items={[{ label: t('\u0627\u0644\u0639\u0627\u0644\u0645 360', 'World 360') }]} />
+          </div>
+
           {/* ═══ HEADER ═══ */}
           <div
             className={cn(
@@ -667,9 +675,9 @@ export default function MarketOverviewClient({
                     animation: connectionStatus === 'live' ? 'statusPulse 2s ease-in-out infinite' : 'none',
                   }}
                 />
-                {(lastUpdated ?? time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                {formatTime(lastUpdated ?? time)}
                 <span>{'\u00B7'}</span>
-                {(lastUpdated ?? time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {formatDate(lastUpdated ?? time)}
                 {/* Refresh button */}
                 {onRefresh && (
                   <button

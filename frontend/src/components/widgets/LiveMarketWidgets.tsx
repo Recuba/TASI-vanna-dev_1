@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ConnectionStatusBadge } from '@/components/common/ConnectionStatusBadge';
 import { API_BASE } from '@/lib/config';
@@ -37,6 +37,70 @@ const ASSET_ICONS: Record<QuoteItem['asset_class'], string> = {
   fx: '\u0024',       // Dollar
   other: '\u2022',    // Bullet
 };
+
+// ---------------------------------------------------------------------------
+// Memoized quote card to prevent re-renders when other quotes update
+// ---------------------------------------------------------------------------
+
+const QuoteCard = React.memo(function QuoteCard({
+  q,
+  priceFmt,
+  pctFmt,
+}: {
+  q: QuoteItem;
+  priceFmt: Intl.NumberFormat;
+  pctFmt: Intl.NumberFormat;
+}) {
+  const isPositive = (q.change_pct ?? 0) > 0;
+  const isNegative = (q.change_pct ?? 0) < 0;
+  const isNeutral = !isPositive && !isNegative;
+
+  return (
+    <div
+      className={cn(
+        'flex-shrink-0 rounded-xl px-3 py-2',
+        'bg-white/5 hover:bg-white/10',
+        'transition-colors duration-200',
+        'min-w-[120px]',
+      )}
+    >
+      {/* Name + asset icon */}
+      <div className="flex items-center gap-1 mb-0.5">
+        <span className="text-[10px] opacity-60" aria-hidden="true">
+          {ASSET_ICONS[q.asset_class] ?? ASSET_ICONS.other}
+        </span>
+        <span className="text-[11px] text-[var(--text-muted)] truncate max-w-[90px]">
+          {q.name}
+        </span>
+        {q.is_delayed && (
+          <span
+            className="text-[9px] text-amber-400/70 flex-shrink-0"
+            title={`Delayed ${q.delay_minutes ?? 15}min`}
+          >
+            D
+          </span>
+        )}
+      </div>
+
+      {/* Price */}
+      <div className="text-sm font-semibold text-[var(--text-primary)]">
+        {priceFmt.format(q.price)}
+      </div>
+
+      {/* Change % */}
+      <div
+        className={cn(
+          'text-[11px] font-medium',
+          isPositive && 'text-accent-green',
+          isNegative && 'text-accent-red',
+          isNeutral && 'text-[var(--text-muted)]',
+        )}
+      >
+        {q.change_pct != null ? `${pctFmt.format(q.change_pct)}%` : '--'}
+      </div>
+    </div>
+  );
+});
 
 // ---------------------------------------------------------------------------
 // Component
@@ -196,63 +260,10 @@ export function LiveMarketWidgets({ lang = 'ar', className }: LiveMarketWidgetsP
         </div>
 
         {/* Scrollable quote cards */}
-        <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-0.5">
-          {quotes.map((q) => {
-            const isPositive = (q.change_pct ?? 0) > 0;
-            const isNegative = (q.change_pct ?? 0) < 0;
-            const isNeutral = !isPositive && !isNegative;
-
-            return (
-              <div
-                key={q.symbol}
-                className={cn(
-                  'flex-shrink-0 rounded-xl px-3 py-2',
-                  'bg-white/5 hover:bg-white/10',
-                  'transition-colors duration-200',
-                  'min-w-[120px]',
-                )}
-              >
-                {/* Name + asset icon */}
-                <div className="flex items-center gap-1 mb-0.5">
-                  <span className="text-[10px] opacity-60" aria-hidden="true">
-                    {ASSET_ICONS[q.asset_class] ?? ASSET_ICONS.other}
-                  </span>
-                  <span className="text-[11px] text-[var(--text-muted)] truncate max-w-[90px]">
-                    {q.name}
-                  </span>
-                  {q.is_delayed && (
-                    <span
-                      className="text-[9px] text-amber-400/70 flex-shrink-0"
-                      title={
-                        lang === 'ar'
-                          ? `متأخر ${q.delay_minutes ?? 15} دقيقة`
-                          : `Delayed ${q.delay_minutes ?? 15}min`
-                      }
-                    >
-                      D
-                    </span>
-                  )}
-                </div>
-
-                {/* Price */}
-                <div className="text-sm font-semibold text-[var(--text-primary)]">
-                  {priceFmt.format(q.price)}
-                </div>
-
-                {/* Change % */}
-                <div
-                  className={cn(
-                    'text-[11px] font-medium',
-                    isPositive && 'text-emerald-400',
-                    isNegative && 'text-rose-400',
-                    isNeutral && 'text-[var(--text-muted)]',
-                  )}
-                >
-                  {q.change_pct != null ? `${pctFmt.format(q.change_pct)}%` : '--'}
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-0.5" aria-live="polite" aria-atomic="false">
+          {quotes.map((q) => (
+            <QuoteCard key={q.symbol} q={q} priceFmt={priceFmt} pctFmt={pctFmt} />
+          ))}
         </div>
       </div>
     </div>

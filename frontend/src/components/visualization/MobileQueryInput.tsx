@@ -59,7 +59,7 @@ export function MobileQueryInput({
             'min-w-[44px] min-h-[44px] flex items-center justify-center',
             'bg-gold/20 text-gold rounded-xl',
             'hover:bg-gold/30 transition-colors',
-            'disabled:opacity-30 disabled:cursor-not-allowed',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
           )}
         >
           {isLoading ? (

@@ -85,7 +85,7 @@ export default function NewsError({
           <button
             onClick={handleRetry}
             disabled={retrying}
-            className="inline-flex items-center gap-2 bg-gold text-[#0E0E0E] font-medium px-6 py-3 rounded-xl hover:bg-gold-light hover:gold-glow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 bg-gold text-[#0E0E0E] font-medium px-6 py-3 rounded-xl hover:bg-gold-light hover:gold-glow-sm transition-all duration-300 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg
               width="16"

@@ -1,7 +1,49 @@
+# Python
 __pycache__/
 .pytest_cache/
 .benchmarks/
 *.pyc
+*.pyo
+*.pyd
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.production
+.env.staging
+frontend/.env.local
+frontend/.env.*
+
+# Credentials and keys
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+
+# IDE and OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Database files (generated)
+*.db-shm
+*.db-wal
+
+# Build artifacts
+node_modules/
+.next/
+dist/
+build/
+
+# Logs
+*.log
+
+# Project-specific generated dirs
 nul
 f8c88490871f6169/
-.env

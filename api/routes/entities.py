@@ -21,6 +21,7 @@ from api.schemas.entities import (
     EntityListResponse,
     SectorInfo,
 )
+from models.validators import validate_ticker
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
 
@@ -163,6 +164,7 @@ def _normalize_ticker(ticker: str) -> str:
 @router.get("/{ticker}", response_model=CompanyDetail)
 async def get_entity(ticker: str) -> CompanyDetail:
     """Return detailed company information with market data, valuation, and profitability."""
+    ticker = validate_ticker(ticker)
     ticker = _normalize_ticker(ticker)
     sql = """
         SELECT

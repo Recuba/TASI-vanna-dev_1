@@ -17,6 +17,7 @@ from api.dependencies import get_reports_service
 from api.schemas.common import PaginatedResponse, PaginationParams
 from api.schemas.reports import ReportCreate, ReportResponse
 from auth.dependencies import get_current_user
+from models.validators import validate_ticker
 
 
 # Backward-compatible alias used by tests/test_api_routes.py
@@ -88,6 +89,7 @@ async def reports_by_ticker(
     svc: TechnicalReportsService = Depends(get_reports_service),
 ) -> PaginatedResponse[ReportResponse]:
     """Return technical reports for a specific ticker."""
+    ticker = validate_ticker(ticker)
     reports = await asyncio.to_thread(
         svc.get_reports_by_ticker,
         ticker=ticker,

@@ -37,7 +37,20 @@ const REPLACEMENTS = [
 ];
 
 // Combined detection regex (used for fast line-level scanning)
-const VIOLATION_RE = /\b(ml-|mr-|pl-|pr-|text-left\b|text-right\b|border-l-|border-r-|rounded-l-|rounded-r-)/;
+const VIOLATION_RE = /\b(ml-|mr-|pl-|pr-|text-left\b|text-right\b|border-l-|border-r-|rounded-l-|rounded-r-|(?<!inset-x-)(?<!\/)left-|(?<!inset-x-)(?<!\/)right-)/;
+
+// Lines containing these patterns are exempt from left-/right- violations
+// (centering transforms, intentional LTR overrides for charts/code)
+const EXEMPT_PATTERNS = [
+  /dir\s*=\s*["']ltr["']/,              // intentional LTR override
+  /left-1\/2/,                           // transform-based centering (direction-neutral)
+  /-translate-x-1\/2/,                   // paired with left-1/2 for centering
+  /inset-x-/,                            // already using logical inset
+];
+
+function isExemptLine(line) {
+  return EXEMPT_PATTERNS.some((pat) => pat.test(line));
+}
 
 function walkFiles(dir) {
   const results = [];
@@ -66,6 +79,9 @@ function scanFile(filePath) {
     if (/^\s*import\s/.test(line)) continue;
 
     if (VIOLATION_RE.test(line)) {
+      // Skip lines with intentional LTR overrides or centering patterns
+      if (isExemptLine(line)) continue;
+
       // Identify which specific violations are on this line
       const matched = [];
       for (const r of REPLACEMENTS) {

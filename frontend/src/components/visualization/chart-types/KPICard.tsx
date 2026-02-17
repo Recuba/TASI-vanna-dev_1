@@ -1,5 +1,7 @@
 'use client';
 
+import { useLanguage } from '@/providers/LanguageProvider';
+
 interface KPICardProps {
   data: Record<string, unknown>[];
   title?: string;
@@ -9,23 +11,25 @@ interface KPICardProps {
   };
 }
 
-function formatValue(val: unknown): string {
+function formatValue(val: unknown, locale: string): string {
   if (typeof val === 'number') {
     if (Math.abs(val) >= 1_000_000_000) {
-      return (val / 1_000_000_000).toFixed(2) + 'B';
+      return (val / 1_000_000_000).toLocaleString(locale, { maximumFractionDigits: 2 }) + 'B';
     }
     if (Math.abs(val) >= 1_000_000) {
-      return (val / 1_000_000).toFixed(2) + 'M';
+      return (val / 1_000_000).toLocaleString(locale, { maximumFractionDigits: 2 }) + 'M';
     }
     if (Math.abs(val) >= 1_000) {
-      return (val / 1_000).toFixed(2) + 'K';
+      return (val / 1_000).toLocaleString(locale, { maximumFractionDigits: 2 }) + 'K';
     }
-    return val.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return val.toLocaleString(locale, { maximumFractionDigits: 2 });
   }
   return String(val ?? '-');
 }
 
 export function KPICard({ data, title, config }: KPICardProps) {
+  const { language } = useLanguage();
+  const locale = language === 'ar' ? 'ar-SA' : 'en-US';
   if (!data || data.length === 0) return null;
 
   const row = data[0];
@@ -44,7 +48,7 @@ export function KPICard({ data, title, config }: KPICardProps) {
           {title}
         </span>
       )}
-      <span className="text-4xl font-bold text-gold mb-1">{formatValue(value)}</span>
+      <span className="text-4xl font-bold text-gold mb-1">{formatValue(value, locale)}</span>
       <span className="text-sm text-[#B0B0B0]">{label}</span>
     </div>
   );

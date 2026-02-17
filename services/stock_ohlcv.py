@@ -21,7 +21,24 @@ logger = logging.getLogger(__name__)
 # Shared cache & circuit breaker instances
 # ---------------------------------------------------------------------------
 _cache = YFinanceCache(ttl=300, max_entries=500, name="stock_ohlcv")
-_fetch_lock = threading.Lock()
+
+# Per-ticker locks: allow concurrent fetches for different tickers
+_ticker_locks: Dict[str, threading.Lock] = {}
+_locks_guard = threading.Lock()  # Protects _ticker_locks dict itself
+_MAX_LOCKS = 1000  # Prevent unbounded growth
+
+
+def _get_ticker_lock(symbol: str, period: str) -> threading.Lock:
+    """Return a per-(symbol, period) lock, creating one if needed."""
+    key = f"{symbol}:{period}"
+    with _locks_guard:
+        if key not in _ticker_locks:
+            # Evict oldest if at capacity
+            if len(_ticker_locks) >= _MAX_LOCKS:
+                # Remove first entry (oldest by insertion order in Python 3.7+)
+                _ticker_locks.pop(next(iter(_ticker_locks)))
+            _ticker_locks[key] = threading.Lock()
+        return _ticker_locks[key]
 
 VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 
@@ -193,8 +210,8 @@ def fetch_stock_ohlcv(ticker: str, period: str = "1y") -> Dict[str, Any]:
         )
         return cached
 
-    # Serialize yfinance fetches
-    with _fetch_lock:
+    # Serialize yfinance fetches per ticker (different tickers fetch concurrently)
+    with _get_ticker_lock(symbol, period):
         # Double-check cache inside the lock
         cached = _get_cached(symbol, period)
         if cached is not None:

@@ -5,7 +5,7 @@ import { AIChatInterface } from '@/components/chat/AIChatInterface';
 
 function ChatContent() {
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-64px)]">
+    <div className="flex-1 flex flex-col h-[calc(100dvh-128px)] lg:h-[calc(100dvh-64px)]">
       <AIChatInterface />
     </div>
   );

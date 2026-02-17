@@ -236,14 +236,14 @@ export function DataTable({ columns, rows, pageSize: initialPageSize = 25, class
           <button
             disabled={page === 0}
             onClick={() => setPage((p) => p - 1)}
-            className="px-2 py-1 rounded disabled:opacity-30 hover:bg-gold/10 transition-colors"
+            className="px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold/10 transition-colors"
           >
             Prev
           </button>
           <button
             disabled={page >= totalPages - 1}
             onClick={() => setPage((p) => p + 1)}
-            className="px-2 py-1 rounded disabled:opacity-30 hover:bg-gold/10 transition-colors"
+            className="px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold/10 transition-colors"
           >
             Next
           </button>

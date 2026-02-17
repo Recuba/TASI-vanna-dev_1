@@ -222,15 +222,11 @@ export function useMarketIndex(period: string = '1y'): ChartDataResult<LineDataP
 export function useMiniChartData(ticker: string): ChartDataResult<LineDataPoint[]> {
   const fetcher = useCallback(async (): Promise<SourcedData<LineDataPoint[]>> => {
     try {
-      const response = await getOHLCVData(ticker);
+      // Request only 1 month of data to reduce payload ~90% for sparklines
+      const response = await getOHLCVData(ticker, { period: '1mo' });
       const ohlcv = response.data;
       if (ohlcv && ohlcv.length > 0 && validateOHLCVData(ohlcv)) {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - 30);
-        const cutoffStr = cutoff.toISOString().split('T')[0];
-        const data = ohlcv
-          .filter((d) => d.time >= cutoffStr)
-          .map((d) => ({ time: d.time, value: d.close }));
+        const data = ohlcv.map((d) => ({ time: d.time, value: d.close }));
         return { data, source: (response.source as DataSource) ?? 'real' };
       }
       if (ohlcv && ohlcv.length > 0) {

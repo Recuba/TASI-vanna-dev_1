@@ -13,6 +13,7 @@ For route-level dual-backend queries, prefer ``api/db_helper.py`` instead.
 from __future__ import annotations
 
 import logging
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -132,17 +133,42 @@ def table_exists(conn, table_name: str) -> bool:
     return row is not None
 
 
+# Whitelist of allowed column names for datetime filtering
+_ALLOWED_DATETIME_COLUMNS = frozenset({
+    "created_at", "updated_at", "published_at", "fetched_at",
+    "scraped_at", "timestamp", "date",
+})
+
+# Interval must match pattern like "1 day", "24 hours", "30 minutes"
+_INTERVAL_PATTERN = re.compile(
+    r"^\d+ (second|minute|hour|day|week|month|year)s?$", re.IGNORECASE
+)
+
+
 def datetime_recent(column: str, interval: str) -> str:
     """Return a WHERE clause fragment for recent records.
 
     Args:
-        column: Column name (e.g. 'created_at')
-        interval: Interval string (e.g. '1 day', '1 hour')
+        column: Column name - must be in the allowed whitelist.
+        interval: Interval string (e.g. '1 day', '24 hours').
 
     Returns:
         SQL fragment like ``created_at > datetime('now', '-1 day')`` for SQLite
         or ``created_at > NOW() - INTERVAL '1 day'`` for PostgreSQL.
+
+    Raises:
+        ValueError: If column or interval fails validation.
     """
+    if column not in _ALLOWED_DATETIME_COLUMNS:
+        raise ValueError(
+            f"Column '{column}' not in allowed list: "
+            f"{sorted(_ALLOWED_DATETIME_COLUMNS)}"
+        )
+    if not _INTERVAL_PATTERN.match(interval):
+        raise ValueError(
+            f"Invalid interval format: '{interval}'. "
+            "Expected '<number> <unit>' (e.g. '1 day', '24 hours')"
+        )
     if is_postgres():
         return f"{column} > NOW() - INTERVAL '{interval}'"
     # SQLite: convert '1 day' -> '-1 day'

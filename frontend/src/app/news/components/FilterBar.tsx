@@ -229,8 +229,9 @@ export function FilterBar({
               {t('الفترة', 'Period')}:
             </span>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-[var(--text-muted)]">{t('من', 'From')}</label>
+              <label htmlFor="news-date-from" className="text-xs text-[var(--text-muted)]">{t('من', 'From')}</label>
               <input
+                id="news-date-from"
                 type="date"
                 value={dateFrom}
                 onChange={(e) => onDateFromChange(e.target.value)}
@@ -244,8 +245,9 @@ export function FilterBar({
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-[var(--text-muted)]">{t('إلى', 'To')}</label>
+              <label htmlFor="news-date-to" className="text-xs text-[var(--text-muted)]">{t('إلى', 'To')}</label>
               <input
+                id="news-date-to"
                 type="date"
                 value={dateTo}
                 onChange={(e) => onDateToChange(e.target.value)}

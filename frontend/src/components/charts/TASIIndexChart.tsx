@@ -36,6 +36,8 @@ import { useLanguage } from '@/providers/LanguageProvider';
 // ---------------------------------------------------------------------------
 
 const PERIODS = [
+  { label: '1D', value: '1d', intraday: true },
+  { label: '1W', value: '5d', intraday: true },
   { label: '3M', value: '3mo' },
   { label: '6M', value: '6mo' },
   { label: '1Y', value: '1y' },
@@ -122,6 +124,36 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
   } | null>(null);
 
   const { data, loading, error, source, refetch } = useTasiOHLCV(period);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Auto-refresh every 5 min during Tadawul trading hours (Sun-Thu, 10:00-15:00 AST/UTC+3)
+  useEffect(() => {
+    function isTradingHours(): boolean {
+      const now = new Date();
+      const utcHour = now.getUTCHours();
+      const utcDay = now.getUTCDay(); // 0=Sun
+      // Tadawul: Sun(0)-Thu(4), 10:00-15:00 AST = 07:00-12:00 UTC
+      const isTradingDay = utcDay >= 0 && utcDay <= 4;
+      const isTradingTime = utcHour >= 7 && utcHour < 12;
+      return isTradingDay && isTradingTime;
+    }
+
+    const intervalId = setInterval(() => {
+      if (isTradingHours()) {
+        refetch();
+        setLastUpdated(new Date());
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(intervalId);
+  }, [refetch]);
+
+  // Track initial data load time
+  useEffect(() => {
+    if (data && data.length > 0 && !lastUpdated) {
+      setLastUpdated(new Date());
+    }
+  }, [data, lastUpdated]);
 
   // Derive last price + day-over-day change
   const lastCandle = data && data.length > 0 ? data[data.length - 1] : null;
@@ -404,7 +436,7 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
             <span className="text-xs hidden sm:inline" style={{ color: '#707070' }}>
               {t('مؤشر السوق الرئيسي', 'Tadawul All Share Index')}
             </span>
-            <DataSourceBadge source={source} />
+            <DataSourceBadge source={source} lastUpdated={lastUpdated?.toISOString()} />
           </div>
 
           {/* Last price display */}
@@ -454,7 +486,9 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
           >
             <button
               onClick={() => setShowMA20((v) => !v)}
-              title="Moving Average 20"
+              title={t('المتوسط المتحرك 20', 'Moving Average 20')}
+              aria-label={t('تبديل المتوسط المتحرك 20', 'Toggle Moving Average 20')}
+              aria-pressed={showMA20}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium"
               style={{
                 background: showMA20 ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
@@ -466,7 +500,9 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
             </button>
             <button
               onClick={() => setShowMA50((v) => !v)}
-              title="Moving Average 50"
+              title={t('المتوسط المتحرك 50', 'Moving Average 50')}
+              aria-label={t('تبديل المتوسط المتحرك 50', 'Toggle Moving Average 50')}
+              aria-pressed={showMA50}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium"
               style={{
                 background: showMA50 ? 'rgba(74, 159, 255, 0.2)' : 'transparent',
@@ -485,7 +521,9 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
           >
             <button
               onClick={() => setChartType('candlestick')}
-              title="Candlestick"
+              title={t('شموع يابانية', 'Candlestick')}
+              aria-label={t('رسم بياني شمعي', 'Candlestick chart')}
+              aria-pressed={chartType === 'candlestick'}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
               style={{
                 background: chartType === 'candlestick' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
@@ -493,7 +531,7 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
                 border: chartType === 'candlestick' ? '1px solid #D4A84B' : '1px solid transparent',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <line x1="9" y1="2" x2="9" y2="22" />
                 <rect x="5" y="7" width="8" height="10" fill="currentColor" opacity="0.3" />
                 <line x1="17" y1="4" x2="17" y2="20" />
@@ -502,7 +540,9 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
             </button>
             <button
               onClick={() => setChartType('line')}
-              title="Line Chart"
+              title={t('رسم خطي', 'Line Chart')}
+              aria-label={t('رسم بياني خطي', 'Line chart')}
+              aria-pressed={chartType === 'line'}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
               style={{
                 background: chartType === 'line' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
@@ -510,13 +550,15 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
                 border: chartType === 'line' ? '1px solid #D4A84B' : '1px solid transparent',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <polyline points="3,17 8,11 13,15 21,5" />
               </svg>
             </button>
             <button
               onClick={() => setChartType('area')}
-              title="Area Chart"
+              title={t('رسم مساحي', 'Area Chart')}
+              aria-label={t('رسم بياني مساحي', 'Area chart')}
+              aria-pressed={chartType === 'area'}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
               style={{
                 background: chartType === 'area' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
@@ -524,7 +566,7 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
                 border: chartType === 'area' ? '1px solid #D4A84B' : '1px solid transparent',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M3,17 L8,11 L13,15 L21,5 L21,21 L3,21 Z" fill="currentColor" opacity="0.2" />
                 <polyline points="3,17 8,11 13,15 21,5" />
               </svg>
@@ -538,7 +580,8 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
           >
             <button
               onClick={handleScreenshot}
-              title="Download PNG"
+              title={t('تحميل PNG', 'Download PNG')}
+              aria-label={t('تحميل صورة الرسم البياني', 'Download chart image')}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block"
               style={{ color: '#707070' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#D4A84B'; }}
@@ -552,13 +595,14 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
             </button>
             <button
               onClick={handleCSVExport}
-              title="Export CSV"
+              title={t('تصدير CSV', 'Export CSV')}
+              aria-label={t('تصدير بيانات الرسم البياني كملف CSV', 'Export chart data as CSV')}
               className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block"
               style={{ color: '#707070' }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#D4A84B'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#707070'; }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M14,2 L6,2 C4.9,2 4,2.9 4,4 L4,20 C4,21.1 4.9,22 6,22 L18,22 C19.1,22 20,21.1 20,20 L20,8 Z" />
                 <polyline points="14,2 14,8 20,8" />
                 <line x1="12" y1="12" x2="12" y2="18" />
@@ -582,6 +626,8 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
+                title={'intraday' in p && p.intraday ? t('قريبا', 'Coming soon') : undefined}
+                aria-label={`${t('فترة', 'Period')} ${p.label}`}
                 className={cn(
                   'text-xs px-2.5 py-1 rounded-md font-medium transition-all duration-200',
                   period === p.value
@@ -642,7 +688,7 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
       </div>
 
       {/* Chart container */}
-      <div ref={containerRef} className="dark:bg-[#1A1A1A] bg-white" style={{ height: chartHeight }} />
+      <div ref={containerRef} role="img" aria-label={t('رسم بياني لمؤشر تاسي', 'TASI index chart')} className="dark:bg-[#1A1A1A] bg-white" style={{ height: chartHeight }} />
     </div>
   );
 }

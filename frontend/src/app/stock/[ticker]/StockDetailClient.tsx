@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useStockDetail, useStockFinancials } from '@/lib/hooks/use-api';
 import { CandlestickChart, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
@@ -10,6 +11,8 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector } from '@/lib/stock-translations';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { useToast } from '@/components/common/Toast';
 
 // ---------------------------------------------------------------------------
 // Watchlist localStorage helper
@@ -38,19 +41,6 @@ function getWatchlistTickers(): string[] {
 
 function setWatchlistTickers(tickers: string[]) {
   localStorage.setItem(WATCHLIST_KEY, JSON.stringify(tickers));
-}
-
-// ---------------------------------------------------------------------------
-// Toast feedback component
-// ---------------------------------------------------------------------------
-
-function Toast({ message, visible }: { message: string; visible: boolean }) {
-  if (!visible) return null;
-  return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-md bg-gold text-dark-bg text-sm font-medium shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300">
-      {message}
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -195,40 +185,43 @@ function FinancialStatementsSection({ ticker, language, t }: {
           {t('\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A \u0645\u0627\u0644\u064A\u0629 \u0645\u062A\u0627\u062D\u0629', 'No financial data available')}
         </p>
       ) : (
-        <div className="overflow-x-auto -mx-2">
-          <table className="w-full text-sm min-w-[500px]">
-            <thead>
-              <tr className="border-b border-[#2A2A2A]">
-                <th className="text-start px-2 py-2 text-xs font-medium text-[var(--text-muted)] sticky left-0 bg-[var(--bg-card)] min-w-[160px]">
-                  {t('\u0627\u0644\u0628\u0646\u062F', 'Item')}
-                </th>
-                {periods.map((p) => (
-                  <th key={p.period_index} className="text-end px-2 py-2 text-xs font-medium text-[var(--text-muted)] min-w-[100px]">
-                    {p.period_date || `P${p.period_index}`}
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 end-0 w-6 bg-gradient-to-l from-[var(--bg-card)] to-transparent z-10" />
+          <div className="overflow-x-auto -mx-2">
+            <table className="w-full text-sm min-w-[500px]">
+              <thead>
+                <tr className="border-b border-[#2A2A2A]">
+                  <th className="text-start px-2 py-2 text-xs font-medium text-[var(--text-muted)] sticky start-0 bg-[var(--bg-card)] min-w-[160px]">
+                    {t('\u0627\u0644\u0628\u0646\u062F', 'Item')}
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {dataKeys.map((key) => (
-                <tr key={key} className="border-b border-[#2A2A2A]/30 hover:bg-[var(--bg-card-hover)] transition-colors">
-                  <td className="px-2 py-1.5 text-xs text-[var(--text-secondary)] sticky left-0 bg-[var(--bg-card)]">
-                    {getFieldLabel(key, language)}
-                  </td>
-                  {periods.map((p) => {
-                    const val = p.data[key];
-                    return (
-                      <td key={p.period_index} className="text-end px-2 py-1.5 text-xs text-[var(--text-primary)] font-mono">
-                        {val !== null && val !== undefined
-                          ? formatNumber(Number(val))
-                          : '-'}
-                      </td>
-                    );
-                  })}
+                  {periods.map((p) => (
+                    <th key={p.period_index} className="text-end px-2 py-2 text-xs font-medium text-[var(--text-muted)] min-w-[100px]">
+                      {p.period_date || `P${p.period_index}`}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {dataKeys.map((key) => (
+                  <tr key={key} className="border-b border-[#2A2A2A]/30 hover:bg-[var(--bg-card-hover)] transition-colors">
+                    <td className="px-2 py-1.5 text-xs text-[var(--text-secondary)] sticky start-0 bg-[var(--bg-card)]">
+                      {getFieldLabel(key, language)}
+                    </td>
+                    {periods.map((p) => {
+                      const val = p.data[key];
+                      return (
+                        <td key={p.period_index} className="text-end px-2 py-1.5 text-xs text-[var(--text-primary)] font-mono">
+                          {val !== null && val !== undefined
+                            ? formatNumber(Number(val))
+                            : '-'}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </section>
@@ -262,11 +255,20 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
   const { data: detail, loading, error, refetch } = useStockDetail(ticker);
   const { data: ohlcvData, loading: chartLoading, source: chartSource } = useOHLCVData(ticker);
   const { t, language } = useLanguage();
+  const { showToast } = useToast();
+  const router = useRouter();
+
+  // Escape key navigates back to market
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') router.push('/market');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [router]);
 
   // Watchlist state
   const [inWatchlist, setInWatchlist] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
-  const [toastVisible, setToastVisible] = useState(false);
 
   useEffect(() => {
     setInWatchlist(getWatchlistTickers().includes(ticker));
@@ -274,20 +276,36 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
 
   const toggleWatchlist = useCallback(() => {
     const current = getWatchlistTickers();
-    let msg: string;
     if (current.includes(ticker)) {
       setWatchlistTickers(current.filter((tk) => tk !== ticker));
       setInWatchlist(false);
-      msg = t('\u062A\u0645\u062A \u0627\u0644\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629', 'Removed from watchlist');
+      showToast(t('\u062A\u0645\u062A \u0627\u0644\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629', 'Removed from watchlist'), 'info');
     } else {
       setWatchlistTickers([...current, ticker]);
       setInWatchlist(true);
-      msg = t('\u062A\u0645\u062A \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Added to watchlist');
+      showToast(t('\u062A\u0645\u062A \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Added to watchlist'), 'success');
     }
-    setToastMsg(msg);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2000);
-  }, [ticker, t]);
+  }, [ticker, t, showToast]);
+
+  const [shareCopied, setShareCopied] = useState(false);
+  const handleShare = useCallback(async () => {
+    const shareTitle = `${detail?.short_name || ticker} - Ra'd AI`;
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: shareTitle, url: window.location.href });
+        return;
+      } catch {
+        // User cancelled or share failed -- fall through to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  }, [detail?.short_name, ticker]);
 
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
@@ -393,17 +411,36 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
                 </div>
               </div>
             </div>
-            <div className="text-end">
-              <p className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-                {detail.current_price?.toFixed(2) || '-'}
-                <span className="text-sm text-[var(--text-muted)] ms-1">{detail.currency || 'SAR'}</span>
-              </p>
-              {priceChange !== null && (
-                <p className={cn('text-sm font-bold mt-0.5', isUp ? 'text-accent-green' : 'text-accent-red')}>
-                  {isUp ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePct?.toFixed(2)}%)
-                  <span className="text-[10px] ms-1">{isUp ? '\u25B2' : '\u25BC'}</span>
+            <div className="flex items-start gap-2">
+              <div className="text-end">
+                <p className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                  {detail.current_price?.toFixed(2) || '-'}
+                  <span className="text-sm text-[var(--text-muted)] ms-1">{detail.currency || 'SAR'}</span>
                 </p>
-              )}
+                {priceChange !== null && (
+                  <p className={cn('text-sm font-bold mt-0.5', isUp ? 'text-accent-green' : 'text-accent-red')}>
+                    {isUp ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePct?.toFixed(2)}%)
+                    <span className="text-[10px] ms-1">{isUp ? '\u25B2' : '\u25BC'}</span>
+                  </p>
+                )}
+              </div>
+              {/* Share button */}
+              <Tooltip text={shareCopied ? t('تم نسخ الرابط', 'Link copied') : t('مشاركة', 'Share')} position="bottom">
+                <button
+                  onClick={handleShare}
+                  className={cn(
+                    'p-2 rounded-md transition-colors mt-1',
+                    'text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)]',
+                  )}
+                  aria-label={t('مشاركة', 'Share')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -533,7 +570,6 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
         </Link>
 
       </div>
-      <Toast message={toastMsg} visible={toastVisible} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -61,9 +61,9 @@ function SentimentBadge({ label }: { label: string | null | undefined }) {
   if (!label) return null;
   let classes = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium';
   if (label === 'إيجابي') {
-    classes += ' bg-green-500/20 text-green-400';
+    classes += ' bg-accent-green/20 text-accent-green';
   } else if (label === 'سلبي') {
-    classes += ' bg-red-500/20 text-red-400';
+    classes += ' bg-accent-red/20 text-accent-red';
   } else {
     classes += ' bg-gray-500/20 text-gray-400';
   }
@@ -157,7 +157,7 @@ export interface ArticleCardProps {
   highlightQuery?: string;
 }
 
-export function ArticleCard({
+export const ArticleCard = React.memo(function ArticleCard({
   id,
   title,
   body,
@@ -316,4 +316,4 @@ export function ArticleCard({
       </div>
     </article>
   );
-}
+});

@@ -11,17 +11,17 @@ export function ConnectionStatusBadge({ status, lang = 'ar' }: { status: Connect
     offline: { ar: 'غير متصل', en: 'Offline' },
   };
   return (
-    <span className={cn(
+    <span role="status" aria-live="polite" className={cn(
       'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full',
-      status === 'live' && 'bg-emerald-500/20 text-emerald-300',
+      status === 'live' && 'bg-accent-green/20 text-accent-green',
       status === 'reconnecting' && 'bg-amber-500/20 text-amber-300',
-      status === 'offline' && 'bg-rose-500/20 text-rose-300',
+      status === 'offline' && 'bg-accent-red/20 text-accent-red',
     )}>
       <span className={cn(
         'w-1.5 h-1.5 rounded-full',
-        status === 'live' && 'bg-emerald-400 animate-pulse',
+        status === 'live' && 'bg-accent-green animate-pulse',
         status === 'reconnecting' && 'bg-amber-400',
-        status === 'offline' && 'bg-rose-400',
+        status === 'offline' && 'bg-accent-red',
       )} />
       {labels[status][lang]}
     </span>

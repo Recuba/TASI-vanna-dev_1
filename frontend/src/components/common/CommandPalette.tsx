@@ -208,6 +208,26 @@ export function CommandPalette() {
     }
   }, [open]);
 
+  const ASK_RAID_SECTION = t('اسأل رعد', 'Ask Ra\'d');
+
+  // Detect if a query looks like a natural language question for the AI
+  const looksLikeQuestion = useCallback((q: string): boolean => {
+    if (!q || q.length < 3) return false;
+    // Contains question mark
+    if (q.includes('?')) return true;
+    // Arabic question particles
+    const arabicParticles = ['هل', 'ما', 'كم', 'أي', 'كيف', 'لماذا', 'أين', 'متى', 'من', 'ماذا', 'أيهما', 'كيفية'];
+    const words = q.split(/\s+/);
+    if (arabicParticles.some((p) => words[0] === p || q.startsWith(p + ' '))) return true;
+    // English question words
+    const enParticles = ['what', 'how', 'which', 'why', 'where', 'when', 'who', 'show', 'list', 'compare', 'plot'];
+    const firstWord = words[0]?.toLowerCase();
+    if (enParticles.includes(firstWord)) return true;
+    // More than 5 words and doesn't look like a ticker search
+    if (words.length > 5 && !/^\d{4}(\.SR)?$/i.test(q.trim())) return true;
+    return false;
+  }, []);
+
   // Build filtered results
   const results = useMemo((): PaletteItem[] => {
     const q = query.trim();
@@ -217,6 +237,17 @@ export function CommandPalette() {
     }
 
     const items: PaletteItem[] = [];
+
+    // Smart query routing: if it looks like a question, add "Ask Ra'd" at the top
+    if (looksLikeQuestion(q)) {
+      items.push({
+        id: 'ask-raid',
+        label: `${t('اسأل رعد:', 'Ask Ra\'d:')} ${q}`,
+        sublabel: t('محادثة ذكية', 'AI Chat'),
+        section: ASK_RAID_SECTION,
+        href: `/chat?q=${encodeURIComponent(q)}`,
+      });
+    }
 
     // Filter stocks (with alias matching for common names like "Aramco")
     const matchedStocks = stocks
@@ -256,7 +287,7 @@ export function CommandPalette() {
     }
 
     return items;
-  }, [query, stocks, language, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION]);
+  }, [query, stocks, language, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION, ASK_RAID_SECTION, looksLikeQuestion]);
 
   // Reset index when results change
   useEffect(() => {
@@ -364,6 +395,10 @@ export function CommandPalette() {
               'focus:outline-none',
             )}
             dir="auto"
+            role="combobox"
+            aria-expanded={results.length > 0}
+            aria-controls="command-palette-listbox"
+            aria-activedescendant={results[selectedIndex] ? `palette-option-${results[selectedIndex].id}` : undefined}
           />
           <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-[var(--text-muted)] bg-[#2A2A2A] rounded">
             ESC
@@ -389,7 +424,7 @@ export function CommandPalette() {
         )}
 
         {/* Results list */}
-        <div ref={listRef} className="max-h-[50vh] overflow-y-auto py-2">
+        <div ref={listRef} id="command-palette-listbox" role="listbox" className="max-h-[50vh] overflow-y-auto py-2">
           {results.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-sm text-[var(--text-muted)]">{t('لا توجد نتائج', 'No results')}</p>
@@ -403,6 +438,9 @@ export function CommandPalette() {
                 {entries.map(({ item, globalIndex }) => (
                   <button
                     key={item.id}
+                    id={`palette-option-${item.id}`}
+                    role="option"
+                    aria-selected={globalIndex === selectedIndex}
                     data-selected={globalIndex === selectedIndex}
                     onClick={() => handleSelect(item)}
                     onMouseEnter={() => setSelectedIndex(globalIndex)}
@@ -417,7 +455,11 @@ export function CommandPalette() {
                   >
                     {/* Icon based on section */}
                     <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                      {item.section === STOCKS_SECTION ? (
+                      {item.section === ASK_RAID_SECTION ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                      ) : item.section === STOCKS_SECTION ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                         </svg>

@@ -14,11 +14,9 @@ export function ChartError({
   return (
     <div
       role="alert"
-      className="flex flex-col items-center justify-center gap-4 rounded-xl"
+      className="flex flex-col items-center justify-center gap-4 rounded-xl dark:bg-dark-card bg-white border border-gold/30"
       style={{
         height,
-        border: '1px solid rgba(212, 168, 75, 0.3)',
-        background: '#1A1A1A',
         animation: 'chart-fade-in 0.4s ease-out',
       }}
     >

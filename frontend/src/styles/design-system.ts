@@ -19,6 +19,7 @@ export const colors = {
   },
   bg: {
     dark: '#0E0E0E',
+    surface: '#141414',
     card: '#1A1A1A',
     cardHover: '#252525',
     input: '#2A2A2A',
@@ -26,13 +27,17 @@ export const colors = {
   text: {
     primary: '#FFFFFF',
     secondary: '#B0B0B0',
-    muted: '#707070',
+    muted: '#8A8A8A',
   },
   accent: {
     green: '#4CAF50',
     red: '#FF6B6B',
     blue: '#4A9FFF',
     warning: '#FFA726',
+  },
+  border: {
+    neutral: '#2A2A2A',
+    neutralLight: '#E0E0E0',
   },
   // Light mode overrides
   light: {
@@ -65,6 +70,9 @@ export const spacing = {
 
 // ---------------------------------------------------------------------------
 // Border Radii
+// Components use Tailwind defaults: rounded-md = 6px, rounded-lg = 8px,
+// rounded-xl = 12px. The custom radii below are available for non-standard
+// cases and are mapped into tailwind.config.ts.
 // ---------------------------------------------------------------------------
 
 export const radii = {
@@ -163,6 +171,7 @@ export const tailwindTokens = {
     },
     dark: {
       bg: colors.bg.dark,
+      surface: colors.bg.surface,
       card: colors.bg.card,
       'card-hover': colors.bg.cardHover,
       input: colors.bg.input,
@@ -182,6 +191,10 @@ export const tailwindTokens = {
     md: radii.md,
     lg: radii.lg,
     pill: radii.pill,
+  },
+  borderColor: {
+    neutral: colors.border.neutral,
+    'neutral-light': colors.border.neutralLight,
   },
   fontFamily: {
     arabic: ['IBM Plex Sans Arabic', 'Tajawal', 'sans-serif'],

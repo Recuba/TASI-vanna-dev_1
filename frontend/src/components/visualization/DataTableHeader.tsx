@@ -49,12 +49,13 @@ export function DataTableHeader({
   return (
     <thead className="sticky top-0 z-10">
       <tr className="bg-[#2A2A2A]">
-        <th className="px-3 py-2 text-start text-xs font-medium text-[#707070] border-b border-gold/20 whitespace-nowrap w-10">
+        <th scope="col" className="px-3 py-2 text-start text-xs font-medium text-[#707070] border-b border-gold/20 whitespace-nowrap w-10">
           #
         </th>
         {columns.map((col) => (
           <th
             key={col}
+            scope="col"
             className={cn(
               'px-3 py-2 text-start text-xs font-medium',
               'text-gold uppercase tracking-wider',

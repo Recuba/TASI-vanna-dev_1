@@ -71,30 +71,109 @@ export function translateSector(sector: string | null | undefined, language: Lan
  * before matching.
  */
 export const STOCK_ALIASES: Record<string, string[]> = {
-  '2222.SR': ['aramco', '\u0623\u0631\u0627\u0645\u0643\u0648', 'saudi aramco', '\u0623\u0631\u0627\u0645\u0643\u0648 \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629'],
-  '1120.SR': ['rajhi', '\u0627\u0644\u0631\u0627\u062C\u062D\u064A', 'al rajhi', '\u0628\u0646\u0643 \u0627\u0644\u0631\u0627\u062C\u062D\u064A'],
-  '1180.SR': ['ahli', '\u0627\u0644\u0623\u0647\u0644\u064A', 'al ahli', 'snb', '\u0627\u0644\u0628\u0646\u0643 \u0627\u0644\u0623\u0647\u0644\u064A'],
-  '1211.SR': ['maaden', '\u0645\u0639\u0627\u062F\u0646', 'saudi mining'],
-  '7010.SR': ['stc', '\u0627\u0633 \u062A\u064A \u0633\u064A', '\u0627\u0644\u0627\u062A\u0635\u0627\u0644\u0627\u062A \u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629', 'saudi telecom'],
-  '2010.SR': ['sabic', '\u0633\u0627\u0628\u0643', '\u0627\u0644\u0635\u0646\u0627\u0639\u0627\u062A \u0627\u0644\u0623\u0633\u0627\u0633\u064A\u0629'],
-  '2082.SR': ['acwa', '\u0623\u0643\u0648\u0627 \u0628\u0627\u0648\u0631', 'acwa power'],
-  '1010.SR': ['riyad', '\u0628\u0646\u0643 \u0627\u0644\u0631\u064A\u0627\u0636', '\u0627\u0644\u0631\u064A\u0627\u0636', 'riyad bank'],
-  '1060.SR': ['sab', '\u0633\u0627\u0628', '\u0627\u0644\u0623\u0648\u0644', 'saudi awwal', 'sabb'],
-  '1150.SR': ['alinma', '\u0627\u0644\u0625\u0646\u0645\u0627\u0621', '\u0628\u0646\u0643 \u0627\u0644\u0625\u0646\u0645\u0627\u0621', 'inma'],
-  '5110.SR': ['sec', '\u0627\u0644\u0643\u0647\u0631\u0628\u0627\u0621', '\u0627\u0644\u0633\u0639\u0648\u062F\u064A\u0629 \u0644\u0644\u0643\u0647\u0631\u0628\u0627\u0621', 'saudi electricity'],
-  '7020.SR': ['mobily', '\u0645\u0648\u0628\u0627\u064A\u0644\u064A', 'etihad etisalat'],
-  '2280.SR': ['almarai', '\u0627\u0644\u0645\u0631\u0627\u0639\u064A'],
-  '1050.SR': ['fransi', '\u0641\u0631\u0646\u0633\u064A', '\u0627\u0644\u0641\u0631\u0646\u0633\u064A', 'saudi fransi', 'bsf'],
-  '1080.SR': ['anb', '\u0627\u0644\u0639\u0631\u0628\u064A', 'arab national'],
-  '1140.SR': ['albilad', '\u0627\u0644\u0628\u0644\u0627\u062F', '\u0628\u0646\u0643 \u0627\u0644\u0628\u0644\u0627\u062F'],
-  '4280.SR': ['kingdom', '\u0627\u0644\u0645\u0645\u0644\u0643\u0629', 'kingdom holding'],
-  '2020.SR': ['safco', '\u0633\u0627\u0641\u0643\u0648', '\u0633\u0627\u0628\u0643 \u0644\u0644\u0645\u063A\u0630\u064A\u0627\u062A', 'sabic nutrients'],
-  '4013.SR': ['sulaiman', '\u0633\u0644\u064A\u0645\u0627\u0646 \u0627\u0644\u062D\u0628\u064A\u0628', '\u0627\u0644\u062D\u0628\u064A\u0628', 'habib'],
-  '7203.SR': ['elm', '\u0639\u0644\u0645'],
-  '4030.SR': ['albahri', '\u0627\u0644\u0628\u062D\u0631\u064A', 'bahri'],
-  '2350.SR': ['kwt', '\u0643\u064A\u0627\u0646', 'kayan'],
-  '4200.SR': ['dallah', '\u062F\u0644\u0629', 'dallah health', '\u062F\u0644\u0629 \u0627\u0644\u0635\u062D\u064A\u0629'],
-  '2223.SR': ['luberef', '\u0644\u0648\u0628\u0631\u064A\u0641', 'base oil', '\u0632\u064A\u0648\u062A \u0623\u0631\u0627\u0645\u0643\u0648'],
+  // === Major Blue Chips ===
+  '2222.SR': ['aramco', 'أرامكو', 'saudi aramco', 'أرامكو السعودية'],
+  '2010.SR': ['sabic', 'سابك', 'الصناعات الأساسية'],
+  '2082.SR': ['acwa', 'أكوا باور', 'acwa power', 'أكوا'],
+  '7203.SR': ['elm', 'علم'],
+  '4280.SR': ['kingdom', 'المملكة', 'kingdom holding', 'المملكة القابضة'],
+
+  // === Banks ===
+  '1120.SR': ['rajhi', 'الراجحي', 'al rajhi', 'بنك الراجحي', 'مصرف الراجحي'],
+  '1180.SR': ['ahli', 'الأهلي', 'al ahli', 'snb', 'البنك الأهلي', 'البنك الأهلي السعودي'],
+  '1010.SR': ['riyad', 'بنك الرياض', 'الرياض', 'riyad bank'],
+  '1140.SR': ['albilad', 'البلاد', 'بنك البلاد'],
+  '1050.SR': ['fransi', 'فرنسي', 'الفرنسي', 'saudi fransi', 'bsf', 'البنك السعودي الفرنسي'],
+  '1060.SR': ['sab', 'ساب', 'الأول', 'saudi awwal', 'sabb', 'بنك ساب'],
+  '1020.SR': ['jazira', 'الجزيرة', 'بنك الجزيرة', 'bank aljazira'],
+  '1150.SR': ['alinma', 'الإنماء', 'بنك الإنماء', 'inma'],
+  '1080.SR': ['anb', 'العربي', 'arab national', 'البنك العربي الوطني'],
+  '1030.SR': ['sib', 'الاستثمار', 'بنك الاستثمار', 'saudi investment bank'],
+
+  // === Telecom ===
+  '7010.SR': ['stc', 'اس تي سي', 'الاتصالات السعودية', 'saudi telecom', 'الاتصالات'],
+  '7020.SR': ['mobily', 'موبايلي', 'etihad etisalat', 'اتحاد اتصالات'],
+  '7030.SR': ['zain', 'زين', 'زين السعودية', 'zain ksa'],
+
+  // === Mining & Energy ===
+  '1211.SR': ['maaden', 'معادن', 'saudi mining', 'التعدين السعودية'],
+  '5110.SR': ['sec', 'الكهرباء', 'السعودية للكهرباء', 'saudi electricity'],
+
+  // === Petrochemicals ===
+  '2020.SR': ['safco', 'سافكو', 'سابك للمغذيات', 'sabic nutrients'],
+  '2001.SR': ['kemanol', 'كيمانول', 'methanol chemicals', 'الميثانول'],
+  '2330.SR': ['advanced', 'المتقدمة', 'advanced petrochemical', 'المتقدمة للبتروكيماويات'],
+  '2350.SR': ['kwt', 'كيان', 'kayan', 'كيان السعودية'],
+  '2310.SR': ['sipchem', 'سبكيم', 'المجموعة السعودية', 'saudi int petrochemical'],
+  '2060.SR': ['tasnee', 'التصنيع', 'tasnee', 'التصنيع الوطنية'],
+  '2290.SR': ['yansab', 'ينساب', 'yanbu national petrochemical'],
+  '2250.SR': ['siig', 'المجموعة السعودية', 'saudi industrial investment'],
+
+  // === Food & Beverages ===
+  '2280.SR': ['almarai', 'المراعي'],
+  '2050.SR': ['savola', 'صافولا', 'savola group', 'مجموعة صافولا'],
+  '6010.SR': ['nadec', 'نادك', 'الشركة الوطنية للتنمية الزراعية'],
+  '6001.SR': ['halwani', 'حلواني إخوان', 'halwani brothers'],
+  '2270.SR': ['sadafco', 'سدافكو', 'الصافي دانون'],
+  '6090.SR': ['jadt', 'المتحدة للأغذية', 'catering', 'الخطوط للتموين'],
+
+  // === Retail ===
+  '4190.SR': ['jarir', 'جرير', 'jarir bookstore', 'مكتبة جرير'],
+  '4003.SR': ['extra', 'اكسترا', 'الأجهزة المنزلية'],
+  '4161.SR': ['bindawood', 'بن داود', 'bindawood holding', 'بنده'],
+  '4162.SR': ['lulu', 'لولو', 'lulu retail', 'لولو السعودية'],
+  '4191.SR': ['maameer', 'المعمر', 'alnasban'],
+
+  // === Healthcare ===
+  '4007.SR': ['hammadi', 'الحمادي', 'hammadi hospital', 'مستشفى الحمادي'],
+  '4002.SR': ['mouwasat', 'المواساة', 'mouwasat medical', 'المواساة الطبية'],
+  '4004.SR': ['riayah', 'رعاية', 'dallah health care', 'شركة رعاية'],
+  '4013.SR': ['sulaiman', 'سليمان الحبيب', 'الحبيب', 'habib', 'dr sulaiman al habib'],
+  '4200.SR': ['dallah', 'دلة', 'dallah health', 'دلة الصحية'],
+
+  // === Real Estate ===
+  '4300.SR': ['dar alarkan', 'دار الأركان', 'dar al arkan'],
+  '4250.SR': ['jabal omar', 'جبل عمر', 'jabal omar development'],
+  '4220.SR': ['emaar', 'إعمار', 'emaar ec', 'إعمار المدينة'],
+  '4100.SR': ['makkah', 'مكة', 'makkah construction', 'مكة للإنشاء'],
+  '4150.SR': ['taiba', 'طيبة', 'taiba holding', 'طيبة القابضة'],
+  '4320.SR': ['knowledge', 'المعرفة', 'alnmae'],
+
+  // === Insurance ===
+  '8210.SR': ['bupa', 'بوبا', 'bupa arabia', 'بوبا العربية'],
+  '8010.SR': ['tawuniya', 'التعاونية', 'tawuniya insurance', 'التأمين التعاوني'],
+  '8030.SR': ['medgulf', 'ميدغلف', 'medgulf insurance'],
+  '8200.SR': ['malath', 'ملاذ', 'malath insurance', 'ملاذ للتأمين'],
+  '8020.SR': ['salama', 'سلامة', 'salama insurance'],
+
+  // === Transportation ===
+  '4030.SR': ['albahri', 'البحري', 'bahri', 'الوطنية للنقل البحري'],
+  '4050.SR': ['flynas', 'ناس', 'طيران ناس', 'nas air', 'فلاي ناس'],
+  '4040.SR': ['saptco', 'سابتكو', 'النقل الجماعي'],
+  '4261.SR': ['budget', 'بدجت', 'budget saudi', 'بدجت السعودية'],
+
+  // === Cement ===
+  '3010.SR': ['arabian cement', 'أسمنت العربية', 'الاسمنت العربية'],
+  '3020.SR': ['yamama', 'اليمامة', 'اسمنت اليمامة', 'yamama cement'],
+  '3030.SR': ['saudi cement', 'السعودية للأسمنت', 'الاسمنت السعودي'],
+  '3040.SR': ['qassim', 'القصيم', 'اسمنت القصيم', 'qassim cement'],
+  '3050.SR': ['southern', 'الجنوبية', 'اسمنت الجنوبية', 'southern cement'],
+  '3060.SR': ['yanbu', 'ينبع', 'اسمنت ينبع', 'yanbu cement'],
+  '3080.SR': ['eastern', 'الشرقية', 'اسمنت الشرقية', 'eastern cement'],
+  '3090.SR': ['tabuk', 'تبوك', 'اسمنت تبوك', 'tabuk cement'],
+
+  // === Other Major Companies ===
+  '2223.SR': ['luberef', 'لوبريف', 'base oil', 'زيوت أرامكو'],
+  '4210.SR': ['nesma', 'نسما', 'nesma and partners'],
+  '1212.SR': ['aslak', 'أسلاك', 'saudi steel pipe'],
+  '1304.SR': ['alandalus', 'الأندلس', 'alandalus property'],
+  '4011.SR': ['labat', 'لازوردي', 'lazurde', 'لازوردي للمجوهرات'],
+  '4240.SR': ['fawaz', 'فواز الحكير', 'alhokair', 'الحكير'],
+  '6002.SR': ['herfy', 'هرفي', 'herfy food'],
+  '1320.SR': ['sgp', 'أنابيب السعودية', 'saudi steel pipe'],
+  '2120.SR': ['yamamah', 'اليمامة للحديد', 'yamamah steel'],
+  '2170.SR': ['alujain', 'اللجين', 'alujain corp'],
+  '4012.SR': ['tihama', 'تهامة', 'tihama advertising'],
 };
 
 /**

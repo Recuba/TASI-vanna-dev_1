@@ -2,24 +2,24 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLanguage } from '@/providers/LanguageProvider';
+import {
+  getChartSectorMarketCap,
+  getChartTopCompanies,
+  getChartSectorPE,
+  getChartDividendYieldTop,
+  type ChartResponse,
+  type ChartDataPoint,
+} from '@/lib/api-client';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface ChartDataPoint {
-  label: string;
-  value: number;
-}
-
-interface ChartResponse {
-  chart_type: string;
-  title: string;
-  data: ChartDataPoint[];
-}
+type ChartFetcher = (signal?: AbortSignal) => Promise<ChartResponse>;
 
 interface ChartCardConfig {
-  endpoint: string;
+  fetcher: ChartFetcher;
+  key: string;
   titleAr: string;
   titleEn: string;
   suffix?: string;
@@ -30,32 +30,34 @@ interface ChartCardConfig {
 // Constants
 // ---------------------------------------------------------------------------
 
-const API_BASE = '';
-
 const CHART_CONFIGS: ChartCardConfig[] = [
   {
-    endpoint: '/api/charts/sector-market-cap',
+    fetcher: (signal) => getChartSectorMarketCap(signal),
+    key: 'sector-market-cap',
     titleAr: 'القيمة السوقية حسب القطاع',
     titleEn: 'Market Cap by Sector',
     suffix: 'SAR',
     color: '#D4A84B',
   },
   {
-    endpoint: '/api/charts/top-companies?limit=10',
+    fetcher: (signal) => getChartTopCompanies({ limit: 10 }, signal),
+    key: 'top-companies',
     titleAr: 'أكبر الشركات',
     titleEn: 'Top Companies',
     suffix: 'SAR',
     color: '#2196F3',
   },
   {
-    endpoint: '/api/charts/sector-pe',
+    fetcher: (signal) => getChartSectorPE(signal),
+    key: 'sector-pe',
     titleAr: 'مكرر الأرباح حسب القطاع',
     titleEn: 'PE Ratio by Sector',
     suffix: 'x',
     color: '#4CAF50',
   },
   {
-    endpoint: '/api/charts/dividend-yield-top?limit=10',
+    fetcher: (signal) => getChartDividendYieldTop({ limit: 10 }, signal),
+    key: 'dividend-yield-top',
     titleAr: 'أعلى توزيعات أرباح',
     titleEn: 'Top Dividend Yields',
     suffix: '%',
@@ -102,22 +104,16 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
     setLoading(true);
     setError(null);
     setHttpStatus(null);
-    let status: number | null = null;
     try {
-      const res = await fetch(`${API_BASE}${config.endpoint}`, {
-        signal: controller.signal,
-      });
-      if (!res.ok) {
-        status = res.status;
-        setHttpStatus(status);
-        throw new Error(`HTTP ${res.status}`);
-      }
-      const json: ChartResponse = await res.json();
+      const json = await config.fetcher(controller.signal);
       if (!controller.signal.aborted) setData(json.data ?? []);
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       if (controller.signal.aborted) return;
-      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      // Extract status from ApiError if available
+      const status = (err as { status?: number })?.status;
+      if (status) setHttpStatus(status);
+      if (err instanceof TypeError && err.message.includes('fetch')) {
         setError(t('تعذر الاتصال بالخادم', 'Could not connect to server'));
       } else if (status === 404) {
         setError(t('نقطة البيانات غير متوفرة', 'Data endpoint not available'));
@@ -127,7 +123,7 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [config.endpoint, t]);
+  }, [config, t]);
 
   useEffect(() => {
     fetchData();
@@ -263,7 +259,7 @@ export default function PreBuiltCharts() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {CHART_CONFIGS.map((config) => (
-        <BarChartCard key={config.endpoint} config={config} />
+        <BarChartCard key={config.key} config={config} />
       ))}
     </div>
   );

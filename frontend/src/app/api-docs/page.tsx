@@ -6,9 +6,9 @@ const SwaggerUI = dynamic(() => import('swagger-ui-react'), { ssr: false });
 
 export default function ApiDocsPage() {
   return (
-    <div className="min-h-screen bg-[#0E0E0E]">
+    <div className="min-h-screen bg-dark-bg">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-[#D4A84B] mb-6">
+        <h1 className="text-2xl font-bold text-gold mb-6">
           Ra&apos;d AI API Documentation
         </h1>
         <div className="swagger-dark">

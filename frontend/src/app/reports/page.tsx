@@ -7,6 +7,7 @@ import { getReports, type ReportItem } from '@/lib/api-client';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 
 // ---------------------------------------------------------------------------
 // Filter types
@@ -44,7 +45,7 @@ interface PaginatedReportResponse {
 // ---------------------------------------------------------------------------
 
 export default function ReportsPage() {
-  const { t, language, isRTL } = useLanguage();
+  const { t, language } = useLanguage();
   const [filter, setFilter] = useState<TypeFilter>('all');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -124,15 +125,18 @@ export default function ReportsPage() {
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       <div className="max-w-content-lg mx-auto space-y-4">
 
+        {/* Breadcrumb */}
+        <Breadcrumb items={[{ label: t('\u062A\u0642\u0627\u0631\u064A\u0631 \u0627\u0644\u0628\u062D\u062B', 'Reports') }]} />
+
         {/* Header */}
-        <div dir={isRTL ? 'rtl' : 'ltr'}>
+        <div>
           <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('تقارير البحث', 'Research Reports')}</h1>
           <p className="text-sm text-[var(--text-muted)]">{t('تحليلات فنية وأساسية لأسهم تاسي', 'Technical & fundamental analysis for TASI stocks')}</p>
         </div>
 
         {/* Search */}
-        <div className="relative" dir={isRTL ? 'rtl' : 'ltr'}>
-          <svg className={cn('absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]', isRTL ? 'right-3' : 'left-3')} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <div className="relative">
+          <svg className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] start-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <input
@@ -151,7 +155,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Type Filters */}
-        <div className="flex gap-2 flex-wrap" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex gap-2 flex-wrap">
           {reportTypes.map((rt) => (
             <button
               key={rt.value}
@@ -174,7 +178,7 @@ export default function ReportsPage() {
         ) : error ? (
           <ErrorDisplay message={error} onRetry={fetchReports} />
         ) : reports.length === 0 ? (
-          <div className="text-center py-12" dir={isRTL ? 'rtl' : 'ltr'}>
+          <div className="text-center py-12">
             <p className="text-sm text-[var(--text-muted)] mb-4">{t('لم يتم العثور على تقارير لهذه الفئة.', 'No reports found for this category.')}</p>
             <Link
               href="/chat"
@@ -193,8 +197,7 @@ export default function ReportsPage() {
               {reports.map((report) => (
                 <article
                   key={report.id}
-                  dir={isRTL ? 'rtl' : 'ltr'}
-                  className={cn(
+                                   className={cn(
                     'p-4 rounded-md flex flex-col',
                     'bg-[var(--bg-card)] border gold-border',
                     'hover:border-gold/40 transition-colors'
@@ -277,7 +280,7 @@ export default function ReportsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 pt-2 pb-4" dir={isRTL ? 'rtl' : 'ltr'}>
+              <div className="flex items-center justify-center gap-4 pt-2 pb-4">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}

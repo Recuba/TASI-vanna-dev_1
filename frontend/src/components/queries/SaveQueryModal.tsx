@@ -22,10 +22,34 @@ export function SaveQueryModal({ record, onClose, onSaved }: SaveQueryModalProps
     nameRef.current?.focus();
   }, []);
 
-  // Close on Escape
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Close on Escape + focus trapping
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -58,7 +82,7 @@ export function SaveQueryModal({ record, onClose, onSaved }: SaveQueryModalProps
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md mx-4 bg-[var(--bg-card)] border gold-border rounded-xl shadow-2xl overflow-hidden">
+      <div ref={modalRef} className="w-full max-w-md mx-4 bg-[var(--bg-card)] border gold-border rounded-xl shadow-2xl overflow-hidden" role="dialog" aria-modal="true" aria-label="Save Query">
         {/* Header */}
         <div className="px-5 py-3 border-b gold-border flex items-center justify-between">
           <h3 className="text-sm font-medium text-[var(--text-primary)]">Save Query</h3>
@@ -82,8 +106,9 @@ export function SaveQueryModal({ record, onClose, onSaved }: SaveQueryModalProps
 
           {/* Name */}
           <div>
-            <label className="block text-xs text-[var(--text-muted)] mb-1">Name</label>
+            <label htmlFor="save-query-name" className="block text-xs text-[var(--text-muted)] mb-1">Name</label>
             <input
+              id="save-query-name"
               ref={nameRef}
               type="text"
               value={name}
@@ -95,8 +120,9 @@ export function SaveQueryModal({ record, onClose, onSaved }: SaveQueryModalProps
 
           {/* Tags */}
           <div>
-            <label className="block text-xs text-[var(--text-muted)] mb-1">Tags (comma separated)</label>
+            <label htmlFor="save-query-tags" className="block text-xs text-[var(--text-muted)] mb-1">Tags (comma separated)</label>
             <input
+              id="save-query-tags"
               type="text"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
@@ -107,8 +133,9 @@ export function SaveQueryModal({ record, onClose, onSaved }: SaveQueryModalProps
 
           {/* Notes */}
           <div>
-            <label className="block text-xs text-[var(--text-muted)] mb-1">Notes</label>
+            <label htmlFor="save-query-notes" className="block text-xs text-[var(--text-muted)] mb-1">Notes</label>
             <textarea
+              id="save-query-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any notes about this query..."

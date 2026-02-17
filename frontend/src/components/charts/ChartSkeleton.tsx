@@ -10,12 +10,8 @@ export function ChartSkeleton({ height = 400 }: ChartSkeletonProps) {
       role="progressbar"
       aria-label="Loading chart"
       aria-busy="true"
-      className="relative overflow-hidden rounded-xl"
-      style={{
-        height,
-        border: '1px solid rgba(212, 168, 75, 0.1)',
-        background: '#1A1A1A',
-      }}
+      className="relative overflow-hidden rounded-xl dark:bg-dark-card bg-white border border-gold/10"
+      style={{ height }}
     >
       {/* Shimmer overlay */}
       <div
@@ -29,11 +25,7 @@ export function ChartSkeleton({ height = 400 }: ChartSkeletonProps) {
 
       {/* Toolbar skeleton */}
       <div
-        className="flex items-center justify-between px-3 py-2"
-        style={{
-          background: '#2A2A2A',
-          borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
-        }}
+        className="flex items-center justify-between px-3 py-2 dark:bg-[#2A2A2A] bg-gray-100 border-b border-gold/10"
       >
         <div className="flex items-center gap-2">
           <div

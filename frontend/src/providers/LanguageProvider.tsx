@@ -17,7 +17,7 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(undefine
 const STORAGE_KEY = 'rad-ai-lang';
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLangState] = useState<Language>('en');
+  const [language, setLangState] = useState<Language>('ar');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -25,6 +25,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem(STORAGE_KEY) as Language | null;
     if (stored === 'ar' || stored === 'en') {
       setLangState(stored);
+    } else {
+      // No stored preference: detect from browser locale
+      const browserLang = typeof navigator !== 'undefined' ? navigator.language : '';
+      if (browserLang.startsWith('en')) {
+        setLangState('en');
+      }
+      // Otherwise keep default 'ar'
     }
   }, []);
 

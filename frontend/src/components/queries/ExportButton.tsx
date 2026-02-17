@@ -102,7 +102,7 @@ export function ExportButton({ data, title, className }: ExportButtonProps) {
       </button>
 
       {open && (
-        <div className="absolute end-0 top-full mt-1 z-20 min-w-[140px] bg-[var(--bg-card)] border gold-border rounded-lg shadow-xl overflow-hidden">
+        <div className="absolute end-0 top-full mt-1 z-20 min-w-[140px] bg-[var(--bg-card)] border gold-border rounded-lg shadow-xl overflow-hidden animate-slide-down">
           {formats.map(({ key, label }) => (
             <button
               key={key}

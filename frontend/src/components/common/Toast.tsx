@@ -45,10 +45,10 @@ export function useToast(): ToastContextValue {
 // ---------------------------------------------------------------------------
 
 const typeStyles: Record<ToastType, string> = {
-  success: 'border-[#4CAF50] bg-[#4CAF50]/10 text-[#4CAF50]',
-  error: 'border-[#FF6B6B] bg-[#FF6B6B]/10 text-[#FF6B6B]',
-  info: 'border-[#D4A84B] bg-[#D4A84B]/10 text-[#D4A84B]',
-  warning: 'border-[#FFA726] bg-[#FFA726]/10 text-[#FFA726]',
+  success: 'border-accent-green bg-accent-green/10 text-accent-green',
+  error: 'border-accent-red bg-accent-red/10 text-accent-red',
+  info: 'border-gold bg-gold/10 text-gold',
+  warning: 'border-accent-warning bg-accent-warning/10 text-accent-warning',
 };
 
 const typeIcons: Record<ToastType, ReactNode> = {

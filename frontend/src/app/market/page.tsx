@@ -11,6 +11,7 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector, findTickersByAlias, matchesSearch } from '@/lib/stock-translations';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 // ---------------------------------------------------------------------------
 // Sort types
 // ---------------------------------------------------------------------------
@@ -180,6 +181,9 @@ export default function MarketPage() {
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       <div className="max-w-content-lg mx-auto space-y-6">
 
+        {/* Breadcrumb */}
+        <Breadcrumb items={[{ label: t('\u0627\u0644\u0633\u0648\u0642', 'Market') }]} />
+
         {/* Header */}
         <div dir={dir}>
           <h1 className="text-xl font-bold text-[var(--text-primary)]">
@@ -254,11 +258,11 @@ export default function MarketPage() {
         ) : sectorsError ? (
           <ErrorDisplay message={sectorsError} onRetry={refetchSectors} />
         ) : sectors && sectors.length > 0 ? (
-          <div className="flex flex-wrap gap-2" dir={dir}>
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible scrollbar-hide" dir={dir}>
             <button
               onClick={() => handleSectorChange(undefined)}
               className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                'px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0',
                 !selectedSector
                   ? 'bg-gold text-[#0E0E0E]'
                   : 'bg-[var(--bg-input)] text-[var(--text-secondary)] border border-[#2A2A2A] hover:border-gold/40'
@@ -271,7 +275,7 @@ export default function MarketPage() {
                 key={s.sector}
                 onClick={() => handleSectorChange(selectedSector === s.sector ? undefined : s.sector)}
                 className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0',
                   selectedSector === s.sector
                     ? 'bg-gold text-[#0E0E0E]'
                     : 'bg-[var(--bg-input)] text-[var(--text-secondary)] border border-[#2A2A2A] hover:border-gold/40'
@@ -306,6 +310,7 @@ export default function MarketPage() {
                       {headerCols.map((col) => (
                         <th
                           key={col.field}
+                          scope="col"
                           onClick={() => toggleSort(col.field)}
                           className={cn(
                             'px-4 py-3 text-xs font-medium text-gold uppercase tracking-wider cursor-pointer select-none',
@@ -319,7 +324,7 @@ export default function MarketPage() {
                           </span>
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-end text-xs font-medium text-gold uppercase tracking-wider w-20">
+                      <th scope="col" className="px-4 py-3 text-end text-xs font-medium text-gold uppercase tracking-wider w-20">
                         {t('\u0627\u0644\u0631\u0633\u0645', 'Chart')}
                       </th>
                     </tr>
@@ -471,10 +476,44 @@ export default function MarketPage() {
               )}
             </ChartErrorBoundary>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-sm text-[var(--text-muted)]" dir={dir}>
+            <div className="text-center py-16" dir={dir}>
+              <div
+                className="relative inline-flex items-center justify-center mb-5"
+                style={{ animation: 'float 3s ease-in-out infinite' }}
+              >
+                <svg className="w-16 h-16 text-[var(--text-muted)] opacity-40" fill="none" viewBox="0 0 48 48" stroke="currentColor" strokeWidth={1.2}>
+                  <circle cx="20" cy="20" r="12" />
+                  <path strokeLinecap="round" d="M29 29l10 10" strokeWidth={2.5} />
+                  <rect x="14" y="13" width="12" height="14" rx="1.5" strokeWidth={1} />
+                  <path d="M17 18h6M17 21h4M17 24h5" strokeWidth={0.8} />
+                </svg>
+              </div>
+              <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1">
                 {t('\u0644\u0627 \u062A\u0648\u062C\u062F \u0634\u0631\u0643\u0627\u062A \u0645\u0637\u0627\u0628\u0642\u0629', 'No matching companies found')}
+              </h3>
+              <p className="text-sm text-[var(--text-muted)] mb-4">
+                {search
+                  ? t('\u062D\u0627\u0648\u0644 \u062A\u063A\u064A\u064A\u0631 \u0643\u0644\u0645\u0627\u062A \u0627\u0644\u0628\u062D\u062B \u0623\u0648 \u0645\u0633\u062D \u0627\u0644\u0641\u0644\u0627\u062A\u0631', 'Try different keywords or clear filters')
+                  : t('\u062C\u0631\u0628 \u0627\u062E\u062A\u064A\u0627\u0631 \u0642\u0637\u0627\u0639 \u0622\u062E\u0631', 'Try selecting a different sector')}
               </p>
+              {(search || selectedSector) && (
+                <button
+                  onClick={() => {
+                    setSearch('');
+                    handleSectorChange(undefined);
+                  }}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium',
+                    'bg-gold/10 text-gold border border-gold/20',
+                    'hover:bg-gold/20 transition-colors',
+                  )}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  {t('\u0645\u0633\u062D \u0627\u0644\u0641\u0644\u0627\u062A\u0631', 'Clear filters')}
+                </button>
+              )}
             </div>
           )}
         </section>

@@ -1,13 +1,14 @@
 'use client';
 
 import { useMemo } from 'react';
-import {
-  VisLineChart,
-  VisBarChart,
-  VisPieChart,
-  VisScatterChart,
-  KPICard,
-} from './chart-types';
+import dynamic from 'next/dynamic';
+import { KPICard } from './chart-types';
+
+// Dynamically import recharts-based chart components to avoid bundling recharts in the main chunk
+const VisLineChart = dynamic(() => import('./chart-types/LineChart').then(m => ({ default: m.VisLineChart })), { ssr: false });
+const VisBarChart = dynamic(() => import('./chart-types/BarChart').then(m => ({ default: m.VisBarChart })), { ssr: false });
+const VisPieChart = dynamic(() => import('./chart-types/PieChart').then(m => ({ default: m.VisPieChart })), { ssr: false });
+const VisScatterChart = dynamic(() => import('./chart-types/ScatterChart').then(m => ({ default: m.VisScatterChart })), { ssr: false });
 
 export type ChartType = 'line' | 'bar' | 'pie' | 'scatter' | 'kpi';
 

@@ -48,6 +48,24 @@ export function Footer() {
           >
             {t('التقارير', 'Reports')}
           </Link>
+          <Link
+            href="/markets"
+            className="text-xs text-[var(--text-secondary)] hover:text-gold transition-colors"
+          >
+            {t('العالم 360', 'World 360')}
+          </Link>
+          <Link
+            href="/announcements"
+            className="text-xs text-[var(--text-secondary)] hover:text-gold transition-colors"
+          >
+            {t('الإعلانات', 'Announcements')}
+          </Link>
+          <Link
+            href="/watchlist"
+            className="text-xs text-[var(--text-secondary)] hover:text-gold transition-colors"
+          >
+            {t('قوائم المراقبة', 'Watchlist')}
+          </Link>
         </div>
 
         {/* Divider */}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { SSETableData } from '@/lib/types';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -34,9 +35,70 @@ function exportCSV(columns: string[], rows: (string | number | null)[][]) {
   URL.revokeObjectURL(url);
 }
 
+function compareValues(a: string | number | null, b: string | number | null): number {
+  if (a === null || a === undefined) return 1;
+  if (b === null || b === undefined) return -1;
+  // Both are numbers
+  if (typeof a === 'number' && typeof b === 'number') return a - b;
+  // Try numeric comparison for string values that look like numbers
+  const numA = Number(a);
+  const numB = Number(b);
+  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+  // Fall back to string comparison
+  return String(a).localeCompare(String(b));
+}
+
+/** Format a numeric cell value with smart formatting. */
+function formatNumericCell(num: number, columnName: string): string {
+  const colLower = columnName.toLowerCase();
+  const isPct = colLower.includes('pct') || colLower.includes('%') || colLower.includes('percent')
+    || colLower.includes('yield') || colLower.includes('ratio') || colLower.includes('change');
+
+  if (isPct && Math.abs(num) < 1000) {
+    return num.toFixed(2) + '%';
+  }
+
+  const abs = Math.abs(num);
+  if (abs >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + 'B';
+  if (abs >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M';
+  if (abs >= 1_000) return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (Number.isInteger(num)) return num.toLocaleString();
+  return num.toFixed(2);
+}
+
+/** Format a cell value with smart number formatting. */
+function formatCell(value: string | number | null, columnName: string): string {
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'number') return formatNumericCell(value, columnName);
+  if (typeof value === 'string') {
+    const num = Number(value);
+    if (!isNaN(num) && value.trim() !== '') return formatNumericCell(num, columnName);
+    return value;
+  }
+  return String(value);
+}
+
 export function DataTable({ data }: DataTableProps) {
   const { columns, rows } = data;
   const { t } = useLanguage();
+  const [sortColumn, setSortColumn] = useState<number | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const sortedRows = useMemo(() => {
+    if (sortColumn === null) return rows;
+    const colIdx = sortColumn;
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => dir * compareValues(a[colIdx], b[colIdx]));
+  }, [rows, sortColumn, sortDirection]);
+
+  const handleHeaderClick = (colIdx: number) => {
+    if (sortColumn === colIdx) {
+      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortColumn(colIdx);
+      setSortDirection('asc');
+    }
+  };
 
   if (!columns || columns.length === 0) return null;
 
@@ -47,6 +109,7 @@ export function DataTable({ data }: DataTableProps) {
           <thead className="sticky top-0 z-10">
             <tr className="bg-[var(--bg-input)]">
               <th
+                scope="col"
                 className={cn(
                   'px-3 py-2 text-start text-xs font-medium',
                   'text-[var(--text-muted)] border-b gold-border whitespace-nowrap w-10'
@@ -57,16 +120,36 @@ export function DataTable({ data }: DataTableProps) {
               {columns.map((col, i) => (
                 <th
                   key={i}
+                  scope="col"
+                  onClick={() => handleHeaderClick(i)}
                   className={cn(
                     'px-3 py-2 text-start text-xs font-medium',
-                    'text-gold uppercase tracking-wider',
-                    'border-b gold-border whitespace-nowrap'
+                    'uppercase tracking-wider',
+                    'border-b gold-border whitespace-nowrap',
+                    'cursor-pointer select-none transition-colors',
+                    sortColumn === i ? 'text-gold' : 'text-gold/70 hover:text-gold'
                   )}
                 >
-                  {col}
+                  <span className="inline-flex items-center gap-1">
+                    {col}
+                    {sortColumn === i ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                        {sortDirection === 'asc' ? (
+                          <polyline points="18 15 12 9 6 15" />
+                        ) : (
+                          <polyline points="6 9 12 15 18 9" />
+                        )}
+                      </svg>
+                    ) : (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 opacity-0 group-hover:opacity-30">
+                        <polyline points="8 9 12 5 16 9" />
+                        <polyline points="16 15 12 19 8 15" />
+                      </svg>
+                    )}
+                  </span>
                 </th>
               ))}
-              <th className="px-2 py-2 border-b gold-border w-8">
+              <th scope="col" className="px-2 py-2 border-b gold-border w-8">
                 <button
                   onClick={() => exportCSV(columns, rows)}
                   className="p-1 rounded text-[var(--text-muted)] hover:text-gold hover:bg-gold/10 transition-colors"
@@ -83,7 +166,7 @@ export function DataTable({ data }: DataTableProps) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, rowIdx) => (
+            {sortedRows.map((row, rowIdx) => (
               <tr
                 key={rowIdx}
                 className={cn(
@@ -99,8 +182,9 @@ export function DataTable({ data }: DataTableProps) {
                   <td
                     key={cellIdx}
                     className="px-3 py-2 text-[var(--text-secondary)] whitespace-nowrap"
+                    title={cell !== null && cell !== undefined ? String(cell) : undefined}
                   >
-                    {cell !== null && cell !== undefined ? String(cell) : '-'}
+                    {formatCell(cell, columns[cellIdx] ?? '')}
                   </td>
                 ))}
                 <td className="px-2 py-2" />

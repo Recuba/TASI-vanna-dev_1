@@ -22,6 +22,8 @@ import { getOHLCVData } from '@/lib/api-client';
 const SERIES_COLORS = ['#D4A84B', '#2196F3', '#4CAF50', '#F44336', '#9C27B0'];
 
 const PERIODS = [
+  { label: '1D', value: '1d', intraday: true },
+  { label: '1W', value: '5d', intraday: true },
   { label: '3M', value: '3mo' },
   { label: '6M', value: '6mo' },
   { label: '1Y', value: '1y' },
@@ -89,6 +91,10 @@ function StockComparisonChartInner({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chartVisible, setChartVisible] = useState(false);
+  const [tooltipData, setTooltipData] = useState<{
+    time: string;
+    values: { ticker: string; value: number; color: string }[];
+  } | null>(null);
 
   // Track which tickers actually have data
   const [loadedTickers, setLoadedTickers] = useState<string[]>([]);
@@ -170,6 +176,32 @@ function StockComparisonChartInner({
       }
 
       chart.timeScale().fitContent();
+
+      // Crosshair tooltip
+      chart.subscribeCrosshairMove((param) => {
+        if (!param.time || !param.seriesData) {
+          setTooltipData(null);
+          return;
+        }
+        const values: { ticker: string; value: number; color: string }[] = [];
+        for (let i = 0; i < seriesRefs.current.length; i++) {
+          const lineData = param.seriesData.get(seriesRefs.current[i]) as
+            | { value?: number }
+            | undefined;
+          if (lineData && lineData.value !== undefined) {
+            values.push({
+              ticker: validTickers[i],
+              value: lineData.value,
+              color: SERIES_COLORS[i % SERIES_COLORS.length],
+            });
+          }
+        }
+        if (values.length > 0) {
+          setTooltipData({ time: String(param.time), values });
+        } else {
+          setTooltipData(null);
+        }
+      });
 
       // Resize observer
       const observer = new ResizeObserver((entries) => {
@@ -289,6 +321,8 @@ function StockComparisonChartInner({
             <button
               key={p.value}
               onClick={() => setPeriod(p.value)}
+              title={'intraday' in p && p.intraday ? t('قريبا', 'Coming soon') : undefined}
+              aria-label={`${t('فترة', 'Period')} ${p.label}`}
               className={cn(
                 'text-xs px-2.5 py-1 rounded-md font-medium transition-all duration-200',
                 period === p.value ? 'shadow-sm' : 'hover:text-[#D4A84B]',
@@ -304,8 +338,31 @@ function StockComparisonChartInner({
         </div>
       </div>
 
+      {/* Crosshair tooltip bar */}
+      <div
+        className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px] dark:bg-dark-card bg-gray-50 border-b border-gold/10 text-gray-500 dark:text-[#808080]"
+      >
+        {tooltipData ? (
+          <>
+            <span className="font-medium" style={{ color: '#D4A84B' }}>
+              {tooltipData.time}
+            </span>
+            {tooltipData.values.map((v) => (
+              <span key={v.ticker}>
+                <span style={{ color: v.color }}>{v.ticker}</span>{' '}
+                <span style={{ color: '#E0E0E0' }}>{v.value.toFixed(1)}</span>
+              </span>
+            ))}
+          </>
+        ) : (
+          <span style={{ color: '#505050' }}>
+            {t('مرر المؤشر فوق الرسم البياني لعرض التفاصيل', 'Hover over chart for details')}
+          </span>
+        )}
+      </div>
+
       {/* Chart container */}
-      <div ref={containerRef} className="dark:bg-[#1A1A1A] bg-white" style={{ height }} />
+      <div ref={containerRef} role="img" aria-label={t('رسم بياني مقارنة الأسهم', 'Stock comparison chart')} className="dark:bg-[#1A1A1A] bg-white" style={{ height }} />
     </div>
   );
 }

@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from api.db_helper import afetchall, afetchone
 from database.queries import ENTITY_FULL_DETAIL, SECTOR_LIST
 from models.api_responses import STANDARD_ERRORS
+from models.validators import validate_ticker
 
 logger = logging.getLogger(__name__)
 
@@ -228,6 +229,7 @@ def _normalize_ticker(ticker: str) -> str:
 @router.get("/{ticker}", response_model=CompanyFullDetail, responses=STANDARD_ERRORS)
 async def get_entity(ticker: str) -> CompanyFullDetail:
     """Return full stock detail joining all available tables."""
+    ticker = validate_ticker(ticker)
     ticker = _normalize_ticker(ticker)
     try:
         row_dict = await afetchone(ENTITY_FULL_DETAIL, (ticker,))

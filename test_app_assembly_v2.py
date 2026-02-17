@@ -583,7 +583,7 @@ try:
         llm_service=prod_llm,
         tool_registry=prod_tools,
         user_resolver=ProdUserResolver(),
-        agent_memory=DemoAgentMemory(max_items=10000),
+        agent_memory=DemoAgentMemory(max_items=500),
         system_prompt_builder=ProdPromptBuilder(),
         config=AgentConfig(stream_responses=True, max_tool_iterations=10),
     )
@@ -641,7 +641,7 @@ if PG_AVAILABLE:
             llm_service=pg_llm,
             tool_registry=pg_tools,
             user_resolver=PGUserResolver(),
-            agent_memory=DemoAgentMemory(max_items=10000),
+            agent_memory=DemoAgentMemory(max_items=500),
             system_prompt_builder=PGPromptBuilder(),
             config=AgentConfig(stream_responses=True, max_tool_iterations=10),
         )

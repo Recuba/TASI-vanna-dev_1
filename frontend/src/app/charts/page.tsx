@@ -10,6 +10,7 @@ import { getTASIStockName } from '@/lib/tradingview-utils';
 import { useStockDetail } from '@/lib/hooks/use-api';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector } from '@/lib/stock-translations';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 
 // Dynamic imports for new chart components (no SSR)
 const StockComparisonChart = dynamic(
@@ -123,7 +124,7 @@ function StockChartPanel({
   return (
     <div className="space-y-4">
       {/* Stock header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-2 sm:gap-4">
         <div>
           <h2 className="text-xl font-bold text-[var(--text-primary)]">
             {displayName}
@@ -198,7 +199,7 @@ function StockChartPanel({
       <StockOHLCVChart
         ticker={ticker}
         stockName={displayName}
-        height={isFullscreen ? Math.max(window.innerHeight - 180, 400) : 550}
+        height={isFullscreen ? Math.max(window.innerHeight - 180, 400) : (typeof window !== 'undefined' ? (window.innerWidth < 640 ? 280 : window.innerWidth < 1024 ? 350 : 550) : 550)}
       />
 
       {/* Footer */}
@@ -330,7 +331,7 @@ function CompareTickerSelector({
         <div className="relative">
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+              className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -365,7 +366,7 @@ function CompareTickerSelector({
                 'absolute z-20 w-full mt-1',
                 'bg-[var(--bg-card)] border gold-border rounded-md',
                 'shadow-lg shadow-black/40 overflow-hidden',
-                'max-h-48 overflow-y-auto',
+                'max-h-48 overflow-y-auto animate-slide-down',
               )}
             >
               {items
@@ -557,6 +558,9 @@ export default function ChartsPage() {
   return (
     <div className="flex-1 px-4 sm:px-6 lg:px-8 py-4 overflow-y-auto">
       <div className="max-w-[1400px] mx-auto space-y-5">
+        {/* Breadcrumb */}
+        <Breadcrumb items={[{ label: t('\u0627\u0644\u0631\u0633\u0648\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A\u0629', 'Charts') }]} />
+
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('الرسوم البيانية', 'Charts')}</h1>
@@ -567,27 +571,28 @@ export default function ChartsPage() {
 
         {/* Tab bar */}
         <div
-          className="flex items-center gap-0 rounded-lg overflow-hidden dark:bg-[#2A2A2A] bg-gray-100"
+          className="flex items-center gap-0 rounded-lg overflow-x-auto dark:bg-[#2A2A2A] bg-gray-100"
         >
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'relative px-5 py-2.5 text-sm font-medium transition-colors',
+                'relative px-5 py-2.5 text-sm font-medium transition-colors duration-200 shrink-0 whitespace-nowrap',
                 activeTab === tab.id
                   ? 'text-gold'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]',
               )}
             >
               <span className="relative z-10">{t(tab.labelAr, tab.labelEn)}</span>
-              {/* Active indicator */}
-              {activeTab === tab.id && (
-                <span
-                  className="absolute bottom-0 left-0 right-0 h-[2px]"
-                  style={{ background: '#D4A84B' }}
-                />
-              )}
+              {/* Active indicator with transition */}
+              <span
+                className={cn(
+                  'absolute bottom-0 left-0 right-0 h-[2px] transition-all duration-300',
+                  activeTab === tab.id ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0',
+                )}
+                style={{ background: '#D4A84B' }}
+              />
             </button>
           ))}
         </div>
@@ -603,7 +608,7 @@ export default function ChartsPage() {
               <div className="relative">
                 <div className="relative">
                   <svg
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+                    className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -641,7 +646,7 @@ export default function ChartsPage() {
                       'absolute z-20 w-full mt-1',
                       'bg-[var(--bg-card)] border gold-border rounded-md',
                       'shadow-lg shadow-black/40 overflow-hidden',
-                      'max-h-64 overflow-y-auto',
+                      'max-h-64 overflow-y-auto animate-slide-down',
                     )}
                   >
                     {items.map((stock, idx) => (
@@ -664,7 +669,7 @@ export default function ChartsPage() {
                     className={cn(
                       'absolute z-20 w-full mt-1',
                       'bg-[var(--bg-card)] border gold-border rounded-md',
-                      'shadow-lg shadow-black/40 overflow-hidden',
+                      'shadow-lg shadow-black/40 overflow-hidden animate-slide-down',
                     )}
                   >
                     <div className="px-3 py-1.5 text-xs text-[var(--text-muted)] border-b border-[var(--bg-input)]">
@@ -742,7 +747,7 @@ export default function ChartsPage() {
                 </div>
 
                 {/* TASI Candlestick Chart (lightweight-charts) */}
-                <TASIIndexChart height={550} />
+                <TASIIndexChart height={typeof window !== 'undefined' ? (window.innerWidth < 640 ? 280 : window.innerWidth < 1024 ? 350 : 550) : 550} />
 
                 {/* Hint */}
                 <div
@@ -803,7 +808,7 @@ export default function ChartsPage() {
 
             {/* Comparison chart */}
             <section className="bg-[var(--bg-card)] border gold-border rounded-md p-4">
-              <StockComparisonChart tickers={compareTickers} height={500} />
+              <StockComparisonChart tickers={compareTickers} height={typeof window !== 'undefined' ? (window.innerWidth < 640 ? 280 : window.innerWidth < 1024 ? 350 : 500) : 500} />
             </section>
           </div>
         )}

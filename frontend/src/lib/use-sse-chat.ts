@@ -427,18 +427,22 @@ export function useSSEChat() {
       }
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
-      // Add user-friendly Arabic error
+      // Bilingual error message based on stored language preference
+      const lang = typeof window !== 'undefined' ? localStorage.getItem('rad-ai-lang') : null;
+      const errorText = lang === 'en'
+        ? 'An error occurred. Please try again.'
+        : 'حدث خطأ. يرجى المحاولة مرة أخرى';
       setMessages((prev) =>
         prev.map((msg) => {
           if (msg.id !== assistantId) return msg;
           const errorEvent: SSEEvent = {
             type: 'text',
-            data: { content: 'حدث خطأ. يرجى المحاولة مرة أخرى' },
+            data: { content: errorText },
           };
           return {
             ...msg,
             components: [...(msg.components || []), errorEvent],
-            content: 'حدث خطأ. يرجى المحاولة مرة أخرى',
+            content: errorText,
             isError: true,
           };
         })

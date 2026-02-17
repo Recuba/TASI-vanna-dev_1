@@ -10,6 +10,7 @@ import { PAGE_SIZE, POLLING_FALLBACK_INTERVAL, getBookmarks, saveBookmarks } fro
 import { useNewsFilters } from './hooks/useNewsFilters';
 import { ArticleCard, FilterBar, NewArticlesBanner, SkeletonCard } from './components';
 import { ConnectionStatusBadge } from '@/components/common/ConnectionStatusBadge';
+import { useToast } from '@/components/common/Toast';
 
 // ---------------------------------------------------------------------------
 // Main page
@@ -29,13 +30,14 @@ export default function NewsPage() {
   const [columnCount, setColumnCount] = useState(1);
   const [sseStatus, setSseStatus] = useState<'live' | 'reconnecting' | 'offline'>('offline');
   const [retrying, setRetrying] = useState(false);
-  const [bookmarkToast, setBookmarkToast] = useState<{ message: string; visible: boolean } | null>(null);
+  const [minLoadElapsed, setMinLoadElapsed] = useState(false);
+  const { showToast } = useToast();
 
   const stickyRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const lastKnownIdsRef = useRef<Set<string>>(new Set());
   const gridContainerRef = useRef<HTMLDivElement>(null);
-  const bookmarkToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadStartRef = useRef(Date.now());
 
   // Filters hook
   const setAllArticlesUpdater = useCallback(
@@ -49,12 +51,13 @@ export default function NewsPage() {
     setBookmarks(getBookmarks());
   }, []);
 
-  // Cleanup bookmark toast timer on unmount
+  // Minimum loading duration (200ms) to prevent skeleton flash
   useEffect(() => {
-    return () => {
-      if (bookmarkToastTimer.current) clearTimeout(bookmarkToastTimer.current);
-    };
-  }, []);
+    loadStartRef.current = Date.now();
+    setMinLoadElapsed(false);
+    const timer = setTimeout(() => setMinLoadElapsed(true), 200);
+    return () => clearTimeout(timer);
+  }, [filters.page, filters.activeSource, filters.activeSentiment, filters.dateFrom, filters.dateTo]);
 
   // Scroll restoration: save position before navigating away
   useEffect(() => {
@@ -320,20 +323,14 @@ export default function NewsPage() {
       }
       saveBookmarks(next);
 
-      // Show toast
       const msg = wasBookmarked
         ? t('تمت إزالة المقال من المحفوظات', 'Article removed from saved')
         : t('تم حفظ المقال', 'Article saved');
-      setBookmarkToast({ message: msg, visible: true });
-      if (bookmarkToastTimer.current) clearTimeout(bookmarkToastTimer.current);
-      bookmarkToastTimer.current = setTimeout(() => {
-        setBookmarkToast(prev => prev ? { ...prev, visible: false } : null);
-        setTimeout(() => setBookmarkToast(null), 200);
-      }, 2000);
+      showToast(msg, wasBookmarked ? 'info' : 'success');
 
       return next;
     });
-  }, [t]);
+  }, [t, showToast]);
 
   const handleDismissNewArticles = useCallback(() => {
     setNewArticleCount(0);
@@ -443,7 +440,7 @@ export default function NewsPage() {
         )}
 
         {/* Content area */}
-        {(loading && filters.page === 1) || searchLoading || savedLoading ? (
+        {(loading && filters.page === 1) || searchLoading || savedLoading || (!minLoadElapsed && filters.page === 1) ? (
           /* Loading skeletons */
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -723,31 +720,6 @@ export default function NewsPage() {
           </>
         )}
       </div>
-
-      {/* Bookmark toast */}
-      {bookmarkToast && (
-        <div
-          className={cn(
-            'fixed bottom-6 start-1/2 -translate-x-1/2 z-50',
-            'px-4 py-2.5 rounded-lg text-sm font-medium',
-            'bg-[#1A1A1A] border border-gold/20 text-gold',
-            'shadow-lg shadow-black/30',
-            'transition-all duration-200',
-            bookmarkToast.visible
-              ? 'translate-y-0 opacity-100'
-              : 'translate-y-2 opacity-0',
-          )}
-          role="status"
-          aria-live="polite"
-        >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-              <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-            {bookmarkToast.message}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

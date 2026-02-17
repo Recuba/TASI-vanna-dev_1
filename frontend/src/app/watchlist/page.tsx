@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector } from '@/lib/stock-translations';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 
 // ---------------------------------------------------------------------------
 // LocalStorage fallback (when API is not available)
@@ -67,7 +68,7 @@ function getDefaultWatchlists(): LocalWatchlist[] {
 // ---------------------------------------------------------------------------
 
 export default function WatchlistPage() {
-  const { t, isRTL, language } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [watchlists, setWatchlists] = useState<LocalWatchlist[]>([]);
   const [activeList, setActiveList] = useState<string>('default');
@@ -362,9 +363,12 @@ export default function WatchlistPage() {
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       <div className="max-w-content-lg mx-auto space-y-4">
 
+        {/* Breadcrumb */}
+        <Breadcrumb items={[{ label: t('\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629', 'Watchlist') }]} />
+
         {/* Sync banner for anonymous users */}
         {!user && (
-          <div className="flex items-center justify-between gap-3 px-3 py-2 bg-gold/5 border border-gold/20 rounded-md" dir={isRTL ? 'rtl' : 'ltr'}>
+          <div className="flex items-center justify-between gap-3 px-3 py-2 bg-gold/5 border border-gold/20 rounded-md">
             <p className="text-xs text-[var(--text-muted)]">
               {t('\u0633\u062C\u0644 \u062F\u062E\u0648\u0644\u0643 \u0644\u0645\u0632\u0627\u0645\u0646\u0629 \u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629 \u0639\u0628\u0631 \u0627\u0644\u0623\u062C\u0647\u0632\u0629', 'Sign in to sync watchlists across devices')}
             </p>
@@ -378,7 +382,7 @@ export default function WatchlistPage() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629', 'Watchlists')}</h1>
             <p className="text-sm text-[var(--text-muted)]">{t('\u062A\u0627\u0628\u0639 \u0623\u0633\u0647\u0645\u0643 \u0627\u0644\u0645\u0641\u0636\u0644\u0629 \u0641\u064A \u062A\u062F\u0627\u0648\u0644', 'Track your favorite Tadawul stocks')}</p>
@@ -397,7 +401,7 @@ export default function WatchlistPage() {
 
         {/* Create list form */}
         {showCreateForm && (
-          <div className="flex gap-2 p-3 bg-[var(--bg-card)] border gold-border rounded-md" dir={isRTL ? 'rtl' : 'ltr'}>
+          <div className="flex gap-2 p-3 bg-[var(--bg-card)] border gold-border rounded-md">
             <input
               type="text"
               value={newListName}
@@ -409,7 +413,7 @@ export default function WatchlistPage() {
             <button
               onClick={handleCreateList}
               disabled={!newListName.trim()}
-              className="px-3 py-1.5 rounded-md text-xs font-medium bg-gold text-dark-bg hover:bg-gold-light disabled:opacity-30 transition-colors"
+              className="px-3 py-1.5 rounded-md text-xs font-medium bg-gold text-dark-bg hover:bg-gold-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {t('\u0625\u0646\u0634\u0627\u0621', 'Create')}
             </button>
@@ -423,7 +427,7 @@ export default function WatchlistPage() {
         )}
 
         {/* Watchlist Tabs */}
-        <div className="flex gap-2 flex-wrap" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex gap-2 flex-wrap">
           {watchlists.map((wl) => (
             <button
               key={wl.id}
@@ -445,7 +449,7 @@ export default function WatchlistPage() {
         {currentList && (
           <>
             {/* Add ticker */}
-            <div className="flex gap-2" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={addTicker}
@@ -457,7 +461,7 @@ export default function WatchlistPage() {
               <button
                 onClick={handleAddTicker}
                 disabled={!addTicker.trim()}
-                className="px-3 py-1.5 rounded-md text-xs font-medium bg-gold/20 text-gold hover:bg-gold/30 disabled:opacity-30 transition-colors"
+                className="px-3 py-1.5 rounded-md text-xs font-medium bg-gold/20 text-gold hover:bg-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t('\u0625\u0636\u0627\u0641\u0629', 'Add')}
               </button>
@@ -473,7 +477,7 @@ export default function WatchlistPage() {
 
             {/* Error banner */}
             {quotesError && (
-              <div className="flex items-center justify-between gap-3 px-3 py-2 bg-accent-red/5 border border-accent-red/20 rounded-md" dir={isRTL ? 'rtl' : 'ltr'}>
+              <div className="flex items-center justify-between gap-3 px-3 py-2 bg-accent-red/5 border border-accent-red/20 rounded-md">
                 <p className="text-xs text-accent-red">{quotesError}</p>
                 <button
                   onClick={() => {
@@ -489,7 +493,7 @@ export default function WatchlistPage() {
 
             {/* Ticker List */}
             {currentList.tickers.length === 0 ? (
-              <div className="text-center py-12 bg-[var(--bg-card)] border gold-border rounded-md" dir={isRTL ? 'rtl' : 'ltr'}>
+              <div className="text-center py-12 bg-[var(--bg-card)] border gold-border rounded-md">
                 <p className="text-sm text-[var(--text-muted)]">{t('\u0644\u0627 \u062A\u0648\u062C\u062F \u0623\u0633\u0647\u0645 \u0641\u064A \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629. \u0623\u0636\u0641 \u0633\u0647\u0645 \u0623\u0639\u0644\u0627\u0647.', 'No stocks in this list. Add a ticker above.')}</p>
               </div>
             ) : (
@@ -502,15 +506,15 @@ export default function WatchlistPage() {
                     </span>
                   </div>
                 )}
-                <table className="w-full text-sm" dir={isRTL ? 'rtl' : 'ltr'}>
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-[var(--bg-input)]">
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider">{t('\u0627\u0644\u0631\u0645\u0632', 'Ticker')}</th>
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">{t('\u0627\u0644\u0627\u0633\u0645', 'Name')}</th>
-                      <th className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">{t('\u0627\u0644\u0642\u0637\u0627\u0639', 'Sector')}</th>
-                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">{t('\u0627\u0644\u0633\u0639\u0631', 'Price')}</th>
-                      <th className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">{t('\u0627\u0644\u062A\u063A\u064A\u064A\u0631', 'Change')}</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium text-gold uppercase tracking-wider w-10">{t('\u0625\u062C\u0631\u0627\u0621\u0627\u062A', 'Actions')}</th>
+                      <th scope="col" className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider">{t('\u0627\u0644\u0631\u0645\u0632', 'Ticker')}</th>
+                      <th scope="col" className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">{t('\u0627\u0644\u0627\u0633\u0645', 'Name')}</th>
+                      <th scope="col" className="px-3 py-2 text-start text-xs font-medium text-gold uppercase tracking-wider hidden sm:table-cell">{t('\u0627\u0644\u0642\u0637\u0627\u0639', 'Sector')}</th>
+                      <th scope="col" className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">{t('\u0627\u0644\u0633\u0639\u0631', 'Price')}</th>
+                      <th scope="col" className="px-3 py-2 text-end text-xs font-medium text-gold uppercase tracking-wider">{t('\u0627\u0644\u062A\u063A\u064A\u064A\u0631', 'Change')}</th>
+                      <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gold uppercase tracking-wider w-10">{t('\u0625\u062C\u0631\u0627\u0621\u0627\u062A', 'Actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
