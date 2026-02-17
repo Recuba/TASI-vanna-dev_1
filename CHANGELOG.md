@@ -4,6 +4,25 @@ All notable changes to the Ra'd AI TASI Platform are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-02-18
+
+### Added
+- E2E Playwright tests for markets page (sector filter, sort, pagination, search, mobile card view, RTL layout)
+- E2E Playwright tests for stock detail page (financials tab, dividends tab, watchlist toggle, news section, reports section)
+- Backend test coverage expansion: XBRL processor (`ingestion/xbrl_processor.py`) 26.7% → 70%+ with 40+ new tests
+- Backend test coverage expansion: price loader (`ingestion/price_loader.py`) 33.5% → 70%+ with 35+ new tests
+- Backend test coverage expansion: stock OHLCV service (`services/stock_ohlcv.py`) 18.8% → 70%+ with 30+ new tests
+- Backend test coverage expansion: Redis client (`backend/services/cache/redis_client.py`) 22.2% → 70%+ with mocked operations, pub/sub, and connection management tests
+- Backend test coverage expansion: ingestion scheduler (`ingestion/scheduler.py`) 0% → 70%+ with 25+ new tests
+- Frontend API module tests for remaining domains: charts, entities, market, and health (`frontend/src/__tests__/lib/api/`)
+- Redis integration tests: mocked client operations, pub/sub flow, connection lifecycle, error recovery
+
+### Changed
+- ConstellationCanvas (`frontend/src/components/`) performance optimized: replaced `setInterval` animation loop with `requestAnimationFrame`; added `React.memo` to particle child components; debounced resize handler to prevent layout thrashing; added `will-change: transform` CSS hint for GPU compositing
+
+### Improved
+- Backend test coverage on critical data ingestion modules from an average of ~20% to 70%+
+
 ## [Unreleased] - 2026-02-17
 
 ### Added

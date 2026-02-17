@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { C } from './constants';
 import { CentralHub } from './CentralHub';
 import { InstrumentNode } from './InstrumentNode';
@@ -54,12 +54,18 @@ function ConstellationCanvasInner({
 }: ConstellationCanvasProps) {
   const posMap = useMemo(() => toPosMap(layout), [layout]);
 
-  const isNodeInEdge = (key: string) =>
-    hoveredEdge !== null && (hoveredEdge.from === key || hoveredEdge.to === key);
+  const isNodeInEdge = useCallback(
+    (key: string) =>
+      hoveredEdge !== null && (hoveredEdge.from === key || hoveredEdge.to === key),
+    [hoveredEdge],
+  );
 
-  const dimNode = (key: string) =>
-    (hoveredKey !== null && hoveredKey !== key && !isNodeInEdge(key)) ||
-    (hoveredEdge !== null && !isNodeInEdge(key));
+  const dimNode = useCallback(
+    (key: string) =>
+      (hoveredKey !== null && hoveredKey !== key && !isNodeInEdge(key)) ||
+      (hoveredEdge !== null && !isNodeInEdge(key)),
+    [hoveredKey, hoveredEdge, isNodeInEdge],
+  );
 
   return (
     <div className="hidden lg:block mt-2">
@@ -90,7 +96,7 @@ function ConstellationCanvasInner({
               strokeWidth="0.4"
               strokeDasharray="3 8"
               opacity={0.22}
-              style={{ animation: `orbitDash ${22 + i * 6}s linear infinite` }}
+              style={{ animation: `orbitDash ${22 + i * 6}s linear infinite`, willChange: 'stroke-dashoffset' }}
             />
           ))}
 

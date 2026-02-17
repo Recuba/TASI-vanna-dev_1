@@ -181,7 +181,7 @@ All settings via environment variables. See `.env.example` for the complete refe
 
 ## Testing
 
-1050+ backend tests (unit, integration, security, performance) and 155+ frontend tests.
+1300+ backend tests (unit, integration, security, performance) and 225+ frontend tests plus Playwright E2E specs.
 
 ```bash
 # Backend tests (all)
@@ -190,8 +190,11 @@ python -m pytest tests/ -q
 # Backend tests with coverage
 python -m pytest tests/ --cov=api --cov=services --cov=backend --cov-report=term-missing
 
-# Frontend tests
+# Frontend unit tests (Vitest)
 cd frontend && npx vitest run
+
+# Frontend E2E tests (Playwright)
+cd frontend && npx playwright test
 
 # Frontend build verification (15 pages)
 cd frontend && npx next build
@@ -199,6 +202,16 @@ cd frontend && npx next build
 # RTL lint check (catch physical direction classes)
 cd frontend && npm run lint:rtl
 ```
+
+### E2E Test Specs
+
+Playwright specs under `frontend/e2e/`:
+
+| Spec | Coverage |
+|---|---|
+| `news.spec.ts` | News portal: RTL, virtual scroll, SSE, source filters |
+| `markets.spec.ts` | Markets: sector filter, sort, pagination, search, mobile card view |
+| `stock-detail.spec.ts` | Stock detail: financials, dividends, watchlist, news, reports |
 
 ## Project Structure
 

@@ -42,7 +42,7 @@ function CentralHubInner({ stats, count, cx, cy, t }: CentralHubProps) {
     >
       <div
         className="absolute inset-[-2px] rounded-full animate-[pulseRing_3s_ease-in-out_infinite] pointer-events-none"
-        style={{ border: `2px solid ${color}30` }}
+        style={{ border: `2px solid ${color}30`, willChange: 'transform, opacity' }}
       />
       <span
         aria-live="polite"

@@ -549,6 +549,80 @@ Fault tolerance for external service calls (yfinance, LLM APIs, Redis):
 - **`degradation.py`**: `DegradationManager` for graceful feature degradation when dependencies fail. `create_default_manager()` factory.
 - **`config.py`**: `ResilienceConfig` with `get_resilience_config()` accessor.
 
+## E2E Testing (Playwright)
+
+End-to-end tests use [Playwright](https://playwright.dev/) and live under `frontend/e2e/`.
+
+### Setup
+
+```bash
+cd frontend
+npx playwright install --with-deps chromium
+```
+
+### Running E2E Tests
+
+```bash
+# Run all E2E tests (headless)
+cd frontend && npx playwright test
+
+# Run with UI (headed)
+cd frontend && npx playwright test --headed
+
+# Run a specific spec file
+cd frontend && npx playwright test e2e/markets.spec.ts
+
+# Show last test report
+cd frontend && npx playwright show-report
+```
+
+### Spec File Locations
+
+| File | What It Covers |
+|---|---|
+| `e2e/news.spec.ts` | News portal: RTL layout, virtual scroll, SSE stream, source filters |
+| `e2e/markets.spec.ts` | Markets page: sector filter chips, column sort, pagination, search, mobile card view |
+| `e2e/stock-detail.spec.ts` | Stock detail: financials tab, dividends tab, watchlist toggle, related news, reports |
+
+### Writing New E2E Tests
+
+- Use `page.getByRole()` and `page.getByTestId()` selectors for resilience
+- Add `data-testid` attributes to new interactive elements in TSX files
+- Use `await page.waitForLoadState('networkidle')` after SSE-dependent page loads
+- For RTL assertions check `dir="rtl"` on `<html>` and use `toHaveCSS` for layout direction
+
+## Performance Optimizations
+
+### ConstellationCanvas Animation
+
+The `ConstellationCanvas` component uses `requestAnimationFrame` instead of `setInterval` for its particle animation loop. This aligns animation updates with the browser's repaint cycle (typically 60fps) and avoids frame-rate issues:
+
+```typescript
+// Correct pattern (requestAnimationFrame)
+const animate = useCallback(() => {
+  drawFrame();
+  animationRef.current = requestAnimationFrame(animate);
+}, [drawFrame]);
+
+useEffect(() => {
+  animationRef.current = requestAnimationFrame(animate);
+  return () => cancelAnimationFrame(animationRef.current!);
+}, [animate]);
+```
+
+Child particle components are wrapped in `React.memo` to prevent re-renders when parent state unrelated to particle data changes.
+
+The resize handler is debounced (300ms) to avoid recalculating canvas dimensions on every intermediate resize event:
+
+```typescript
+const handleResize = useMemo(
+  () => debounce(() => { /* recalculate */ }, 300),
+  []
+);
+```
+
+The canvas element has `will-change: transform` applied via CSS to hint to the browser that it should be composited on a separate GPU layer.
+
 ## Running Test Coverage
 
 Generate an HTML coverage report for the backend:
@@ -603,6 +677,20 @@ New frontend test files added in the quality sprint:
 | `src/__tests__/lib/api/stocks.test.ts` | Domain module exports, request shaping, error handling |
 | `src/__tests__/lib/api/news.test.ts` | News domain module: feed, article, search, sources |
 | `src/__tests__/app/stocks/StockDetail.test.tsx` | Financials tab, dividends tab, watchlist toggle, news section |
+| `src/__tests__/lib/api/charts.test.ts` | Chart data fetch, TASI index, error and loading states |
+| `src/__tests__/lib/api/entities.test.ts` | Entity search, pagination, empty results |
+| `src/__tests__/lib/api/market.test.ts` | Market overview, sector filter, sort parameters |
+| `src/__tests__/lib/api/health.test.ts` | Liveness and readiness probe responses |
+
+New backend test files added in the coverage expansion sprint:
+
+| File | Coverage Target | Description |
+|---|---|---|
+| `tests/test_xbrl_processor.py` | 70%+ (was 26.7%) | XBRL document parsing, field extraction, error handling |
+| `tests/test_price_loader.py` | 70%+ (was 33.5%) | Price record loading, batch upsert, date normalization |
+| `tests/test_stock_ohlcv.py` | 70%+ (was 18.8%) | OHLCV service: yfinance integration, cache, circuit breaker |
+| `tests/test_redis_client.py` | 70%+ (was 22.2%) | Redis client: mocked ops, pub/sub flow, connection pool, error recovery |
+| `tests/test_ingestion_scheduler.py` | 70%+ (was 0%) | Scheduler: task registration, run cycle, error isolation |
 
 Run specific test categories:
 

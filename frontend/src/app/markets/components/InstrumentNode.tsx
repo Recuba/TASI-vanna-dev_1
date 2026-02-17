@@ -68,6 +68,7 @@ function InstrumentNodeInner({
         opacity: isDimmed ? 0.3 : 1,
         zIndex: isHovered ? 20 : 5,
         direction: isRTL ? 'rtl' : 'ltr',
+        willChange: 'transform, opacity',
       }}
     >
       {/* Header row */}
