@@ -9,6 +9,7 @@ Provides injectable dependencies for route handlers:
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Dict, FrozenSet
 
 import jwt
@@ -26,7 +27,7 @@ _bearer_scheme_optional = HTTPBearer(auto_error=False)
 ADMIN_TIERS: FrozenSet[str] = frozenset({"enterprise", "admin"})
 
 
-def get_optional_current_user(
+async def get_optional_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme_optional),
 ) -> Dict[str, Any] | None:
     """Extract and validate the access token if present.
@@ -39,10 +40,26 @@ def get_optional_current_user(
         return None
     # Delegate to the strict version; let its HTTPExceptions propagate
     # (expired / invalid tokens should still be rejected).
-    return get_current_user(credentials)
+    return await get_current_user(credentials)
 
 
-def get_current_user(
+def _fetch_user_row(user_id: str):
+    """Synchronous DB lookup -- runs in a thread via asyncio.to_thread()."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, email, display_name, subscription_tier, "
+                "usage_count, is_active, created_at "
+                "FROM users WHERE id = %s",
+                (user_id,),
+            )
+            return cur.fetchone()
+    finally:
+        conn.close()
+
+
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
 ) -> Dict[str, Any]:
     """Extract and validate the access token from the Authorization header.
@@ -77,19 +94,8 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Fetch user from database to ensure they still exist and are active
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, email, display_name, subscription_tier, "
-                "usage_count, is_active, created_at "
-                "FROM users WHERE id = %s",
-                (user_id,),
-            )
-            row = cur.fetchone()
-    finally:
-        conn.close()
+    # Fetch user from database in a thread to avoid blocking the event loop
+    row = await asyncio.to_thread(_fetch_user_row, user_id)
 
     if row is None:
         raise HTTPException(

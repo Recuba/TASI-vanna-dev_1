@@ -16,7 +16,7 @@ Uses FastAPI TestClient with the health router + mocked health service.
 
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 

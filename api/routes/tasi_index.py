@@ -8,6 +8,7 @@ PostgreSQL backends (no database dependency).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import List, Literal, Optional
 
@@ -70,7 +71,7 @@ async def get_tasi_index(
             detail=f"Invalid period '{period}'. Must be one of: {', '.join(VALID_PERIODS)}",
         )
 
-    result = fetch_tasi_index(period=period)
+    result = await asyncio.to_thread(fetch_tasi_index, period=period)
 
     return TASIIndexResponse(
         data=[TASIOHLCVPoint(**pt) for pt in result["data"]],

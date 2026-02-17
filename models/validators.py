@@ -8,9 +8,8 @@ for common parameters like ticker symbols and period strings.
 from __future__ import annotations
 
 import re
-from typing import Literal
 
-from fastapi import HTTPException, Path, Query
+from fastapi import HTTPException
 
 # ---------------------------------------------------------------------------
 # Ticker validation

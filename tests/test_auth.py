@@ -339,16 +339,15 @@ class TestAuthDependencies:
         creds.credentials = token
         return creds
 
-    def test_get_current_user_with_valid_token(self):
+    @pytest.mark.asyncio
+    async def test_get_current_user_with_valid_token(self):
         from auth.jwt_handler import create_access_token
         from auth.dependencies import get_current_user
 
         token = create_access_token({"sub": "user-42", "email": "u@t.com"})
         creds = self._make_credentials(token)
 
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = (
+        fake_row = (
             "user-42",
             "u@t.com",
             "Test User",
@@ -357,17 +356,16 @@ class TestAuthDependencies:
             True,
             datetime.now(),
         )
-        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
-        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
 
-        with patch("auth.dependencies.get_db_connection", return_value=mock_conn):
-            user = get_current_user(creds)
+        with patch("auth.dependencies._fetch_user_row", return_value=fake_row):
+            user = await get_current_user(creds)
 
         assert user["id"] == "user-42"
         assert user["email"] == "u@t.com"
         assert user["is_active"] is True
 
-    def test_get_current_user_expired_token_raises_401(self):
+    @pytest.mark.asyncio
+    async def test_get_current_user_expired_token_raises_401(self):
         from auth.dependencies import get_current_user
         from fastapi import HTTPException
 
@@ -384,20 +382,22 @@ class TestAuthDependencies:
         creds = self._make_credentials(expired_token)
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(creds)
+            await get_current_user(creds)
         assert exc_info.value.status_code == 401
         assert "expired" in exc_info.value.detail.lower()
 
-    def test_get_current_user_invalid_token_raises_401(self):
+    @pytest.mark.asyncio
+    async def test_get_current_user_invalid_token_raises_401(self):
         from auth.dependencies import get_current_user
         from fastapi import HTTPException
 
         creds = self._make_credentials("totally-invalid-token")
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(creds)
+            await get_current_user(creds)
         assert exc_info.value.status_code == 401
 
-    def test_get_current_user_missing_sub_raises_401(self):
+    @pytest.mark.asyncio
+    async def test_get_current_user_missing_sub_raises_401(self):
         from auth.dependencies import get_current_user
         from fastapi import HTTPException
 
@@ -413,11 +413,12 @@ class TestAuthDependencies:
         )
         creds = self._make_credentials(token)
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(creds)
+            await get_current_user(creds)
         assert exc_info.value.status_code == 401
         assert "claims" in exc_info.value.detail.lower()
 
-    def test_get_current_user_deactivated_account_raises_401(self):
+    @pytest.mark.asyncio
+    async def test_get_current_user_deactivated_account_raises_401(self):
         from auth.jwt_handler import create_access_token
         from auth.dependencies import get_current_user
         from fastapi import HTTPException
@@ -425,9 +426,7 @@ class TestAuthDependencies:
         token = create_access_token({"sub": "user-99"})
         creds = self._make_credentials(token)
 
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = (
+        fake_row = (
             "user-99",
             "user@t.com",
             None,
@@ -436,16 +435,15 @@ class TestAuthDependencies:
             False,
             None,
         )
-        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
-        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
 
-        with patch("auth.dependencies.get_db_connection", return_value=mock_conn):
+        with patch("auth.dependencies._fetch_user_row", return_value=fake_row):
             with pytest.raises(HTTPException) as exc_info:
-                get_current_user(creds)
+                await get_current_user(creds)
         assert exc_info.value.status_code == 401
         assert "deactivated" in exc_info.value.detail.lower()
 
-    def test_get_current_user_not_found_raises_401(self):
+    @pytest.mark.asyncio
+    async def test_get_current_user_not_found_raises_401(self):
         from auth.jwt_handler import create_access_token
         from auth.dependencies import get_current_user
         from fastapi import HTTPException
@@ -453,15 +451,9 @@ class TestAuthDependencies:
         token = create_access_token({"sub": "nonexistent"})
         creds = self._make_credentials(token)
 
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = None
-        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
-        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
-
-        with patch("auth.dependencies.get_db_connection", return_value=mock_conn):
+        with patch("auth.dependencies._fetch_user_row", return_value=None):
             with pytest.raises(HTTPException) as exc_info:
-                get_current_user(creds)
+                await get_current_user(creds)
         assert exc_info.value.status_code == 401
 
     def test_require_admin_with_enterprise_user(self):

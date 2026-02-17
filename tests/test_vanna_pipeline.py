@@ -6,7 +6,7 @@ to avoid real API calls while validating the pipeline assembly and execution.
 
 import uuid
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 

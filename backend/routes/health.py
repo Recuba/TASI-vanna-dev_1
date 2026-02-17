@@ -10,8 +10,9 @@ Provides three endpoints (no auth required):
 """
 
 import logging
+import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
@@ -24,14 +25,16 @@ router = APIRouter(tags=["health"])
 _START_TIME = time.monotonic()
 _REQUEST_COUNTER = 0
 _ERROR_COUNTER = 0
+_counter_lock = threading.Lock()
 
 
 def record_request(*, is_error: bool = False) -> None:
     """Increment global request counters (called from middleware)."""
     global _REQUEST_COUNTER, _ERROR_COUNTER
-    _REQUEST_COUNTER += 1
-    if is_error:
-        _ERROR_COUNTER += 1
+    with _counter_lock:
+        _REQUEST_COUNTER += 1
+        if is_error:
+            _ERROR_COUNTER += 1
 
 
 # ---------------------------------------------------------------------------

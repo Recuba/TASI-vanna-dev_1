@@ -34,6 +34,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from vanna.tools import RunSqlTool, VisualizeDataTool
+import jwt
 from chart_engine import RaidChartGenerator
 from config.prompts import SAUDI_STOCKS_SYSTEM_PROMPT, PG_NOTES
 
@@ -146,7 +147,7 @@ class JWTUserResolver(UserResolver):
                 email=email,
                 group_memberships=["user"],
             )
-        except Exception:
+        except (jwt.PyJWTError, ValueError, KeyError):
             raise ValueError("Invalid or expired authentication token")
 
 
@@ -337,7 +338,7 @@ if DB_BACKEND == "postgres":
                     from auth.jwt_handler import decode_token
 
                     decode_token(token, expected_type="access")
-                except Exception:
+                except (jwt.PyJWTError, ValueError, KeyError):
                     return JSONResponse(
                         status_code=401,
                         content={"detail": "Invalid or expired authentication token"},

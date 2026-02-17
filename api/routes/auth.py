@@ -9,10 +9,14 @@ The guest endpoint works without a database (generates anonymous tokens).
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import uuid
 from typing import Any, Dict
 
 import jwt
+
+logger = logging.getLogger(__name__)
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth.dependencies import get_current_user
@@ -40,6 +44,7 @@ def _get_auth_service():
 
         return AuthService(get_conn=get_db_connection)
     except Exception:
+        logger.warning("AuthService unavailable (expected in SQLite mode)", exc_info=True)
         return None
 
 
@@ -72,7 +77,7 @@ async def register(body: UserCreate):
             detail="Registration requires PostgreSQL backend",
         )
 
-    result = service.register(body.email, body.password, body.display_name)
+    result = await asyncio.to_thread(service.register, body.email, body.password, body.display_name)
 
     if not result.success:
         raise HTTPException(
@@ -106,7 +111,7 @@ async def login(body: UserLogin):
             detail="Login requires PostgreSQL backend",
         )
 
-    result = service.login(body.email, body.password)
+    result = await asyncio.to_thread(service.login, body.email, body.password)
 
     if not result.success:
         raise HTTPException(
@@ -173,7 +178,7 @@ async def refresh_token(body: TokenRefreshRequest):
     if not str(user_id).startswith("guest-"):
         service = _get_auth_service()
         if service is not None:
-            result = service.verify_user_active(user_id)
+            result = await asyncio.to_thread(service.verify_user_active, user_id)
             if not result.success:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

@@ -8,6 +8,7 @@ Works with both SQLite and PostgreSQL backends (no database dependency).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import List, Literal
 
@@ -79,7 +80,7 @@ async def get_stock_ohlcv(
             detail=f"Invalid period '{period}'. Must be one of: {', '.join(VALID_PERIODS)}",
         )
 
-    result = fetch_stock_ohlcv(ticker=ticker, period=period)
+    result = await asyncio.to_thread(fetch_stock_ohlcv, ticker=ticker, period=period)
 
     return StockOHLCVResponse(
         data=[StockOHLCVPoint(**pt) for pt in result["data"]],

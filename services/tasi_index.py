@@ -109,40 +109,47 @@ def _set_cache(period: str, payload: Dict[str, Any]) -> None:
 
 
 def _sync_to_breaker() -> None:
-    """Push module-level state into the CircuitBreaker instance."""
+    """Push module-level state into the CircuitBreaker instance.
+
+    Must be called while holding ``_circuit_lock``.
+    """
     _breaker._consecutive_failures = _consecutive_failures
     _breaker._open_until = _circuit_open_until
 
 
 def _is_circuit_open() -> bool:
     """Return True if the circuit breaker is currently open (yfinance skipped)."""
-    _sync_to_breaker()
-    return _breaker.is_open()
+    with _circuit_lock:
+        _sync_to_breaker()
+        return _breaker.is_open()
 
 
 def _record_failure() -> None:
     """Increment consecutive failure count; open circuit if threshold reached."""
     global _consecutive_failures, _circuit_open_until
-    _sync_to_breaker()
-    _breaker.record_failure()
-    # Sync back
-    _consecutive_failures = _breaker._consecutive_failures
-    _circuit_open_until = _breaker._open_until
+    with _circuit_lock:
+        _sync_to_breaker()
+        _breaker.record_failure()
+        # Sync back
+        _consecutive_failures = _breaker._consecutive_failures
+        _circuit_open_until = _breaker._open_until
 
 
 def _record_success() -> None:
     """Reset circuit breaker on a successful fetch."""
     global _consecutive_failures, _circuit_open_until
-    _sync_to_breaker()
-    _breaker.record_success()
-    _consecutive_failures = _breaker._consecutive_failures
-    _circuit_open_until = _breaker._open_until
+    with _circuit_lock:
+        _sync_to_breaker()
+        _breaker.record_success()
+        _consecutive_failures = _breaker._consecutive_failures
+        _circuit_open_until = _breaker._open_until
 
 
 def get_circuit_breaker_status() -> Dict[str, Any]:
     """Return circuit breaker diagnostics for the health endpoint."""
-    _sync_to_breaker()
-    return _breaker.get_status()
+    with _circuit_lock:
+        _sync_to_breaker()
+        return _breaker.get_status()
 
 
 # ---------------------------------------------------------------------------

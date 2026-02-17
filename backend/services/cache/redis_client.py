@@ -10,7 +10,6 @@ import logging
 import time
 from typing import Any
 
-import redis.asyncio as aioredis
 from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import ConnectionError as RedisConnectionError, RedisError
 
