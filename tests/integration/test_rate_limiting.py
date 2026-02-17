@@ -17,9 +17,7 @@ Uses FastAPI TestClient with RateLimitMiddleware.
 """
 
 import sys
-import time
 from pathlib import Path
-from unittest.mock import patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -30,7 +28,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from middleware.rate_limit import RateLimitMiddleware
+from middleware.rate_limit import RateLimitMiddleware  # noqa: E402
 
 
 def _create_rate_limited_app(

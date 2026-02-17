@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from api.db_helper import afetchall, afetchone, get_conn, fetchall, fetchone
+from api.db_helper import afetchall, afetchone, get_conn, fetchall
 from database.queries import (
     COMPANY_EXISTS,
     COMPANY_NAMES_BY_TICKERS,

@@ -169,7 +169,7 @@ def install_exception_handlers(app: "FastAPI") -> None:
         if errors:
             parts = []
             for err in errors[:5]:  # Limit to first 5 errors
-                loc = " -> ".join(str(l) for l in err.get("loc", []))
+                loc = " -> ".join(str(part) for part in err.get("loc", []))
                 msg = err.get("msg", "invalid")
                 parts.append(f"{loc}: {msg}")
             message = "; ".join(parts)

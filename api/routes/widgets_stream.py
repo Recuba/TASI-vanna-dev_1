@@ -8,7 +8,6 @@ falls back to polling the in-memory snapshot from the quotes hub.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 
 from fastapi import APIRouter, Request
