@@ -20,9 +20,9 @@ class TTLTier(str, Enum):
     that category.
     """
 
-    MARKET = "market"          # 60 s  - live/recent market data
+    MARKET = "market"  # 60 s  - live/recent market data
     HISTORICAL = "historical"  # 3600 s - historical financials
-    SCHEMA = "schema"          # 86400 s - schema/metadata lookups
+    SCHEMA = "schema"  # 86400 s - schema/metadata lookups
 
     @property
     def ttl_seconds(self) -> int:

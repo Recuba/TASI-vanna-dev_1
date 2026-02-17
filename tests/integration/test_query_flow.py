@@ -79,9 +79,7 @@ class TestValidQueryFlow:
         assert rows[0][0] == "1010.SR"
 
     def test_aggregation_validates_and_executes(self, validator, test_db):
-        sql = (
-            "SELECT sector, COUNT(*) as cnt FROM companies GROUP BY sector"
-        )
+        sql = "SELECT sector, COUNT(*) as cnt FROM companies GROUP BY sector"
         result = validator.validate(sql)
         assert result.is_valid is True
 
@@ -157,7 +155,9 @@ class TestInjectionBlockedPreExecution:
         assert result.sanitized_sql == ""
 
         # Verify table still exists
-        count = test_db["cursor"].execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+        count = (
+            test_db["cursor"].execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+        )
         assert count == 2
 
     def test_stacked_delete_blocked(self, validator, test_db):
@@ -166,7 +166,9 @@ class TestInjectionBlockedPreExecution:
         assert result.is_valid is False
 
         # Verify no rows were deleted
-        count = test_db["cursor"].execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+        count = (
+            test_db["cursor"].execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+        )
         assert count == 2
 
     def test_union_schema_probe_blocked(self, validator):
@@ -181,7 +183,9 @@ class TestInjectionBlockedPreExecution:
         assert result.is_valid is False
 
         # Verify no new row
-        count = test_db["cursor"].execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+        count = (
+            test_db["cursor"].execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+        )
         assert count == 2
 
 
@@ -193,23 +197,29 @@ class TestInjectionBlockedPreExecution:
 class TestReadOnlyEnforcement:
     """Test that only read operations are allowed."""
 
-    @pytest.mark.parametrize("operation", [
-        "INSERT INTO companies VALUES ('X', 'Y', 'Z', 'W', 'V', 'U')",
-        "UPDATE companies SET short_name = 'hacked'",
-        "DELETE FROM companies",
-        "DROP TABLE companies",
-        "ALTER TABLE companies ADD COLUMN evil TEXT",
-        "CREATE TABLE evil (id INTEGER)",
-        "TRUNCATE TABLE companies",
-    ])
+    @pytest.mark.parametrize(
+        "operation",
+        [
+            "INSERT INTO companies VALUES ('X', 'Y', 'Z', 'W', 'V', 'U')",
+            "UPDATE companies SET short_name = 'hacked'",
+            "DELETE FROM companies",
+            "DROP TABLE companies",
+            "ALTER TABLE companies ADD COLUMN evil TEXT",
+            "CREATE TABLE evil (id INTEGER)",
+            "TRUNCATE TABLE companies",
+        ],
+    )
     def test_mutation_blocked(self, validator, operation):
         assert validator.is_read_only(operation) is False
 
-    @pytest.mark.parametrize("operation", [
-        "SELECT * FROM companies",
-        "SELECT COUNT(*) FROM market_data",
-        "SELECT c.ticker FROM companies c JOIN market_data m ON c.ticker = m.ticker",
-    ])
+    @pytest.mark.parametrize(
+        "operation",
+        [
+            "SELECT * FROM companies",
+            "SELECT COUNT(*) FROM market_data",
+            "SELECT c.ticker FROM companies c JOIN market_data m ON c.ticker = m.ticker",
+        ],
+    )
     def test_select_allowed(self, validator, operation):
         assert validator.is_read_only(operation) is True
 

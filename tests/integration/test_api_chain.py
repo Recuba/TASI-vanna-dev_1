@@ -32,6 +32,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def tasi_app():
     """Create a minimal FastAPI app with just the TASI router."""
@@ -67,6 +68,7 @@ def _clear_tasi_cache():
 # ---------------------------------------------------------------------------
 # TASI Index -- Valid periods
 # ---------------------------------------------------------------------------
+
 
 class TestTASIIndexValidPeriods:
     """Test GET /api/v1/charts/tasi/index with valid periods."""
@@ -125,6 +127,7 @@ class TestTASIIndexValidPeriods:
 # TASI Index -- Invalid periods
 # ---------------------------------------------------------------------------
 
+
 class TestTASIIndexInvalidPeriods:
     """Test GET /api/v1/charts/tasi/index with invalid periods."""
 
@@ -144,12 +147,15 @@ class TestTASIIndexInvalidPeriods:
     @pytest.mark.parametrize("bad_period", ["10y", "1d", "1w", "abc", ""])
     def test_various_invalid_periods(self, tasi_client, bad_period):
         resp = tasi_client.get(f"/api/v1/charts/tasi/index?period={bad_period}")
-        assert resp.status_code in (400, 422), f"Expected 400/422, got {resp.status_code}"
+        assert resp.status_code in (400, 422), (
+            f"Expected 400/422, got {resp.status_code}"
+        )
 
 
 # ---------------------------------------------------------------------------
 # TASI Health
 # ---------------------------------------------------------------------------
+
 
 class TestTASIHealth:
     """Test GET /api/v1/charts/tasi/health."""
@@ -172,8 +178,11 @@ class TestTASIHealth:
         resp = tasi_client.get("/api/v1/charts/tasi/health")
         body = resp.json()
         forbidden = {
-            "yfinance_available", "cache_status", "cache_age_seconds",
-            "circuit_state", "consecutive_failures",
+            "yfinance_available",
+            "cache_status",
+            "cache_age_seconds",
+            "circuit_state",
+            "consecutive_failures",
         }
         exposed = forbidden & set(body.keys())
         assert exposed == set(), f"Leaks internal fields: {exposed}"
@@ -182,6 +191,7 @@ class TestTASIHealth:
 # ---------------------------------------------------------------------------
 # Circuit breaker (mock yfinance failure)
 # ---------------------------------------------------------------------------
+
 
 class TestCircuitBreaker:
     """Test that repeated yfinance failures trip the circuit breaker."""
@@ -218,6 +228,7 @@ class TestCircuitBreaker:
 
         with patch.dict("sys.modules", {"yfinance": mock_yf}):
             import services.tasi_index as mod
+
             mod._cache.clear()
             resp = tasi_client.get("/api/v1/charts/tasi/index")
 
@@ -229,6 +240,7 @@ class TestCircuitBreaker:
 # ---------------------------------------------------------------------------
 # Rate limiting
 # ---------------------------------------------------------------------------
+
 
 class TestRateLimiting:
     """Test rate limiter middleware returns 429 when limit is exceeded."""

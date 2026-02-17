@@ -264,15 +264,24 @@ class CostController:
         if self._limits.daily_token_limit > 0:
             total_daily = usage.daily_input_tokens + usage.daily_output_tokens
             if total_daily >= self._limits.daily_token_limit:
-                return False, f"Daily token limit exceeded ({total_daily}/{self._limits.daily_token_limit})"
+                return (
+                    False,
+                    f"Daily token limit exceeded ({total_daily}/{self._limits.daily_token_limit})",
+                )
 
         if self._limits.daily_cost_limit_usd > 0:
             if usage.daily_cost_usd >= self._limits.daily_cost_limit_usd:
-                return False, f"Daily cost limit exceeded (${usage.daily_cost_usd:.4f}/${self._limits.daily_cost_limit_usd})"
+                return (
+                    False,
+                    f"Daily cost limit exceeded (${usage.daily_cost_usd:.4f}/${self._limits.daily_cost_limit_usd})",
+                )
 
         if self._limits.monthly_cost_limit_usd > 0:
             if usage.monthly_cost_usd >= self._limits.monthly_cost_limit_usd:
-                return False, f"Monthly cost limit exceeded (${usage.monthly_cost_usd:.4f}/${self._limits.monthly_cost_limit_usd})"
+                return (
+                    False,
+                    f"Monthly cost limit exceeded (${usage.monthly_cost_usd:.4f}/${self._limits.monthly_cost_limit_usd})",
+                )
 
         return True, ""
 

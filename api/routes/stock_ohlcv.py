@@ -62,7 +62,9 @@ class StockHealthResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-@router.get("/{ticker}/ohlcv", response_model=StockOHLCVResponse, responses=STANDARD_ERRORS)
+@router.get(
+    "/{ticker}/ohlcv", response_model=StockOHLCVResponse, responses=STANDARD_ERRORS
+)
 async def get_stock_ohlcv(
     ticker: str = Path(..., description="Stock ticker (e.g. 2222 or 2222.SR)"),
     period: str = Query("1y", description="Data period"),

@@ -54,7 +54,9 @@ async def create_watchlist(
     """Create a new watchlist for the authenticated user."""
     wl = await asyncio.to_thread(
         svc.create_watchlist,
-        user_id=current_user["id"], name=body.name, tickers=body.tickers,
+        user_id=current_user["id"],
+        name=body.name,
+        tickers=body.tickers,
     )
     return WatchlistResponse(
         id=wl.id, user_id=wl.user_id, name=wl.name, tickers=wl.tickers
@@ -126,7 +128,8 @@ async def delete_watchlist(
     """Delete a watchlist. Requires authentication."""
     deleted = await asyncio.to_thread(
         svc.delete_watchlist,
-        watchlist_id=watchlist_id, user_id=current_user["id"],
+        watchlist_id=watchlist_id,
+        user_id=current_user["id"],
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="Watchlist not found")
@@ -142,7 +145,9 @@ async def list_alerts(
     svc: UserService = Depends(get_user_service),
 ) -> List[AlertResponse]:
     """Return active alerts for the authenticated user. Returns 401 if not authenticated."""
-    alerts = await asyncio.to_thread(svc.get_active_alerts, user_id=current_user["id"], ticker=ticker)
+    alerts = await asyncio.to_thread(
+        svc.get_active_alerts, user_id=current_user["id"], ticker=ticker
+    )
     return [
         AlertResponse(
             id=a.id,
@@ -190,6 +195,8 @@ async def deactivate_alert(
     svc: UserService = Depends(get_user_service),
 ):
     """Deactivate an alert (soft-delete). Requires authentication."""
-    updated = await asyncio.to_thread(svc.deactivate_alert, alert_id=alert_id, user_id=current_user["id"])
+    updated = await asyncio.to_thread(
+        svc.deactivate_alert, alert_id=alert_id, user_id=current_user["id"]
+    )
     if not updated:
         raise HTTPException(status_code=404, detail="Alert not found")

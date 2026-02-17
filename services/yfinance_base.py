@@ -168,10 +168,7 @@ class CircuitBreaker:
         """Increment failure count; open circuit if threshold reached."""
         with self._lock:
             self._consecutive_failures += 1
-            if (
-                self._consecutive_failures >= self._threshold
-                and not self.is_open()
-            ):
+            if self._consecutive_failures >= self._threshold and not self.is_open():
                 self._open_until = time.monotonic() + self._timeout
                 logger.warning(
                     "%s circuit breaker OPEN -- serving cached/mock for next %d seconds "

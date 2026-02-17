@@ -115,9 +115,7 @@ class TestAgentAssemblyComponents:
         assert agent.user_resolver is mock_resolver
         assert agent.agent_memory is demo_memory
 
-    def test_agent_with_custom_system_prompt_builder(
-        self, tool_registry, demo_memory
-    ):
+    def test_agent_with_custom_system_prompt_builder(self, tool_registry, demo_memory):
         """Agent accepts a custom SystemPromptBuilder."""
 
         class StubPromptBuilder(SystemPromptBuilder):
@@ -157,9 +155,7 @@ class TestToolRegistryTools:
     @pytest.mark.asyncio
     async def test_tool_schemas_available_for_admin(self, tool_registry):
         """Schemas visible to an admin user."""
-        admin = User(
-            id="admin", email="admin@test.com", group_memberships=["admin"]
-        )
+        admin = User(id="admin", email="admin@test.com", group_memberships=["admin"])
         schemas = await tool_registry.get_schemas(user=admin)
         assert len(schemas) >= 2
 
@@ -242,9 +238,7 @@ class TestSqlToolExecution:
     """Verify RunSqlTool executes queries against the real database."""
 
     @pytest.mark.asyncio
-    async def test_sql_tool_executes_valid_query(
-        self, real_sqlite_runner, demo_memory
-    ):
+    async def test_sql_tool_executes_valid_query(self, real_sqlite_runner, demo_memory):
         """RunSqlTool should successfully execute SELECT COUNT(*) FROM companies."""
         tool = RunSqlTool(sql_runner=real_sqlite_runner)
         user = User(id="test", email="t@t.com", group_memberships=["user"])
@@ -324,9 +318,7 @@ class TestSqlToolRejectsDestructive:
         assert result.error is not None
 
     @pytest.mark.asyncio
-    async def test_sql_tool_does_not_block_writes(
-        self, sqlite_runner, tool_context
-    ):
+    async def test_sql_tool_does_not_block_writes(self, sqlite_runner, tool_context):
         """RunSqlTool does NOT block write operations at the tool level.
 
         IMPORTANT FINDING: Vanna 2.0's RunSqlTool relies on LLM behavior
@@ -358,16 +350,12 @@ class TestAgentMemory:
     """Test DemoAgentMemory can store and retrieve items."""
 
     @pytest.mark.asyncio
-    async def test_agent_memory_stores_and_retrieves(
-        self, demo_memory, tool_context
-    ):
+    async def test_agent_memory_stores_and_retrieves(self, demo_memory, tool_context):
         """save_text_memory / get_recent_text_memories roundtrip."""
         await demo_memory.save_text_memory("Test memory entry 1", tool_context)
         await demo_memory.save_text_memory("Test memory entry 2", tool_context)
 
-        memories = await demo_memory.get_recent_text_memories(
-            tool_context, limit=10
-        )
+        memories = await demo_memory.get_recent_text_memories(tool_context, limit=10)
         memory_texts = [m.content for m in memories]
 
         assert "Test memory entry 1" in memory_texts
@@ -470,9 +458,7 @@ class TestEndToEndQueryPipeline:
             finish_reason="end_turn",
         )
 
-        llm.send_request = AsyncMock(
-            side_effect=[sql_tool_response, text_response]
-        )
+        llm.send_request = AsyncMock(side_effect=[sql_tool_response, text_response])
         llm.validate_tools = MagicMock(return_value=[])
         return llm
 
@@ -507,23 +493,17 @@ class TestEndToEndQueryPipeline:
         assert len(components) > 0
 
     @pytest.mark.asyncio
-    async def test_pipeline_passes_sql_result_back_to_llm(
-        self, pipeline_agent
-    ):
+    async def test_pipeline_passes_sql_result_back_to_llm(self, pipeline_agent):
         """After RunSqlTool executes, the result is sent back to the LLM."""
         request_ctx = RequestContext(headers={}, cookies={})
-        async for _ in pipeline_agent.send_message(
-            request_ctx, "Count companies"
-        ):
+        async for _ in pipeline_agent.send_message(request_ctx, "Count companies"):
             pass
 
         # LLM should be called twice: once to get tool call, once with result
         assert pipeline_agent.llm_service.send_request.call_count == 2
 
         # The second call should include the tool result in messages
-        second_call_args = (
-            pipeline_agent.llm_service.send_request.call_args_list[1]
-        )
+        second_call_args = pipeline_agent.llm_service.send_request.call_args_list[1]
         request = second_call_args[0][0]  # First positional arg (LlmRequest)
         # Messages should include the tool result
         messages = request.messages
@@ -642,9 +622,7 @@ class TestPipelineErrorHandling:
     """Test that the pipeline handles errors gracefully."""
 
     @pytest.mark.asyncio
-    async def test_pipeline_handles_bad_sql_from_llm(
-        self, tool_registry, demo_memory
-    ):
+    async def test_pipeline_handles_bad_sql_from_llm(self, tool_registry, demo_memory):
         """When LLM generates invalid SQL, the error is captured and
         sent back to the LLM for a corrective response."""
         llm = MagicMock(spec=LlmService)
@@ -669,9 +647,7 @@ class TestPipelineErrorHandling:
             finish_reason="end_turn",
         )
 
-        llm.send_request = AsyncMock(
-            side_effect=[bad_sql_response, apology_response]
-        )
+        llm.send_request = AsyncMock(side_effect=[bad_sql_response, apology_response])
         llm.validate_tools = MagicMock(return_value=[])
 
         agent = Agent(
@@ -684,9 +660,7 @@ class TestPipelineErrorHandling:
 
         request_ctx = RequestContext(headers={}, cookies={})
         components = []
-        async for component in agent.send_message(
-            request_ctx, "Show all companies"
-        ):
+        async for component in agent.send_message(request_ctx, "Show all companies"):
             components.append(component)
 
         # Pipeline should not crash -- LLM gets the error and responds
@@ -694,9 +668,7 @@ class TestPipelineErrorHandling:
         assert len(components) > 0
 
     @pytest.mark.asyncio
-    async def test_pipeline_handles_empty_results(
-        self, tool_registry, demo_memory
-    ):
+    async def test_pipeline_handles_empty_results(self, tool_registry, demo_memory):
         """Pipeline handles SQL that returns zero rows gracefully."""
         llm = MagicMock(spec=LlmService)
 
@@ -722,9 +694,7 @@ class TestPipelineErrorHandling:
             finish_reason="end_turn",
         )
 
-        llm.send_request = AsyncMock(
-            side_effect=[empty_response, text_response]
-        )
+        llm.send_request = AsyncMock(side_effect=[empty_response, text_response])
         llm.validate_tools = MagicMock(return_value=[])
 
         agent = Agent(
@@ -781,9 +751,7 @@ class TestPipelineErrorHandling:
 
         request_ctx = RequestContext(headers={}, cookies={})
         components = []
-        async for component in agent.send_message(
-            request_ctx, "Keep querying"
-        ):
+        async for component in agent.send_message(request_ctx, "Keep querying"):
             components.append(component)
 
         # Should stop after max_tool_iterations (3) + 1 final call

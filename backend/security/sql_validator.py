@@ -56,14 +56,25 @@ FORBIDDEN_OPERATIONS: set[str] = {
 # Patterns that indicate injection attempts (case-insensitive)
 INJECTION_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r";\s*(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE)", re.IGNORECASE),
-    re.compile(r"UNION\s+ALL\s+SELECT\s+.*(FROM\s+sqlite_master|information_schema)", re.IGNORECASE),
+    re.compile(
+        r"UNION\s+ALL\s+SELECT\s+.*(FROM\s+sqlite_master|information_schema)",
+        re.IGNORECASE,
+    ),
     re.compile(r"(--|#|/\*)\s*(DROP|ALTER|DELETE|INSERT|UPDATE)", re.IGNORECASE),
     re.compile(r"0x[0-9a-fA-F]+"),  # Hex-encoded payloads
-    re.compile(r"CHAR\s*\(\s*\d+(\s*,\s*\d+)*\s*\)", re.IGNORECASE),  # CHAR() obfuscation
+    re.compile(
+        r"CHAR\s*\(\s*\d+(\s*,\s*\d+)*\s*\)", re.IGNORECASE
+    ),  # CHAR() obfuscation
     re.compile(r"CONCAT\s*\(", re.IGNORECASE),  # String concatenation tricks
-    re.compile(r"(SLEEP|BENCHMARK|WAITFOR|PG_SLEEP)\s*\(", re.IGNORECASE),  # Time-based injection
-    re.compile(r"(LOAD_FILE|INTO\s+OUTFILE|INTO\s+DUMPFILE)\s*\(", re.IGNORECASE),  # File access
-    re.compile(r"sqlite_master|information_schema|pg_catalog|pg_tables", re.IGNORECASE),  # Schema probing
+    re.compile(
+        r"(SLEEP|BENCHMARK|WAITFOR|PG_SLEEP)\s*\(", re.IGNORECASE
+    ),  # Time-based injection
+    re.compile(
+        r"(LOAD_FILE|INTO\s+OUTFILE|INTO\s+DUMPFILE)\s*\(", re.IGNORECASE
+    ),  # File access
+    re.compile(
+        r"sqlite_master|information_schema|pg_catalog|pg_tables", re.IGNORECASE
+    ),  # Schema probing
 ]
 
 # Risk score weights for different violation types
@@ -140,35 +151,32 @@ class SqlQueryValidator:
         # Check read-only
         forbidden = self.contains_forbidden_operations(sql)
         if forbidden:
-            violations.extend(
-                f"Forbidden operation: {op}" for op in forbidden
-            )
-            risk_scores.extend(
-                RISK_WEIGHTS["forbidden_operation"] for _ in forbidden
-            )
+            violations.extend(f"Forbidden operation: {op}" for op in forbidden)
+            risk_scores.extend(RISK_WEIGHTS["forbidden_operation"] for _ in forbidden)
 
         # Check injection patterns
         for pattern in INJECTION_PATTERNS:
             match = pattern.search(sql)
             if match:
-                violations.append(
-                    f"Injection pattern detected: {match.group()[:50]}"
-                )
+                violations.append(f"Injection pattern detected: {match.group()[:50]}")
                 risk_scores.append(RISK_WEIGHTS["injection_pattern"])
 
         # Check for comments containing SQL keywords
         comment_violations = self._check_comments(stmt)
         if comment_violations:
             violations.extend(comment_violations)
-            risk_scores.extend(
-                RISK_WEIGHTS["comment"] for _ in comment_violations
-            )
+            risk_scores.extend(RISK_WEIGHTS["comment"] for _ in comment_violations)
 
         # Extract tables
         tables = self.extract_tables(sql)
 
         # Check for schema probing tables
-        schema_tables = {"sqlite_master", "information_schema", "pg_catalog", "pg_tables"}
+        schema_tables = {
+            "sqlite_master",
+            "information_schema",
+            "pg_catalog",
+            "pg_tables",
+        }
         probed = [t for t in tables if t.lower() in schema_tables]
         if probed:
             violations.append(f"Schema probing via: {', '.join(probed)}")
@@ -232,8 +240,7 @@ class SqlQueryValidator:
 
                 # Check keywords (TRUNCATE, GRANT, etc.)
                 if token.ttype is Keyword or (
-                    token.ttype is not None
-                    and token.ttype in Keyword
+                    token.ttype is not None and token.ttype in Keyword
                 ):
                     upper_val = token.value.upper()
                     if upper_val in FORBIDDEN_OPERATIONS:
@@ -279,9 +286,7 @@ class SqlQueryValidator:
                 unique.append(t)
         return unique
 
-    def _extract_tables_from_tokens(
-        self, tokens: list, tables: list[str]
-    ) -> None:
+    def _extract_tables_from_tokens(self, tokens: list, tables: list[str]) -> None:
         """Recursively extract table names from token list."""
         from_seen = False
 
@@ -303,16 +308,35 @@ class SqlQueryValidator:
             # Track FROM / JOIN keywords
             if token.ttype is Keyword:
                 upper_val = token.value.upper()
-                if upper_val in ("FROM", "JOIN", "INNER JOIN", "LEFT JOIN",
-                                 "RIGHT JOIN", "FULL JOIN", "CROSS JOIN",
-                                 "LEFT OUTER JOIN", "RIGHT OUTER JOIN",
-                                 "FULL OUTER JOIN", "NATURAL JOIN"):
+                if upper_val in (
+                    "FROM",
+                    "JOIN",
+                    "INNER JOIN",
+                    "LEFT JOIN",
+                    "RIGHT JOIN",
+                    "FULL JOIN",
+                    "CROSS JOIN",
+                    "LEFT OUTER JOIN",
+                    "RIGHT OUTER JOIN",
+                    "FULL OUTER JOIN",
+                    "NATURAL JOIN",
+                ):
                     from_seen = True
                     continue
                 # Reset on other keywords like WHERE, GROUP BY, etc.
-                if upper_val in ("WHERE", "GROUP", "ORDER", "HAVING",
-                                 "LIMIT", "UNION", "EXCEPT", "INTERSECT",
-                                 "ON", "SET", "VALUES"):
+                if upper_val in (
+                    "WHERE",
+                    "GROUP",
+                    "ORDER",
+                    "HAVING",
+                    "LIMIT",
+                    "UNION",
+                    "EXCEPT",
+                    "INTERSECT",
+                    "ON",
+                    "SET",
+                    "VALUES",
+                ):
                     from_seen = False
                     continue
 
@@ -354,8 +378,14 @@ class SqlQueryValidator:
         """Check for SQL keywords hidden inside comments."""
         violations: list[str] = []
         dangerous_in_comments = {
-            "DROP", "DELETE", "INSERT", "UPDATE", "ALTER",
-            "TRUNCATE", "EXEC", "EXECUTE",
+            "DROP",
+            "DELETE",
+            "INSERT",
+            "UPDATE",
+            "ALTER",
+            "TRUNCATE",
+            "EXEC",
+            "EXECUTE",
         }
 
         for token in stmt.flatten():

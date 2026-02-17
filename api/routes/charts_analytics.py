@@ -37,7 +37,9 @@ router = APIRouter(prefix="/api/charts", tags=["charts-analytics"])
 # ---------------------------------------------------------------------------
 
 
-@router.get("/sector-market-cap", response_model=ChartResponse, responses=STANDARD_ERRORS)
+@router.get(
+    "/sector-market-cap", response_model=ChartResponse, responses=STANDARD_ERRORS
+)
 async def sector_market_cap() -> ChartResponse:
     """Return total market cap by sector for a pie/bar chart."""
     try:
@@ -122,7 +124,9 @@ async def sector_avg_pe() -> ChartResponse:
     )
 
 
-@router.get("/dividend-yield-top", response_model=ChartResponse, responses=STANDARD_ERRORS)
+@router.get(
+    "/dividend-yield-top", response_model=ChartResponse, responses=STANDARD_ERRORS
+)
 async def top_dividend_yields(
     limit: int = Query(15, ge=1, le=50),
 ) -> ChartResponse:

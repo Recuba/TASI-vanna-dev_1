@@ -59,15 +59,11 @@ class QueryAllowlist:
             with open(self._config_path, encoding="utf-8") as f:
                 data: dict[str, Any] = json.load(f)
 
-            self._allowed_tables = {
-                t.lower() for t in data.get("allowed_tables", [])
-            }
+            self._allowed_tables = {t.lower() for t in data.get("allowed_tables", [])}
             self._allowed_operations = {
                 op.upper() for op in data.get("allowed_operations", [])
             }
-            self._blocked_tables = {
-                t.lower() for t in data.get("blocked_tables", [])
-            }
+            self._blocked_tables = {t.lower() for t in data.get("blocked_tables", [])}
             self._last_mtime = os.path.getmtime(self._config_path)
             self._last_check_time = time.monotonic()
 

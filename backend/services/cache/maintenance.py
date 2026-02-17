@@ -68,9 +68,7 @@ class CacheMaintenance:
                 errors.append(msg)
                 logger.warning("Warm-up failed: %s", msg)
 
-        logger.info(
-            "Cache warm-up complete: warmed=%d errors=%d", warmed, len(errors)
-        )
+        logger.info("Cache warm-up complete: warmed=%d errors=%d", warmed, len(errors))
         return {"warmed": warmed, "skipped": 0, "errors": errors}
 
     async def cleanup_expired(self) -> dict[str, Any]:

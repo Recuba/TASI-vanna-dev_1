@@ -52,16 +52,16 @@ def _report_latency(name: str, latencies: list[float]) -> dict:
         "p95_ms": round(percentile(latencies, 95) * 1000, 2),
         "p99_ms": round(percentile(latencies, 99) * 1000, 2),
     }
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {name} Latency Report ({stats['count']} requests)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  min:  {stats['min_ms']}ms")
     print(f"  mean: {stats['mean_ms']}ms")
     print(f"  p50:  {stats['p50_ms']}ms")
     print(f"  p95:  {stats['p95_ms']}ms")
     print(f"  p99:  {stats['p99_ms']}ms")
     print(f"  max:  {stats['max_ms']}ms")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     return stats
 
 
@@ -196,6 +196,7 @@ class TestConcurrentAuth:
             start = time.monotonic()
             with patch("auth.jwt_handler._get_auth_settings") as mock:
                 from config.settings import AuthSettings
+
                 mock.return_value = AuthSettings(
                     jwt_secret="perf-test-secret",
                     jwt_algorithm="HS256",
@@ -293,7 +294,9 @@ class TestConcurrentSqlValidation:
         total_elapsed = time.monotonic() - start
 
         throughput = len(all_queries) / total_elapsed
-        print(f"\nSQL Validation Throughput: {throughput:.0f} queries/sec ({len(all_queries)} queries in {total_elapsed:.2f}s)")
+        print(
+            f"\nSQL Validation Throughput: {throughput:.0f} queries/sec ({len(all_queries)} queries in {total_elapsed:.2f}s)"
+        )
         assert throughput > 100, f"Throughput too low: {throughput:.0f} queries/sec"
 
 
@@ -329,9 +332,7 @@ class TestAsyncConcurrent:
             "SELECT c.ticker FROM companies c JOIN market_data m ON c.ticker = m.ticker",
         ] * 20  # 100 concurrent
 
-        results = await asyncio.gather(
-            *[validate_query(q) for q in queries]
-        )
+        results = await asyncio.gather(*[validate_query(q) for q in queries])
 
         latencies = [elapsed for _, elapsed in results]
         stats = _report_latency("Async Concurrent (100 queries)", latencies)

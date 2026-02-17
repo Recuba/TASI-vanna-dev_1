@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional
 try:
     import psycopg2
     import psycopg2.extras
+
     _HAS_PSYCOPG2 = True
 except ImportError:
     _HAS_PSYCOPG2 = False
@@ -238,11 +239,18 @@ class TechnicalReportsService:
         d = report.to_dict()
         if is_sqlite:
             return (
-                d["id"], d.get("ticker"), d["title"], d.get("summary"),
-                d.get("author"), d.get("source_name"), d.get("source_url"),
+                d["id"],
+                d.get("ticker"),
+                d["title"],
+                d.get("summary"),
+                d.get("author"),
+                d.get("source_name"),
+                d.get("source_url"),
                 d.get("published_at") and str(d["published_at"]),
-                d.get("recommendation"), d.get("target_price"),
-                d.get("current_price_at_report"), d.get("report_type"),
+                d.get("recommendation"),
+                d.get("target_price"),
+                d.get("current_price_at_report"),
+                d.get("report_type"),
             )
         return d
 
@@ -384,7 +392,9 @@ class TechnicalReportsService:
         else:
             clauses_pg = ["r.ticker = %(ticker)s"]
             pg_params: Dict[str, Any] = {
-                "ticker": ticker, "limit": limit, "offset": offset,
+                "ticker": ticker,
+                "limit": limit,
+                "offset": offset,
             }
             if recommendation:
                 clauses_pg.append(f"r.recommendation {like} %(recommendation)s")

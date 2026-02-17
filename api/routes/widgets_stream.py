@@ -25,6 +25,7 @@ def _get_redis():
     """Return the Redis client, or None."""
     try:
         from cache import get_redis
+
         return get_redis()
     except ImportError:
         return None

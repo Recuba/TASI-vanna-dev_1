@@ -38,7 +38,9 @@ class CircuitStats(BaseModel):
     name: str = Field(description="Identifier of the protected service")
     state: CircuitState = Field(description="Current circuit state")
     failure_count: int = Field(default=0, description="Consecutive failure count")
-    success_count: int = Field(default=0, description="Consecutive success count in half-open")
+    success_count: int = Field(
+        default=0, description="Consecutive success count in half-open"
+    )
     total_failures: int = Field(default=0, description="Lifetime failure count")
     total_successes: int = Field(default=0, description="Lifetime success count")
     total_rejected: int = Field(default=0, description="Calls rejected while open")

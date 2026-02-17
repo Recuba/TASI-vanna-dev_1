@@ -134,10 +134,17 @@ def table_exists(conn, table_name: str) -> bool:
 
 
 # Whitelist of allowed column names for datetime filtering
-_ALLOWED_DATETIME_COLUMNS = frozenset({
-    "created_at", "updated_at", "published_at", "fetched_at",
-    "scraped_at", "timestamp", "date",
-})
+_ALLOWED_DATETIME_COLUMNS = frozenset(
+    {
+        "created_at",
+        "updated_at",
+        "published_at",
+        "fetched_at",
+        "scraped_at",
+        "timestamp",
+        "date",
+    }
+)
 
 # Interval must match pattern like "1 day", "24 hours", "30 minutes"
 _INTERVAL_PATTERN = re.compile(

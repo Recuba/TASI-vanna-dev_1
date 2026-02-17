@@ -176,7 +176,11 @@ class QueryCache:
             await self._redis.set(key, packed, ttl=ttl)
             logger.debug(
                 "Cache SET key=%s tier=%s ttl=%ds rows=%d bytes=%d",
-                key, tier.value, ttl, len(data), len(packed),
+                key,
+                tier.value,
+                ttl,
+                len(data),
+                len(packed),
             )
             return True
         except Exception:

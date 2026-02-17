@@ -125,8 +125,7 @@ class RateLimitConfig(BaseSettings):
             Mapping of path prefix -> (limit, window_seconds).
         """
         return {
-            rule.path_prefix: (rule.limit, rule.window)
-            for rule in self.endpoint_rules
+            rule.path_prefix: (rule.limit, rule.window) for rule in self.endpoint_rules
         }
 
     def log_config(self) -> None:

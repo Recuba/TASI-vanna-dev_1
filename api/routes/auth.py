@@ -44,7 +44,9 @@ def _get_auth_service():
 
         return AuthService(get_conn=get_db_connection)
     except Exception:
-        logger.warning("AuthService unavailable (expected in SQLite mode)", exc_info=True)
+        logger.warning(
+            "AuthService unavailable (expected in SQLite mode)", exc_info=True
+        )
         return None
 
 
@@ -77,7 +79,9 @@ async def register(body: UserCreate):
             detail="Registration requires PostgreSQL backend",
         )
 
-    result = await asyncio.to_thread(service.register, body.email, body.password, body.display_name)
+    result = await asyncio.to_thread(
+        service.register, body.email, body.password, body.display_name
+    )
 
     if not result.success:
         raise HTTPException(

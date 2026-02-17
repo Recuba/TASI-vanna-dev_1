@@ -50,11 +50,29 @@ class JsonFormatter(logging.Formatter):
 
         # Include extra fields from middleware (e.g. request_id, duration_ms)
         _skip = {
-            "name", "msg", "args", "created", "relativeCreated",
-            "exc_info", "exc_text", "stack_info", "lineno", "funcName",
-            "pathname", "filename", "module", "levelno", "levelname",
-            "thread", "threadName", "process", "processName",
-            "getMessage", "message", "msecs", "taskName",
+            "name",
+            "msg",
+            "args",
+            "created",
+            "relativeCreated",
+            "exc_info",
+            "exc_text",
+            "stack_info",
+            "lineno",
+            "funcName",
+            "pathname",
+            "filename",
+            "module",
+            "levelno",
+            "levelname",
+            "thread",
+            "threadName",
+            "process",
+            "processName",
+            "getMessage",
+            "message",
+            "msecs",
+            "taskName",
         }
         for key, value in record.__dict__.items():
             if key not in _skip and not key.startswith("_"):

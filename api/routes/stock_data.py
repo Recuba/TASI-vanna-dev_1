@@ -191,7 +191,9 @@ class QuoteItem(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-@router.get("/{ticker}/dividends", response_model=DividendData, responses=STANDARD_ERRORS)
+@router.get(
+    "/{ticker}/dividends", response_model=DividendData, responses=STANDARD_ERRORS
+)
 async def get_dividends(ticker: str) -> DividendData:
     """Get dividend data for a specific stock."""
     ticker = validate_ticker(ticker)
@@ -218,7 +220,9 @@ async def get_dividends(ticker: str) -> DividendData:
     )
 
 
-@router.get("/{ticker}/summary", response_model=FinancialSummaryData, responses=STANDARD_ERRORS)
+@router.get(
+    "/{ticker}/summary", response_model=FinancialSummaryData, responses=STANDARD_ERRORS
+)
 async def get_financial_summary(ticker: str) -> FinancialSummaryData:
     """Get financial summary for a specific stock."""
     ticker = validate_ticker(ticker)
@@ -248,7 +252,9 @@ async def get_financial_summary(ticker: str) -> FinancialSummaryData:
     )
 
 
-@router.get("/{ticker}/financials", response_model=FinancialsResponse, responses=STANDARD_ERRORS)
+@router.get(
+    "/{ticker}/financials", response_model=FinancialsResponse, responses=STANDARD_ERRORS
+)
 async def get_financials(
     ticker: str,
     statement: str = Query(

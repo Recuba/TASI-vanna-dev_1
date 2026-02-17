@@ -34,6 +34,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # Skip if PostgreSQL is not available
 # ---------------------------------------------------------------------------
 
+
 def _pg_available() -> bool:
     """Check if PostgreSQL is reachable."""
     if not os.environ.get("POSTGRES_HOST"):
@@ -69,6 +70,7 @@ pytestmark = [
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def pg_conn():
@@ -120,6 +122,7 @@ def temp_table(pg_conn, test_table_name):
 # Connection tests
 # ---------------------------------------------------------------------------
 
+
 class TestPGConnection:
     """Test basic PostgreSQL connectivity."""
 
@@ -141,6 +144,7 @@ class TestPGConnection:
 # ---------------------------------------------------------------------------
 # Table creation tests
 # ---------------------------------------------------------------------------
+
 
 class TestPGTableCreation:
     """Test table creation and schema verification."""
@@ -164,6 +168,7 @@ class TestPGTableCreation:
 # ---------------------------------------------------------------------------
 # Data insertion and retrieval
 # ---------------------------------------------------------------------------
+
 
 class TestPGDataOperations:
     """Test data insertion, retrieval, and query patterns."""
@@ -233,6 +238,7 @@ class TestPGDataOperations:
 # ---------------------------------------------------------------------------
 # Schema verification (if main schema tables exist)
 # ---------------------------------------------------------------------------
+
 
 class TestPGSchemaVerification:
     """Verify that the main application tables exist (if schema has been applied)."""

@@ -55,11 +55,13 @@ except ImportError:
     def task(weight=1):
         def decorator(func):
             return func
+
         return decorator
 
     def tag(*tags):
         def decorator(func):
             return func
+
         return decorator
 
 

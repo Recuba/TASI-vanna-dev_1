@@ -100,8 +100,7 @@ def validate_vanna_output(
 
     # Step 2: Check tables against allowlist
     disallowed_tables = [
-        t for t in result.tables_accessed
-        if not allowlist.is_table_allowed(t)
+        t for t in result.tables_accessed if not allowlist.is_table_allowed(t)
     ]
     if disallowed_tables:
         elapsed = (time.perf_counter() - start_time) * 1000

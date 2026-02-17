@@ -44,7 +44,9 @@ def validate_ticker(ticker: str) -> str:
     return stripped
 
 
-def validate_ticker_list(tickers_csv: str, min_count: int = 1, max_count: int = 50) -> list[str]:
+def validate_ticker_list(
+    tickers_csv: str, min_count: int = 1, max_count: int = 50
+) -> list[str]:
     """Validate a comma-separated list of tickers.
 
     Returns a list of validated ticker strings.

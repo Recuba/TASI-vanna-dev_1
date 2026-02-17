@@ -40,6 +40,7 @@ def _get_ticker_lock(symbol: str, period: str) -> threading.Lock:
             _ticker_locks[key] = threading.Lock()
         return _ticker_locks[key]
 
+
 VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 
 _breaker = CircuitBreaker(

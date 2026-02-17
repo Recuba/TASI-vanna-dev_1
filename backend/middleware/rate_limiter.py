@@ -227,11 +227,7 @@ class RateLimiter:
     def _cleanup_memory(self, now: float, window: int) -> None:
         """Remove in-memory keys with no recent requests."""
         cutoff = now - window
-        stale = [
-            k
-            for k, ts in self._requests.items()
-            if not ts or ts[-1] < cutoff
-        ]
+        stale = [k for k, ts in self._requests.items() if not ts or ts[-1] < cutoff]
         for k in stale:
             del self._requests[k]
 

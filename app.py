@@ -210,16 +210,34 @@ app.openapi_tags = [
     {"name": "health", "description": "Platform health checks"},
     {"name": "auth", "description": "Authentication and user management"},
     {"name": "entities", "description": "Company/stock entity lookup and listing"},
-    {"name": "stock-data", "description": "Per-stock dividends, financials, comparison, and quotes"},
-    {"name": "market-analytics", "description": "Market movers, summary, sector analytics, heatmap"},
-    {"name": "charts-analytics", "description": "Pre-built chart data (sector market cap, P/E, dividends)"},
-    {"name": "market-overview", "description": "World 360 global market overview (10 instruments)"},
+    {
+        "name": "stock-data",
+        "description": "Per-stock dividends, financials, comparison, and quotes",
+    },
+    {
+        "name": "market-analytics",
+        "description": "Market movers, summary, sector analytics, heatmap",
+    },
+    {
+        "name": "charts-analytics",
+        "description": "Pre-built chart data (sector market cap, P/E, dividends)",
+    },
+    {
+        "name": "market-overview",
+        "description": "World 360 global market overview (10 instruments)",
+    },
     {"name": "tasi-index", "description": "TASI index OHLCV data and health"},
     {"name": "stock-ohlcv", "description": "Per-stock OHLCV chart data"},
-    {"name": "news-feed", "description": "Live news feed from Arabic financial sources"},
+    {
+        "name": "news-feed",
+        "description": "Live news feed from Arabic financial sources",
+    },
     {"name": "news", "description": "News articles (PostgreSQL-backed)"},
     {"name": "reports", "description": "Technical/analyst reports (dual-backend)"},
-    {"name": "announcements", "description": "CMA/Tadawul announcements (PostgreSQL-backed)"},
+    {
+        "name": "announcements",
+        "description": "CMA/Tadawul announcements (PostgreSQL-backed)",
+    },
     {"name": "watchlists", "description": "User watchlists and alerts (authenticated)"},
 ]
 
@@ -247,7 +265,10 @@ app.user_middleware[:] = [
 # 8a. Middleware (outermost first: error_handler -> request_logging -> rate_limit -> CORS)
 # ---------------------------------------------------------------------------
 try:
-    from middleware.error_handler import ErrorHandlerMiddleware, install_exception_handlers
+    from middleware.error_handler import (
+        ErrorHandlerMiddleware,
+        install_exception_handlers,
+    )
     from middleware.request_logging import RequestLoggingMiddleware
     from middleware.rate_limit import RateLimitMiddleware
     from middleware.cors import setup_cors
@@ -362,6 +383,7 @@ except ImportError as exc:
 # Reports route works with both SQLite and PostgreSQL backends.
 try:
     from api.routes.reports import router as reports_router
+
     app.include_router(reports_router)
     logger.info("Reports route registered (dual-backend)")
 except ImportError as exc:
@@ -556,7 +578,9 @@ _TEMPLATE_RAW = (_HERE / "templates" / "index.html").read_text(encoding="utf-8")
 @app.get("/", response_class=HTMLResponse)
 async def custom_index():
     # Inject the actual frontend URL (env-driven, default to local dev)
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
+    frontend_url = (
+        os.environ.get("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
+    )
     html = _TEMPLATE_RAW.replace("{{FRONTEND_URL}}", frontend_url)
     return html
 
@@ -690,6 +714,7 @@ async def lifespan(app):
         _redis_for_hub = None
         if _redis_status == "connected":
             from cache import get_redis as _get_redis_client
+
             _redis_for_hub = _get_redis_client()
 
         _quotes_hub_task = asyncio.create_task(run_quotes_hub(_redis_for_hub))

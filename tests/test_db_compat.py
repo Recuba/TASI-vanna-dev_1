@@ -17,6 +17,7 @@ from services.db_compat import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(params=[False, True], ids=["sqlite", "postgres"])
 def backend(request, monkeypatch):
     """Run each test against both SQLite and PostgreSQL backends."""
@@ -27,6 +28,7 @@ def backend(request, monkeypatch):
 # ---------------------------------------------------------------------------
 # Valid inputs
 # ---------------------------------------------------------------------------
+
 
 class TestDatetimeRecentValid:
     """Ensure valid column + interval combinations produce correct SQL."""
@@ -74,6 +76,7 @@ class TestDatetimeRecentValid:
 # Invalid column names
 # ---------------------------------------------------------------------------
 
+
 class TestDatetimeRecentInvalidColumn:
     """Ensure non-whitelisted columns are rejected."""
 
@@ -98,6 +101,7 @@ class TestDatetimeRecentInvalidColumn:
 # ---------------------------------------------------------------------------
 # Invalid intervals
 # ---------------------------------------------------------------------------
+
 
 class TestDatetimeRecentInvalidInterval:
     """Ensure malformed intervals are rejected."""
@@ -127,6 +131,7 @@ class TestDatetimeRecentInvalidInterval:
 # SQL injection attempts
 # ---------------------------------------------------------------------------
 
+
 class TestDatetimeRecentInjection:
     """Verify that SQL injection payloads are blocked."""
 
@@ -150,6 +155,7 @@ class TestDatetimeRecentInjection:
 # ---------------------------------------------------------------------------
 # Whitelist / pattern sanity checks
 # ---------------------------------------------------------------------------
+
 
 class TestWhitelistAndPattern:
     """Sanity-check the module-level constants."""

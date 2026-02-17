@@ -94,23 +94,17 @@ class NewsScheduler:
                 try:
                     articles = scraper.fetch_articles()
                     all_articles.extend(articles)
-                    logger.info(
-                        "Source %s: fetched %d articles", source, len(articles)
-                    )
+                    logger.info("Source %s: fetched %d articles", source, len(articles))
                     if articles:
                         _time.sleep(INTER_REQUEST_DELAY)
                 except Exception:
                     cycle_errors[source] = cycle_errors.get(source, 0) + 1
-                    logger.warning(
-                        "Source %s: fetch failed", source, exc_info=True
-                    )
+                    logger.warning("Source %s: fetch failed", source, exc_info=True)
 
             # Update cumulative error counts
             with self._source_errors_lock:
                 for src, count in cycle_errors.items():
-                    self._source_errors[src] = (
-                        self._source_errors.get(src, 0) + count
-                    )
+                    self._source_errors[src] = self._source_errors.get(src, 0) + count
 
             if all_articles:
                 inserted = self.store.store_articles(all_articles)

@@ -34,6 +34,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def auth_app():
     """Create a minimal FastAPI app with the auth router."""
@@ -90,6 +91,7 @@ def mock_db_user():
 # ---------------------------------------------------------------------------
 # Guest login -> JWT
 # ---------------------------------------------------------------------------
+
 
 class TestGuestLogin:
     """Test POST /api/auth/guest returns a valid JWT."""
@@ -152,6 +154,7 @@ class TestGuestLogin:
 # Protected endpoint with valid token -> 200
 # ---------------------------------------------------------------------------
 
+
 class TestProtectedWithValidToken:
     """Test GET /api/auth/me with a valid token returns user profile."""
 
@@ -194,6 +197,7 @@ class TestProtectedWithValidToken:
 # Protected endpoint without token -> 401/403
 # ---------------------------------------------------------------------------
 
+
 class TestProtectedWithoutToken:
     """Test GET /api/auth/me without a token returns 401/403."""
 
@@ -212,6 +216,7 @@ class TestProtectedWithoutToken:
 # ---------------------------------------------------------------------------
 # Protected endpoint with invalid token -> 401/403
 # ---------------------------------------------------------------------------
+
 
 class TestProtectedWithInvalidToken:
     """Test GET /api/auth/me with invalid tokens."""
@@ -272,6 +277,7 @@ class TestProtectedWithInvalidToken:
 # ---------------------------------------------------------------------------
 # Token refresh
 # ---------------------------------------------------------------------------
+
 
 class TestTokenRefresh:
     """Test POST /api/auth/refresh with guest tokens."""

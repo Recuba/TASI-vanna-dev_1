@@ -377,9 +377,7 @@ def check_news() -> ComponentHealth:
                     latency_ms=(time.monotonic() - start) * 1000,
                     message="news_articles table not found",
                 )
-            count_rows = _sqlite_query(
-                "SELECT COUNT(*) FROM news_articles", db_path
-            )
+            count_rows = _sqlite_query("SELECT COUNT(*) FROM news_articles", db_path)
             article_count = count_rows[0][0] if count_rows else 0
             source_rows = _sqlite_query(
                 "SELECT COUNT(DISTINCT source_name) FROM news_articles", db_path

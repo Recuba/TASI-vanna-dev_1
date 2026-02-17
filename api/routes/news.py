@@ -62,7 +62,9 @@ async def list_news(
     """Return the latest news articles across all tickers."""
     articles = await asyncio.to_thread(
         svc.get_latest_news,
-        limit=pagination.limit, offset=pagination.offset, language=language,
+        limit=pagination.limit,
+        offset=pagination.offset,
+        language=language,
     )
     total = await asyncio.to_thread(svc.count_articles)
     return PaginatedResponse.build(

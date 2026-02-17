@@ -87,12 +87,18 @@ async def get_news_feed(
     """Get latest news articles with optional filtering and pagination."""
     store = get_store()
     articles = await store.aget_latest_news(
-        limit=limit, offset=offset, source=source,
-        sentiment_label=sentiment, date_from=date_from, date_to=date_to,
+        limit=limit,
+        offset=offset,
+        source=source,
+        sentiment_label=sentiment,
+        date_from=date_from,
+        date_to=date_to,
     )
     total = await store.acount_articles(
-        source=source, sentiment_label=sentiment,
-        date_from=date_from, date_to=date_to,
+        source=source,
+        sentiment_label=sentiment,
+        date_from=date_from,
+        date_to=date_to,
     )
     page = (offset // limit) + 1 if limit > 0 else 1
 
@@ -145,13 +151,20 @@ async def search_articles(
     """Search articles by title or body text with optional filters."""
     store = get_store()
     articles = await store.asearch_articles(
-        query=q, limit=limit, offset=offset,
-        source=source, sentiment_label=sentiment,
-        date_from=date_from, date_to=date_to,
+        query=q,
+        limit=limit,
+        offset=offset,
+        source=source,
+        sentiment_label=sentiment,
+        date_from=date_from,
+        date_to=date_to,
     )
     total = await store.acount_search(
-        query=q, source=source, sentiment_label=sentiment,
-        date_from=date_from, date_to=date_to,
+        query=q,
+        source=source,
+        sentiment_label=sentiment,
+        date_from=date_from,
+        date_to=date_to,
     )
     page = (offset // limit) + 1 if limit > 0 else 1
 

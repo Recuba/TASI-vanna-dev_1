@@ -37,6 +37,7 @@ def _get_period_lock(period: str) -> threading.Lock:
             _period_locks[period] = threading.Lock()
         return _period_locks[period]
 
+
 VALID_PERIODS = ("1mo", "3mo", "6mo", "1y", "2y", "5y")
 
 _breaker = CircuitBreaker(

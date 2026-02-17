@@ -197,7 +197,9 @@ class NewsStore:
         .. deprecated:: Use :meth:`aget_latest_news` in async contexts.
         """
         conn = self._connect()
-        clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
+        clauses, params = self._build_filters(
+            source, sentiment_label, date_from, date_to
+        )
         where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
         params.extend([limit, offset])
         rows = conn.execute(
@@ -247,7 +249,9 @@ class NewsStore:
         .. deprecated:: Use :meth:`acount_articles` in async contexts.
         """
         conn = self._connect()
-        clauses, params = self._build_filters(source, sentiment_label, date_from, date_to)
+        clauses, params = self._build_filters(
+            source, sentiment_label, date_from, date_to
+        )
         where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
         row = conn.execute(
             f"SELECT COUNT(*) FROM news_articles{where}", params

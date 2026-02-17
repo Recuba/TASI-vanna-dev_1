@@ -53,7 +53,10 @@ def main() -> None:
 
             content = yaml.dump(schema, default_flow_style=False, allow_unicode=True)
         except ImportError:
-            print("ERROR: pyyaml is required for YAML output. Install with: pip install pyyaml", file=sys.stderr)
+            print(
+                "ERROR: pyyaml is required for YAML output. Install with: pip install pyyaml",
+                file=sys.stderr,
+            )
             sys.exit(1)
     else:
         content = json.dumps(schema, indent=2, ensure_ascii=False)

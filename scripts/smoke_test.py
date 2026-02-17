@@ -28,6 +28,7 @@ TIMEOUT = 10  # seconds
 # Colored output helpers
 # ---------------------------------------------------------------------------
 
+
 class Colors:
     GREEN = "\033[92m"
     RED = "\033[91m"
@@ -42,6 +43,7 @@ def _supports_color() -> bool:
     if sys.platform == "win32":
         try:
             import os
+
             return os.isatty(sys.stdout.fileno()) and os.environ.get("TERM") != "dumb"
         except Exception:
             return False
@@ -91,6 +93,7 @@ def _skip(name: str, reason: str = "") -> None:
 # HTTP helpers (stdlib only -- no requests dependency)
 # ---------------------------------------------------------------------------
 
+
 def _get(url: str, headers: dict | None = None) -> tuple[int, bytes]:
     """Perform a GET request, return (status_code, body_bytes)."""
     req = urllib.request.Request(url, headers=headers or {})
@@ -117,6 +120,7 @@ def _get_json(url: str, headers: dict | None = None) -> tuple[int, dict | None]:
 # ---------------------------------------------------------------------------
 # Test cases
 # ---------------------------------------------------------------------------
+
 
 def test_tasi_health(base: str) -> None:
     """(1) /api/v1/charts/tasi/health returns JSON with status field."""
@@ -266,6 +270,7 @@ def test_tasi_invalid_period(base: str) -> None:
 # ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     base_url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_BASE_URL

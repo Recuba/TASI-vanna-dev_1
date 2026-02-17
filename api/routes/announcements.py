@@ -96,7 +96,9 @@ async def material_events(
         ticker=ticker,
         since=since,
     )
-    total = await asyncio.to_thread(svc.count_announcements, ticker=ticker, is_material=True)
+    total = await asyncio.to_thread(
+        svc.count_announcements, ticker=ticker, is_material=True
+    )
     return PaginatedResponse.build(
         items=[_to_response(a) for a in items],
         total=total,

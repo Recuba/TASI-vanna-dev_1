@@ -112,7 +112,10 @@ class TestClassicInjection:
         )
         assert result.is_valid is False
         assert result.risk_score > 0
-        assert any("sqlite_master" in v.lower() or "schema" in v.lower() for v in result.violations)
+        assert any(
+            "sqlite_master" in v.lower() or "schema" in v.lower()
+            for v in result.violations
+        )
 
     def test_union_select_information_schema(self, validator):
         result = validator.validate(
@@ -120,7 +123,10 @@ class TestClassicInjection:
             "UNION ALL SELECT table_name FROM information_schema.tables"
         )
         assert result.is_valid is False
-        assert any("information_schema" in v.lower() or "schema" in v.lower() for v in result.violations)
+        assert any(
+            "information_schema" in v.lower() or "schema" in v.lower()
+            for v in result.violations
+        )
 
     def test_union_with_null_padding(self, validator):
         result = validator.validate(
@@ -138,9 +144,7 @@ class TestStackedQueries:
     """Test multiple statement (stacked query) detection."""
 
     def test_stacked_select_drop(self, validator):
-        result = validator.validate(
-            "SELECT * FROM companies; DROP TABLE companies"
-        )
+        result = validator.validate("SELECT * FROM companies; DROP TABLE companies")
         assert result.is_valid is False
         assert any("stacked" in v.lower() or "DROP" in v for v in result.violations)
 
@@ -157,9 +161,7 @@ class TestStackedQueries:
         assert result.is_valid is False
 
     def test_stacked_select_delete(self, validator):
-        result = validator.validate(
-            "SELECT * FROM companies; DELETE FROM companies"
-        )
+        result = validator.validate("SELECT * FROM companies; DELETE FROM companies")
         assert result.is_valid is False
 
 
@@ -177,9 +179,7 @@ class TestForbiddenOperations:
         assert any("DROP" in v for v in result.violations)
 
     def test_alter_table(self, validator):
-        result = validator.validate(
-            "ALTER TABLE companies ADD COLUMN hacked TEXT"
-        )
+        result = validator.validate("ALTER TABLE companies ADD COLUMN hacked TEXT")
         assert result.is_valid is False
         assert any("ALTER" in v for v in result.violations)
 
@@ -234,7 +234,9 @@ class TestTimeBasedInjection:
             "SELECT * FROM companies WHERE ticker = '' OR SLEEP(5) --"
         )
         assert result.is_valid is False
-        assert any("SLEEP" in v.upper() or "injection" in v.lower() for v in result.violations)
+        assert any(
+            "SLEEP" in v.upper() or "injection" in v.lower() for v in result.violations
+        )
 
     def test_benchmark_injection(self, validator):
         result = validator.validate(
@@ -243,9 +245,7 @@ class TestTimeBasedInjection:
         assert result.is_valid is False
 
     def test_waitfor_injection(self, validator):
-        result = validator.validate(
-            "SELECT * FROM companies; WAITFOR DELAY '00:00:05'"
-        )
+        result = validator.validate("SELECT * FROM companies; WAITFOR DELAY '00:00:05'")
         assert result.is_valid is False
 
     def test_pg_sleep_injection(self, validator):
@@ -264,9 +264,7 @@ class TestCommentObfuscation:
     """Test SQL keyword hiding inside comments."""
 
     def test_inline_comment_with_drop(self, validator):
-        result = validator.validate(
-            "SELECT * FROM companies -- DROP TABLE companies"
-        )
+        result = validator.validate("SELECT * FROM companies -- DROP TABLE companies")
         assert result.is_valid is False
         assert any("DROP" in v for v in result.violations)
 
@@ -293,9 +291,7 @@ class TestEncodingTricks:
     """Test detection of encoding-based obfuscation."""
 
     def test_hex_encoded_payload(self, validator):
-        result = validator.validate(
-            "SELECT * FROM companies WHERE ticker = 0x41424344"
-        )
+        result = validator.validate("SELECT * FROM companies WHERE ticker = 0x41424344")
         assert result.is_valid is False
         assert any("0x" in v or "injection" in v.lower() for v in result.violations)
 
@@ -304,14 +300,18 @@ class TestEncodingTricks:
             "SELECT * FROM companies WHERE ticker = CHAR(65, 66, 67)"
         )
         assert result.is_valid is False
-        assert any("CHAR" in v.upper() or "injection" in v.lower() for v in result.violations)
+        assert any(
+            "CHAR" in v.upper() or "injection" in v.lower() for v in result.violations
+        )
 
     def test_concat_trick(self, validator):
         result = validator.validate(
             "SELECT * FROM companies WHERE ticker = CONCAT('DR', 'OP')"
         )
         assert result.is_valid is False
-        assert any("CONCAT" in v.upper() or "injection" in v.lower() for v in result.violations)
+        assert any(
+            "CONCAT" in v.upper() or "injection" in v.lower() for v in result.violations
+        )
 
 
 # ===========================================================================
@@ -323,9 +323,7 @@ class TestFileAccessInjection:
     """Test detection of file access injection attempts."""
 
     def test_load_file(self, validator):
-        result = validator.validate(
-            "SELECT LOAD_FILE('/etc/passwd')"
-        )
+        result = validator.validate("SELECT LOAD_FILE('/etc/passwd')")
         assert result.is_valid is False
 
     def test_into_outfile(self, validator):
@@ -352,7 +350,10 @@ class TestSchemaProbing:
     def test_sqlite_master(self, validator):
         result = validator.validate("SELECT * FROM sqlite_master")
         assert result.is_valid is False
-        assert any("sqlite_master" in v.lower() or "schema" in v.lower() for v in result.violations)
+        assert any(
+            "sqlite_master" in v.lower() or "schema" in v.lower()
+            for v in result.violations
+        )
 
     def test_pg_catalog(self, validator):
         result = validator.validate("SELECT * FROM pg_catalog.pg_tables")
@@ -363,9 +364,7 @@ class TestSchemaProbing:
         assert result.is_valid is False
 
     def test_information_schema_tables(self, validator):
-        result = validator.validate(
-            "SELECT table_name FROM information_schema.tables"
-        )
+        result = validator.validate("SELECT table_name FROM information_schema.tables")
         assert result.is_valid is False
 
 
@@ -378,9 +377,7 @@ class TestSQLiteSpecific:
     """Test SQLite-specific injection patterns."""
 
     def test_attach_database(self, validator):
-        result = validator.validate(
-            "ATTACH DATABASE '/tmp/evil.db' AS evil"
-        )
+        result = validator.validate("ATTACH DATABASE '/tmp/evil.db' AS evil")
         assert result.is_valid is False
 
     def test_pragma_table_info(self, validator):

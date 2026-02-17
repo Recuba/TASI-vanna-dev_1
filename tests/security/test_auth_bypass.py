@@ -166,7 +166,11 @@ class TestMalformedTokenBypass:
     def test_truncated_token_rejected(self, client, mock_auth_settings):
         """Token with missing signature segment."""
         token = pyjwt.encode(
-            {"sub": "user-1", "type": "access", "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+            {
+                "sub": "user-1",
+                "type": "access",
+                "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            },
             mock_auth_settings.jwt_secret,
             algorithm=mock_auth_settings.jwt_algorithm,
         )
@@ -284,17 +288,29 @@ class TestAlgorithmConfusion:
         import base64
         import json
 
-        header = base64.urlsafe_b64encode(
-            json.dumps({"alg": "none", "typ": "JWT"}).encode()
-        ).rstrip(b"=").decode()
-        payload = base64.urlsafe_b64encode(
-            json.dumps({
-                "sub": "admin",
-                "email": "admin@test.com",
-                "type": "access",
-                "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
-            }).encode()
-        ).rstrip(b"=").decode()
+        header = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode())
+            .rstrip(b"=")
+            .decode()
+        )
+        payload = (
+            base64.urlsafe_b64encode(
+                json.dumps(
+                    {
+                        "sub": "admin",
+                        "email": "admin@test.com",
+                        "type": "access",
+                        "exp": int(
+                            (
+                                datetime.now(timezone.utc) + timedelta(hours=1)
+                            ).timestamp()
+                        ),
+                    }
+                ).encode()
+            )
+            .rstrip(b"=")
+            .decode()
+        )
         fake_token = f"{header}.{payload}."
 
         resp = client.get(

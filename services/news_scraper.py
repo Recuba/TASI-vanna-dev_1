@@ -964,7 +964,9 @@ def _title_word_overlap(title_a: str, title_b: str) -> float:
     return len(intersection) / len(union)
 
 
-def _deduplicate(articles: List[dict], threshold: float = _scraper_cfg.dedup_threshold) -> List[dict]:
+def _deduplicate(
+    articles: List[dict], threshold: float = _scraper_cfg.dedup_threshold
+) -> List[dict]:
     """Remove near-duplicate articles based on title similarity.
 
     Two-pass deduplication:

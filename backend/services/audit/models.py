@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 # Security event enumerations
 # ---------------------------------------------------------------------------
 
+
 class SecuritySeverity(str, Enum):
     """Severity level for security events."""
 
@@ -45,6 +46,7 @@ class SecurityEventType(str, Enum):
 # ---------------------------------------------------------------------------
 # Query audit event
 # ---------------------------------------------------------------------------
+
 
 class QueryAuditEvent(BaseModel):
     """Structured record of a single NL-to-SQL query lifecycle.
@@ -94,6 +96,7 @@ class QueryAuditEvent(BaseModel):
 # ---------------------------------------------------------------------------
 # Security event
 # ---------------------------------------------------------------------------
+
 
 class SecurityEvent(BaseModel):
     """Structured record of a security-relevant occurrence.

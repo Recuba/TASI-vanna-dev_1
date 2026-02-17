@@ -218,6 +218,7 @@ class TestHealthNoAuth:
     def test_health_accessible_without_token(self, client):
         with patch("api.routes.health.get_health") as mock_fn:
             from services.health_service import HealthReport, HealthStatus
+
             mock_fn.return_value = HealthReport(
                 status=HealthStatus.HEALTHY,
                 uptime_seconds=1.0,

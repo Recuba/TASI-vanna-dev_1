@@ -24,9 +24,7 @@ MAX_IDENTIFIER_LENGTH = 128
 _IDENTIFIER_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 # Control characters to strip (C0 and C1 control chars, excluding \n \r \t)
-_CONTROL_CHARS_PATTERN = re.compile(
-    r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]"
-)
+_CONTROL_CHARS_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
 
 # Pattern to detect input that is purely SQL (not natural language)
 _PURE_SQL_PATTERN = re.compile(

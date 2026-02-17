@@ -98,7 +98,9 @@ async def reports_by_ticker(
         recommendation=recommendation,
         since=since,
     )
-    total = await asyncio.to_thread(svc.count_reports, ticker=ticker, recommendation=recommendation)
+    total = await asyncio.to_thread(
+        svc.count_reports, ticker=ticker, recommendation=recommendation
+    )
     return PaginatedResponse.build(
         items=[_to_response(r) for r in reports],
         total=total,

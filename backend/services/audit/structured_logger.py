@@ -39,13 +39,33 @@ class JSONFormatter(logging.Formatter):
     """
 
     # Standard LogRecord attributes to exclude from the "extra" sweep.
-    _SKIP_ATTRS: frozenset[str] = frozenset({
-        "name", "msg", "args", "created", "relativeCreated",
-        "exc_info", "exc_text", "stack_info", "lineno", "funcName",
-        "pathname", "filename", "module", "levelno", "levelname",
-        "thread", "threadName", "process", "processName",
-        "getMessage", "message", "msecs", "taskName",
-    })
+    _SKIP_ATTRS: frozenset[str] = frozenset(
+        {
+            "name",
+            "msg",
+            "args",
+            "created",
+            "relativeCreated",
+            "exc_info",
+            "exc_text",
+            "stack_info",
+            "lineno",
+            "funcName",
+            "pathname",
+            "filename",
+            "module",
+            "levelno",
+            "levelname",
+            "thread",
+            "threadName",
+            "process",
+            "processName",
+            "getMessage",
+            "message",
+            "msecs",
+            "taskName",
+        }
+    )
 
     def format(self, record: logging.LogRecord) -> str:
         log_entry: dict = {
@@ -115,8 +135,15 @@ def configure_logging(
     root.addHandler(handler)
 
     # Suppress noisy third-party loggers.
-    for noisy in ("uvicorn.access", "uvicorn.error", "httpcore", "httpx",
-                  "urllib3", "watchfiles", "yfinance"):
+    for noisy in (
+        "uvicorn.access",
+        "uvicorn.error",
+        "httpcore",
+        "httpx",
+        "urllib3",
+        "watchfiles",
+        "yfinance",
+    ):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
