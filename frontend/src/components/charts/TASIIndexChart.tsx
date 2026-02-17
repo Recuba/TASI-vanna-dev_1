@@ -412,28 +412,22 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
     <div
       dir="ltr"
       className={cn(
-        'rounded-xl overflow-hidden transition-opacity duration-500 dark:bg-[#1A1A1A] bg-white',
+        'rounded-xl overflow-hidden transition-opacity duration-500 dark:bg-dark-card bg-white border border-gold/10',
         chartVisible ? 'opacity-100' : 'opacity-0',
         className,
       )}
-      style={{
-        border: '1px solid rgba(212, 168, 75, 0.1)',
-      }}
     >
       {/* Toolbar */}
       <div
-        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-[#2A2A2A] bg-gray-100"
-        style={{
-          borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
-        }}
+        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-dark-input bg-gray-100 border-b border-gold/10"
       >
         {/* Left: Title + last price + source badge + period change */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold" style={{ color: '#D4A84B' }}>
+            <span className="text-sm font-bold text-gold">
               TASI
             </span>
-            <span className="text-xs hidden sm:inline" style={{ color: '#707070' }}>
+            <span className="text-xs hidden sm:inline text-[#707070]">
               {t('مؤشر السوق الرئيسي', 'Tadawul All Share Index')}
             </span>
             <DataSourceBadge source={source} lastUpdated={lastUpdated?.toISOString()} />
@@ -442,16 +436,15 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
           {/* Last price display */}
           {lastPrice !== null && (
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold" style={{ color: '#E0E0E0' }}>
+              <span className="text-base font-bold text-[#E0E0E0]">
                 {lastPrice.toFixed(2)}
               </span>
               {priceChange !== null && (
                 <span
-                  className="text-xs font-medium px-1.5 py-0.5 rounded"
-                  style={{
-                    color: isUp ? '#4CAF50' : '#FF6B6B',
-                    background: isUp ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 107, 107, 0.1)',
-                  }}
+                  className={cn(
+                    'text-xs font-medium px-1.5 py-0.5 rounded',
+                    isUp ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10',
+                  )}
                 >
                   {isUp ? '+' : ''}{priceChange.toFixed(2)}
                   {priceChangePct !== null && ` (${priceChangePct.toFixed(2)}%)`}
@@ -463,13 +456,10 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
           {/* Period % change */}
           {periodChange !== null && (
             <span
-              className="text-xs font-semibold px-1.5 py-0.5 rounded hidden sm:inline-block"
-              style={{
-                color: periodChange >= 0 ? '#4CAF50' : '#FF6B6B',
-                background: periodChange >= 0
-                  ? 'rgba(76, 175, 80, 0.1)'
-                  : 'rgba(255, 107, 107, 0.1)',
-              }}
+              className={cn(
+                'text-xs font-semibold px-1.5 py-0.5 rounded hidden sm:inline-block',
+                periodChange >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10',
+              )}
               title={t('تغير الفترة خلال النطاق المحدد', 'Period change over selected range')}
             >
               {t('الفترة', 'Period')}: {periodChange >= 0 ? '+' : ''}{periodChange.toFixed(2)}%
@@ -481,8 +471,7 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
         <div className="flex items-center gap-1 flex-wrap">
           {/* MA toggles */}
           <div
-            className="flex items-center gap-0.5 p-0.5 rounded-md"
-            style={{ background: 'rgba(212, 168, 75, 0.05)' }}
+            className="flex items-center gap-0.5 p-0.5 rounded-md bg-gold/5"
           >
             <button
               onClick={() => setShowMA20((v) => !v)}
@@ -516,20 +505,19 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
 
           {/* Chart type toggle */}
           <div
-            className="flex items-center gap-0.5 p-0.5 rounded-md"
-            style={{ background: 'rgba(212, 168, 75, 0.05)' }}
+            className="flex items-center gap-0.5 p-0.5 rounded-md bg-gold/5"
           >
             <button
               onClick={() => setChartType('candlestick')}
               title={t('شموع يابانية', 'Candlestick')}
               aria-label={t('رسم بياني شمعي', 'Candlestick chart')}
               aria-pressed={chartType === 'candlestick'}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
-              style={{
-                background: chartType === 'candlestick' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-                color: chartType === 'candlestick' ? '#D4A84B' : '#707070',
-                border: chartType === 'candlestick' ? '1px solid #D4A84B' : '1px solid transparent',
-              }}
+              className={cn(
+                'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
+                chartType === 'candlestick'
+                  ? 'bg-gold/20 text-gold border-gold'
+                  : 'bg-transparent text-[#707070] border-transparent',
+              )}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <line x1="9" y1="2" x2="9" y2="22" />
@@ -543,12 +531,12 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
               title={t('رسم خطي', 'Line Chart')}
               aria-label={t('رسم بياني خطي', 'Line chart')}
               aria-pressed={chartType === 'line'}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
-              style={{
-                background: chartType === 'line' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-                color: chartType === 'line' ? '#D4A84B' : '#707070',
-                border: chartType === 'line' ? '1px solid #D4A84B' : '1px solid transparent',
-              }}
+              className={cn(
+                'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
+                chartType === 'line'
+                  ? 'bg-gold/20 text-gold border-gold'
+                  : 'bg-transparent text-[#707070] border-transparent',
+              )}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <polyline points="3,17 8,11 13,15 21,5" />
@@ -559,12 +547,12 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
               title={t('رسم مساحي', 'Area Chart')}
               aria-label={t('رسم بياني مساحي', 'Area chart')}
               aria-pressed={chartType === 'area'}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
-              style={{
-                background: chartType === 'area' ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-                color: chartType === 'area' ? '#D4A84B' : '#707070',
-                border: chartType === 'area' ? '1px solid #D4A84B' : '1px solid transparent',
-              }}
+              className={cn(
+                'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
+                chartType === 'area'
+                  ? 'bg-gold/20 text-gold border-gold'
+                  : 'bg-transparent text-[#707070] border-transparent',
+              )}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M3,17 L8,11 L13,15 L21,5 L21,21 L3,21 Z" fill="currentColor" opacity="0.2" />
@@ -575,17 +563,13 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
 
           {/* Export buttons */}
           <div
-            className="flex items-center gap-0.5 p-0.5 rounded-md"
-            style={{ background: 'rgba(212, 168, 75, 0.05)' }}
+            className="flex items-center gap-0.5 p-0.5 rounded-md bg-gold/5"
           >
             <button
               onClick={handleScreenshot}
               title={t('تحميل PNG', 'Download PNG')}
               aria-label={t('تحميل صورة الرسم البياني', 'Download chart image')}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block"
-              style={{ color: '#707070' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#D4A84B'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#707070'; }}
+              className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block text-[#707070] hover:text-gold"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -597,10 +581,7 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
               onClick={handleCSVExport}
               title={t('تصدير CSV', 'Export CSV')}
               aria-label={t('تصدير بيانات الرسم البياني كملف CSV', 'Export chart data as CSV')}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block"
-              style={{ color: '#707070' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#D4A84B'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#707070'; }}
+              className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block text-[#707070] hover:text-gold"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M14,2 L6,2 C4.9,2 4,2.9 4,4 L4,20 C4,21.1 4.9,22 6,22 L18,22 C19.1,22 20,21.1 20,20 L20,8 Z" />
@@ -613,14 +594,12 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
 
           {/* Separator */}
           <span
-            className="w-px h-4 mx-0.5 hidden sm:block"
-            style={{ background: 'rgba(212, 168, 75, 0.15)' }}
+            className="w-px h-4 mx-0.5 hidden sm:block bg-gold/[0.15]"
           />
 
           {/* Period pill selector */}
           <div
-            className="flex items-center gap-0.5 p-0.5 rounded-lg"
-            style={{ background: 'rgba(212, 168, 75, 0.05)' }}
+            className="flex items-center gap-0.5 p-0.5 rounded-lg bg-gold/5"
           >
             {PERIODS.map((p) => (
               <button
@@ -631,13 +610,9 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
                 className={cn(
                   'text-xs px-2.5 py-1 rounded-md font-medium transition-all duration-200',
                   period === p.value
-                    ? 'shadow-sm'
-                    : 'hover:text-[#D4A84B]',
+                    ? 'bg-gold/20 text-gold shadow-sm'
+                    : 'bg-transparent text-[#707070] hover:text-gold',
                 )}
-                style={{
-                  background: period === p.value ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-                  color: period === p.value ? '#D4A84B' : '#707070',
-                }}
               >
                 {p.label}
               </button>
@@ -648,47 +623,41 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
 
       {/* Crosshair tooltip bar */}
       <div
-        className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px] dark:bg-[#1A1A1A] bg-gray-50"
-        style={{
-          borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
-          color: '#808080',
-        }}
+        className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px] dark:bg-dark-card bg-gray-50 border-b border-gold/10 text-[#808080]"
       >
         {tooltipData ? (
           <>
-            <span className="font-medium" style={{ color: '#D4A84B' }}>
+            <span className="font-medium text-gold">
               {tooltipData.time}
             </span>
             <span>
-              O <span style={{ color: '#E0E0E0' }}>{tooltipData.open.toFixed(2)}</span>
+              O <span className="text-[#E0E0E0]">{tooltipData.open.toFixed(2)}</span>
             </span>
             <span>
-              H <span style={{ color: '#4CAF50' }}>{tooltipData.high.toFixed(2)}</span>
+              H <span className="text-accent-green">{tooltipData.high.toFixed(2)}</span>
             </span>
             <span>
-              L <span style={{ color: '#FF6B6B' }}>{tooltipData.low.toFixed(2)}</span>
+              L <span className="text-accent-red">{tooltipData.low.toFixed(2)}</span>
             </span>
             <span>
               C{' '}
               <span
-                style={{
-                  color: tooltipData.close >= tooltipData.open ? '#4CAF50' : '#FF6B6B',
-                }}
+                className={tooltipData.close >= tooltipData.open ? 'text-accent-green' : 'text-accent-red'}
               >
                 {tooltipData.close.toFixed(2)}
               </span>
             </span>
             <span>
-              Vol <span style={{ color: '#B0B0B0' }}>{formatVolume(tooltipData.volume)}</span>
+              Vol <span className="text-text-secondary">{formatVolume(tooltipData.volume)}</span>
             </span>
           </>
         ) : (
-          <span style={{ color: '#505050' }}>{t('مرر المؤشر فوق الرسم البياني لعرض التفاصيل', 'Hover over chart for details')}</span>
+          <span className="text-[#505050]">{t('مرر المؤشر فوق الرسم البياني لعرض التفاصيل', 'Hover over chart for details')}</span>
         )}
       </div>
 
       {/* Chart container */}
-      <div ref={containerRef} role="img" aria-label={t('رسم بياني لمؤشر تاسي', 'TASI index chart')} className="dark:bg-[#1A1A1A] bg-white" style={{ height: chartHeight }} />
+      <div ref={containerRef} role="img" aria-label={t('رسم بياني لمؤشر تاسي', 'TASI index chart')} className="dark:bg-dark-card bg-white" style={{ height: chartHeight }} />
     </div>
   );
 }

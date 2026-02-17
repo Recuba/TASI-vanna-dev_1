@@ -18,8 +18,8 @@ const positionClasses: Record<string, string> = {
 const arrowClasses: Record<string, string> = {
   top: 'top-full left-1/2 -translate-x-1/2 border-t-[var(--bg-card)] border-x-transparent border-b-transparent',
   bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-[var(--bg-card)] border-x-transparent border-t-transparent',
-  left: 'left-full top-1/2 -translate-y-1/2 border-l-[var(--bg-card)] border-y-transparent border-r-transparent',
-  right: 'right-full top-1/2 -translate-y-1/2 border-r-[var(--bg-card)] border-y-transparent border-l-transparent',
+  left: 'left-full top-1/2 -translate-y-1/2 border-s-[var(--bg-card)] border-y-transparent border-e-transparent',
+  right: 'right-full top-1/2 -translate-y-1/2 border-e-[var(--bg-card)] border-y-transparent border-s-transparent',
 };
 
 export function Tooltip({ text, position = 'top', children }: TooltipProps) {

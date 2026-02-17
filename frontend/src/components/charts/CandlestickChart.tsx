@@ -347,34 +347,26 @@ export function CandlestickChart({
   return (
     <div
       dir="ltr"
-      className={cn('rounded-xl overflow-hidden', className)}
-      style={{
-        border: '1px solid rgba(212, 168, 75, 0.1)',
-        background: '#1A1A1A',
-      }}
+      className={cn('rounded-xl overflow-hidden border border-gold/10 dark:bg-dark-card bg-white', className)}
     >
       {/* Toolbar */}
       <div
-        className="flex items-center justify-between px-3 py-2"
-        style={{
-          background: '#2A2A2A',
-          borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
-        }}
+        className="flex items-center justify-between px-3 py-2 dark:bg-dark-input bg-gray-100 border-b border-gold/10"
       >
         {/* Left: Title / ticker */}
         <div className="flex items-center gap-2">
           {ticker && (
-            <span className="text-sm font-bold" style={{ color: '#D4A84B' }}>
+            <span className="text-sm font-bold text-gold">
               {ticker}
             </span>
           )}
           {title && !ticker && (
-            <span className="text-sm font-medium" style={{ color: '#B0B0B0' }}>
+            <span className="text-sm font-medium text-text-secondary">
               {title}
             </span>
           )}
           {title && ticker && (
-            <span className="text-xs" style={{ color: '#707070' }}>
+            <span className="text-xs text-[#707070]">
               {title}
             </span>
           )}
@@ -385,57 +377,35 @@ export function CandlestickChart({
           {/* MA toggles */}
           <button
             onClick={() => setShowMA20((v) => !v)}
-            className="text-xs px-2 py-0.5 rounded transition-colors"
-            style={{
-              background: showMA20 ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-              color: showMA20 ? '#D4A84B' : '#707070',
-            }}
-            onMouseEnter={(e) => {
-              if (!showMA20) (e.target as HTMLElement).style.color = '#D4A84B';
-            }}
-            onMouseLeave={(e) => {
-              if (!showMA20) (e.target as HTMLElement).style.color = '#707070';
-            }}
+            className={cn(
+              'text-xs px-2 py-0.5 rounded transition-colors hover:text-gold',
+              showMA20 ? 'bg-gold/20 text-gold' : 'bg-transparent text-[#707070]',
+            )}
           >
             MA20
           </button>
           <button
             onClick={() => setShowMA50((v) => !v)}
-            className="text-xs px-2 py-0.5 rounded transition-colors"
-            style={{
-              background: showMA50 ? 'rgba(74, 159, 255, 0.2)' : 'transparent',
-              color: showMA50 ? '#4A9FFF' : '#707070',
-            }}
-            onMouseEnter={(e) => {
-              if (!showMA50) (e.target as HTMLElement).style.color = '#4A9FFF';
-            }}
-            onMouseLeave={(e) => {
-              if (!showMA50) (e.target as HTMLElement).style.color = '#707070';
-            }}
+            className={cn(
+              'text-xs px-2 py-0.5 rounded transition-colors hover:text-accent-blue',
+              showMA50 ? 'bg-accent-blue/20 text-accent-blue' : 'bg-transparent text-[#707070]',
+            )}
           >
             MA50
           </button>
           <button
             onClick={() => setShowVolume((v) => !v)}
-            className="text-xs px-2 py-0.5 rounded transition-colors"
-            style={{
-              background: showVolume ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-              color: showVolume ? '#D4A84B' : '#707070',
-            }}
-            onMouseEnter={(e) => {
-              if (!showVolume) (e.target as HTMLElement).style.color = '#D4A84B';
-            }}
-            onMouseLeave={(e) => {
-              if (!showVolume) (e.target as HTMLElement).style.color = '#707070';
-            }}
+            className={cn(
+              'text-xs px-2 py-0.5 rounded transition-colors hover:text-gold',
+              showVolume ? 'bg-gold/20 text-gold' : 'bg-transparent text-[#707070]',
+            )}
           >
             Vol
           </button>
 
           {/* Separator */}
           <span
-            className="w-px h-4 mx-0.5"
-            style={{ background: 'rgba(212, 168, 75, 0.15)' }}
+            className="w-px h-4 mx-0.5 bg-gold/[0.15]"
           />
 
           {/* Time range buttons */}
@@ -443,18 +413,12 @@ export function CandlestickChart({
             <button
               key={tr.value}
               onClick={() => setRange(tr.value)}
-              className="text-xs px-1.5 py-0.5 rounded transition-colors"
-              style={{
-                background: range === tr.value ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-                color: range === tr.value ? '#D4A84B' : '#707070',
-                fontWeight: range === tr.value ? 500 : 400,
-              }}
-              onMouseEnter={(e) => {
-                if (range !== tr.value) (e.target as HTMLElement).style.color = '#D4A84B';
-              }}
-              onMouseLeave={(e) => {
-                if (range !== tr.value) (e.target as HTMLElement).style.color = '#707070';
-              }}
+              className={cn(
+                'text-xs px-1.5 py-0.5 rounded transition-colors hover:text-gold',
+                range === tr.value
+                  ? 'bg-gold/20 text-gold font-medium'
+                  : 'bg-transparent text-[#707070] font-normal',
+              )}
             >
               {tr.label}
             </button>
@@ -465,44 +429,37 @@ export function CandlestickChart({
       {/* Crosshair tooltip bar */}
       {tooltipData && (
         <div
-          className="flex items-center gap-4 px-3 py-1 text-xs"
-          style={{
-            background: '#1A1A1A',
-            borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
-            color: '#B0B0B0',
-          }}
+          className="flex items-center gap-4 px-3 py-1 text-xs dark:bg-dark-card bg-gray-50 border-b border-gold/10 text-text-secondary"
         >
           <span>
             O{' '}
-            <span style={{ color: '#E0E0E0' }}>
+            <span className="text-[#E0E0E0]">
               {tooltipData.open.toFixed(2)}
             </span>
           </span>
           <span>
             H{' '}
-            <span style={{ color: '#4CAF50' }}>
+            <span className="text-accent-green">
               {tooltipData.high.toFixed(2)}
             </span>
           </span>
           <span>
             L{' '}
-            <span style={{ color: '#FF6B6B' }}>
+            <span className="text-accent-red">
               {tooltipData.low.toFixed(2)}
             </span>
           </span>
           <span>
             C{' '}
             <span
-              style={{
-                color: tooltipData.close >= tooltipData.open ? '#4CAF50' : '#FF6B6B',
-              }}
+              className={tooltipData.close >= tooltipData.open ? 'text-accent-green' : 'text-accent-red'}
             >
               {tooltipData.close.toFixed(2)}
             </span>
           </span>
           <span>
             Vol{' '}
-            <span style={{ color: '#B0B0B0' }}>
+            <span className="text-text-secondary">
               {formatVolume(tooltipData.volume)}
             </span>
           </span>

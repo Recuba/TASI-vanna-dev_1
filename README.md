@@ -31,6 +31,10 @@ Built on [Vanna 2.0](https://vanna.ai/) with Google Gemini, supporting dual SQLi
 - **Query caching**: Tiered Redis cache with GZip compression and connection pooling
 - **Audit logging**: Structured JSON logging, correlation IDs, query audit trail, security event tracking
 - **Cost control**: LLM spend tracking middleware with configurable limits
+- **Component decomposition**: Charts and Markets pages split into focused subcomponents for maintainability
+- **Modular API client**: Domain-scoped API modules under `lib/api/` with backward-compatible shim
+- **Auth enhancements**: Token refresh, guest login, profile enrichment
+- **Enriched stock detail**: Financials, dividends, reports, news, and watchlist in one page
 
 ## Quick Start
 
@@ -177,7 +181,7 @@ All settings via environment variables. See `.env.example` for the complete refe
 
 ## Testing
 
-820+ backend tests (unit, integration, security, performance) and 139 frontend tests.
+1050+ backend tests (unit, integration, security, performance) and 155+ frontend tests.
 
 ```bash
 # Backend tests (all)

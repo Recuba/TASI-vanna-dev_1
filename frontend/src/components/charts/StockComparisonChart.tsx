@@ -241,8 +241,8 @@ function StockComparisonChartInner({
   if (tickers.length === 0) {
     return (
       <div
-        className="flex items-center justify-center rounded-xl dark:bg-[#1A1A1A] bg-gray-50"
-        style={{ height, border: '1px solid rgba(212,168,75,0.1)' }}
+        className="flex items-center justify-center rounded-xl dark:bg-dark-card bg-gray-50 border border-gold/10"
+        style={{ height }}
       >
         <p className="text-sm text-[var(--text-muted)]">
           {t('اختر أسهم للمقارنة (حتى 5)', 'Select stocks to compare (up to 5)')}
@@ -258,18 +258,13 @@ function StockComparisonChartInner({
   if (error) {
     return (
       <div
-        className="flex flex-col items-center justify-center gap-3 rounded-xl dark:bg-[#1A1A1A] bg-gray-50"
-        style={{ height, border: '1px solid rgba(212,168,75,0.1)' }}
+        className="flex flex-col items-center justify-center gap-3 rounded-xl dark:bg-dark-card bg-gray-50 border border-gold/10"
+        style={{ height }}
       >
         <p className="text-sm text-red-400">{error}</p>
         <button
           onClick={buildChart}
-          className="px-4 py-1.5 text-xs font-medium rounded-md border transition-all duration-200 hover:bg-[rgba(212,168,75,0.1)]"
-          style={{
-            border: '1px solid #D4A84B',
-            background: 'transparent',
-            color: '#D4A84B',
-          }}
+          className="px-4 py-1.5 text-xs font-medium rounded-md border border-gold bg-transparent text-gold transition-all duration-200 hover:bg-gold/10"
         >
           {t('إعادة المحاولة', 'Retry')}
         </button>
@@ -281,20 +276,14 @@ function StockComparisonChartInner({
     <div
       dir="ltr"
       className={cn(
-        'rounded-xl overflow-hidden transition-opacity duration-500',
+        'rounded-xl overflow-hidden transition-opacity duration-500 border border-gold/10',
         chartVisible ? 'opacity-100' : 'opacity-0',
         className,
       )}
-      style={{
-        border: '1px solid rgba(212, 168, 75, 0.1)',
-      }}
     >
       {/* Toolbar */}
       <div
-        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-[#2A2A2A] bg-gray-100"
-        style={{
-          borderBottom: '1px solid rgba(212, 168, 75, 0.1)',
-        }}
+        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-dark-input bg-gray-100 border-b border-gold/10"
       >
         {/* Legend */}
         <div className="flex items-center gap-3 flex-wrap">
@@ -314,8 +303,7 @@ function StockComparisonChartInner({
 
         {/* Period selector */}
         <div
-          className="flex items-center gap-0.5 p-0.5 rounded-lg"
-          style={{ background: 'rgba(212, 168, 75, 0.05)' }}
+          className="flex items-center gap-0.5 p-0.5 rounded-lg bg-gold/5"
         >
           {PERIODS.map((p) => (
             <button
@@ -325,12 +313,10 @@ function StockComparisonChartInner({
               aria-label={`${t('فترة', 'Period')} ${p.label}`}
               className={cn(
                 'text-xs px-2.5 py-1 rounded-md font-medium transition-all duration-200',
-                period === p.value ? 'shadow-sm' : 'hover:text-[#D4A84B]',
+                period === p.value
+                  ? 'bg-gold/20 text-gold shadow-sm'
+                  : 'bg-transparent text-[#707070] hover:text-gold',
               )}
-              style={{
-                background: period === p.value ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-                color: period === p.value ? '#D4A84B' : '#707070',
-              }}
             >
               {p.label}
             </button>
@@ -344,25 +330,25 @@ function StockComparisonChartInner({
       >
         {tooltipData ? (
           <>
-            <span className="font-medium" style={{ color: '#D4A84B' }}>
+            <span className="font-medium text-gold">
               {tooltipData.time}
             </span>
             {tooltipData.values.map((v) => (
               <span key={v.ticker}>
                 <span style={{ color: v.color }}>{v.ticker}</span>{' '}
-                <span style={{ color: '#E0E0E0' }}>{v.value.toFixed(1)}</span>
+                <span className="text-[#E0E0E0]">{v.value.toFixed(1)}</span>
               </span>
             ))}
           </>
         ) : (
-          <span style={{ color: '#505050' }}>
+          <span className="text-[#505050]">
             {t('مرر المؤشر فوق الرسم البياني لعرض التفاصيل', 'Hover over chart for details')}
           </span>
         )}
       </div>
 
       {/* Chart container */}
-      <div ref={containerRef} role="img" aria-label={t('رسم بياني مقارنة الأسهم', 'Stock comparison chart')} className="dark:bg-[#1A1A1A] bg-white" style={{ height }} />
+      <div ref={containerRef} role="img" aria-label={t('رسم بياني مقارنة الأسهم', 'Stock comparison chart')} className="dark:bg-dark-card bg-white" style={{ height }} />
     </div>
   );
 }

@@ -214,6 +214,93 @@ print(f'Total: {len(articles)} articles from all sources')
 "
 ```
 
+## Frontend Architecture
+
+### Component Decomposition
+
+Large page files have been decomposed into focused subcomponents to improve maintainability:
+
+**Charts Page** (`frontend/src/app/charts/`):
+
+| File | Purpose |
+|---|---|
+| `page.tsx` | Top-level orchestrator (slim) |
+| `components/ChartHeader.tsx` | Page title + stock selector header |
+| `components/ChartControls.tsx` | Timeframe picker + chart-type selector |
+| `components/CandlestickPanel.tsx` | OHLCV candlestick chart wrapper |
+| `components/VolumePanel.tsx` | Volume bar chart panel |
+| `components/TASIPanel.tsx` | TASI index lightweight-charts panel |
+| `components/ComparisonPanel.tsx` | Multi-stock overlay comparison chart |
+| `components/StockSearch.tsx` | Ticker autocomplete search input |
+| `components/ChartSkeleton.tsx` | Loading skeleton for chart panels |
+
+**Markets Page** (`frontend/src/app/markets/`):
+
+| File | Purpose |
+|---|---|
+| `page.tsx` | Top-level orchestrator (slim) |
+| `components/MarketHeader.tsx` | Summary stats + breadcrumb |
+| `components/SectorFilter.tsx` | Sector filter chip bar |
+| `components/SortControls.tsx` | Column sort controls |
+| `components/MarketTable.tsx` | Full desktop data table |
+| `components/MarketCard.tsx` | Mobile card view for a single stock |
+| `components/MarketCardList.tsx` | Mobile card list container |
+| `components/PaginationBar.tsx` | Pagination controls |
+| `components/MarketSearch.tsx` | Market search input |
+| `components/MarketSkeleton.tsx` | Loading skeleton for table/cards |
+| `components/MarketError.tsx` | Error state component |
+| `components/MarketEmpty.tsx` | Empty state component |
+
+### API Client Modules
+
+`frontend/src/lib/api-client.ts` now re-exports from domain modules under `frontend/src/lib/api/`. Import from the domain module directly for new code:
+
+```typescript
+// Preferred: domain-specific import
+import { getStockDetail } from '@/lib/api/stocks';
+import { getNewsFeed } from '@/lib/api/news';
+
+// Still works: legacy import (backward-compatible shim)
+import { getStockDetail, getNewsFeed } from '@/lib/api-client';
+```
+
+Domain modules:
+
+| Module | Exports |
+|---|---|
+| `api/stocks.ts` | `getStockDetail`, `getStockOHLCV`, `searchStocks` |
+| `api/news.ts` | `getNewsFeed`, `getNewsArticle`, `getNewsSources`, `searchNews` |
+| `api/charts.ts` | `getChartData`, `getTASIIndex` |
+| `api/market.ts` | `getMarketOverview`, `getMarketSectors` |
+| `api/auth.ts` | `login`, `refreshToken`, `guestLogin`, `getProfile` |
+| `api/health.ts` | `getHealth`, `getLiveness`, `getReadiness` |
+| `api/widgets.ts` | `getWidgetQuotes` |
+| `api/reports.ts` | `getReports`, `getReport` |
+| `api/announcements.ts` | `getAnnouncements` |
+
+### Auth System
+
+The auth hook (`frontend/src/lib/hooks/use-auth.ts`) provides:
+
+- **Token refresh**: Automatically refreshes JWT before expiry using a background timer
+- **Guest login**: `loginAsGuest()` calls `/api/v1/auth/guest` for anonymous access
+- **Profile enrichment**: `fetchProfile()` populates user name, role, and permissions after login
+
+Auth service (`services/auth_service.py`) was updated to support:
+
+- Guest token issuance with limited claims
+- Profile endpoint (`/api/v1/auth/me`) returning enriched user data
+
+### Stock Detail Page
+
+The stock detail page (`frontend/src/app/stocks/[ticker]/page.tsx`) now includes:
+
+- **Financials tab**: Balance sheet, income statement, and cash flow in tabbed panels
+- **Dividends tab**: Historical dividend table with yield trend sparkline
+- **Reports section**: Related analyst reports linked to the ticker
+- **News feed**: Latest news articles filtered by ticker/company name
+- **Watchlist toggle**: Add/remove from watchlist with toast notification
+
 ## Frontend Patterns
 
 ### RTL Support
@@ -487,12 +574,35 @@ python -m pytest tests/ --cov=api --cov=services --cov=backend --cov-report=term
 
 ## Test Organization
 
+### Backend Tests
+
 | Directory | Purpose | Marker |
 |---|---|---|
 | `tests/` | Unit tests (services, routes, schemas, middleware) | `@pytest.mark.fast` |
 | `tests/integration/` | Integration tests (API chains, auth flows, health, PG path) | `@pytest.mark.integration` |
 | `tests/security/` | Security tests (SQL injection, auth bypass) | - |
 | `tests/performance/` | Load and concurrency tests | `@pytest.mark.performance` |
+
+New backend test files added in the quality sprint:
+
+| File | Coverage |
+|---|---|
+| `tests/test_auth_service.py` | JWT issuance, guest login, token refresh, permission guards |
+| `tests/test_widget_system.py` | QuotesHub providers, SSE streaming, Redis pub/sub fallback |
+| `tests/test_health_config.py` | Health probes (live/ready), config validation, env startup checks |
+
+### Frontend Tests (Vitest)
+
+Frontend tests live under `frontend/src/__tests__/`. Run with `npx vitest run` from the `frontend/` directory.
+
+New frontend test files added in the quality sprint:
+
+| File | Coverage |
+|---|---|
+| `src/__tests__/hooks/use-auth.test.ts` | Token refresh timer, guest login flow, profile enrichment |
+| `src/__tests__/lib/api/stocks.test.ts` | Domain module exports, request shaping, error handling |
+| `src/__tests__/lib/api/news.test.ts` | News domain module: feed, article, search, sources |
+| `src/__tests__/app/stocks/StockDetail.test.tsx` | Financials tab, dividends tab, watchlist toggle, news section |
 
 Run specific test categories:
 

@@ -304,6 +304,20 @@ export function useSSEChat() {
     }
   }, [messages]);
 
+  // Cleanup flush timer and abort controller on unmount to prevent leaks
+  useEffect(() => {
+    return () => {
+      if (flushTimerRef.current) {
+        clearInterval(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+    };
+  }, []);
+
   function nextId(): string {
     return `msg-${++messageIdRef.current}-${Date.now()}`;
   }

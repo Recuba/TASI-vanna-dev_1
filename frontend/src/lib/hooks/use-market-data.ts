@@ -1,25 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { API_BASE } from '@/lib/config';
+import { getMarketOverview } from '@/lib/api-client';
 import { RAW_INSTRUMENTS, INSTRUMENT_META } from '@/lib/market-graph/data';
 import type { RawInstrument } from '@/lib/market-graph/types';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-/** Shape returned by GET /api/v1/market-overview */
-interface MarketOverviewResponse {
-  instruments: Array<{
-    key: string;
-    value: number;
-    change: number;
-    sparkline: number[];
-    historical_closes?: number[];
-  }>;
-  timestamp: string;
-}
 
 export interface UseMarketDataReturn {
   instruments: RawInstrument[];
@@ -65,14 +49,7 @@ export function useMarketDataLive(): UseMarketDataReturn {
     setIsLoading(true);
     setError(null);
 
-    fetch(`${API_BASE}/api/v1/market-overview`, {
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json' },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`API returned ${res.status}`);
-        return res.json() as Promise<MarketOverviewResponse>;
-      })
+    getMarketOverview(controller.signal)
       .then((data) => {
         if (controller.signal.aborted) return;
 
@@ -83,11 +60,11 @@ export function useMarketDataLive(): UseMarketDataReturn {
             const meta = INSTRUMENT_META[item.key];
             return {
               key: item.key,
-              nameAr: meta?.nameAr ?? item.key,
-              nameEn: meta?.nameEn ?? item.key,
-              value: item.value,
-              change: item.change,
-              category: meta?.category ?? 'Commodity',
+              nameAr: meta?.nameAr ?? item.nameAr ?? item.key,
+              nameEn: meta?.nameEn ?? item.nameEn ?? item.key,
+              value: item.value!,
+              change: item.change!,
+              category: (meta?.category ?? item.category ?? 'Commodity') as RawInstrument['category'],
               sparkline: item.sparkline ?? [],
             };
           });

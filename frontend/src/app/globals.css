@@ -179,6 +179,9 @@ body {
     background: linear-gradient(90deg, transparent 0%, rgba(212, 168, 75, 0.06) 50%, transparent 100%);
     animation: shimmer 1.5s ease-in-out infinite;
   }
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
 }
 
 /* ===================================================================

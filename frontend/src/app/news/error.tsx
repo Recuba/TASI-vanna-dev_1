@@ -30,8 +30,7 @@ export default function NewsError({
         <div className="relative mb-6 inline-flex items-center justify-center">
           <div className="absolute inset-0 w-20 h-20 -translate-x-2 -translate-y-2 rounded-full bg-gold/8 blur-xl" />
           <div
-            className="relative w-16 h-16 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center"
-            style={{ animation: 'float 3s ease-in-out infinite' }}
+            className="relative w-16 h-16 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center animate-float"
           >
             <svg
               width="32"

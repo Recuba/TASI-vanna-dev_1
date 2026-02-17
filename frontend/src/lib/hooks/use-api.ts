@@ -8,6 +8,8 @@ import {
   searchNewsFeed,
   getNewsSources,
   getReports,
+  getReportsByTicker,
+  getNewsByTicker,
   getEntities,
   getEntityDetail,
   getSectors,
@@ -290,5 +292,21 @@ export function useBatchQuotes(tickers: string[]) {
     (signal) => getBatchQuotes(tickers, signal),
     [tickers.join(',')],
     30_000,
+  );
+}
+
+/** News articles for a specific ticker */
+export function useNewsByTicker(ticker: string, params?: { page?: number; page_size?: number }) {
+  return useAsync<NewsListResponse>(
+    (signal) => getNewsByTicker(ticker, params, signal),
+    [ticker, params?.page, params?.page_size],
+  );
+}
+
+/** Reports for a specific ticker */
+export function useReportsByTicker(ticker: string, params?: { page?: number; page_size?: number }) {
+  return useAsync<ReportListResponse>(
+    (signal) => getReportsByTicker(ticker, params, signal),
+    [ticker, params?.page, params?.page_size],
   );
 }

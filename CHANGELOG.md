@@ -7,17 +7,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased] - 2026-02-17
 
 ### Added
+- Frontend component decomposition: charts page split into 9 subcomponents (`frontend/src/app/charts/components/`), markets page split into 12 subcomponents (`frontend/src/app/markets/components/`)
+- API client modularized into domain modules under `frontend/src/lib/api/` (stocks, news, charts, market, auth, health, widgets, reports, announcements); backward-compatible shim retained at `api-client.ts`
+- Auth system enhancements: token refresh, guest login flow, profile enrichment in auth hook and auth service
+- Stock detail page enriched with financials tab, dividends tab, reports section, related news feed, and watchlist toggle
+- Chat SSE message batching and message persistence across sessions
+- Tailwind CSS keyframe animations added to global styles
+- Performance config files consolidated (Next.js + Tailwind + PostCSS)
+- New frontend test suites: auth hook tests, API client module tests, stock detail page tests
+- New backend test suites: auth service tests, widget system tests, health and config module tests
 - UX/UI deep dive audit with 100 recommendations from 10-agent analysis
 - 122 new tests: 95 db_compat tests + 27 Vanna pipeline integration tests
-- `requirements-dev.txt` with separated development dependencies (pytest, pytest-timeout, ruff)
-- `.gitignore` expansion to cover `.env.*`, keys, and build artifacts (49 patterns)
 
 ### Changed
+- API client architecture: flat `api-client.ts` moved to modular domain structure under `frontend/src/lib/api/`; original file now re-exports from modules for backward compatibility
 - Apply ruff 0.15.1 formatting across 49 Python files
 - Reduce DemoAgentMemory from 10,000 to 500 items (OOM prevention)
 - Replace global `_fetch_lock` with per-ticker locks in stock_ohlcv and tasi_index services
+- `requirements-dev.txt` with separated development dependencies (pytest, pytest-timeout, ruff)
+- `.gitignore` expansion to cover `.env.*`, keys, and build artifacts (49 patterns)
 
 ### Fixed
+- RTL lint violations: physical direction Tailwind classes replaced with logical properties across charts and markets pages
+- ESLint warnings resolved across new frontend component files
 - CI pipeline: install `requirements-dev.txt` for test jobs
 - CI pipeline: add `--timeout=60` per-test timeout to prevent yfinance network hangs
 - CI pipeline: skip `tests/performance/` directory (network-dependent load tests)

@@ -72,6 +72,18 @@ const config: Config = {
           from: { opacity: '0' },
           to: { opacity: '1' },
         },
+        'tab-in': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'chart-section-in': {
+          from: { opacity: '0', transform: 'translateY(12px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'chart-fullscreen-in': {
+          from: { opacity: '0', transform: 'scale(0.98)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
       },
       animation: {
         'gold-pulse': 'gold-pulse 2s ease-in-out infinite',
@@ -83,6 +95,9 @@ const config: Config = {
         'dot-bounce': 'dot-bounce 1.4s ease-in-out infinite both',
         'slide-down': 'slide-down 0.2s ease-out',
         'fade-in': 'fade-in 0.2s ease-out',
+        'tab-in': 'tab-in 0.25s ease-out',
+        'chart-section-in': 'chart-section-in 0.35s ease-out',
+        'chart-fullscreen-in': 'chart-fullscreen-in 0.3s ease-out',
       },
     },
   },

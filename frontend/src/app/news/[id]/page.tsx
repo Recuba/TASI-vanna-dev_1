@@ -158,11 +158,8 @@ function ReadingProgressBar() {
   return (
     <div className="fixed top-14 inset-x-0 z-50 h-1 bg-transparent pointer-events-none">
       <div
-        className="h-full transition-[width] duration-100 ease-out"
-        style={{
-          width: `${progress}%`,
-          background: 'linear-gradient(90deg, #D4A84B, #E8C56D)',
-        }}
+        className="h-full transition-[width] duration-100 ease-out bg-gradient-to-r from-gold to-gold-light"
+        style={{ width: `${progress}%` }}
       />
     </div>
   );
@@ -272,8 +269,7 @@ function ArticleSkeleton() {
       </div>
       {/* Shimmer overlay */}
       <div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(212,168,75,0.05)] to-transparent"
-        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+        className="absolute inset-0 animate-shimmer"
       />
     </div>
   );
@@ -302,19 +298,17 @@ function RelatedArticleCard({
     <Link
       href={`/news/${id}`}
       className={cn(
-        'block p-4 rounded-md',
+        'block p-4 rounded-md border-e-[3px]',
         'bg-[var(--bg-card)] border border-[#2A2A2A]',
         'hover:border-[#D4A84B]/30 hover:shadow-md hover:shadow-[#D4A84B]/5',
         'hover:-translate-y-0.5',
         'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
         'transition-all duration-200 group',
-        'opacity-0 animate-fade-in',
+        'opacity-0 animate-fade-in [animation-fill-mode:forwards]',
       )}
       style={{
-        borderInlineEndWidth: '3px',
         borderInlineEndColor: color,
         animationDelay: `${index * 100}ms`,
-        animationFillMode: 'forwards',
       }}
     >
       <h4 className="text-sm font-bold text-[var(--text-primary)] leading-tight mb-2 line-clamp-2 group-hover:text-gold transition-colors">

@@ -217,7 +217,7 @@ export const ArticleCard = React.memo(function ArticleCard({
         }
       }}
       className={cn(
-        'rounded-md overflow-hidden cursor-pointer',
+        'rounded-md overflow-hidden cursor-pointer border-e-4',
         'bg-[var(--bg-card)] border border-[#2A2A2A]',
         'hover:border-[#D4A84B]/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#D4A84B]/8',
         'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
@@ -226,10 +226,7 @@ export const ArticleCard = React.memo(function ArticleCard({
         'group',
         priority >= 5 && 'ring-1 ring-accent-red/20',
       )}
-      style={{
-        borderInlineEndWidth: '4px',
-        borderInlineEndColor: sourceColor,
-      }}
+      style={{ borderInlineEndColor: sourceColor }}
     >
       {priority >= 5 && (
         <div className="h-0.5 w-full bg-gradient-to-r from-accent-red/60 via-accent-red to-accent-red/60" />

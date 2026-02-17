@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { HEALTH_POLL_INTERVAL_MS } from '@/lib/config';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { prefetchRoute } from '@/lib/performance/utils';
@@ -26,6 +27,7 @@ const navLinks = [
 export function Header({ onToggleMobileSidebar }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const { language, toggleLanguage, t } = useLanguage();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
 
@@ -211,29 +213,71 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
           </Tooltip>
 
           {/* Status indicator */}
-          <div className="flex items-center gap-1.5">
+          <Tooltip
+            text={
+              backendStatus === 'online'
+                ? t('الخادم متصل', 'Backend online')
+                : backendStatus === 'offline'
+                  ? t('الخادم غير متصل', 'Backend offline')
+                  : t('جاري الفحص...', 'Checking...')
+            }
+            position="bottom"
+          >
             <span
               className={cn(
-                'w-2 h-2 rounded-full',
+                'w-2 h-2 rounded-full inline-block',
                 backendStatus === 'online' && 'bg-accent-green animate-gold-pulse',
                 backendStatus === 'offline' && 'bg-accent-red',
                 backendStatus === 'checking' && 'bg-amber-400 animate-pulse',
               )}
-              aria-hidden="true"
+              aria-label={
+                backendStatus === 'online'
+                  ? t('الخادم متصل', 'Backend online')
+                  : backendStatus === 'offline'
+                    ? t('الخادم غير متصل', 'Backend offline')
+                    : t('جاري الفحص', 'Checking')
+              }
             />
-            <span
+          </Tooltip>
+
+          {/* User auth section */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              <Tooltip text={user.email} position="bottom">
+                <span className="text-xs font-medium text-[var(--text-secondary)] hidden sm:inline max-w-[100px] truncate">
+                  {user.isGuest ? t('زائر', 'Guest') : user.name}
+                </span>
+              </Tooltip>
+              <Tooltip text={t('تسجيل الخروج', 'Sign out')} position="bottom">
+                <button
+                  onClick={logout}
+                  className={cn(
+                    'p-1.5 rounded-md transition-colors',
+                    'text-[var(--text-muted)] hover:text-accent-red',
+                    'hover:bg-[var(--bg-card-hover)]'
+                  )}
+                  aria-label={t('تسجيل الخروج', 'Sign out')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                </button>
+              </Tooltip>
+            </div>
+          ) : (
+            <Link
+              href="/login"
               className={cn(
-                'text-xs font-medium hidden sm:inline',
-                backendStatus === 'online' && 'text-accent-green',
-                backendStatus === 'offline' && 'text-accent-red',
-                backendStatus === 'checking' && 'text-amber-400',
+                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                'bg-gold/10 text-gold border border-gold/30',
+                'hover:bg-gold/20'
               )}
             >
-              {backendStatus === 'online' && t('متصل', 'Online')}
-              {backendStatus === 'offline' && t('غير متصل', 'Offline')}
-              {backendStatus === 'checking' && t('جاري الفحص...', 'Checking...')}
-            </span>
-          </div>
+              {t('تسجيل الدخول', 'Sign In')}
+            </Link>
+          )}
         </div>
       </div>
     </header>

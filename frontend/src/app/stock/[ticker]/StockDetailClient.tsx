@@ -4,7 +4,14 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useStockDetail, useStockFinancials } from '@/lib/hooks/use-api';
+import {
+  useStockDetail,
+  useStockFinancials,
+  useStockDividends,
+  useStockFinancialSummary,
+  useNewsByTicker,
+  useReportsByTicker,
+} from '@/lib/hooks/use-api';
 import { CandlestickChart, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
 import { useOHLCVData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
@@ -229,6 +236,358 @@ function FinancialStatementsSection({ ticker, language, t }: {
 }
 
 // ---------------------------------------------------------------------------
+// Dividend Section
+// ---------------------------------------------------------------------------
+
+function DividendSection({ ticker, language, t }: {
+  ticker: string;
+  language: string;
+  t: (ar: string, en: string) => string;
+}) {
+  const { data: dividends, loading } = useStockDividends(ticker);
+  const dir = language === 'ar' ? 'rtl' : 'ltr';
+
+  if (!loading && (!dividends || (dividends.dividend_rate === null && dividends.dividend_yield === null))) {
+    return null;
+  }
+
+  return (
+    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+        {t('\u062A\u0648\u0632\u064A\u0639\u0627\u062A \u0627\u0644\u0623\u0631\u0628\u0627\u062D', 'Dividends')}
+      </h2>
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
+        </div>
+      ) : dividends ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <MetricCard
+            label={t('\u0645\u0639\u062F\u0644 \u0627\u0644\u062A\u0648\u0632\u064A\u0639', 'Dividend Rate')}
+            value={dividends.dividend_rate?.toFixed(2) || '-'}
+            sub={dividends.dividend_rate ? 'SAR' : undefined}
+          />
+          <MetricCard
+            label={t('\u0639\u0627\u0626\u062F \u0627\u0644\u062A\u0648\u0632\u064A\u0639\u0627\u062A', 'Dividend Yield')}
+            value={dividends.dividend_yield !== null ? `${(dividends.dividend_yield * 100).toFixed(2)}%` : '-'}
+            accent={dividends.dividend_yield !== null && dividends.dividend_yield > 0 ? 'green' : undefined}
+          />
+          <MetricCard
+            label={t('\u0646\u0633\u0628\u0629 \u0627\u0644\u062A\u0648\u0632\u064A\u0639', 'Payout Ratio')}
+            value={dividends.payout_ratio !== null ? `${(dividends.payout_ratio * 100).toFixed(1)}%` : '-'}
+          />
+          <MetricCard
+            label={t('\u0645\u062A\u0648\u0633\u0637 5 \u0633\u0646\u0648\u0627\u062A', '5-Year Avg Yield')}
+            value={dividends.five_year_avg_dividend_yield !== null ? `${dividends.five_year_avg_dividend_yield.toFixed(2)}%` : '-'}
+          />
+          <MetricCard
+            label={t('\u062A\u0627\u0631\u064A\u062E \u0627\u0644\u0627\u0633\u062A\u062D\u0642\u0627\u0642', 'Ex-Dividend Date')}
+            value={dividends.ex_dividend_date || '-'}
+          />
+          <MetricCard
+            label={t('\u0622\u062E\u0631 \u062A\u0648\u0632\u064A\u0639', 'Last Dividend')}
+            value={dividends.last_dividend_value?.toFixed(2) || '-'}
+            sub={dividends.last_dividend_date || undefined}
+          />
+          <MetricCard
+            label={t('\u0627\u0644\u062A\u0648\u0632\u064A\u0639 \u0627\u0644\u0633\u0646\u0648\u064A \u0627\u0644\u0645\u062A\u0623\u062E\u0631', 'Trailing Annual Rate')}
+            value={dividends.trailing_annual_dividend_rate?.toFixed(2) || '-'}
+          />
+          <MetricCard
+            label={t('\u0627\u0644\u0639\u0627\u0626\u062F \u0627\u0644\u0633\u0646\u0648\u064A \u0627\u0644\u0645\u062A\u0623\u062E\u0631', 'Trailing Annual Yield')}
+            value={dividends.trailing_annual_dividend_yield !== null ? `${(dividends.trailing_annual_dividend_yield * 100).toFixed(2)}%` : '-'}
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Financial Summary Section
+// ---------------------------------------------------------------------------
+
+function FinancialSummarySection({ ticker, language, t }: {
+  ticker: string;
+  language: string;
+  t: (ar: string, en: string) => string;
+}) {
+  const { data: summary, loading } = useStockFinancialSummary(ticker);
+  const dir = language === 'ar' ? 'rtl' : 'ltr';
+
+  if (!loading && !summary) return null;
+
+  return (
+    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+        {t('\u0627\u0644\u0645\u0644\u062E\u0635 \u0627\u0644\u0645\u0627\u0644\u064A', 'Financial Summary')}
+      </h2>
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
+        </div>
+      ) : summary ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <MetricCard
+            label={t('\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A', 'Total Revenue')}
+            value={formatNumber(summary.total_revenue, { prefix: 'SAR ' })}
+          />
+          <MetricCard
+            label={t('\u0627\u0644\u0625\u064A\u0631\u0627\u062F \u0644\u0644\u0633\u0647\u0645', 'Revenue/Share')}
+            value={summary.revenue_per_share?.toFixed(2) || '-'}
+          />
+          <MetricCard
+            label={t('\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0646\u0642\u062F', 'Total Cash')}
+            value={formatNumber(summary.total_cash, { prefix: 'SAR ' })}
+          />
+          <MetricCard
+            label={t('\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u062F\u064A\u0648\u0646', 'Total Debt')}
+            value={formatNumber(summary.total_debt, { prefix: 'SAR ' })}
+          />
+          <MetricCard
+            label={t('\u0627\u0644\u062F\u064A\u0648\u0646/\u0627\u0644\u0645\u0644\u0643\u064A\u0629', 'Debt/Equity')}
+            value={summary.debt_to_equity?.toFixed(2) || '-'}
+            accent={summary.debt_to_equity !== null && summary.debt_to_equity !== undefined ? (summary.debt_to_equity < 1 ? 'green' : 'red') : undefined}
+          />
+          <MetricCard
+            label={t('\u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u062C\u0627\u0631\u064A\u0629', 'Current Ratio')}
+            value={summary.current_ratio?.toFixed(2) || '-'}
+            accent={summary.current_ratio !== null && summary.current_ratio !== undefined ? (summary.current_ratio >= 1 ? 'green' : 'red') : undefined}
+          />
+          <MetricCard
+            label={t('\u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u0633\u0631\u064A\u0639\u0629', 'Quick Ratio')}
+            value={summary.quick_ratio?.toFixed(2) || '-'}
+          />
+          <MetricCard
+            label="EBITDA"
+            value={formatNumber(summary.ebitda, { prefix: 'SAR ' })}
+          />
+          <MetricCard
+            label={t('\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0631\u0628\u062D', 'Gross Profit')}
+            value={formatNumber(summary.gross_profit, { prefix: 'SAR ' })}
+          />
+          <MetricCard
+            label={t('\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u0646\u0642\u062F\u064A \u0627\u0644\u062D\u0631', 'Free Cash Flow')}
+            value={formatNumber(summary.free_cashflow, { prefix: 'SAR ' })}
+            accent={summary.free_cashflow !== null && summary.free_cashflow !== undefined ? (summary.free_cashflow >= 0 ? 'green' : 'red') : undefined}
+          />
+          <MetricCard
+            label={t('\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u062A\u0634\u063A\u064A\u0644\u064A', 'Operating Cash Flow')}
+            value={formatNumber(summary.operating_cashflow, { prefix: 'SAR ' })}
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Related News Section
+// ---------------------------------------------------------------------------
+
+function RelatedNewsSection({ ticker, language, t }: {
+  ticker: string;
+  language: string;
+  t: (ar: string, en: string) => string;
+}) {
+  const { data: newsData, loading } = useNewsByTicker(ticker, { page: 1, page_size: 5 });
+  const dir = language === 'ar' ? 'rtl' : 'ltr';
+
+  if (!loading && (!newsData || newsData.items.length === 0)) return null;
+
+  return (
+    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+        {t('\u0623\u062E\u0628\u0627\u0631 \u0630\u0627\u062A \u0635\u0644\u0629', 'Related News')}
+      </h2>
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {newsData?.items.map((article) => (
+            <Link
+              key={article.id}
+              href={`/news/${article.id}`}
+              className={cn(
+                'block p-3 rounded-lg',
+                'bg-[var(--bg-input)] hover:bg-[var(--bg-card-hover)]',
+                'border border-transparent hover:border-gold/20',
+                'transition-all duration-200 group',
+              )}
+            >
+              <h3 className="text-sm font-medium text-[var(--text-primary)] group-hover:text-gold transition-colors line-clamp-2" dir={dir}>
+                {article.title}
+              </h3>
+              <div className="flex items-center gap-2 mt-2">
+                {article.source_name && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold font-medium">
+                    {article.source_name}
+                  </span>
+                )}
+                {article.published_at && (
+                  <time className="text-[10px] text-[var(--text-muted)]" dateTime={article.published_at}>
+                    {new Date(article.published_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </time>
+                )}
+                {article.sentiment_label && (
+                  <span className={cn(
+                    'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                    article.sentiment_label.toLowerCase().includes('positive') || article.sentiment_label === '\u0625\u064A\u062C\u0627\u0628\u064A'
+                      ? 'bg-accent-green/15 text-accent-green'
+                      : article.sentiment_label.toLowerCase().includes('negative') || article.sentiment_label === '\u0633\u0644\u0628\u064A'
+                        ? 'bg-accent-red/15 text-accent-red'
+                        : 'bg-gray-500/15 text-gray-400',
+                  )}>
+                    {article.sentiment_label}
+                  </span>
+                )}
+              </div>
+            </Link>
+          ))}
+          {newsData && newsData.total > 5 && (
+            <Link
+              href={`/news?ticker=${encodeURIComponent(ticker)}`}
+              className="block text-center text-xs text-gold hover:text-gold-light transition-colors py-2 font-medium"
+              dir={dir}
+            >
+              {t('\u0639\u0631\u0636 \u0643\u0644 \u0627\u0644\u0623\u062E\u0628\u0627\u0631', 'View all news')} ({newsData.total})
+            </Link>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Related Reports Section
+// ---------------------------------------------------------------------------
+
+function RelatedReportsSection({ ticker, language, t }: {
+  ticker: string;
+  language: string;
+  t: (ar: string, en: string) => string;
+}) {
+  const { data: reportsData, loading } = useReportsByTicker(ticker, { page: 1, page_size: 5 });
+  const dir = language === 'ar' ? 'rtl' : 'ltr';
+
+  if (!loading && (!reportsData || reportsData.items.length === 0)) return null;
+
+  return (
+    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+        {t('\u062A\u0642\u0627\u0631\u064A\u0631 \u0630\u0627\u062A \u0635\u0644\u0629', 'Related Reports')}
+      </h2>
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {reportsData?.items.map((report) => (
+            <div
+              key={report.id}
+              className={cn(
+                'p-3 rounded-lg',
+                'bg-[var(--bg-input)]',
+                'border border-transparent',
+              )}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-medium text-[var(--text-primary)] line-clamp-2" dir={dir}>
+                    {report.title}
+                  </h3>
+                  {report.summary && (
+                    <p className="text-xs text-[var(--text-secondary)] mt-1 line-clamp-2" dir={dir}>
+                      {report.summary}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {report.recommendation && (
+                      <span className={cn(
+                        'text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase',
+                        report.recommendation.toLowerCase().includes('buy')
+                          ? 'bg-accent-green/15 text-accent-green'
+                          : report.recommendation.toLowerCase().includes('sell')
+                            ? 'bg-accent-red/15 text-accent-red'
+                            : 'bg-gold/15 text-gold',
+                      )}>
+                        {report.recommendation}
+                      </span>
+                    )}
+                    {report.target_price !== null && (
+                      <span className="text-[10px] text-[var(--text-muted)]">
+                        {t('\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0645\u0633\u062A\u0647\u062F\u0641', 'Target')}: {report.target_price.toFixed(2)} SAR
+                      </span>
+                    )}
+                    {report.author && (
+                      <span className="text-[10px] text-[var(--text-muted)]">{report.author}</span>
+                    )}
+                    {report.published_at && (
+                      <time className="text-[10px] text-[var(--text-muted)]" dateTime={report.published_at}>
+                        {new Date(report.published_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </time>
+                    )}
+                  </div>
+                </div>
+                {report.source_url && (
+                  <a
+                    href={report.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 p-1.5 rounded-md text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)] transition-colors"
+                    title={t('\u0641\u062A\u062D \u0627\u0644\u062A\u0642\u0631\u064A\u0631', 'Open report')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+          {reportsData && reportsData.total > 5 && (
+            <Link
+              href={`/reports?ticker=${encodeURIComponent(ticker)}`}
+              className="block text-center text-xs text-gold hover:text-gold-light transition-colors py-2 font-medium"
+              dir={dir}
+            >
+              {t('\u0639\u0631\u0636 \u0643\u0644 \u0627\u0644\u062A\u0642\u0627\u0631\u064A\u0631', 'View all reports')} ({reportsData.total})
+            </Link>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page Tab type
+// ---------------------------------------------------------------------------
+
+type PageTab = 'overview' | 'financials' | 'dividends' | 'news';
+
+const PAGE_TABS: { id: PageTab; labelAr: string; labelEn: string }[] = [
+  { id: 'overview', labelAr: '\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629', labelEn: 'Overview' },
+  { id: 'financials', labelAr: '\u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0645\u0627\u0644\u064A\u0629', labelEn: 'Financials' },
+  { id: 'dividends', labelAr: '\u0627\u0644\u062A\u0648\u0632\u064A\u0639\u0627\u062A', labelEn: 'Dividends' },
+  { id: 'news', labelAr: '\u0627\u0644\u0623\u062E\u0628\u0627\u0631 \u0648\u0627\u0644\u062A\u0642\u0627\u0631\u064A\u0631', labelEn: 'News & Reports' },
+];
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -286,6 +645,8 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
       showToast(t('\u062A\u0645\u062A \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Added to watchlist'), 'success');
     }
   }, [ticker, t, showToast]);
+
+  const [activeTab, setActiveTab] = useState<PageTab>('overview');
 
   const [shareCopied, setShareCopied] = useState(false);
   const handleShare = useCallback(async () => {
@@ -459,97 +820,143 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
           <MetricCard label={t('\u062D\u062C\u0645 \u0627\u0644\u062A\u062F\u0627\u0648\u0644', 'Volume')} value={formatNumber(detail.volume, { decimals: 0 })} />
         </div>
 
-        {/* Chart */}
-        <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-4">
-          <ChartErrorBoundary fallbackHeight={400}>
-            <ChartWrapper title={t('\u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A', 'Price Chart')} source={chartSource}>
-              <CandlestickChart data={ohlcvData || []} height={400} ticker={ticker} loading={chartLoading} />
-            </ChartWrapper>
-          </ChartErrorBoundary>
-          <div className="flex items-center justify-between -mt-1">
-            <Link
-              href={`/charts?ticker=${encodeURIComponent(ticker)}`}
-              className="text-xs text-gold hover:text-gold-light transition-colors font-medium"
-              dir={dir}
+        {/* Page Tab Navigation */}
+        <nav className="flex gap-1 bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-1.5 overflow-x-auto" role="tablist">
+          {PAGE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
+                activeTab === tab.id
+                  ? 'bg-gold/15 text-gold border border-gold/30'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-input)]',
+              )}
             >
-              {t('\u0639\u0631\u0636 \u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A \u0627\u0644\u0643\u0627\u0645\u0644', 'View full chart')}
-            </Link>
-            <TradingViewAttribution />
-          </div>
-        </section>
+              {language === 'ar' ? tab.labelAr : tab.labelEn}
+            </button>
+          ))}
+        </nav>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-          {/* Key Metrics */}
-          <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-              {t('\u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629', 'Key Metrics')}
-            </h2>
-            <div className="grid grid-cols-2 gap-2">
-              <MetricCard label={t('\u0627\u0644\u0642\u064A\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064A\u0629', 'Market Cap')} value={formatNumber(detail.market_cap, { prefix: 'SAR ' })} />
-              <MetricCard label="Beta" value={detail.beta?.toFixed(2) || '-'} />
-              <MetricCard label={t('P/E (\u0645\u062A\u0623\u062E\u0631)', 'P/E (Trailing)')} value={detail.trailing_pe?.toFixed(2) || '-'} />
-              <MetricCard label={t('P/E (\u0645\u062A\u0648\u0642\u0639)', 'P/E (Forward)')} value={detail.forward_pe?.toFixed(2) || '-'} />
-              <MetricCard label="P/B" value={detail.price_to_book?.toFixed(2) || '-'} />
-              <MetricCard label="EPS" value={detail.trailing_eps?.toFixed(2) || '-'} />
-            </div>
-          </section>
-
-          {/* Profitability */}
-          <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-              {t('\u0627\u0644\u0631\u0628\u062D\u064A\u0629', 'Profitability')}
-            </h2>
-            <div className="grid grid-cols-2 gap-2">
-              <MetricCard
-                label={t('\u0627\u0644\u0639\u0627\u0626\u062F \u0639\u0644\u0649 \u0627\u0644\u0645\u0644\u0643\u064A\u0629', 'Return on Equity')}
-                value={formatPct(detail.roe)}
-                accent={detail.roe !== null && detail.roe !== undefined ? (detail.roe >= 0 ? 'green' : 'red') : undefined}
-              />
-              <MetricCard
-                label={t('\u0647\u0627\u0645\u0634 \u0627\u0644\u0631\u0628\u062D', 'Profit Margin')}
-                value={formatPct(detail.profit_margin)}
-                accent={detail.profit_margin !== null && detail.profit_margin !== undefined ? (detail.profit_margin >= 0 ? 'green' : 'red') : undefined}
-              />
-              <MetricCard
-                label={t('\u0646\u0645\u0648 \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A', 'Revenue Growth')}
-                value={formatPct(detail.revenue_growth)}
-                accent={detail.revenue_growth !== null && detail.revenue_growth !== undefined ? (detail.revenue_growth >= 0 ? 'green' : 'red') : undefined}
-              />
-            </div>
-          </section>
-
-        </div>
-
-        {/* Analyst Data */}
-        {detail.recommendation && (
-          <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-            <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-              {t('\u0625\u062C\u0645\u0627\u0639 \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646', 'Analyst Consensus')}
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="bg-[var(--bg-input)] rounded-xl px-4 py-3 text-center">
-                <p className="text-xs text-[var(--text-muted)] mb-1">{t('\u0627\u0644\u062A\u0648\u0635\u064A\u0629', 'Recommendation')}</p>
-                <p className={cn(
-                  'text-sm font-bold uppercase',
-                  detail.recommendation.toLowerCase().includes('buy') ? 'text-accent-green'
-                    : detail.recommendation.toLowerCase().includes('sell') ? 'text-accent-red'
-                    : 'text-gold'
-                )}>
-                  {detail.recommendation.toUpperCase()}
-                </p>
+        {/* ====== OVERVIEW TAB ====== */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Chart */}
+            <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-4">
+              <ChartErrorBoundary fallbackHeight={400}>
+                <ChartWrapper title={t('\u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A', 'Price Chart')} source={chartSource}>
+                  <CandlestickChart data={ohlcvData || []} height={400} ticker={ticker} loading={chartLoading} />
+                </ChartWrapper>
+              </ChartErrorBoundary>
+              <div className="flex items-center justify-between -mt-1">
+                <Link
+                  href={`/charts?ticker=${encodeURIComponent(ticker)}`}
+                  className="text-xs text-gold hover:text-gold-light transition-colors font-medium"
+                  dir={dir}
+                >
+                  {t('\u0639\u0631\u0636 \u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A \u0627\u0644\u0643\u0627\u0645\u0644', 'View full chart')}
+                </Link>
+                <TradingViewAttribution />
               </div>
-              <MetricCard label={t('\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0645\u0633\u062A\u0647\u062F\u0641', 'Target Price')} value={detail.target_mean_price?.toFixed(2) || '-'} />
-              <MetricCard label={t('\u0639\u062F\u062F \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646', 'Number of Analysts')} value={String(detail.analyst_count || '-')} />
+            </section>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+              {/* Key Metrics */}
+              <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+                  {t('\u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629', 'Key Metrics')}
+                </h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <MetricCard label={t('\u0627\u0644\u0642\u064A\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064A\u0629', 'Market Cap')} value={formatNumber(detail.market_cap, { prefix: 'SAR ' })} />
+                  <MetricCard label="Beta" value={detail.beta?.toFixed(2) || '-'} />
+                  <MetricCard label={t('P/E (\u0645\u062A\u0623\u062E\u0631)', 'P/E (Trailing)')} value={detail.trailing_pe?.toFixed(2) || '-'} />
+                  <MetricCard label={t('P/E (\u0645\u062A\u0648\u0642\u0639)', 'P/E (Forward)')} value={detail.forward_pe?.toFixed(2) || '-'} />
+                  <MetricCard label="P/B" value={detail.price_to_book?.toFixed(2) || '-'} />
+                  <MetricCard label="EPS" value={detail.trailing_eps?.toFixed(2) || '-'} />
+                </div>
+              </section>
+
+              {/* Profitability */}
+              <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+                  {t('\u0627\u0644\u0631\u0628\u062D\u064A\u0629', 'Profitability')}
+                </h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <MetricCard
+                    label={t('\u0627\u0644\u0639\u0627\u0626\u062F \u0639\u0644\u0649 \u0627\u0644\u0645\u0644\u0643\u064A\u0629', 'Return on Equity')}
+                    value={formatPct(detail.roe)}
+                    accent={detail.roe !== null && detail.roe !== undefined ? (detail.roe >= 0 ? 'green' : 'red') : undefined}
+                  />
+                  <MetricCard
+                    label={t('\u0647\u0627\u0645\u0634 \u0627\u0644\u0631\u0628\u062D', 'Profit Margin')}
+                    value={formatPct(detail.profit_margin)}
+                    accent={detail.profit_margin !== null && detail.profit_margin !== undefined ? (detail.profit_margin >= 0 ? 'green' : 'red') : undefined}
+                  />
+                  <MetricCard
+                    label={t('\u0646\u0645\u0648 \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A', 'Revenue Growth')}
+                    value={formatPct(detail.revenue_growth)}
+                    accent={detail.revenue_growth !== null && detail.revenue_growth !== undefined ? (detail.revenue_growth >= 0 ? 'green' : 'red') : undefined}
+                  />
+                </div>
+              </section>
+
             </div>
-          </section>
+
+            {/* Analyst Data */}
+            {detail.recommendation && (
+              <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
+                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
+                  {t('\u0625\u062C\u0645\u0627\u0639 \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646', 'Analyst Consensus')}
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="bg-[var(--bg-input)] rounded-xl px-4 py-3 text-center">
+                    <p className="text-xs text-[var(--text-muted)] mb-1">{t('\u0627\u0644\u062A\u0648\u0635\u064A\u0629', 'Recommendation')}</p>
+                    <p className={cn(
+                      'text-sm font-bold uppercase',
+                      detail.recommendation.toLowerCase().includes('buy') ? 'text-accent-green'
+                        : detail.recommendation.toLowerCase().includes('sell') ? 'text-accent-red'
+                        : 'text-gold'
+                    )}>
+                      {detail.recommendation.toUpperCase()}
+                    </p>
+                  </div>
+                  <MetricCard label={t('\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0645\u0633\u062A\u0647\u062F\u0641', 'Target Price')} value={detail.target_mean_price?.toFixed(2) || '-'} />
+                  <MetricCard label={t('\u0639\u062F\u062F \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646', 'Number of Analysts')} value={String(detail.analyst_count || '-')} />
+                </div>
+              </section>
+            )}
+          </>
         )}
 
-        {/* Financial Statements */}
-        <FinancialStatementsSection ticker={ticker} language={language} t={t} />
+        {/* ====== FINANCIALS TAB ====== */}
+        {activeTab === 'financials' && (
+          <>
+            {/* Financial Summary */}
+            <FinancialSummarySection ticker={ticker} language={language} t={t} />
 
-        {/* AI Chat CTA - pre-filled with ticker */}
+            {/* Financial Statements */}
+            <FinancialStatementsSection ticker={ticker} language={language} t={t} />
+          </>
+        )}
+
+        {/* ====== DIVIDENDS TAB ====== */}
+        {activeTab === 'dividends' && (
+          <DividendSection ticker={ticker} language={language} t={t} />
+        )}
+
+        {/* ====== NEWS & REPORTS TAB ====== */}
+        {activeTab === 'news' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <RelatedNewsSection ticker={ticker} language={language} t={t} />
+            <RelatedReportsSection ticker={ticker} language={language} t={t} />
+          </div>
+        )}
+
+        {/* AI Chat CTA - pre-filled with ticker (always visible) */}
         <Link
           href={`/chat?q=${encodeURIComponent(language === 'ar' ? '\u062D\u0644\u0644 \u0633\u0647\u0645 ' + ticker : 'Analyze stock ' + ticker)}`}
           className={cn(

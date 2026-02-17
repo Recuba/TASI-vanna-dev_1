@@ -287,7 +287,7 @@ export function CommandPalette() {
     }
 
     return items;
-  }, [query, stocks, language, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION, ASK_RAID_SECTION, looksLikeQuestion]);
+  }, [query, stocks, language, t, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION, ASK_RAID_SECTION, looksLikeQuestion]);
 
   // Reset index when results change
   useEffect(() => {

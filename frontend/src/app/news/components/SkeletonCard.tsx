@@ -3,11 +3,8 @@
 function ShimmerOverlay({ delay = 0 }: { delay?: number }) {
   return (
     <div
-      className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(212,168,75,0.05)] to-transparent"
-      style={{
-        animation: 'shimmer 2s ease-in-out infinite',
-        animationDelay: `${delay}ms`,
-      }}
+      className="absolute inset-0 animate-shimmer"
+      style={{ animationDelay: `${delay}ms` }}
     />
   );
 }
@@ -17,11 +14,7 @@ export function SkeletonCard({ index = 0 }: { index?: number }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-md bg-[var(--bg-card)] border border-[#2A2A2A]"
-      style={{
-        borderInlineEndWidth: '4px',
-        borderInlineEndColor: 'var(--bg-input)',
-      }}
+      className="relative overflow-hidden rounded-md bg-[var(--bg-card)] border border-[#2A2A2A] border-e-4 border-e-[var(--bg-input)]"
     >
       <div className="p-5 flex gap-4">
         {/* Main content area */}
