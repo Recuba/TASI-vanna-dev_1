@@ -20,6 +20,7 @@ and async callables and preserves function metadata via functools.wraps.
 
 import asyncio
 import functools
+import json
 import logging
 import threading
 import time
@@ -82,6 +83,10 @@ _fallback_cache = TTLCache()
 # Redis client placeholder -- set externally via ``configure_redis``.
 _redis_client: Any = None
 
+# Consecutive Redis failure tracking (S2-B3)
+_redis_fail_count: int = 0
+_REDIS_WARN_THRESHOLD: int = 3
+
 
 def configure_redis(client: Any) -> None:
     """Set a Redis client for the caching layer.
@@ -108,6 +113,46 @@ def _make_key(func: Callable, args: tuple, kwargs: dict) -> str:
     return ":".join(parts)
 
 
+def _cache_get(key: str) -> Any:
+    """Try Redis GET, then in-memory. Returns None on miss."""
+    global _redis_fail_count
+    if _redis_client is not None:
+        try:
+            cached = _redis_client.get(key)
+            if cached is not None:
+                _redis_fail_count = 0  # reset on success
+                return json.loads(cached)
+        except Exception as e:
+            _redis_fail_count += 1
+            if _redis_fail_count >= _REDIS_WARN_THRESHOLD:
+                logger.warning(
+                    "Redis unavailable after %d consecutive failures — using in-memory fallback",
+                    _redis_fail_count,
+                )
+            else:
+                logger.debug("Redis get failed for key %s: %s", key, e)
+    return _fallback_cache.get(key)
+
+
+def _cache_put(key: str, value: Any, ttl: int) -> None:
+    """Store in Redis and in-memory fallback."""
+    global _redis_fail_count
+    if _redis_client is not None:
+        try:
+            _redis_client.setex(key, ttl, json.dumps(value, default=str))
+            _redis_fail_count = 0  # reset on success
+        except Exception as e:
+            _redis_fail_count += 1
+            if _redis_fail_count >= _REDIS_WARN_THRESHOLD:
+                logger.warning(
+                    "Redis unavailable after %d consecutive failures — using in-memory fallback",
+                    _redis_fail_count,
+                )
+            else:
+                logger.debug("Redis set failed for key %s: %s", key, e)
+    _fallback_cache.put(key, value, ttl=ttl)
+
+
 def cache_response(ttl: int = 300) -> Callable[[F], F]:
     """Decorator that caches function return values.
 
@@ -125,36 +170,11 @@ def cache_response(ttl: int = 300) -> Callable[[F], F]:
             @functools.wraps(func)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 key = _make_key(func, args, kwargs)
-
-                # Try Redis first
-                if _redis_client is not None:
-                    try:
-                        import json as _json
-
-                        cached = _redis_client.get(key)
-                        if cached is not None:
-                            return _json.loads(cached)
-                    except Exception:
-                        logger.debug("Redis get failed for %s, using fallback", key)
-
-                # Fallback: in-memory
-                cached = _fallback_cache.get(key)
+                cached = _cache_get(key)
                 if cached is not None:
                     return cached
-
                 result = await func(*args, **kwargs)
-
-                # Store in Redis
-                if _redis_client is not None:
-                    try:
-                        import json as _json
-
-                        _redis_client.setex(key, ttl, _json.dumps(result))
-                    except Exception:
-                        logger.debug("Redis set failed for %s, using fallback", key)
-
-                # Always store in fallback too
-                _fallback_cache.put(key, result, ttl=ttl)
+                _cache_put(key, result, ttl)
                 return result
 
             return async_wrapper  # type: ignore[return-value]
@@ -163,36 +183,11 @@ def cache_response(ttl: int = 300) -> Callable[[F], F]:
             @functools.wraps(func)
             def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 key = _make_key(func, args, kwargs)
-
-                # Try Redis first
-                if _redis_client is not None:
-                    try:
-                        import json as _json
-
-                        cached = _redis_client.get(key)
-                        if cached is not None:
-                            return _json.loads(cached)
-                    except Exception:
-                        logger.debug("Redis get failed for %s, using fallback", key)
-
-                # Fallback: in-memory
-                cached = _fallback_cache.get(key)
+                cached = _cache_get(key)
                 if cached is not None:
                     return cached
-
                 result = func(*args, **kwargs)
-
-                # Store in Redis
-                if _redis_client is not None:
-                    try:
-                        import json as _json
-
-                        _redis_client.setex(key, ttl, _json.dumps(result))
-                    except Exception:
-                        logger.debug("Redis set failed for %s, using fallback", key)
-
-                # Always store in fallback too
-                _fallback_cache.put(key, result, ttl=ttl)
+                _cache_put(key, result, ttl)
                 return result
 
             return sync_wrapper  # type: ignore[return-value]
