@@ -30,22 +30,10 @@ import { useTasiOHLCV } from '@/lib/hooks/use-chart-data';
 import type { OHLCVData } from './chart-types';
 import dynamic from 'next/dynamic';
 import { useLanguage } from '@/providers/LanguageProvider';
-
-// ---------------------------------------------------------------------------
-// Period options
-// ---------------------------------------------------------------------------
-
-const PERIODS = [
-  { label: '1D', value: '1d', intraday: true },
-  { label: '1W', value: '5d', intraday: true },
-  { label: '3M', value: '3mo' },
-  { label: '6M', value: '6mo' },
-  { label: '1Y', value: '1y' },
-  { label: '2Y', value: '2y' },
-  { label: '5Y', value: '5y' },
-] as const;
-
-type ChartType = 'candlestick' | 'line' | 'area';
+import { useChartIndicators } from './tasi/useChartIndicators';
+import { IndicatorToggleBar } from './tasi/IndicatorToggleBar';
+import { PeriodSelector } from './tasi/PeriodSelector';
+import { ChartExportButton } from './tasi/ChartExportButton';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -62,40 +50,16 @@ function calculateMA(data: OHLCVData[], period: number): LineData[] {
   const result: LineData[] = [];
   for (let i = period - 1; i < data.length; i++) {
     let sum = 0;
-    for (let j = i - period + 1; j <= i; j++) {
-      sum += data[j].close;
-    }
+    for (let j = i - period + 1; j <= i; j++) sum += data[j].close;
     result.push({ time: data[i].time as Time, value: sum / period });
   }
   return result;
 }
 
-function exportCSV(data: OHLCVData[], period: string) {
-  const header = 'Date,Open,High,Low,Close,Volume\n';
-  const rows = data
-    .map((d) => `${d.time},${d.open},${d.high},${d.low},${d.close},${d.volume ?? 0}`)
-    .join('\n');
-  const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `TASI_${period}_ohlcv.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
-
 interface TASIIndexChartProps {
   height?: number;
   className?: string;
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
   const { t } = useLanguage();
@@ -110,19 +74,12 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
   const observerRef = useRef<ResizeObserver | null>(null);
 
   const [period, setPeriod] = useState('1y');
-  const [chartType, setChartType] = useState<ChartType>('candlestick');
-  const [showMA20, setShowMA20] = useState(false);
-  const [showMA50, setShowMA50] = useState(false);
   const [chartVisible, setChartVisible] = useState(false);
   const [tooltipData, setTooltipData] = useState<{
-    time: string;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume: number;
+    time: string; open: number; high: number; low: number; close: number; volume: number;
   } | null>(null);
 
+  const { showMA20, showMA50, chartType, toggleMA20, toggleMA50, setChartType } = useChartIndicators();
   const { data, loading, error, source, refetch } = useTasiOHLCV(period);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -131,525 +88,154 @@ function TASIIndexChartInner({ height = 550, className }: TASIIndexChartProps) {
     function isTradingHours(): boolean {
       const now = new Date();
       const utcHour = now.getUTCHours();
-      const utcDay = now.getUTCDay(); // 0=Sun
-      // Tadawul: Sun(0)-Thu(4), 10:00-15:00 AST = 07:00-12:00 UTC
-      const isTradingDay = utcDay >= 0 && utcDay <= 4;
-      const isTradingTime = utcHour >= 7 && utcHour < 12;
-      return isTradingDay && isTradingTime;
+      const utcDay = now.getUTCDay();
+      return utcDay >= 0 && utcDay <= 4 && utcHour >= 7 && utcHour < 12;
     }
-
-    const intervalId = setInterval(() => {
-      if (isTradingHours()) {
-        refetch();
-        setLastUpdated(new Date());
-      }
-    }, 5 * 60 * 1000); // 5 minutes
-
-    return () => clearInterval(intervalId);
+    const id = setInterval(() => { if (isTradingHours()) { refetch(); setLastUpdated(new Date()); } }, 5 * 60 * 1000);
+    return () => clearInterval(id);
   }, [refetch]);
 
-  // Track initial data load time
   useEffect(() => {
-    if (data && data.length > 0 && !lastUpdated) {
-      setLastUpdated(new Date());
-    }
+    if (data && data.length > 0 && !lastUpdated) setLastUpdated(new Date());
   }, [data, lastUpdated]);
 
-  // Derive last price + day-over-day change
   const lastCandle = data && data.length > 0 ? data[data.length - 1] : null;
   const prevCandle = data && data.length > 1 ? data[data.length - 2] : null;
   const lastPrice = lastCandle?.close ?? null;
   const priceChange = lastPrice !== null && prevCandle ? lastPrice - prevCandle.close : null;
-  const priceChangePct =
-    priceChange !== null && prevCandle && prevCandle.close > 0
-      ? (priceChange / prevCandle.close) * 100
-      : null;
+  const priceChangePct = priceChange !== null && prevCandle && prevCandle.close > 0 ? (priceChange / prevCandle.close) * 100 : null;
   const isUp = priceChange !== null && priceChange >= 0;
 
-  // Period % change (first to last)
   const periodChange = useMemo(() => {
     if (!data || data.length < 2) return null;
     const first = data[0].close;
     const last = data[data.length - 1].close;
-    if (first === 0) return null;
-    return ((last - first) / first) * 100;
+    return first === 0 ? null : ((last - first) / first) * 100;
   }, [data]);
 
-  // Responsive chart height
   const [chartHeight, setChartHeight] = useState(height);
   useEffect(() => {
     function handleResize() {
       const w = window.innerWidth;
-      if (w < 640) setChartHeight(280);
-      else if (w < 1024) setChartHeight(350);
-      else setChartHeight(height);
+      setChartHeight(w < 640 ? 280 : w < 1024 ? 350 : height);
     }
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [height]);
 
-  // Build chart
   const buildChart = useCallback(() => {
     const container = containerRef.current;
     if (!container || chartRef.current) return;
-
     const chart = createChart(container, {
       ...RAID_CHART_OPTIONS,
       width: container.clientWidth,
       height: chartHeight,
-      layout: {
-        ...RAID_CHART_OPTIONS.layout,
-        background: { type: ColorType.Solid, color: 'transparent' },
-      },
+      layout: { ...RAID_CHART_OPTIONS.layout, background: { type: ColorType.Solid, color: 'transparent' } },
     });
-
-    // Candlestick series
-    const candle = chart.addCandlestickSeries({
-      upColor: '#D4A84B',
-      downColor: '#FF6B6B',
-      borderUpColor: '#D4A84B',
-      borderDownColor: '#FF6B6B',
-      wickUpColor: '#D4A84B',
-      wickDownColor: '#FF6B6B',
-    });
+    const candle = chart.addCandlestickSeries({ upColor: '#D4A84B', downColor: '#FF6B6B', borderUpColor: '#D4A84B', borderDownColor: '#FF6B6B', wickUpColor: '#D4A84B', wickDownColor: '#FF6B6B' });
     candleRef.current = candle;
-
-    // Line series (hidden initially)
-    const line = chart.addLineSeries({
-      color: LINE_COLOR,
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      visible: false,
-    });
-    lineRef.current = line;
-
-    // Area series (hidden initially)
-    const area = chart.addAreaSeries({
-      topColor: AREA_TOP_COLOR,
-      bottomColor: AREA_BOTTOM_COLOR,
-      lineColor: LINE_COLOR,
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      visible: false,
-    });
-    areaRef.current = area;
-
-    // Volume histogram
-    const volume = chart.addHistogramSeries({
-      priceFormat: { type: 'volume' },
-      priceScaleId: 'volume',
-    });
-    chart.priceScale('volume').applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
-    });
+    lineRef.current = chart.addLineSeries({ color: LINE_COLOR, lineWidth: 2, priceLineVisible: false, lastValueVisible: false, visible: false });
+    areaRef.current = chart.addAreaSeries({ topColor: AREA_TOP_COLOR, bottomColor: AREA_BOTTOM_COLOR, lineColor: LINE_COLOR, lineWidth: 2, priceLineVisible: false, lastValueVisible: false, visible: false });
+    const volume = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'volume' });
+    chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
     volumeRef.current = volume;
-
-    // MA20 line
-    const ma20 = chart.addLineSeries({
-      color: MA20_COLOR,
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    ma20Ref.current = ma20;
-
-    // MA50 line
-    const ma50 = chart.addLineSeries({
-      color: MA50_COLOR,
-      lineWidth: 1,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    ma50Ref.current = ma50;
-
-    // Crosshair tooltip
+    ma20Ref.current = chart.addLineSeries({ color: MA20_COLOR, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+    ma50Ref.current = chart.addLineSeries({ color: MA50_COLOR, lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
     chart.subscribeCrosshairMove((param) => {
-      if (!param.time || !param.seriesData) {
-        setTooltipData(null);
-        return;
-      }
+      if (!param.time || !param.seriesData) { setTooltipData(null); return; }
       const cd = param.seriesData.get(candle) as CandlestickData | undefined;
       if (cd) {
         const volEntry = param.seriesData.get(volume) as HistogramData | undefined;
-        setTooltipData({
-          time: String(param.time),
-          open: cd.open,
-          high: cd.high,
-          low: cd.low,
-          close: cd.close,
-          volume: volEntry?.value ?? 0,
-        });
+        setTooltipData({ time: String(param.time), open: cd.open, high: cd.high, low: cd.low, close: cd.close, volume: volEntry?.value ?? 0 });
       }
     });
-
     chartRef.current = chart;
-
-    // ResizeObserver
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        chart.applyOptions({ width: entry.contentRect.width });
-      }
-    });
+    const observer = new ResizeObserver((entries) => { for (const e of entries) chart.applyOptions({ width: e.contentRect.width }); });
     observer.observe(container);
     observerRef.current = observer;
-
     requestAnimationFrame(() => setChartVisible(true));
   }, [chartHeight]);
 
-  // Create / destroy
   useEffect(() => {
-    if (!loading && data && data.length > 0) {
-      buildChart();
-    }
+    if (!loading && data && data.length > 0) buildChart();
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-      if (chartRef.current) {
-        chartRef.current.remove();
-        chartRef.current = null;
-        candleRef.current = null;
-        lineRef.current = null;
-        areaRef.current = null;
-        volumeRef.current = null;
-        ma20Ref.current = null;
-        ma50Ref.current = null;
-      }
+      observerRef.current?.disconnect(); observerRef.current = null;
+      if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; candleRef.current = null; lineRef.current = null; areaRef.current = null; volumeRef.current = null; ma20Ref.current = null; ma50Ref.current = null; }
       setChartVisible(false);
     };
   }, [loading, data && data.length > 0, buildChart]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update height on resize
-  useEffect(() => {
-    if (chartRef.current) {
-      chartRef.current.applyOptions({ height: chartHeight });
-    }
-  }, [chartHeight]);
+  useEffect(() => { if (chartRef.current) chartRef.current.applyOptions({ height: chartHeight }); }, [chartHeight]);
 
-  // Update data + chart type visibility
   useEffect(() => {
     if (!candleRef.current || !data || loading) return;
-
-    const candleData: CandlestickData[] = data.map((d) => ({
-      time: d.time as Time,
-      open: d.open,
-      high: d.high,
-      low: d.low,
-      close: d.close,
-    }));
-    const closeData: LineData[] = data.map((d) => ({
-      time: d.time as Time,
-      value: d.close,
-    }));
-
-    // Set data on all series
+    const candleData: CandlestickData[] = data.map((d) => ({ time: d.time as Time, open: d.open, high: d.high, low: d.low, close: d.close }));
+    const closeData: LineData[] = data.map((d) => ({ time: d.time as Time, value: d.close }));
     candleRef.current.setData(candleData);
     lineRef.current?.setData(closeData);
     areaRef.current?.setData(closeData);
-
-    // Toggle visibility based on chart type
     candleRef.current.applyOptions({ visible: chartType === 'candlestick' });
     lineRef.current?.applyOptions({ visible: chartType === 'line' });
     areaRef.current?.applyOptions({ visible: chartType === 'area' });
-
     if (volumeRef.current) {
-      const volData: HistogramData[] = data.map((d) => ({
-        time: d.time as Time,
-        value: d.volume ?? 0,
-        color: d.close >= d.open ? VOLUME_UP_COLOR : VOLUME_DOWN_COLOR,
-      }));
-      volumeRef.current.setData(volData);
+      volumeRef.current.setData(data.map((d) => ({ time: d.time as Time, value: d.volume ?? 0, color: d.close >= d.open ? VOLUME_UP_COLOR : VOLUME_DOWN_COLOR })));
     }
-
-    // MA lines
-    if (ma20Ref.current) {
-      ma20Ref.current.setData(showMA20 ? calculateMA(data, 20) : []);
-    }
-    if (ma50Ref.current) {
-      ma50Ref.current.setData(showMA50 ? calculateMA(data, 50) : []);
-    }
-
+    if (ma20Ref.current) ma20Ref.current.setData(showMA20 ? calculateMA(data, 20) : []);
+    if (ma50Ref.current) ma50Ref.current.setData(showMA50 ? calculateMA(data, 50) : []);
     chartRef.current?.timeScale().fitContent();
   }, [data, loading, chartType, showMA20, showMA50]);
 
-  // PNG download
-  const handleScreenshot = useCallback(() => {
-    if (!chartRef.current) return;
-    const canvas = chartRef.current.takeScreenshot();
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    const dateStr = new Date().toISOString().split('T')[0];
-    a.download = `TASI_${period}_${dateStr}.png`;
-    a.click();
-  }, [period]);
-
-  // CSV export
-  const handleCSVExport = useCallback(() => {
-    if (!data) return;
-    exportCSV(data, period);
-  }, [data, period]);
-
-  // Loading state
-  if (loading && (!data || data.length === 0)) {
-    return <ChartSkeleton height={chartHeight} />;
-  }
-
-  // Error state
-  if (error) {
-    return <ChartError height={chartHeight} message={error} onRetry={refetch} />;
-  }
-
-  // Empty state
-  if (!data || data.length === 0) {
-    return <ChartEmpty height={chartHeight} message="No TASI index data available" />;
-  }
+  if (loading && (!data || data.length === 0)) return <ChartSkeleton height={chartHeight} />;
+  if (error) return <ChartError height={chartHeight} message={error} onRetry={refetch} />;
+  if (!data || data.length === 0) return <ChartEmpty height={chartHeight} message="No TASI index data available" />;
 
   return (
-    <div
-      dir="ltr"
-      className={cn(
-        'rounded-xl overflow-hidden transition-opacity duration-500 dark:bg-dark-card bg-white border border-gold/10',
-        chartVisible ? 'opacity-100' : 'opacity-0',
-        className,
-      )}
-    >
+    <div dir="ltr" className={cn('rounded-xl overflow-hidden transition-opacity duration-500 dark:bg-dark-card bg-white border border-gold/10', chartVisible ? 'opacity-100' : 'opacity-0', className)}>
       {/* Toolbar */}
-      <div
-        className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-dark-input bg-gray-100 border-b border-gold/10"
-      >
+      <div className="flex items-center justify-between px-3 py-2 flex-wrap gap-2 dark:bg-dark-input bg-gray-100 border-b border-gold/10">
         {/* Left: Title + last price + source badge + period change */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-gold">
-              TASI
-            </span>
-            <span className="text-xs hidden sm:inline text-[#707070]">
-              {t('مؤشر السوق الرئيسي', 'Tadawul All Share Index')}
-            </span>
+            <span className="text-sm font-bold text-gold">TASI</span>
+            <span className="text-xs hidden sm:inline text-[#707070]">{t('مؤشر السوق الرئيسي', 'Tadawul All Share Index')}</span>
             <DataSourceBadge source={source} lastUpdated={lastUpdated?.toISOString()} />
           </div>
-
-          {/* Last price display */}
           {lastPrice !== null && (
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold text-[#E0E0E0]">
-                {lastPrice.toFixed(2)}
-              </span>
+              <span className="text-base font-bold text-[#E0E0E0]">{lastPrice.toFixed(2)}</span>
               {priceChange !== null && (
-                <span
-                  className={cn(
-                    'text-xs font-medium px-1.5 py-0.5 rounded',
-                    isUp ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10',
-                  )}
-                >
-                  {isUp ? '+' : ''}{priceChange.toFixed(2)}
-                  {priceChangePct !== null && ` (${priceChangePct.toFixed(2)}%)`}
+                <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded', isUp ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10')}>
+                  {isUp ? '+' : ''}{priceChange.toFixed(2)}{priceChangePct !== null && ` (${priceChangePct.toFixed(2)}%)`}
                 </span>
               )}
             </div>
           )}
-
-          {/* Period % change */}
           {periodChange !== null && (
-            <span
-              className={cn(
-                'text-xs font-semibold px-1.5 py-0.5 rounded hidden sm:inline-block',
-                periodChange >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10',
-              )}
-              title={t('تغير الفترة خلال النطاق المحدد', 'Period change over selected range')}
-            >
+            <span className={cn('text-xs font-semibold px-1.5 py-0.5 rounded hidden sm:inline-block', periodChange >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10')} title={t('تغير الفترة خلال النطاق المحدد', 'Period change over selected range')}>
               {t('الفترة', 'Period')}: {periodChange >= 0 ? '+' : ''}{periodChange.toFixed(2)}%
             </span>
           )}
         </div>
-
         {/* Right: Controls */}
         <div className="flex items-center gap-1 flex-wrap">
-          {/* MA toggles */}
-          <div
-            className="flex items-center gap-0.5 p-0.5 rounded-md bg-gold/5"
-          >
-            <button
-              onClick={() => setShowMA20((v) => !v)}
-              title={t('المتوسط المتحرك 20', 'Moving Average 20')}
-              aria-label={t('تبديل المتوسط المتحرك 20', 'Toggle Moving Average 20')}
-              aria-pressed={showMA20}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium"
-              style={{
-                background: showMA20 ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
-                color: showMA20 ? MA20_COLOR : '#707070',
-                border: showMA20 ? `1px solid ${MA20_COLOR}` : '1px solid transparent',
-              }}
-            >
-              MA20
-            </button>
-            <button
-              onClick={() => setShowMA50((v) => !v)}
-              title={t('المتوسط المتحرك 50', 'Moving Average 50')}
-              aria-label={t('تبديل المتوسط المتحرك 50', 'Toggle Moving Average 50')}
-              aria-pressed={showMA50}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium"
-              style={{
-                background: showMA50 ? 'rgba(74, 159, 255, 0.2)' : 'transparent',
-                color: showMA50 ? MA50_COLOR : '#707070',
-                border: showMA50 ? `1px solid ${MA50_COLOR}` : '1px solid transparent',
-              }}
-            >
-              MA50
-            </button>
-          </div>
-
-          {/* Chart type toggle */}
-          <div
-            className="flex items-center gap-0.5 p-0.5 rounded-md bg-gold/5"
-          >
-            <button
-              onClick={() => setChartType('candlestick')}
-              title={t('شموع يابانية', 'Candlestick')}
-              aria-label={t('رسم بياني شمعي', 'Candlestick chart')}
-              aria-pressed={chartType === 'candlestick'}
-              className={cn(
-                'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
-                chartType === 'candlestick'
-                  ? 'bg-gold/20 text-gold border-gold'
-                  : 'bg-transparent text-[#707070] border-transparent',
-              )}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <line x1="9" y1="2" x2="9" y2="22" />
-                <rect x="5" y="7" width="8" height="10" fill="currentColor" opacity="0.3" />
-                <line x1="17" y1="4" x2="17" y2="20" />
-                <rect x="13" y="9" width="8" height="6" fill="currentColor" opacity="0.3" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setChartType('line')}
-              title={t('رسم خطي', 'Line Chart')}
-              aria-label={t('رسم بياني خطي', 'Line chart')}
-              aria-pressed={chartType === 'line'}
-              className={cn(
-                'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
-                chartType === 'line'
-                  ? 'bg-gold/20 text-gold border-gold'
-                  : 'bg-transparent text-[#707070] border-transparent',
-              )}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <polyline points="3,17 8,11 13,15 21,5" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setChartType('area')}
-              title={t('رسم مساحي', 'Area Chart')}
-              aria-label={t('رسم بياني مساحي', 'Area chart')}
-              aria-pressed={chartType === 'area'}
-              className={cn(
-                'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
-                chartType === 'area'
-                  ? 'bg-gold/20 text-gold border-gold'
-                  : 'bg-transparent text-[#707070] border-transparent',
-              )}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M3,17 L8,11 L13,15 L21,5 L21,21 L3,21 Z" fill="currentColor" opacity="0.2" />
-                <polyline points="3,17 8,11 13,15 21,5" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Export buttons */}
-          <div
-            className="flex items-center gap-0.5 p-0.5 rounded-md bg-gold/5"
-          >
-            <button
-              onClick={handleScreenshot}
-              title={t('تحميل PNG', 'Download PNG')}
-              aria-label={t('تحميل صورة الرسم البياني', 'Download chart image')}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block text-[#707070] hover:text-gold"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21,15 16,10 5,21" />
-              </svg>
-            </button>
-            <button
-              onClick={handleCSVExport}
-              title={t('تصدير CSV', 'Export CSV')}
-              aria-label={t('تصدير بيانات الرسم البياني كملف CSV', 'Export chart data as CSV')}
-              className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block text-[#707070] hover:text-gold"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M14,2 L6,2 C4.9,2 4,2.9 4,4 L4,20 C4,21.1 4.9,22 6,22 L18,22 C19.1,22 20,21.1 20,20 L20,8 Z" />
-                <polyline points="14,2 14,8 20,8" />
-                <line x1="12" y1="12" x2="12" y2="18" />
-                <polyline points="9,15 12,18 15,15" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Separator */}
-          <span
-            className="w-px h-4 mx-0.5 hidden sm:block bg-gold/[0.15]"
-          />
-
-          {/* Period pill selector */}
-          <div
-            className="flex items-center gap-0.5 p-0.5 rounded-lg bg-gold/5"
-          >
-            {PERIODS.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => setPeriod(p.value)}
-                title={'intraday' in p && p.intraday ? t('قريبا', 'Coming soon') : undefined}
-                aria-label={`${t('فترة', 'Period')} ${p.label}`}
-                className={cn(
-                  'text-xs px-2.5 py-1 rounded-md font-medium transition-all duration-200',
-                  period === p.value
-                    ? 'bg-gold/20 text-gold shadow-sm'
-                    : 'bg-transparent text-[#707070] hover:text-gold',
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          <IndicatorToggleBar showMA20={showMA20} showMA50={showMA50} chartType={chartType} onToggleMA20={toggleMA20} onToggleMA50={toggleMA50} onSetChartType={setChartType} />
+          <ChartExportButton chartRef={chartRef} data={data} period={period} />
+          <span className="w-px h-4 mx-0.5 hidden sm:block bg-gold/[0.15]" />
+          <PeriodSelector period={period} onPeriodChange={setPeriod} />
         </div>
       </div>
 
       {/* Crosshair tooltip bar */}
-      <div
-        className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px] dark:bg-dark-card bg-gray-50 border-b border-gold/10 text-[#808080]"
-      >
+      <div className="flex items-center gap-4 px-3 py-1 text-xs min-h-[24px] dark:bg-dark-card bg-gray-50 border-b border-gold/10 text-[#808080]">
         {tooltipData ? (
           <>
-            <span className="font-medium text-gold">
-              {tooltipData.time}
-            </span>
-            <span>
-              O <span className="text-[#E0E0E0]">{tooltipData.open.toFixed(2)}</span>
-            </span>
-            <span>
-              H <span className="text-accent-green">{tooltipData.high.toFixed(2)}</span>
-            </span>
-            <span>
-              L <span className="text-accent-red">{tooltipData.low.toFixed(2)}</span>
-            </span>
-            <span>
-              C{' '}
-              <span
-                className={tooltipData.close >= tooltipData.open ? 'text-accent-green' : 'text-accent-red'}
-              >
-                {tooltipData.close.toFixed(2)}
-              </span>
-            </span>
-            <span>
-              Vol <span className="text-text-secondary">{formatVolume(tooltipData.volume)}</span>
-            </span>
+            <span className="font-medium text-gold">{tooltipData.time}</span>
+            <span>O <span className="text-[#E0E0E0]">{tooltipData.open.toFixed(2)}</span></span>
+            <span>H <span className="text-accent-green">{tooltipData.high.toFixed(2)}</span></span>
+            <span>L <span className="text-accent-red">{tooltipData.low.toFixed(2)}</span></span>
+            <span>C <span className={tooltipData.close >= tooltipData.open ? 'text-accent-green' : 'text-accent-red'}>{tooltipData.close.toFixed(2)}</span></span>
+            <span>Vol <span className="text-text-secondary">{formatVolume(tooltipData.volume)}</span></span>
           </>
         ) : (
           <span className="text-[#505050]">{t('مرر المؤشر فوق الرسم البياني لعرض التفاصيل', 'Hover over chart for details')}</span>
