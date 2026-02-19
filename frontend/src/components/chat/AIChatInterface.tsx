@@ -91,6 +91,7 @@ export function AIChatInterface() {
               onClick={() => setHistoryOpen(!historyOpen)}
               className={cn('flex items-center gap-1.5 text-xs px-2 py-1 rounded transition-colors', historyOpen ? 'text-gold bg-gold/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]')}
               title={t('سجل المحادثات', 'Chat History')}
+              aria-label={t('سجل المحادثات', 'Chat History')}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
@@ -134,7 +135,7 @@ export function AIChatInterface() {
                       {' '}&middot;{' '}{conv.messageCount} {t('رسائل', 'messages')}
                     </p>
                   </div>
-                  <button onClick={(e) => handleDeleteConversation(conv.id, e)} className="opacity-0 group-hover/conv:opacity-100 p-1 rounded text-[var(--text-muted)] hover:text-accent-red transition-all" title={t('حذف', 'Delete')}>
+                  <button onClick={(e) => handleDeleteConversation(conv.id, e)} className="opacity-0 group-hover/conv:opacity-100 p-1 rounded text-[var(--text-muted)] hover:text-accent-red transition-all" title={t('حذف', 'Delete')} aria-label={t('حذف المحادثة', 'Delete conversation')}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                   </button>
                 </div>

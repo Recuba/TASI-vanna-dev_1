@@ -59,7 +59,8 @@ export const StockReportsSection = memo(function StockReportsSection({ ticker, l
                 {report.source_url && (
                   <a href={report.source_url} target="_blank" rel="noopener noreferrer"
                     className="shrink-0 p-1.5 rounded-md text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)] transition-colors"
-                    title={t('فتح التقرير', 'Open report')}>
+                    title={t('فتح التقرير', 'Open report')}
+                    aria-label={t('فتح التقرير في نافذة جديدة', 'Open report in new window')}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                       <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />

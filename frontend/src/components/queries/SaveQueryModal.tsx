@@ -88,6 +88,7 @@ export function SaveQueryModal({ record, onClose, onSaved }: SaveQueryModalProps
           <h3 className="text-sm font-medium text-[var(--text-primary)]">Save Query</h3>
           <button
             onClick={onClose}
+            aria-label="Close dialog"
             className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

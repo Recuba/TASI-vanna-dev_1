@@ -55,6 +55,7 @@ export function MobileQueryInput({
         <button
           type="submit"
           disabled={!query.trim() || isLoading}
+          aria-label={isLoading ? 'Submitting query' : 'Submit query'}
           className={cn(
             'min-w-[44px] min-h-[44px] flex items-center justify-center',
             'bg-gold/20 text-gold rounded-xl',
