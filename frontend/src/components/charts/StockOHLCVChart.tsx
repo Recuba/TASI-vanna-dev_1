@@ -170,6 +170,16 @@ function StockOHLCVChartInner({
     return pct;
   }, [data]);
 
+  // Memoize MA series data — only recomputes when data or toggle changes
+  const ma20Data = useMemo(
+    () => (data && showMA20 ? calculateMA(data, 20) : []),
+    [data, showMA20],
+  );
+  const ma50Data = useMemo(
+    () => (data && showMA50 ? calculateMA(data, 50) : []),
+    [data, showMA50],
+  );
+
   // Responsive chart height
   const [chartHeight, setChartHeight] = useState(height);
   useEffect(() => {
@@ -360,16 +370,12 @@ function StockOHLCVChartInner({
       volumeRef.current.setData(volData);
     }
 
-    // MA lines
-    if (ma20Ref.current) {
-      ma20Ref.current.setData(showMA20 ? calculateMA(data, 20) : []);
-    }
-    if (ma50Ref.current) {
-      ma50Ref.current.setData(showMA50 ? calculateMA(data, 50) : []);
-    }
+    // MA lines (pre-computed by useMemo)
+    if (ma20Ref.current) ma20Ref.current.setData(ma20Data);
+    if (ma50Ref.current) ma50Ref.current.setData(ma50Data);
 
     chartRef.current?.timeScale().fitContent();
-  }, [data, loading, chartType, showMA20, showMA50]);
+  }, [data, loading, chartType, ma20Data, ma50Data]);
 
   // PNG download
   const handleScreenshot = useCallback(() => {

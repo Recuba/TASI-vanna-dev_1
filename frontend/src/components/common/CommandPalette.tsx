@@ -6,6 +6,7 @@ import {
   useCallback,
   useRef,
   useMemo,
+  useDeferredValue,
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -114,6 +115,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [stocks, setStocks] = useState<CachedStock[]>([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const deferredQuery = useDeferredValue(query);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -230,7 +232,7 @@ export function CommandPalette() {
 
   // Build filtered results
   const results = useMemo((): PaletteItem[] => {
-    const q = query.trim();
+    const q = deferredQuery.trim();
     if (!q) {
       // Show pages + actions when no query
       return [...PAGE_ITEMS, ...ACTION_ITEMS];
@@ -287,7 +289,7 @@ export function CommandPalette() {
     }
 
     return items;
-  }, [query, stocks, language, t, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION, ASK_RAID_SECTION, looksLikeQuestion]);
+  }, [deferredQuery, stocks, language, t, PAGE_ITEMS, ACTION_ITEMS, STOCKS_SECTION, ASK_RAID_SECTION, looksLikeQuestion]);
 
   // Reset index when results change
   useEffect(() => {
