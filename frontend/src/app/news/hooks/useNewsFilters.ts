@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import type { NewsFeedItem } from '@/lib/api-client';
 
 interface NewsFiltersState {
   page: number;
@@ -28,7 +27,7 @@ interface NewsFiltersActions {
 }
 
 export function useNewsFilters(
-  setAllArticles: (fn: (prev: NewsFeedItem[]) => NewsFeedItem[]) => void,
+  resetAllArticles: () => void,
 ): NewsFiltersState & NewsFiltersActions {
   const [page, setPage] = useState(1);
   const [activeSource, setActiveSource] = useState<string | null>(null);
@@ -47,35 +46,35 @@ export function useNewsFilters(
   const handleSourceChange = useCallback((source: string | null) => {
     setActiveSource(source);
     setPage(1);
-    setAllArticles(() => []);
+    resetAllArticles();
     setShowSaved(false);
-  }, [setAllArticles]);
+  }, [resetAllArticles]);
 
   const handleClearAdvancedFilters = useCallback(() => {
     setActiveSentiment(null);
     setDateFrom('');
     setDateTo('');
     setPage(1);
-    setAllArticles(() => []);
-  }, [setAllArticles]);
+    resetAllArticles();
+  }, [resetAllArticles]);
 
   const handleSentimentChange = useCallback((sentiment: string) => {
     setActiveSentiment((prev) => (prev === sentiment ? null : sentiment));
     setPage(1);
-    setAllArticles(() => []);
-  }, [setAllArticles]);
+    resetAllArticles();
+  }, [resetAllArticles]);
 
   const handleDateFromChange = useCallback((value: string) => {
     setDateFrom(value);
     setPage(1);
-    setAllArticles(() => []);
-  }, [setAllArticles]);
+    resetAllArticles();
+  }, [resetAllArticles]);
 
   const handleDateToChange = useCallback((value: string) => {
     setDateTo(value);
     setPage(1);
-    setAllArticles(() => []);
-  }, [setAllArticles]);
+    resetAllArticles();
+  }, [resetAllArticles]);
 
   return {
     page,

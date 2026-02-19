@@ -18,18 +18,12 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector } from '@/lib/stock-translations';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { loadLocalWatchlists, saveLocalWatchlists, type LocalWatchlist } from '@/lib/hooks/useWatchlist';
+import { formatPrice, formatPercent } from '@/lib/formatters';
 
 // ---------------------------------------------------------------------------
 // LocalStorage fallback (when API is not available)
 // ---------------------------------------------------------------------------
-
-const STORAGE_KEY = 'rad-ai-watchlists';
-
-interface LocalWatchlist {
-  id: string;
-  name: string;
-  tickers: string[];
-}
 
 /** Unified quote data that works with both BatchQuote and CompanyDetail. */
 interface QuoteData {
@@ -40,27 +34,6 @@ interface QuoteData {
   previous_close: number | null;
   change_pct: number | null;
   volume: number | null;
-}
-
-function loadLocalWatchlists(): LocalWatchlist[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : getDefaultWatchlists();
-  } catch {
-    return getDefaultWatchlists();
-  }
-}
-
-function saveLocalWatchlists(lists: LocalWatchlist[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(lists));
-}
-
-function getDefaultWatchlists(): LocalWatchlist[] {
-  return [
-    { id: 'default', name: '\u0642\u0627\u0626\u0645\u062A\u064A', tickers: ['2222.SR', '1180.SR', '2010.SR', '1010.SR', '7010.SR'] },
-    { id: 'banks', name: '\u0642\u0637\u0627\u0639 \u0627\u0644\u0628\u0646\u0648\u0643', tickers: ['1180.SR', '1010.SR', '1020.SR', '1050.SR'] },
-  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -555,14 +528,14 @@ export default function WatchlistPage() {
                             {quotesLoading && !quote ? (
                               <span className="inline-block w-12 h-4 bg-[var(--bg-input)] rounded animate-pulse" />
                             ) : (
-                              quote?.current_price?.toFixed(2) || '-'
+                              formatPrice(quote?.current_price)
                             )}
                           </td>
                           <td className={cn('px-3 py-2 text-end font-medium', isUp ? 'text-accent-green' : 'text-accent-red')}>
                             {quotesLoading && !quote ? (
                               <span className="inline-block w-12 h-4 bg-[var(--bg-input)] rounded animate-pulse" />
                             ) : (
-                              change !== null ? `${change >= 0 ? '+' : ''}${change.toFixed(2)}%` : '-'
+                              change !== null ? formatPercent(change) : '-'
                             )}
                           </td>
                           <td className="px-3 py-2 text-center">

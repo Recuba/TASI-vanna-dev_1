@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useReducer, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '@/lib/utils';
 import { useNewsFeed, useNewsSources } from '@/lib/hooks/use-api';
@@ -13,24 +13,105 @@ import { ConnectionStatusBadge } from '@/components/common/ConnectionStatusBadge
 import { useToast } from '@/components/common/Toast';
 
 // ---------------------------------------------------------------------------
+// Types & reducer (outside component)
+// ---------------------------------------------------------------------------
+
+interface NewsState {
+  allArticles: NewsFeedItem[];
+  bookmarks: Set<string>;
+  loadingMore: boolean;
+  searchResults: NewsFeedItem[] | null;
+  searchLoading: boolean;
+  isSticky: boolean;
+  newArticleCount: number;
+  savedArticles: NewsFeedItem[];
+  savedLoading: boolean;
+  columnCount: number;
+  sseStatus: 'live' | 'reconnecting' | 'offline';
+  retrying: boolean;
+  minLoadElapsed: boolean;
+}
+
+type NewsAction =
+  | { type: 'SET_ALL_ARTICLES'; payload: NewsFeedItem[] }
+  | { type: 'APPEND_ARTICLES'; payload: NewsFeedItem[] }
+  | { type: 'SET_BOOKMARKS'; payload: Set<string> }
+  | { type: 'TOGGLE_BOOKMARK'; id: string }
+  | { type: 'SET_LOADING_MORE'; payload: boolean }
+  | { type: 'SET_SEARCH_RESULTS'; payload: NewsFeedItem[] | null }
+  | { type: 'SET_SEARCH_LOADING'; payload: boolean }
+  | { type: 'SET_IS_STICKY'; payload: boolean }
+  | { type: 'SET_NEW_ARTICLE_COUNT'; payload: number }
+  | { type: 'SET_SAVED_ARTICLES'; payload: NewsFeedItem[] }
+  | { type: 'SET_SAVED_LOADING'; payload: boolean }
+  | { type: 'SET_COLUMN_COUNT'; payload: number }
+  | { type: 'SET_SSE_STATUS'; payload: 'live' | 'reconnecting' | 'offline' }
+  | { type: 'SET_RETRYING'; payload: boolean }
+  | { type: 'SET_MIN_LOAD_ELAPSED'; payload: boolean };
+
+const initialState: NewsState = {
+  allArticles: [],
+  bookmarks: new Set(),
+  loadingMore: false,
+  searchResults: null,
+  searchLoading: false,
+  isSticky: false,
+  newArticleCount: 0,
+  savedArticles: [],
+  savedLoading: false,
+  columnCount: 1,
+  sseStatus: 'offline',
+  retrying: false,
+  minLoadElapsed: false,
+};
+
+function newsReducer(state: NewsState, action: NewsAction): NewsState {
+  switch (action.type) {
+    case 'SET_ALL_ARTICLES': return { ...state, allArticles: action.payload };
+    case 'APPEND_ARTICLES': return { ...state, allArticles: [...state.allArticles, ...action.payload] };
+    case 'SET_BOOKMARKS': return { ...state, bookmarks: action.payload };
+    case 'TOGGLE_BOOKMARK': {
+      const next = new Set(state.bookmarks);
+      if (next.has(action.id)) next.delete(action.id); else next.add(action.id);
+      return { ...state, bookmarks: next };
+    }
+    case 'SET_LOADING_MORE': return { ...state, loadingMore: action.payload };
+    case 'SET_SEARCH_RESULTS': return { ...state, searchResults: action.payload };
+    case 'SET_SEARCH_LOADING': return { ...state, searchLoading: action.payload };
+    case 'SET_IS_STICKY': return { ...state, isSticky: action.payload };
+    case 'SET_NEW_ARTICLE_COUNT': return { ...state, newArticleCount: action.payload };
+    case 'SET_SAVED_ARTICLES': return { ...state, savedArticles: action.payload };
+    case 'SET_SAVED_LOADING': return { ...state, savedLoading: action.payload };
+    case 'SET_COLUMN_COUNT': return { ...state, columnCount: action.payload };
+    case 'SET_SSE_STATUS': return { ...state, sseStatus: action.payload };
+    case 'SET_RETRYING': return { ...state, retrying: action.payload };
+    case 'SET_MIN_LOAD_ELAPSED': return { ...state, minLoadElapsed: action.payload };
+    default: return state;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
 export default function NewsPage() {
   const { t, language } = useLanguage();
-  const [allArticles, setAllArticles] = useState<NewsFeedItem[]>([]);
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [searchResults, setSearchResults] = useState<NewsFeedItem[] | null>(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [isSticky, setIsSticky] = useState(false);
-  const [newArticleCount, setNewArticleCount] = useState(0);
-  const [savedArticles, setSavedArticles] = useState<NewsFeedItem[]>([]);
-  const [savedLoading, setSavedLoading] = useState(false);
-  const [columnCount, setColumnCount] = useState(1);
-  const [sseStatus, setSseStatus] = useState<'live' | 'reconnecting' | 'offline'>('offline');
-  const [retrying, setRetrying] = useState(false);
-  const [minLoadElapsed, setMinLoadElapsed] = useState(false);
+  const [state, dispatch] = useReducer(newsReducer, initialState);
+  const {
+    allArticles,
+    bookmarks,
+    loadingMore,
+    searchResults,
+    searchLoading,
+    isSticky,
+    newArticleCount,
+    savedArticles,
+    savedLoading,
+    columnCount,
+    sseStatus,
+    retrying,
+    minLoadElapsed,
+  } = state;
   const { showToast } = useToast();
 
   const stickyRef = useRef<HTMLDivElement>(null);
@@ -39,23 +120,22 @@ export default function NewsPage() {
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const loadStartRef = useRef(Date.now());
 
-  // Filters hook
-  const setAllArticlesUpdater = useCallback(
-    (fn: (prev: NewsFeedItem[]) => NewsFeedItem[]) => setAllArticles(fn),
-    [],
-  );
-  const filters = useNewsFilters(setAllArticlesUpdater);
+  // Filters hook — pass a reset callback that dispatches SET_ALL_ARTICLES with []
+  const resetAllArticles = useCallback(() => {
+    dispatch({ type: 'SET_ALL_ARTICLES', payload: [] });
+  }, []);
+  const filters = useNewsFilters(resetAllArticles);
 
   // Load bookmarks from localStorage on mount
   useEffect(() => {
-    setBookmarks(getBookmarks());
+    dispatch({ type: 'SET_BOOKMARKS', payload: getBookmarks() });
   }, []);
 
   // Minimum loading duration (200ms) to prevent skeleton flash
   useEffect(() => {
     loadStartRef.current = Date.now();
-    setMinLoadElapsed(false);
-    const timer = setTimeout(() => setMinLoadElapsed(true), 200);
+    dispatch({ type: 'SET_MIN_LOAD_ELAPSED', payload: false });
+    const timer = setTimeout(() => dispatch({ type: 'SET_MIN_LOAD_ELAPSED', payload: true }), 200);
     return () => clearTimeout(timer);
   }, [filters.page, filters.activeSource, filters.activeSentiment, filters.dateFrom, filters.dateTo]);
 
@@ -92,20 +172,20 @@ export default function NewsPage() {
   // Fetch saved articles from backend when showSaved is active
   useEffect(() => {
     if (!filters.showSaved || bookmarks.size === 0) {
-      setSavedArticles([]);
+      dispatch({ type: 'SET_SAVED_ARTICLES', payload: [] });
       return;
     }
-    setSavedLoading(true);
+    dispatch({ type: 'SET_SAVED_LOADING', payload: true });
     const ids = Array.from(bookmarks);
     getNewsFeedByIds(ids)
       .then((res) => {
-        setSavedArticles(res.items);
+        dispatch({ type: 'SET_SAVED_ARTICLES', payload: res.items });
       })
       .catch(() => {
-        setSavedArticles([]);
+        dispatch({ type: 'SET_SAVED_ARTICLES', payload: [] });
       })
       .finally(() => {
-        setSavedLoading(false);
+        dispatch({ type: 'SET_SAVED_LOADING', payload: false });
       });
   }, [filters.showSaved, bookmarks]);
 
@@ -115,7 +195,7 @@ export default function NewsPage() {
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsSticky(!entry.isIntersecting);
+        dispatch({ type: 'SET_IS_STICKY', payload: !entry.isIntersecting });
       },
       { threshold: 1, rootMargin: '-1px 0px 0px 0px' },
     );
@@ -130,7 +210,7 @@ export default function NewsPage() {
     const ro = new ResizeObserver(([entry]) => {
       const w = entry.contentRect.width;
       // Match Tailwind breakpoints: xl(1280)=3cols, md(768)=2cols, else 1col
-      setColumnCount(w >= 1024 ? 3 : w >= 640 ? 2 : 1);
+      dispatch({ type: 'SET_COLUMN_COUNT', payload: w >= 1024 ? 3 : w >= 640 ? 2 : 1 });
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -139,14 +219,14 @@ export default function NewsPage() {
   // Auto-refresh: SSE stream with polling fallback
   useEffect(() => {
     if (filters.searchQuery.trim() || filters.showSaved) {
-      setSseStatus('offline');
+      dispatch({ type: 'SET_SSE_STATUS', payload: 'offline' });
       return;
     }
 
     let fallbackTimer: ReturnType<typeof setInterval> | null = null;
 
     const startPollingFallback = () => {
-      setSseStatus('offline');
+      dispatch({ type: 'SET_SSE_STATUS', payload: 'offline' });
       if (!fallbackTimer) {
         fallbackTimer = setInterval(async () => {
           if (document.hidden) return;
@@ -159,7 +239,7 @@ export default function NewsPage() {
               if (currentIds.size > 0) {
                 const newIds = res.items.filter((a) => !currentIds.has(a.id));
                 if (newIds.length > 0) {
-                  setNewArticleCount(newIds.length);
+                  dispatch({ type: 'SET_NEW_ARTICLE_COUNT', payload: newIds.length });
                 }
               }
             }
@@ -176,18 +256,18 @@ export default function NewsPage() {
 
     try {
       es = new EventSource(sseUrl);
-      setSseStatus('reconnecting');
+      dispatch({ type: 'SET_SSE_STATUS', payload: 'reconnecting' });
 
       es.onopen = () => {
-        setSseStatus('live');
+        dispatch({ type: 'SET_SSE_STATUS', payload: 'live' });
       };
 
       es.onmessage = (event) => {
-        setSseStatus('live');
+        dispatch({ type: 'SET_SSE_STATUS', payload: 'live' });
         try {
           const data = JSON.parse(event.data);
           if (data.count > 0) {
-            setNewArticleCount(data.count);
+            dispatch({ type: 'SET_NEW_ARTICLE_COUNT', payload: data.count });
           }
         } catch {
           // Ignore malformed events
@@ -245,17 +325,15 @@ export default function NewsPage() {
   useEffect(() => {
     if (data?.items) {
       if (filters.page === 1) {
-        setAllArticles(data.items);
+        dispatch({ type: 'SET_ALL_ARTICLES', payload: data.items });
       } else {
-        setAllArticles((prev) => {
-          const existingIds = new Set(prev.map((a) => a.id));
-          const newItems = data.items.filter((a) => !existingIds.has(a.id));
-          return [...prev, ...newItems];
-        });
+        const existingIds = new Set(allArticles.map((a) => a.id));
+        const newItems = data.items.filter((a) => !existingIds.has(a.id));
+        dispatch({ type: 'SET_ALL_ARTICLES', payload: [...allArticles, ...newItems] });
       }
-      setLoadingMore(false);
+      dispatch({ type: 'SET_LOADING_MORE', payload: false });
     }
-  }, [data, filters.page]);
+  }, [data, filters.page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const total = data?.total ?? 0;
   const hasMore = allArticles.length < total;
@@ -268,7 +346,7 @@ export default function NewsPage() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && hasMore && !loadingMore && !loading) {
-          setLoadingMore(true);
+          dispatch({ type: 'SET_LOADING_MORE', payload: true });
           filters.setPage((p) => p + 1);
         }
       },
@@ -281,11 +359,11 @@ export default function NewsPage() {
   // Search handling with debounce
   useEffect(() => {
     if (!filters.searchQuery.trim()) {
-      setSearchResults(null);
-      setSearchLoading(false);
+      dispatch({ type: 'SET_SEARCH_RESULTS', payload: null });
+      dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
       return;
     }
-    setSearchLoading(true);
+    dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
     const controller = new AbortController();
     searchNewsFeed({
       q: filters.searchQuery,
@@ -297,45 +375,38 @@ export default function NewsPage() {
     }, controller.signal)
       .then((res) => {
         if (!controller.signal.aborted) {
-          setSearchResults(res.items);
-          setSearchLoading(false);
+          dispatch({ type: 'SET_SEARCH_RESULTS', payload: res.items });
+          dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
         }
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
           // Don't treat abort errors as search failures
           if (err instanceof DOMException && err.name === 'AbortError') return;
-          setSearchResults([]);
-          setSearchLoading(false);
+          dispatch({ type: 'SET_SEARCH_RESULTS', payload: [] });
+          dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
         }
       });
     return () => controller.abort();
   }, [filters.searchQuery, filters.activeSource, filters.activeSentiment, filters.dateFrom, filters.dateTo]);
 
   const handleToggleBookmark = useCallback((id: string) => {
-    setBookmarks((prev) => {
-      const next = new Set(prev);
-      const wasBookmarked = next.has(id);
-      if (wasBookmarked) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      saveBookmarks(next);
+    const wasBookmarked = bookmarks.has(id);
+    const next = new Set(bookmarks);
+    if (wasBookmarked) next.delete(id); else next.add(id);
+    saveBookmarks(next);
+    dispatch({ type: 'SET_BOOKMARKS', payload: next });
 
-      const msg = wasBookmarked
-        ? t('تمت إزالة المقال من المحفوظات', 'Article removed from saved')
-        : t('تم حفظ المقال', 'Article saved');
-      showToast(msg, wasBookmarked ? 'info' : 'success');
-
-      return next;
-    });
-  }, [t, showToast]);
+    const msg = wasBookmarked
+      ? t('تمت إزالة المقال من المحفوظات', 'Article removed from saved')
+      : t('تم حفظ المقال', 'Article saved');
+    showToast(msg, wasBookmarked ? 'info' : 'success');
+  }, [bookmarks, t, showToast]);
 
   const handleDismissNewArticles = useCallback(() => {
-    setNewArticleCount(0);
+    dispatch({ type: 'SET_NEW_ARTICLE_COUNT', payload: 0 });
     filters.setPage(1);
-    setAllArticles([]);
+    dispatch({ type: 'SET_ALL_ARTICLES', payload: [] });
     refetch();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [refetch, filters]);
@@ -470,9 +541,9 @@ export default function NewsPage() {
             <div className="w-12 h-0.5 mx-auto mb-5 rounded-full bg-gold-gradient opacity-40" />
             <button
               onClick={() => {
-                setRetrying(true);
+                dispatch({ type: 'SET_RETRYING', payload: true });
                 refetch();
-                setTimeout(() => setRetrying(false), 2000);
+                setTimeout(() => dispatch({ type: 'SET_RETRYING', payload: false }), 2000);
               }}
               disabled={retrying}
               className={cn(
@@ -697,7 +768,7 @@ export default function NewsPage() {
               <>
                 <div className="flex justify-center py-2">
                   <button
-                    onClick={() => { setLoadingMore(true); filters.setPage(p => p + 1); }}
+                    onClick={() => { dispatch({ type: 'SET_LOADING_MORE', payload: true }); filters.setPage(p => p + 1); }}
                     className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 rounded-md text-sm font-medium bg-gold/10 text-gold border border-gold/20 hover:bg-gold/20 focus-visible:ring-2 focus-visible:ring-gold/40 focus-visible:outline-none transition-colors duration-200 disabled:opacity-50"
                     disabled={loadingMore}
                   >
