@@ -35,10 +35,21 @@ else:
 
     if echo "$DB_STATUS" | grep -q "NEED_INIT"; then
         echo "Initializing database schema..."
-        PGPASSWORD="$PG_PASSWORD" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DBNAME" -f database/schema.sql 2>&1 || echo "Schema init via psql failed, trying Python..."
+        if ! PGPASSWORD="$PG_PASSWORD" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" \
+             -d "$PG_DBNAME" -f database/schema.sql 2>&1; then
+            echo "ERROR: Schema initialization failed. Check database/schema.sql and DB credentials." >&2
+            exit 1
+        fi
 
         echo "Loading data from CSV..."
-        python database/csv_to_postgres.py --csv-path saudi_stocks_yahoo_data.csv 2>&1 || echo "WARNING: Data loading failed, app will start with empty database"
+        if [ ! -f database/csv_to_postgres.py ]; then
+            echo "ERROR: CSV loader not found at database/csv_to_postgres.py" >&2
+            exit 1
+        fi
+        if ! python database/csv_to_postgres.py --csv-path saudi_stocks_yahoo_data.csv; then
+            echo "ERROR: CSV data loading failed. App cannot start without data." >&2
+            exit 1
+        fi
         echo "Database initialization complete."
     else
         echo "Database already initialized, skipping."
