@@ -19,7 +19,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector } from '@/lib/stock-translations';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
 import { loadLocalWatchlists, saveLocalWatchlists, type LocalWatchlist } from '@/lib/hooks/useWatchlist';
-import { formatPrice, formatPercent } from '@/lib/formatters';
+import { formatPrice, formatChangePercent } from '@/lib/formatters';
 
 // ---------------------------------------------------------------------------
 // LocalStorage fallback (when API is not available)
@@ -535,7 +535,7 @@ export default function WatchlistPage() {
                             {quotesLoading && !quote ? (
                               <span className="inline-block w-12 h-4 bg-[var(--bg-input)] rounded animate-pulse" />
                             ) : (
-                              change !== null ? formatPercent(change) : '-'
+                              change !== null ? formatChangePercent(change) : '-'
                             )}
                           </td>
                           <td className="px-3 py-2 text-center">

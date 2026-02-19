@@ -26,6 +26,7 @@ import { ChartSkeleton } from './ChartSkeleton';
 import { ChartError } from './ChartError';
 import { ChartEmpty } from './ChartEmpty';
 import { DataSourceBadge } from './DataSourceBadge';
+import { formatVolume } from '@/lib/formatters';
 import { useTasiOHLCV } from '@/lib/hooks/use-chart-data';
 import type { OHLCVData } from './chart-types';
 import dynamic from 'next/dynamic';
@@ -38,13 +39,6 @@ import { ChartExportButton } from './tasi/ChartExportButton';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatVolume(vol: number): string {
-  if (vol >= 1_000_000_000) return (vol / 1_000_000_000).toFixed(1) + 'B';
-  if (vol >= 1_000_000) return (vol / 1_000_000).toFixed(1) + 'M';
-  if (vol >= 1_000) return (vol / 1_000).toFixed(1) + 'K';
-  return vol.toFixed(0);
-}
 
 function calculateMA(data: OHLCVData[], period: number): LineData[] {
   const result: LineData[] = [];

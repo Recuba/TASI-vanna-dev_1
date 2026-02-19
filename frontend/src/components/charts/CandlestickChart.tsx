@@ -20,6 +20,7 @@ import {
   MA50_COLOR,
 } from './chart-config';
 import type { OHLCVData, ChartTimeRange } from './chart-types';
+import { formatVolume } from '@/lib/formatters';
 import dynamic from 'next/dynamic';
 import { ChartSkeleton } from './ChartSkeleton';
 import { ChartError } from './ChartError';
@@ -100,13 +101,6 @@ function filterByTimeRange(data: OHLCVData[], range: ChartTimeRange): OHLCVData[
 
   const cutoffStr = cutoff.toISOString().split('T')[0];
   return data.filter((d) => d.time >= cutoffStr);
-}
-
-function formatVolume(vol: number): string {
-  if (vol >= 1_000_000_000) return (vol / 1_000_000_000).toFixed(1) + 'B';
-  if (vol >= 1_000_000) return (vol / 1_000_000).toFixed(1) + 'M';
-  if (vol >= 1_000) return (vol / 1_000).toFixed(1) + 'K';
-  return vol.toFixed(0);
 }
 
 // ---------------------------------------------------------------------------

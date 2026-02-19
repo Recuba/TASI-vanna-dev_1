@@ -67,7 +67,11 @@ const initialState: NewsState = {
 function newsReducer(state: NewsState, action: NewsAction): NewsState {
   switch (action.type) {
     case 'SET_ALL_ARTICLES': return { ...state, allArticles: action.payload };
-    case 'APPEND_ARTICLES': return { ...state, allArticles: [...state.allArticles, ...action.payload] };
+    case 'APPEND_ARTICLES': {
+      const existingIds = new Set(state.allArticles.map((a) => a.id));
+      const newItems = (action.payload as NewsFeedItem[]).filter((a) => !existingIds.has(a.id));
+      return { ...state, allArticles: [...state.allArticles, ...newItems] };
+    }
     case 'SET_BOOKMARKS': return { ...state, bookmarks: action.payload };
     case 'SET_LOADING_MORE': return { ...state, loadingMore: action.payload };
     case 'SET_SEARCH_RESULTS': return { ...state, searchResults: action.payload };
@@ -321,13 +325,11 @@ export default function NewsPage() {
       if (filters.page === 1) {
         dispatch({ type: 'SET_ALL_ARTICLES', payload: data.items });
       } else {
-        const existingIds = new Set(allArticles.map((a) => a.id));
-        const newItems = data.items.filter((a) => !existingIds.has(a.id));
-        dispatch({ type: 'SET_ALL_ARTICLES', payload: [...allArticles, ...newItems] });
+        dispatch({ type: 'APPEND_ARTICLES', payload: data.items });
       }
       dispatch({ type: 'SET_LOADING_MORE', payload: false });
     }
-  }, [data, filters.page]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, filters.page]);
 
   const total = data?.total ?? 0;
   const hasMore = allArticles.length < total;

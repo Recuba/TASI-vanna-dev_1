@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const STORAGE_KEY = 'rad-ai-watchlists';
 
@@ -26,12 +26,14 @@ export function loadLocalWatchlists(): LocalWatchlist[] {
 }
 
 export function saveLocalWatchlists(lists: LocalWatchlist[]): void {
+  if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(lists));
 }
 
 export function useWatchlist() {
   const [watchlists, setWatchlists] = useState<LocalWatchlist[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const hasPersistedRef = useRef(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -39,11 +41,14 @@ export function useWatchlist() {
     setLoaded(true);
   }, []);
 
-  // Persist to localStorage on change (after initial load)
+  // Persist to localStorage on change - skip the very first render after load
   useEffect(() => {
-    if (loaded && watchlists.length > 0) {
-      saveLocalWatchlists(watchlists);
+    if (!loaded) return;
+    if (!hasPersistedRef.current) {
+      hasPersistedRef.current = true;
+      return; // skip initial load-triggered effect
     }
+    saveLocalWatchlists(watchlists);
   }, [watchlists, loaded]);
 
   const addTicker = useCallback((ticker: string, listId: string = 'default') => {
