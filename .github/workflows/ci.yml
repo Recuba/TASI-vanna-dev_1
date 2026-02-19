@@ -73,7 +73,7 @@ jobs:
         run: python -m pytest test_database.py -v
 
       - name: Run Vanna assembly tests
-        run: python -m pytest test_app_assembly_v2.py -v
+        run: python test_app_assembly_v2.py
 
       - name: Run unit and integration tests
         run: python -m pytest tests/ -v --timeout=60 --ignore=tests/test_services.py --ignore=tests/test_api_routes.py --ignore=tests/performance/ --cov=api --cov=services --cov=middleware --cov=config --cov=backend --cov=ingestion --cov-report=term-missing --cov-fail-under=70
