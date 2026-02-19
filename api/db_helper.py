@@ -123,20 +123,30 @@ def fetchone(conn: Any, sql: str, params: Params = None) -> Optional[Dict[str, A
 
 def _sync_fetchall(sql: str, params: Params = None) -> List[Dict[str, Any]]:
     """Open a connection, run fetchall, close. Designed for asyncio.to_thread."""
-    conn = get_conn()
-    try:
-        return fetchall(conn, sql, params)
-    finally:
-        conn.close()
+    if is_postgres():
+        conn = get_conn()
+        try:
+            return fetchall(conn, sql, params)
+        finally:
+            conn.close()
+    else:
+        from services.sqlite_pool import get_pool
+        with get_pool().connection() as conn:
+            return fetchall(conn, sql, params)
 
 
 def _sync_fetchone(sql: str, params: Params = None) -> Optional[Dict[str, Any]]:
     """Open a connection, run fetchone, close. Designed for asyncio.to_thread."""
-    conn = get_conn()
-    try:
-        return fetchone(conn, sql, params)
-    finally:
-        conn.close()
+    if is_postgres():
+        conn = get_conn()
+        try:
+            return fetchone(conn, sql, params)
+        finally:
+            conn.close()
+    else:
+        from services.sqlite_pool import get_pool
+        with get_pool().connection() as conn:
+            return fetchone(conn, sql, params)
 
 
 async def afetchall(sql: str, params: Params = None) -> List[Dict[str, Any]]:

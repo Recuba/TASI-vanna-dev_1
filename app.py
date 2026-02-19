@@ -646,6 +646,21 @@ async def lifespan(app):
         except Exception as exc:
             logger.error("Failed to initialize connection pool: %s", exc)
 
+    # Initialize SQLite connection pool (WAL mode, 5 connections)
+    if DB_BACKEND != "postgres":
+        try:
+            from services.sqlite_pool import init_pool as _init_sqlite_pool
+
+            _sqlite_db_path = (
+                str(_settings.db.resolved_sqlite_path)
+                if _settings
+                else str(_HERE / "saudi_stocks.db")
+            )
+            _init_sqlite_pool(_sqlite_db_path, pool_size=5)
+            logger.info("SQLite connection pool initialized for: %s", _sqlite_db_path)
+        except Exception as exc:
+            logger.warning("Failed to initialize SQLite connection pool: %s", exc)
+
     # Initialize Redis (if enabled)
     _cache_enabled = _settings.cache.enabled if _settings else False
     _redis_status = "disabled"
