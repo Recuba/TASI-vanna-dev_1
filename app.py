@@ -673,19 +673,6 @@ async def lifespan(app):
     logger.info("Routes registered: %d", len(app.routes))
     logger.info("Redis: %s", _redis_status)
 
-    # SA-04: Enforce JWT secret in production (postgres + non-debug)
-    if DB_BACKEND == "postgres" and _settings:
-        _jwt_secret_env = os.environ.get("AUTH_JWT_SECRET", "")
-        if not _jwt_secret_env:
-            if not _settings.server.debug:
-                raise RuntimeError(
-                    "AUTH_JWT_SECRET must be set in production "
-                    "(DB_BACKEND=postgres, SERVER_DEBUG=false)"
-                )
-            logger.warning(
-                "AUTH_JWT_SECRET not configured -- JWT tokens will not persist across restarts"
-            )
-
     # SA-06: Warn if debug mode is enabled (rate limiting disabled)
     _is_debug = globals().get("_debug_mode", False)
     if _is_debug:

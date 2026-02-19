@@ -39,7 +39,11 @@ def on_startup() -> None:
     try:
         from config.env_validator import validate_and_log
 
-        validate_and_log()
+        if not validate_and_log():
+            logger.critical(
+                "Startup aborted: environment validation errors must be resolved before starting."
+            )
+            sys.exit(1)
     except ImportError:
         logger.debug("env_validator not available, skipping validation")
 

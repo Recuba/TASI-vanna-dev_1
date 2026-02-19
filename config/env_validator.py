@@ -86,9 +86,10 @@ def validate_env() -> Tuple[List[str], List[str]]:
     if environment == "production":
         jwt_secret = os.environ.get("AUTH_JWT_SECRET")
         if not jwt_secret:
-            warnings.append(
-                "AUTH_JWT_SECRET not set in production. "
-                "JWT tokens will not persist across restarts."
+            errors.append(
+                "AUTH_JWT_SECRET must be set explicitly in production. "
+                "Sessions will be invalidated on every restart without it. "
+                'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
             )
 
     # --- CORS origins ---
