@@ -67,11 +67,18 @@ class DatabaseSettings(BaseSettings):
 
 
 class LLMSettings(BaseSettings):
-    """LLM provider settings (Anthropic Claude)."""
+    """LLM provider settings."""
 
     model_config = SettingsConfigDict(env_prefix="LLM_")
 
-    model: str = "claude-sonnet-4-5-20250929"
+    provider: Literal["anthropic", "gemini", "openai"] = Field(
+        default="gemini",
+        description="LLM provider: anthropic | gemini | openai"
+    )
+    model: str = Field(
+        default="gemini-2.0-flash-exp",
+        description="Model name — provider-specific"
+    )
     api_key: str = ""
     max_tool_iterations: int = 10
 
@@ -227,8 +234,17 @@ class Settings(BaseSettings):
     scraper: ScraperSettings = ScraperSettings()
 
     def get_llm_api_key(self) -> str:
-        """Return the effective LLM API key (LLM_API_KEY > ANTHROPIC_API_KEY)."""
-        return self.llm.api_key or self.anthropic_api_key
+        """Return the effective LLM API key for the configured provider."""
+        if self.llm.api_key:
+            return self.llm.api_key
+        import os
+        if self.llm.provider == "anthropic":
+            return self.anthropic_api_key or os.environ.get("ANTHROPIC_API_KEY", "")
+        if self.llm.provider == "gemini":
+            return os.environ.get("GEMINI_API_KEY", "")
+        if self.llm.provider == "openai":
+            return os.environ.get("OPENAI_API_KEY", "")
+        return ""
 
 
 @lru_cache(maxsize=1)
