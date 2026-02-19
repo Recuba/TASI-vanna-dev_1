@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 _DB_BACKEND = os.environ.get("DB_BACKEND", "sqlite")
 _HERE = Path(__file__).resolve().parent.parent
-_SQLITE_PATH = str(_HERE / "saudi_stocks.db")
+_SQLITE_PATH = os.environ.get("DB_SQLITE_PATH", str(_HERE / "saudi_stocks.db"))
 
 
 def is_postgres() -> bool:

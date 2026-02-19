@@ -19,7 +19,7 @@ from typing import List
 # Backend helpers
 # ---------------------------------------------------------------------------
 _HERE = Path(__file__).resolve().parent
-_SQLITE_PATH = str(_HERE / "saudi_stocks.db")
+_SQLITE_PATH = os.environ.get("DB_SQLITE_PATH", str(_HERE / "saudi_stocks.db"))
 
 
 def _pg_available() -> bool:
