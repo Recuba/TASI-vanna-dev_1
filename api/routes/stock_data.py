@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from api.db_helper import afetchall, afetchone, get_conn, fetchall
 from database.queries import (
+    BATCH_QUOTES_SQL,
     COMPANY_EXISTS,
     COMPANY_NAMES_BY_TICKERS,
     DIVIDEND_DATA_BY_TICKER,
@@ -392,23 +393,7 @@ async def get_batch_quotes(
     ticker_list = validate_ticker_list(tickers, min_count=1, max_count=50)
 
     placeholders = ",".join("?" for _ in ticker_list)
-    sql = f"""
-        SELECT
-            c.ticker,
-            c.short_name,
-            m.current_price,
-            m.previous_close,
-            CASE WHEN m.previous_close > 0
-                 THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
-                 ELSE NULL
-            END AS change_pct,
-            m.volume
-        FROM companies c
-        LEFT JOIN market_data m ON m.ticker = c.ticker
-        WHERE c.ticker IN ({placeholders})
-    """
-
-    rows = await afetchall(sql, tuple(ticker_list))
+    rows = await afetchall(BATCH_QUOTES_SQL.format(placeholders=placeholders), tuple(ticker_list))
 
     return [
         QuoteItem(

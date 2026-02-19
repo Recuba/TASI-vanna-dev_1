@@ -30,6 +30,22 @@ COMPANY_NAMES_BY_TICKERS = (
     "SELECT ticker, short_name FROM companies WHERE ticker IN ({placeholders})"
 )
 
+BATCH_QUOTES_SQL = """
+    SELECT
+        c.ticker,
+        c.short_name,
+        m.current_price,
+        m.previous_close,
+        CASE WHEN m.previous_close > 0
+             THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
+             ELSE NULL
+        END AS change_pct,
+        m.volume
+    FROM companies c
+    LEFT JOIN market_data m ON m.ticker = c.ticker
+    WHERE c.ticker IN ({placeholders})
+"""
+
 # ---------------------------------------------------------------------------
 # market_analytics queries
 # ---------------------------------------------------------------------------
