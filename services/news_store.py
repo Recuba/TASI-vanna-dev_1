@@ -111,7 +111,13 @@ class NewsStore:
             raise
 
     def store_articles(self, articles: List[Dict]) -> int:
-        """Insert articles, skipping duplicates. Returns count of newly inserted."""
+        """Insert articles, skipping duplicates. Returns count of newly inserted.
+
+        Uses a single ``executemany`` call (all-or-nothing batch). Duplicate
+        rows are silently skipped by ``INSERT OR IGNORE`` at the SQLite engine
+        level — no ``IntegrityError`` is raised for duplicates.  Any other
+        unexpected error rolls back the entire batch.
+        """
         if not articles:
             return 0
 
