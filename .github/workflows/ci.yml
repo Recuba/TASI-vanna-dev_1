@@ -31,6 +31,19 @@ jobs:
       - name: Run ruff format check
         run: ruff format --check .
 
+      - name: Install pip-tools
+        run: pip install pip-tools
+
+      - name: Verify lock file is up to date
+        run: |
+          pip-compile requirements.in -o /tmp/requirements.lock.check --no-annotate --strip-extras --quiet
+          if ! diff -q requirements.lock /tmp/requirements.lock.check > /dev/null 2>&1; then
+            echo "requirements.lock is stale. Run: pip-compile requirements.in -o requirements.lock"
+            diff requirements.lock /tmp/requirements.lock.check | head -30
+            exit 1
+          fi
+          echo "requirements.lock is up to date"
+
   security:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -46,7 +59,9 @@ jobs:
         run: pip install pip-audit
 
       - name: Audit dependencies for known vulnerabilities
-        run: pip-audit -r requirements.txt --ignore-vuln GHSA-0000 || true
+        # requirements.lock provides the reproducible pinned set audited here.
+        # Do not use || true — real CVEs must be explicitly acknowledged with valid IDs.
+        run: pip-audit -r requirements.txt
 
   python-tests:
     name: Test (SQLite)
