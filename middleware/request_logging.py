@@ -3,7 +3,7 @@ Request logging middleware.
 
 Logs method, path, status code, duration, client IP (anonymized), and
 request_id for each request as structured JSON-compatible log records.
-Uses Python logging with extra fields compatible with config/logging.py.
+Uses Python logging with extra fields compatible with config/logging_config.py.
 """
 
 from __future__ import annotations
