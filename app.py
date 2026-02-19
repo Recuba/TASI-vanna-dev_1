@@ -631,15 +631,14 @@ async def lifespan(app):
     # Initialize PostgreSQL connection pool
     if DB_BACKEND == "postgres":
         try:
-            from database.pool import init_pool
+            from api.dependencies import init_pg_pool
 
             _pool_min = _settings.pool.min if _settings else 2
             _pool_max = _settings.pool.max if _settings else 10
             _db_settings = _settings.db if _settings else None
             if _db_settings:
-                init_pool(
-                    _db_settings, min_connections=_pool_min, max_connections=_pool_max
-                )
+                pg_dsn = _db_settings.pg_connection_string
+                init_pg_pool(pg_dsn, minconn=_pool_min, maxconn=_pool_max)
                 logger.info("PostgreSQL connection pool initialized")
         except ImportError:
             logger.warning("database.pool not available -- using direct connections")

@@ -71,8 +71,12 @@ class HealthReport:
 def check_database() -> ComponentHealth:
     """Check database connectivity.
 
-    When the connection pool is initialized, uses a pool connection for the
-    PostgreSQL check. Falls back to a direct connection otherwise.
+    For PostgreSQL, uses the connection pool exclusively.  If the pool has not
+    been initialized the check returns ``unhealthy`` immediately — the
+    application should not be serving traffic without a healthy pool, and
+    falling back to a direct connection would mask a real misconfiguration.
+
+    For SQLite, opens a direct connection to the configured database file.
     """
     settings = get_settings()
     start = time.monotonic()
@@ -81,30 +85,20 @@ def check_database() -> ComponentHealth:
         if settings.db.backend == "postgres":
             from database.pool import is_pool_initialized, get_connection
 
-            if is_pool_initialized():
-                # Use the pool
-                with get_connection() as conn:
-                    cur = conn.cursor()
-                    cur.execute("SELECT 1")
-                    cur.close()
-            else:
-                # Fallback to direct connection
-                import psycopg2
-
-                conn = psycopg2.connect(
-                    host=settings.db.pg_host,
-                    port=settings.db.pg_port,
-                    dbname=settings.db.pg_database,
-                    user=settings.db.pg_user,
-                    password=settings.db.pg_password,
-                    connect_timeout=5,
+            if not is_pool_initialized():
+                latency = (time.monotonic() - start) * 1000
+                return ComponentHealth(
+                    name="database",
+                    status=HealthStatus.UNHEALTHY,
+                    latency_ms=latency,
+                    message="PostgreSQL connection pool not initialized",
                 )
-                try:
-                    cur = conn.cursor()
-                    cur.execute("SELECT 1")
-                    cur.close()
-                finally:
-                    conn.close()
+
+            # Pool is available — use it exclusively; no direct-connection fallback.
+            with get_connection() as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT 1")
+                cur.close()
         else:
             db_path = settings.db.resolved_sqlite_path
             if not db_path.exists():
