@@ -14,7 +14,7 @@ import traceback
 import inspect
 
 _HERE = Path(__file__).resolve().parent
-_SQLITE_PATH = str(_HERE / "saudi_stocks.db")
+_SQLITE_PATH = os.environ.get("DB_SQLITE_PATH", str(_HERE / "saudi_stocks.db"))
 
 # Test results tracker
 test_results = []
