@@ -116,35 +116,33 @@ class NewsStore:
             return 0
 
         conn = self._connect()
-        inserted = 0
         try:
-            for article in articles:
-                article_id = article.get("id") or str(uuid.uuid4())
-                try:
-                    conn.execute(
-                        """INSERT OR IGNORE INTO news_articles
-                           (id, ticker, title, body, source_name, source_url,
-                            published_at, sentiment_score, sentiment_label,
-                            language, priority)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                        (
-                            article_id,
-                            article.get("ticker"),
-                            article.get("title", ""),
-                            article.get("body", ""),
-                            article.get("source_name", ""),
-                            article.get("source_url", ""),
-                            article.get("published_at"),
-                            article.get("sentiment_score"),
-                            article.get("sentiment_label"),
-                            article.get("language", "ar"),
-                            article.get("priority", 3),
-                        ),
-                    )
-                    if conn.execute("SELECT changes()").fetchone()[0] > 0:
-                        inserted += 1
-                except sqlite3.IntegrityError:
-                    pass
+            rows = [
+                (
+                    article.get("id") or str(uuid.uuid4()),
+                    article.get("ticker"),
+                    article.get("title", ""),
+                    article.get("body", ""),
+                    article.get("source_name", ""),
+                    article.get("source_url", ""),
+                    article.get("published_at"),
+                    article.get("sentiment_score"),
+                    article.get("sentiment_label"),
+                    article.get("language", "ar"),
+                    article.get("priority", 3),
+                )
+                for article in articles
+            ]
+            before = conn.total_changes
+            conn.executemany(
+                """INSERT OR IGNORE INTO news_articles
+                   (id, ticker, title, body, source_name, source_url,
+                    published_at, sentiment_score, sentiment_label,
+                    language, priority)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                rows,
+            )
+            inserted = conn.total_changes - before
             conn.commit()
             logger.info(
                 "Stored %d new articles (of %d provided)", inserted, len(articles)

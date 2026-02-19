@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -28,6 +29,10 @@ logger = logging.getLogger(__name__)
 _DB_BACKEND = os.environ.get("DB_BACKEND", "sqlite")
 _HERE = Path(__file__).resolve().parent.parent
 _SQLITE_PATH = os.environ.get("DB_SQLITE_PATH", str(_HERE / "saudi_stocks.db"))
+
+# Matches single-quoted strings, double-quoted strings, or bare ? placeholders.
+# Used by _convert_sql() to skip ? inside string literals.
+_PLACEHOLDER_RE = re.compile(r"'[^']*'|\"[^\"]*\"|\?")
 
 
 def is_postgres() -> bool:
@@ -73,9 +78,15 @@ def get_conn():
 
 
 def _convert_sql(sql: str) -> str:
-    """Convert ``?`` positional placeholders to ``%s`` for PostgreSQL."""
+    """Convert ``?`` positional placeholders to ``%s`` for PostgreSQL.
+
+    Skips ``?`` characters inside quoted string literals to avoid
+    corrupting LIKE patterns and other literal strings.
+    """
     if is_postgres():
-        return sql.replace("?", "%s")
+        def _replace(m: re.Match) -> str:
+            return "%s" if m.group(0) == "?" else m.group(0)
+        return _PLACEHOLDER_RE.sub(_replace, sql)
     return sql
 
 
