@@ -4,14 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import {
-  useStockDetail,
-  useStockFinancials,
-  useStockDividends,
-  useStockFinancialSummary,
-  useNewsByTicker,
-  useReportsByTicker,
-} from '@/lib/hooks/use-api';
+import { useStockDetail } from '@/lib/hooks/use-api';
 import { CandlestickChart, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
 import { useOHLCVData } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
@@ -20,14 +13,17 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector } from '@/lib/stock-translations';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useToast } from '@/components/common/Toast';
+import { StockFinancials } from './components/StockFinancials';
+import { StockDividends } from './components/StockDividends';
+import { StockNewsSection } from './components/StockNewsSection';
+import { StockReportsSection } from './components/StockReportsSection';
 
 // ---------------------------------------------------------------------------
-// Watchlist localStorage helper
+// Watchlist helpers
 // ---------------------------------------------------------------------------
 
 const WATCHLIST_KEY = 'rad-ai-watchlist-tickers';
 
-// Migrate old key name
 if (typeof window !== 'undefined') {
   const oldVal = localStorage.getItem('raid-watchlist-tickers');
   if (oldVal && !localStorage.getItem('rad-ai-watchlist-tickers')) {
@@ -38,12 +34,7 @@ if (typeof window !== 'undefined') {
 
 function getWatchlistTickers(): string[] {
   if (typeof window === 'undefined') return [];
-  try {
-    const stored = localStorage.getItem(WATCHLIST_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]'); } catch { return []; }
 }
 
 function setWatchlistTickers(tickers: string[]) {
@@ -51,15 +42,15 @@ function setWatchlistTickers(tickers: string[]) {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Shared helpers
 // ---------------------------------------------------------------------------
 
-function formatNumber(val: number | null | undefined, opts?: { decimals?: number; prefix?: string; suffix?: string }): string {
+function formatNumber(val: number | null | undefined, opts?: { decimals?: number; prefix?: string }): string {
   if (val === null || val === undefined) return '-';
-  const { decimals = 2, prefix = '', suffix = '' } = opts || {};
-  if (Math.abs(val) >= 1e9) return `${prefix}${(val / 1e9).toFixed(1)}B${suffix}`;
-  if (Math.abs(val) >= 1e6) return `${prefix}${(val / 1e6).toFixed(1)}M${suffix}`;
-  return `${prefix}${val.toFixed(decimals)}${suffix}`;
+  const { decimals = 2, prefix = '' } = opts || {};
+  if (Math.abs(val) >= 1e9) return `${prefix}${(val / 1e9).toFixed(1)}B`;
+  if (Math.abs(val) >= 1e6) return `${prefix}${(val / 1e6).toFixed(1)}M`;
+  return `${prefix}${val.toFixed(decimals)}`;
 }
 
 function formatPct(val: number | null | undefined): string {
@@ -71,543 +62,35 @@ function MetricCard({ label, value, sub, accent }: { label: string; value: strin
   return (
     <div className="bg-[var(--bg-input)] rounded-xl px-4 py-3">
       <p className="text-xs text-[var(--text-muted)] mb-1">{label}</p>
-      <p className={cn(
-        'text-sm font-bold',
-        accent === 'green' ? 'text-accent-green' : accent === 'red' ? 'text-accent-red' : 'text-[var(--text-primary)]'
-      )}>
-        {value}
-      </p>
+      <p className={cn('text-sm font-bold', accent === 'green' ? 'text-accent-green' : accent === 'red' ? 'text-accent-red' : 'text-[var(--text-primary)]')}>{value}</p>
       {sub && <p className="text-xs text-[var(--text-secondary)] mt-0.5">{sub}</p>}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Financial Statements Section
+// Ticker normalization + tab types
 // ---------------------------------------------------------------------------
 
-type StatementTab = 'income_statement' | 'balance_sheet' | 'cash_flow';
-
-const STATEMENT_TABS: { id: StatementTab; labelAr: string; labelEn: string }[] = [
-  { id: 'income_statement', labelAr: '\u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u062F\u062E\u0644', labelEn: 'Income Statement' },
-  { id: 'balance_sheet', labelAr: '\u0627\u0644\u0645\u064A\u0632\u0627\u0646\u064A\u0629', labelEn: 'Balance Sheet' },
-  { id: 'cash_flow', labelAr: '\u0627\u0644\u062A\u062F\u0641\u0642\u0627\u062A \u0627\u0644\u0646\u0642\u062F\u064A\u0629', labelEn: 'Cash Flow' },
-];
-
-/** Human-readable labels for common financial data keys */
-const FIELD_LABELS: Record<string, { ar: string; en: string }> = {
-  total_revenue: { ar: '\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A', en: 'Total Revenue' },
-  cost_of_revenue: { ar: '\u062A\u0643\u0644\u0641\u0629 \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A', en: 'Cost of Revenue' },
-  gross_profit: { ar: '\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0631\u0628\u062D', en: 'Gross Profit' },
-  operating_income: { ar: '\u0627\u0644\u062F\u062E\u0644 \u0627\u0644\u062A\u0634\u063A\u064A\u0644\u064A', en: 'Operating Income' },
-  net_income: { ar: '\u0635\u0627\u0641\u064A \u0627\u0644\u062F\u062E\u0644', en: 'Net Income' },
-  ebitda: { ar: 'EBITDA', en: 'EBITDA' },
-  total_assets: { ar: '\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0623\u0635\u0648\u0644', en: 'Total Assets' },
-  total_liabilities: { ar: '\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0627\u0644\u062A\u0632\u0627\u0645\u0627\u062A', en: 'Total Liabilities' },
-  total_equity: { ar: '\u0625\u062C\u0645\u0627\u0644\u064A \u062D\u0642\u0648\u0642 \u0627\u0644\u0645\u0644\u0643\u064A\u0629', en: 'Total Equity' },
-  total_debt: { ar: '\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u062F\u064A\u0648\u0646', en: 'Total Debt' },
-  total_current_assets: { ar: '\u0627\u0644\u0623\u0635\u0648\u0644 \u0627\u0644\u0645\u062A\u062F\u0627\u0648\u0644\u0629', en: 'Current Assets' },
-  total_current_liabilities: { ar: '\u0627\u0644\u0627\u0644\u062A\u0632\u0627\u0645\u0627\u062A \u0627\u0644\u0645\u062A\u062F\u0627\u0648\u0644\u0629', en: 'Current Liabilities' },
-  cash_and_equivalents: { ar: '\u0627\u0644\u0646\u0642\u062F \u0648\u0645\u0627 \u064A\u0639\u0627\u062F\u0644\u0647', en: 'Cash & Equivalents' },
-  retained_earnings: { ar: '\u0627\u0644\u0623\u0631\u0628\u0627\u062D \u0627\u0644\u0645\u0628\u0642\u0627\u0629', en: 'Retained Earnings' },
-  operating_cash_flow: { ar: '\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u0646\u0642\u062F\u064A \u0627\u0644\u062A\u0634\u063A\u064A\u0644\u064A', en: 'Operating Cash Flow' },
-  investing_cash_flow: { ar: '\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u0646\u0642\u062F\u064A \u0627\u0644\u0627\u0633\u062A\u062B\u0645\u0627\u0631\u064A', en: 'Investing Cash Flow' },
-  financing_cash_flow: { ar: '\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u0646\u0642\u062F\u064A \u0627\u0644\u062A\u0645\u0648\u064A\u0644\u064A', en: 'Financing Cash Flow' },
-  free_cash_flow: { ar: '\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u0646\u0642\u062F\u064A \u0627\u0644\u062D\u0631', en: 'Free Cash Flow' },
-  capital_expenditure: { ar: '\u0627\u0644\u0625\u0646\u0641\u0627\u0642 \u0627\u0644\u0631\u0623\u0633\u0645\u0627\u0644\u064A', en: 'Capital Expenditure' },
-  depreciation_and_amortization: { ar: '\u0627\u0644\u0627\u0633\u062A\u0647\u0644\u0627\u0643 \u0648\u0627\u0644\u0625\u0637\u0641\u0627\u0621', en: 'Depreciation & Amortization' },
-  change_in_working_capital: { ar: '\u0627\u0644\u062A\u063A\u064A\u0631 \u0641\u064A \u0631\u0623\u0633 \u0627\u0644\u0645\u0627\u0644 \u0627\u0644\u0639\u0627\u0645\u0644', en: 'Change in Working Capital' },
-  interest_expense: { ar: '\u0645\u0635\u0631\u0648\u0641\u0627\u062A \u0627\u0644\u0641\u0648\u0627\u0626\u062F', en: 'Interest Expense' },
-  tax_provision: { ar: '\u0645\u062E\u0635\u0635 \u0627\u0644\u0636\u0631\u0627\u0626\u0628', en: 'Tax Provision' },
-  basic_eps: { ar: '\u0631\u0628\u062D\u064A\u0629 \u0627\u0644\u0633\u0647\u0645 \u0627\u0644\u0623\u0633\u0627\u0633\u064A\u0629', en: 'Basic EPS' },
-  diluted_eps: { ar: '\u0631\u0628\u062D\u064A\u0629 \u0627\u0644\u0633\u0647\u0645 \u0627\u0644\u0645\u062E\u0641\u0636\u0629', en: 'Diluted EPS' },
-  operating_expense: { ar: '\u0627\u0644\u0645\u0635\u0631\u0648\u0641\u0627\u062A \u0627\u0644\u062A\u0634\u063A\u064A\u0644\u064A\u0629', en: 'Operating Expenses' },
-  research_and_development: { ar: '\u0627\u0644\u0628\u062D\u062B \u0648\u0627\u0644\u062A\u0637\u0648\u064A\u0631', en: 'Research & Development' },
-};
-
-function getFieldLabel(key: string, lang: string): string {
-  const label = FIELD_LABELS[key];
-  if (label) return lang === 'ar' ? label.ar : label.en;
-  // Fallback: convert snake_case to Title Case
-  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+function normalizeTicker(raw: string): string {
+  const trimmed = raw.trim();
+  return /^\d+$/.test(trimmed) ? `${trimmed}.SR` : trimmed;
 }
-
-function FinancialStatementsSection({ ticker, language, t }: {
-  ticker: string;
-  language: string;
-  t: (ar: string, en: string) => string;
-}) {
-  const [activeStatement, setActiveStatement] = useState<StatementTab>('income_statement');
-  const { data: financials, loading: financialsLoading } = useStockFinancials(ticker, activeStatement, 'annual');
-
-  const periods = financials?.periods ?? [];
-
-  // Get all data keys from all periods (preserving order from first period)
-  const dataKeys: string[] = [];
-  const seenKeys = new Set<string>();
-  for (const period of periods) {
-    for (const key of Object.keys(period.data)) {
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
-        dataKeys.push(key);
-      }
-    }
-  }
-
-  // Don't render the section if there's no data after loading
-  if (!financialsLoading && periods.length === 0) return null;
-
-  const dir = language === 'ar' ? 'rtl' : 'ltr';
-
-  return (
-    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-        {t('\u0627\u0644\u0642\u0648\u0627\u0626\u0645 \u0627\u0644\u0645\u0627\u0644\u064A\u0629', 'Financial Statements')}
-      </h2>
-
-      {/* Statement type tabs */}
-      <div className="flex gap-1 mb-4 bg-[var(--bg-input)] rounded-lg p-1 overflow-x-auto">
-        {STATEMENT_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveStatement(tab.id)}
-            className={cn(
-              'px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all',
-              activeStatement === tab.id
-                ? 'bg-gold/20 text-gold'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]',
-            )}
-          >
-            {language === 'ar' ? tab.labelAr : tab.labelEn}
-          </button>
-        ))}
-      </div>
-
-      {financialsLoading ? (
-        <div className="flex justify-center py-8">
-          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
-        </div>
-      ) : periods.length === 0 ? (
-        <p className="text-sm text-[var(--text-muted)] text-center py-6" dir={dir}>
-          {t('\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A \u0645\u0627\u0644\u064A\u0629 \u0645\u062A\u0627\u062D\u0629', 'No financial data available')}
-        </p>
-      ) : (
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 end-0 w-6 bg-gradient-to-l from-[var(--bg-card)] to-transparent z-10" />
-          <div className="overflow-x-auto -mx-2">
-            <table className="w-full text-sm min-w-[500px]">
-              <thead>
-                <tr className="border-b border-[#2A2A2A]">
-                  <th className="text-start px-2 py-2 text-xs font-medium text-[var(--text-muted)] sticky start-0 bg-[var(--bg-card)] min-w-[160px]">
-                    {t('\u0627\u0644\u0628\u0646\u062F', 'Item')}
-                  </th>
-                  {periods.map((p) => (
-                    <th key={p.period_index} className="text-end px-2 py-2 text-xs font-medium text-[var(--text-muted)] min-w-[100px]">
-                      {p.period_date || `P${p.period_index}`}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {dataKeys.map((key) => (
-                  <tr key={key} className="border-b border-[#2A2A2A]/30 hover:bg-[var(--bg-card-hover)] transition-colors">
-                    <td className="px-2 py-1.5 text-xs text-[var(--text-secondary)] sticky start-0 bg-[var(--bg-card)]">
-                      {getFieldLabel(key, language)}
-                    </td>
-                    {periods.map((p) => {
-                      const val = p.data[key];
-                      return (
-                        <td key={p.period_index} className="text-end px-2 py-1.5 text-xs text-[var(--text-primary)] font-mono">
-                          {val !== null && val !== undefined
-                            ? formatNumber(Number(val))
-                            : '-'}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Dividend Section
-// ---------------------------------------------------------------------------
-
-function DividendSection({ ticker, language, t }: {
-  ticker: string;
-  language: string;
-  t: (ar: string, en: string) => string;
-}) {
-  const { data: dividends, loading } = useStockDividends(ticker);
-  const dir = language === 'ar' ? 'rtl' : 'ltr';
-
-  if (!loading && (!dividends || (dividends.dividend_rate === null && dividends.dividend_yield === null))) {
-    return null;
-  }
-
-  return (
-    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-        {t('\u062A\u0648\u0632\u064A\u0639\u0627\u062A \u0627\u0644\u0623\u0631\u0628\u0627\u062D', 'Dividends')}
-      </h2>
-      {loading ? (
-        <div className="flex justify-center py-6">
-          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
-        </div>
-      ) : dividends ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          <MetricCard
-            label={t('\u0645\u0639\u062F\u0644 \u0627\u0644\u062A\u0648\u0632\u064A\u0639', 'Dividend Rate')}
-            value={dividends.dividend_rate?.toFixed(2) || '-'}
-            sub={dividends.dividend_rate ? 'SAR' : undefined}
-          />
-          <MetricCard
-            label={t('\u0639\u0627\u0626\u062F \u0627\u0644\u062A\u0648\u0632\u064A\u0639\u0627\u062A', 'Dividend Yield')}
-            value={dividends.dividend_yield !== null ? `${(dividends.dividend_yield * 100).toFixed(2)}%` : '-'}
-            accent={dividends.dividend_yield !== null && dividends.dividend_yield > 0 ? 'green' : undefined}
-          />
-          <MetricCard
-            label={t('\u0646\u0633\u0628\u0629 \u0627\u0644\u062A\u0648\u0632\u064A\u0639', 'Payout Ratio')}
-            value={dividends.payout_ratio !== null ? `${(dividends.payout_ratio * 100).toFixed(1)}%` : '-'}
-          />
-          <MetricCard
-            label={t('\u0645\u062A\u0648\u0633\u0637 5 \u0633\u0646\u0648\u0627\u062A', '5-Year Avg Yield')}
-            value={dividends.five_year_avg_dividend_yield !== null ? `${dividends.five_year_avg_dividend_yield.toFixed(2)}%` : '-'}
-          />
-          <MetricCard
-            label={t('\u062A\u0627\u0631\u064A\u062E \u0627\u0644\u0627\u0633\u062A\u062D\u0642\u0627\u0642', 'Ex-Dividend Date')}
-            value={dividends.ex_dividend_date || '-'}
-          />
-          <MetricCard
-            label={t('\u0622\u062E\u0631 \u062A\u0648\u0632\u064A\u0639', 'Last Dividend')}
-            value={dividends.last_dividend_value?.toFixed(2) || '-'}
-            sub={dividends.last_dividend_date || undefined}
-          />
-          <MetricCard
-            label={t('\u0627\u0644\u062A\u0648\u0632\u064A\u0639 \u0627\u0644\u0633\u0646\u0648\u064A \u0627\u0644\u0645\u062A\u0623\u062E\u0631', 'Trailing Annual Rate')}
-            value={dividends.trailing_annual_dividend_rate?.toFixed(2) || '-'}
-          />
-          <MetricCard
-            label={t('\u0627\u0644\u0639\u0627\u0626\u062F \u0627\u0644\u0633\u0646\u0648\u064A \u0627\u0644\u0645\u062A\u0623\u062E\u0631', 'Trailing Annual Yield')}
-            value={dividends.trailing_annual_dividend_yield !== null ? `${(dividends.trailing_annual_dividend_yield * 100).toFixed(2)}%` : '-'}
-          />
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Financial Summary Section
-// ---------------------------------------------------------------------------
-
-function FinancialSummarySection({ ticker, language, t }: {
-  ticker: string;
-  language: string;
-  t: (ar: string, en: string) => string;
-}) {
-  const { data: summary, loading } = useStockFinancialSummary(ticker);
-  const dir = language === 'ar' ? 'rtl' : 'ltr';
-
-  if (!loading && !summary) return null;
-
-  return (
-    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-        {t('\u0627\u0644\u0645\u0644\u062E\u0635 \u0627\u0644\u0645\u0627\u0644\u064A', 'Financial Summary')}
-      </h2>
-      {loading ? (
-        <div className="flex justify-center py-6">
-          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
-        </div>
-      ) : summary ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          <MetricCard
-            label={t('\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A', 'Total Revenue')}
-            value={formatNumber(summary.total_revenue, { prefix: 'SAR ' })}
-          />
-          <MetricCard
-            label={t('\u0627\u0644\u0625\u064A\u0631\u0627\u062F \u0644\u0644\u0633\u0647\u0645', 'Revenue/Share')}
-            value={summary.revenue_per_share?.toFixed(2) || '-'}
-          />
-          <MetricCard
-            label={t('\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0646\u0642\u062F', 'Total Cash')}
-            value={formatNumber(summary.total_cash, { prefix: 'SAR ' })}
-          />
-          <MetricCard
-            label={t('\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u062F\u064A\u0648\u0646', 'Total Debt')}
-            value={formatNumber(summary.total_debt, { prefix: 'SAR ' })}
-          />
-          <MetricCard
-            label={t('\u0627\u0644\u062F\u064A\u0648\u0646/\u0627\u0644\u0645\u0644\u0643\u064A\u0629', 'Debt/Equity')}
-            value={summary.debt_to_equity?.toFixed(2) || '-'}
-            accent={summary.debt_to_equity !== null && summary.debt_to_equity !== undefined ? (summary.debt_to_equity < 1 ? 'green' : 'red') : undefined}
-          />
-          <MetricCard
-            label={t('\u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u062C\u0627\u0631\u064A\u0629', 'Current Ratio')}
-            value={summary.current_ratio?.toFixed(2) || '-'}
-            accent={summary.current_ratio !== null && summary.current_ratio !== undefined ? (summary.current_ratio >= 1 ? 'green' : 'red') : undefined}
-          />
-          <MetricCard
-            label={t('\u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u0633\u0631\u064A\u0639\u0629', 'Quick Ratio')}
-            value={summary.quick_ratio?.toFixed(2) || '-'}
-          />
-          <MetricCard
-            label="EBITDA"
-            value={formatNumber(summary.ebitda, { prefix: 'SAR ' })}
-          />
-          <MetricCard
-            label={t('\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0631\u0628\u062D', 'Gross Profit')}
-            value={formatNumber(summary.gross_profit, { prefix: 'SAR ' })}
-          />
-          <MetricCard
-            label={t('\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u0646\u0642\u062F\u064A \u0627\u0644\u062D\u0631', 'Free Cash Flow')}
-            value={formatNumber(summary.free_cashflow, { prefix: 'SAR ' })}
-            accent={summary.free_cashflow !== null && summary.free_cashflow !== undefined ? (summary.free_cashflow >= 0 ? 'green' : 'red') : undefined}
-          />
-          <MetricCard
-            label={t('\u0627\u0644\u062A\u062F\u0641\u0642 \u0627\u0644\u062A\u0634\u063A\u064A\u0644\u064A', 'Operating Cash Flow')}
-            value={formatNumber(summary.operating_cashflow, { prefix: 'SAR ' })}
-          />
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Related News Section
-// ---------------------------------------------------------------------------
-
-function RelatedNewsSection({ ticker, language, t }: {
-  ticker: string;
-  language: string;
-  t: (ar: string, en: string) => string;
-}) {
-  const { data: newsData, loading } = useNewsByTicker(ticker, { page: 1, page_size: 5 });
-  const dir = language === 'ar' ? 'rtl' : 'ltr';
-
-  if (!loading && (!newsData || newsData.items.length === 0)) return null;
-
-  return (
-    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-        {t('\u0623\u062E\u0628\u0627\u0631 \u0630\u0627\u062A \u0635\u0644\u0629', 'Related News')}
-      </h2>
-      {loading ? (
-        <div className="flex justify-center py-6">
-          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {newsData?.items.map((article) => (
-            <Link
-              key={article.id}
-              href={`/news/${article.id}`}
-              className={cn(
-                'block p-3 rounded-lg',
-                'bg-[var(--bg-input)] hover:bg-[var(--bg-card-hover)]',
-                'border border-transparent hover:border-gold/20',
-                'transition-all duration-200 group',
-              )}
-            >
-              <h3 className="text-sm font-medium text-[var(--text-primary)] group-hover:text-gold transition-colors line-clamp-2" dir={dir}>
-                {article.title}
-              </h3>
-              <div className="flex items-center gap-2 mt-2">
-                {article.source_name && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold font-medium">
-                    {article.source_name}
-                  </span>
-                )}
-                {article.published_at && (
-                  <time className="text-[10px] text-[var(--text-muted)]" dateTime={article.published_at}>
-                    {new Date(article.published_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </time>
-                )}
-                {article.sentiment_label && (
-                  <span className={cn(
-                    'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
-                    article.sentiment_label.toLowerCase().includes('positive') || article.sentiment_label === '\u0625\u064A\u062C\u0627\u0628\u064A'
-                      ? 'bg-accent-green/15 text-accent-green'
-                      : article.sentiment_label.toLowerCase().includes('negative') || article.sentiment_label === '\u0633\u0644\u0628\u064A'
-                        ? 'bg-accent-red/15 text-accent-red'
-                        : 'bg-gray-500/15 text-gray-400',
-                  )}>
-                    {article.sentiment_label}
-                  </span>
-                )}
-              </div>
-            </Link>
-          ))}
-          {newsData && newsData.total > 5 && (
-            <Link
-              href={`/news?ticker=${encodeURIComponent(ticker)}`}
-              className="block text-center text-xs text-gold hover:text-gold-light transition-colors py-2 font-medium"
-              dir={dir}
-            >
-              {t('\u0639\u0631\u0636 \u0643\u0644 \u0627\u0644\u0623\u062E\u0628\u0627\u0631', 'View all news')} ({newsData.total})
-            </Link>
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Related Reports Section
-// ---------------------------------------------------------------------------
-
-function RelatedReportsSection({ ticker, language, t }: {
-  ticker: string;
-  language: string;
-  t: (ar: string, en: string) => string;
-}) {
-  const { data: reportsData, loading } = useReportsByTicker(ticker, { page: 1, page_size: 5 });
-  const dir = language === 'ar' ? 'rtl' : 'ltr';
-
-  if (!loading && (!reportsData || reportsData.items.length === 0)) return null;
-
-  return (
-    <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-      <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-        {t('\u062A\u0642\u0627\u0631\u064A\u0631 \u0630\u0627\u062A \u0635\u0644\u0629', 'Related Reports')}
-      </h2>
-      {loading ? (
-        <div className="flex justify-center py-6">
-          <LoadingSpinner message={t('\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...', 'Loading...')} />
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {reportsData?.items.map((report) => (
-            <div
-              key={report.id}
-              className={cn(
-                'p-3 rounded-lg',
-                'bg-[var(--bg-input)]',
-                'border border-transparent',
-              )}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-medium text-[var(--text-primary)] line-clamp-2" dir={dir}>
-                    {report.title}
-                  </h3>
-                  {report.summary && (
-                    <p className="text-xs text-[var(--text-secondary)] mt-1 line-clamp-2" dir={dir}>
-                      {report.summary}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    {report.recommendation && (
-                      <span className={cn(
-                        'text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase',
-                        report.recommendation.toLowerCase().includes('buy')
-                          ? 'bg-accent-green/15 text-accent-green'
-                          : report.recommendation.toLowerCase().includes('sell')
-                            ? 'bg-accent-red/15 text-accent-red'
-                            : 'bg-gold/15 text-gold',
-                      )}>
-                        {report.recommendation}
-                      </span>
-                    )}
-                    {report.target_price !== null && (
-                      <span className="text-[10px] text-[var(--text-muted)]">
-                        {t('\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0645\u0633\u062A\u0647\u062F\u0641', 'Target')}: {report.target_price.toFixed(2)} SAR
-                      </span>
-                    )}
-                    {report.author && (
-                      <span className="text-[10px] text-[var(--text-muted)]">{report.author}</span>
-                    )}
-                    {report.published_at && (
-                      <time className="text-[10px] text-[var(--text-muted)]" dateTime={report.published_at}>
-                        {new Date(report.published_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </time>
-                    )}
-                  </div>
-                </div>
-                {report.source_url && (
-                  <a
-                    href={report.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 p-1.5 rounded-md text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)] transition-colors"
-                    title={t('\u0641\u062A\u062D \u0627\u0644\u062A\u0642\u0631\u064A\u0631', 'Open report')}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                      <polyline points="15 3 21 3 21 9" />
-                      <line x1="10" y1="14" x2="21" y2="3" />
-                    </svg>
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-          {reportsData && reportsData.total > 5 && (
-            <Link
-              href={`/reports?ticker=${encodeURIComponent(ticker)}`}
-              className="block text-center text-xs text-gold hover:text-gold-light transition-colors py-2 font-medium"
-              dir={dir}
-            >
-              {t('\u0639\u0631\u0636 \u0643\u0644 \u0627\u0644\u062A\u0642\u0627\u0631\u064A\u0631', 'View all reports')} ({reportsData.total})
-            </Link>
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Page Tab type
-// ---------------------------------------------------------------------------
 
 type PageTab = 'overview' | 'financials' | 'dividends' | 'news';
 
 const PAGE_TABS: { id: PageTab; labelAr: string; labelEn: string }[] = [
-  { id: 'overview', labelAr: '\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629', labelEn: 'Overview' },
-  { id: 'financials', labelAr: '\u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0645\u0627\u0644\u064A\u0629', labelEn: 'Financials' },
-  { id: 'dividends', labelAr: '\u0627\u0644\u062A\u0648\u0632\u064A\u0639\u0627\u062A', labelEn: 'Dividends' },
-  { id: 'news', labelAr: '\u0627\u0644\u0623\u062E\u0628\u0627\u0631 \u0648\u0627\u0644\u062A\u0642\u0627\u0631\u064A\u0631', labelEn: 'News & Reports' },
+  { id: 'overview', labelAr: 'نظرة عامة', labelEn: 'Overview' },
+  { id: 'financials', labelAr: 'البيانات المالية', labelEn: 'Financials' },
+  { id: 'dividends', labelAr: 'التوزيعات', labelEn: 'Dividends' },
+  { id: 'news', labelAr: 'الأخبار والتقارير', labelEn: 'News & Reports' },
 ];
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-/**
- * Normalize a Saudi stock ticker: if the input is purely numeric
- * (e.g. "2222"), append ".SR" so the API lookup matches the database
- * format ("2222.SR"). Tickers that already include a suffix are
- * returned as-is.
- */
-function normalizeTicker(raw: string): string {
-  const trimmed = raw.trim();
-  if (/^\d+$/.test(trimmed)) {
-    return `${trimmed}.SR`;
-  }
-  return trimmed;
-}
-
-interface StockDetailClientProps {
-  ticker: string;
-}
+interface StockDetailClientProps { ticker: string; }
 
 export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps) {
   const ticker = normalizeTicker(rawTicker);
@@ -617,94 +100,47 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
   const { showToast } = useToast();
   const router = useRouter();
 
-  // Escape key navigates back to market
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') router.push('/market');
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') router.push('/market'); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [router]);
 
-  // Watchlist state
   const [inWatchlist, setInWatchlist] = useState(false);
-
-  useEffect(() => {
-    setInWatchlist(getWatchlistTickers().includes(ticker));
-  }, [ticker]);
+  useEffect(() => { setInWatchlist(getWatchlistTickers().includes(ticker)); }, [ticker]);
 
   const toggleWatchlist = useCallback(() => {
     const current = getWatchlistTickers();
     if (current.includes(ticker)) {
       setWatchlistTickers(current.filter((tk) => tk !== ticker));
       setInWatchlist(false);
-      showToast(t('\u062A\u0645\u062A \u0627\u0644\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629', 'Removed from watchlist'), 'info');
+      showToast(t('تمت الإزالة من المفضلة', 'Removed from watchlist'), 'info');
     } else {
       setWatchlistTickers([...current, ticker]);
       setInWatchlist(true);
-      showToast(t('\u062A\u0645\u062A \u0627\u0644\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Added to watchlist'), 'success');
+      showToast(t('تمت الإضافة للمفضلة', 'Added to watchlist'), 'success');
     }
   }, [ticker, t, showToast]);
 
   const [activeTab, setActiveTab] = useState<PageTab>('overview');
-
   const [shareCopied, setShareCopied] = useState(false);
+
   const handleShare = useCallback(async () => {
     const shareTitle = `${detail?.short_name || ticker} - Ra'd AI`;
     if (typeof navigator.share === 'function') {
-      try {
-        await navigator.share({ title: shareTitle, url: window.location.href });
-        return;
-      } catch {
-        // User cancelled or share failed -- fall through to clipboard
-      }
+      try { await navigator.share({ title: shareTitle, url: window.location.href }); return; } catch { /* fall through */ }
     }
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 2000);
-    } catch {
-      // ignore
-    }
+    try { await navigator.clipboard.writeText(window.location.href); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000); } catch { /* ignore */ }
   }, [detail?.short_name, ticker]);
 
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <LoadingSpinner message={t(`${ticker} \u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644...`, `Loading ${ticker}...`)} />
-      </div>
-    );
-  }
+  if (loading) return <div className="flex-1 flex items-center justify-center"><LoadingSpinner message={t(`${ticker} جاري التحميل...`, `Loading ${ticker}...`)} /></div>;
+  if (error) return <div className="flex-1 flex items-center justify-center"><ErrorDisplay message={error} onRetry={refetch} /></div>;
+  if (!detail) return <div className="flex-1 flex items-center justify-center"><div className="text-center"><p className="text-lg font-bold text-[var(--text-primary)] mb-2">{ticker}</p><p className="text-sm text-[var(--text-muted)]" dir={dir}>{t('بيانات السهم غير متاحة', 'Stock data not available')}</p></div></div>;
 
-  if (error) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <ErrorDisplay message={error} onRetry={refetch} />
-      </div>
-    );
-  }
-
-  if (!detail) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg font-bold text-[var(--text-primary)] mb-2">{ticker}</p>
-          <p className="text-sm text-[var(--text-muted)]" dir={dir}>
-            {t('\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0633\u0647\u0645 \u063A\u064A\u0631 \u0645\u062A\u0627\u062D\u0629', 'Stock data not available')}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const priceChange = detail.current_price != null && detail.previous_close != null
-    ? detail.current_price - detail.previous_close
-    : null;
-  const priceChangePct = priceChange != null && detail.previous_close != null && detail.previous_close > 0
-    ? (priceChange / detail.previous_close) * 100
-    : null;
+  const priceChange = detail.current_price != null && detail.previous_close != null ? detail.current_price - detail.previous_close : null;
+  const priceChangePct = priceChange != null && detail.previous_close != null && detail.previous_close > 0 ? (priceChange / detail.previous_close) * 100 : null;
   const isUp = priceChange !== null && priceChange >= 0;
 
   return (
@@ -713,25 +149,11 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
 
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] flex-wrap" dir={dir}>
-          <Link href="/" className="hover:text-gold transition-colors">
-            {t('\u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629', 'Home')}
-          </Link>
-          <span className="text-[var(--text-muted)]">&gt;</span>
-          <Link href="/market" className="hover:text-gold transition-colors">
-            {t('\u0627\u0644\u0633\u0648\u0642', 'Market')}
-          </Link>
-          {detail.sector && (
-            <>
-              <span className="text-[var(--text-muted)]">&gt;</span>
-              <Link
-                href={`/market?sector=${encodeURIComponent(detail.sector)}`}
-                className="hover:text-gold transition-colors"
-              >
-                {translateSector(detail.sector, language)}
-              </Link>
-            </>
-          )}
-          <span className="text-[var(--text-muted)]">&gt;</span>
+          <Link href="/" className="hover:text-gold transition-colors">{t('الرئيسية', 'Home')}</Link>
+          <span>&gt;</span>
+          <Link href="/market" className="hover:text-gold transition-colors">{t('السوق', 'Market')}</Link>
+          {detail.sector && (<><span>&gt;</span><Link href={`/market?sector=${encodeURIComponent(detail.sector)}`} className="hover:text-gold transition-colors">{translateSector(detail.sector, language)}</Link></>)}
+          <span>&gt;</span>
           <span className="text-gold font-medium">{ticker}</span>
         </nav>
 
@@ -739,67 +161,26 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
         <div className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-start gap-3">
-              {/* Watchlist Star */}
-              <button
-                onClick={toggleWatchlist}
-                className="mt-1 text-2xl transition-colors hover:scale-110 active:scale-95"
-                aria-label={inWatchlist ? t('\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629', 'Remove from watchlist') : t('\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Add to watchlist')}
-                title={inWatchlist ? t('\u0625\u0632\u0627\u0644\u0629 \u0645\u0646 \u0627\u0644\u0645\u0641\u0636\u0644\u0629', 'Remove from watchlist') : t('\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0645\u0641\u0636\u0644\u0629', 'Add to watchlist')}
-              >
-                {inWatchlist ? (
-                  <span className="text-gold">&#9733;</span>
-                ) : (
-                  <span className="text-[var(--text-muted)] hover:text-gold">&#9734;</span>
-                )}
+              <button onClick={toggleWatchlist} className="mt-1 text-2xl transition-colors hover:scale-110 active:scale-95" aria-label={inWatchlist ? t('إزالة من المفضلة', 'Remove from watchlist') : t('إضافة للمفضلة', 'Add to watchlist')}>
+                {inWatchlist ? <span className="text-gold">&#9733;</span> : <span className="text-[var(--text-muted)] hover:text-gold">&#9734;</span>}
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] break-words">
-                  {detail.short_name || ticker}
-                </h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] break-words">{detail.short_name || ticker}</h1>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded-full font-medium">{ticker}</span>
-                  {detail.sector && (
-                    <Link
-                      href={`/market?sector=${encodeURIComponent(detail.sector)}`}
-                      className="text-xs bg-[var(--bg-input)] text-[var(--text-secondary)] px-2 py-0.5 rounded-full hover:text-gold transition-colors"
-                    >
-                      {translateSector(detail.sector, language)}
-                    </Link>
-                  )}
-                  {detail.industry && (
-                    <span className="text-xs bg-[var(--bg-input)] text-[var(--text-muted)] px-2 py-0.5 rounded-full">{detail.industry}</span>
-                  )}
+                  {detail.sector && (<Link href={`/market?sector=${encodeURIComponent(detail.sector)}`} className="text-xs bg-[var(--bg-input)] text-[var(--text-secondary)] px-2 py-0.5 rounded-full hover:text-gold transition-colors">{translateSector(detail.sector, language)}</Link>)}
+                  {detail.industry && (<span className="text-xs bg-[var(--bg-input)] text-[var(--text-muted)] px-2 py-0.5 rounded-full">{detail.industry}</span>)}
                 </div>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <div className="text-end">
-                <p className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-                  {detail.current_price?.toFixed(2) || '-'}
-                  <span className="text-sm text-[var(--text-muted)] ms-1">{detail.currency || 'SAR'}</span>
-                </p>
-                {priceChange !== null && (
-                  <p className={cn('text-sm font-bold mt-0.5', isUp ? 'text-accent-green' : 'text-accent-red')}>
-                    {isUp ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePct?.toFixed(2)}%)
-                    <span className="text-[10px] ms-1">{isUp ? '\u25B2' : '\u25BC'}</span>
-                  </p>
-                )}
+                <p className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">{detail.current_price?.toFixed(2) || '-'}<span className="text-sm text-[var(--text-muted)] ms-1">{detail.currency || 'SAR'}</span></p>
+                {priceChange !== null && (<p className={cn('text-sm font-bold mt-0.5', isUp ? 'text-accent-green' : 'text-accent-red')}>{isUp ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePct?.toFixed(2)}%)<span className="text-[10px] ms-1">{isUp ? '▲' : '▼'}</span></p>)}
               </div>
-              {/* Share button */}
               <Tooltip text={shareCopied ? t('تم نسخ الرابط', 'Link copied') : t('مشاركة', 'Share')} position="bottom">
-                <button
-                  onClick={handleShare}
-                  className={cn(
-                    'p-2 rounded-md transition-colors mt-1',
-                    'text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)]',
-                  )}
-                  aria-label={t('مشاركة', 'Share')}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                    <polyline points="16 6 12 2 8 6" />
-                    <line x1="12" y1="2" x2="12" y2="15" />
-                  </svg>
+                <button onClick={handleShare} className={cn('p-2 rounded-md transition-colors mt-1', 'text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)]')} aria-label={t('مشاركة', 'Share')}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
                 </button>
               </Tooltip>
             </div>
@@ -808,172 +189,87 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
 
         {/* Price Summary Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <MetricCard label={t('\u0627\u0644\u0625\u063A\u0644\u0627\u0642 \u0627\u0644\u0633\u0627\u0628\u0642', 'Previous Close')} value={detail.previous_close?.toFixed(2) || '-'} />
-          <MetricCard
-            label={t('\u0646\u0637\u0627\u0642 \u0627\u0644\u064A\u0648\u0645', 'Day Range')}
-            value={`${detail.day_low?.toFixed(2) || '-'} - ${detail.day_high?.toFixed(2) || '-'}`}
-          />
-          <MetricCard
-            label={t('\u0646\u0637\u0627\u0642 52 \u0623\u0633\u0628\u0648\u0639', '52-Week Range')}
-            value={`${detail.week_52_low?.toFixed(2) || '-'} - ${detail.week_52_high?.toFixed(2) || '-'}`}
-          />
-          <MetricCard label={t('\u062D\u062C\u0645 \u0627\u0644\u062A\u062F\u0627\u0648\u0644', 'Volume')} value={formatNumber(detail.volume, { decimals: 0 })} />
+          <MetricCard label={t('الإغلاق السابق', 'Previous Close')} value={detail.previous_close?.toFixed(2) || '-'} />
+          <MetricCard label={t('نطاق اليوم', 'Day Range')} value={`${detail.day_low?.toFixed(2) || '-'} - ${detail.day_high?.toFixed(2) || '-'}`} />
+          <MetricCard label={t('نطاق 52 أسبوع', '52-Week Range')} value={`${detail.week_52_low?.toFixed(2) || '-'} - ${detail.week_52_high?.toFixed(2) || '-'}`} />
+          <MetricCard label={t('حجم التداول', 'Volume')} value={formatNumber(detail.volume, { decimals: 0 })} />
         </div>
 
-        {/* Page Tab Navigation */}
+        {/* Tab Navigation */}
         <nav className="flex gap-1 bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-1.5 overflow-x-auto" role="tablist">
           {PAGE_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all',
-                activeTab === tab.id
-                  ? 'bg-gold/15 text-gold border border-gold/30'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-input)]',
-              )}
-            >
+            <button key={tab.id} role="tab" aria-selected={activeTab === tab.id} onClick={() => setActiveTab(tab.id)}
+              className={cn('px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all', activeTab === tab.id ? 'bg-gold/15 text-gold border border-gold/30' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-input)]')}>
               {language === 'ar' ? tab.labelAr : tab.labelEn}
             </button>
           ))}
         </nav>
 
-        {/* ====== OVERVIEW TAB ====== */}
+        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <>
-            {/* Chart */}
             <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-4">
               <ChartErrorBoundary fallbackHeight={400}>
-                <ChartWrapper title={t('\u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A', 'Price Chart')} source={chartSource}>
+                <ChartWrapper title={t('الرسم البياني', 'Price Chart')} source={chartSource}>
                   <CandlestickChart data={ohlcvData || []} height={400} ticker={ticker} loading={chartLoading} />
                 </ChartWrapper>
               </ChartErrorBoundary>
               <div className="flex items-center justify-between -mt-1">
-                <Link
-                  href={`/charts?ticker=${encodeURIComponent(ticker)}`}
-                  className="text-xs text-gold hover:text-gold-light transition-colors font-medium"
-                  dir={dir}
-                >
-                  {t('\u0639\u0631\u0636 \u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064A\u0627\u0646\u064A \u0627\u0644\u0643\u0627\u0645\u0644', 'View full chart')}
-                </Link>
+                <Link href={`/charts?ticker=${encodeURIComponent(ticker)}`} className="text-xs text-gold hover:text-gold-light transition-colors font-medium" dir={dir}>{t('عرض الرسم البياني الكامل', 'View full chart')}</Link>
                 <TradingViewAttribution />
               </div>
             </section>
-
-            {/* Metrics Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-              {/* Key Metrics */}
               <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-                  {t('\u0627\u0644\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629', 'Key Metrics')}
-                </h2>
+                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>{t('المؤشرات الرئيسية', 'Key Metrics')}</h2>
                 <div className="grid grid-cols-2 gap-2">
-                  <MetricCard label={t('\u0627\u0644\u0642\u064A\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064A\u0629', 'Market Cap')} value={formatNumber(detail.market_cap, { prefix: 'SAR ' })} />
+                  <MetricCard label={t('القيمة السوقية', 'Market Cap')} value={formatNumber(detail.market_cap, { prefix: 'SAR ' })} />
                   <MetricCard label="Beta" value={detail.beta?.toFixed(2) || '-'} />
-                  <MetricCard label={t('P/E (\u0645\u062A\u0623\u062E\u0631)', 'P/E (Trailing)')} value={detail.trailing_pe?.toFixed(2) || '-'} />
-                  <MetricCard label={t('P/E (\u0645\u062A\u0648\u0642\u0639)', 'P/E (Forward)')} value={detail.forward_pe?.toFixed(2) || '-'} />
+                  <MetricCard label={t('P/E (متأخر)', 'P/E (Trailing)')} value={detail.trailing_pe?.toFixed(2) || '-'} />
+                  <MetricCard label={t('P/E (متوقع)', 'P/E (Forward)')} value={detail.forward_pe?.toFixed(2) || '-'} />
                   <MetricCard label="P/B" value={detail.price_to_book?.toFixed(2) || '-'} />
                   <MetricCard label="EPS" value={detail.trailing_eps?.toFixed(2) || '-'} />
                 </div>
               </section>
-
-              {/* Profitability */}
               <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-                  {t('\u0627\u0644\u0631\u0628\u062D\u064A\u0629', 'Profitability')}
-                </h2>
+                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>{t('الربحية', 'Profitability')}</h2>
                 <div className="grid grid-cols-2 gap-2">
-                  <MetricCard
-                    label={t('\u0627\u0644\u0639\u0627\u0626\u062F \u0639\u0644\u0649 \u0627\u0644\u0645\u0644\u0643\u064A\u0629', 'Return on Equity')}
-                    value={formatPct(detail.roe)}
-                    accent={detail.roe !== null && detail.roe !== undefined ? (detail.roe >= 0 ? 'green' : 'red') : undefined}
-                  />
-                  <MetricCard
-                    label={t('\u0647\u0627\u0645\u0634 \u0627\u0644\u0631\u0628\u062D', 'Profit Margin')}
-                    value={formatPct(detail.profit_margin)}
-                    accent={detail.profit_margin !== null && detail.profit_margin !== undefined ? (detail.profit_margin >= 0 ? 'green' : 'red') : undefined}
-                  />
-                  <MetricCard
-                    label={t('\u0646\u0645\u0648 \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A', 'Revenue Growth')}
-                    value={formatPct(detail.revenue_growth)}
-                    accent={detail.revenue_growth !== null && detail.revenue_growth !== undefined ? (detail.revenue_growth >= 0 ? 'green' : 'red') : undefined}
-                  />
+                  <MetricCard label={t('العائد على الملكية', 'Return on Equity')} value={formatPct(detail.roe)} accent={detail.roe !== null && detail.roe !== undefined ? (detail.roe >= 0 ? 'green' : 'red') : undefined} />
+                  <MetricCard label={t('هامش الربح', 'Profit Margin')} value={formatPct(detail.profit_margin)} accent={detail.profit_margin !== null && detail.profit_margin !== undefined ? (detail.profit_margin >= 0 ? 'green' : 'red') : undefined} />
+                  <MetricCard label={t('نمو الإيرادات', 'Revenue Growth')} value={formatPct(detail.revenue_growth)} accent={detail.revenue_growth !== null && detail.revenue_growth !== undefined ? (detail.revenue_growth >= 0 ? 'green' : 'red') : undefined} />
                 </div>
               </section>
-
             </div>
-
-            {/* Analyst Data */}
             {detail.recommendation && (
               <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-5">
-                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
-                  {t('\u0625\u062C\u0645\u0627\u0639 \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646', 'Analyst Consensus')}
-                </h2>
+                <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>{t('إجماع المحللين', 'Analyst Consensus')}</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div className="bg-[var(--bg-input)] rounded-xl px-4 py-3 text-center">
-                    <p className="text-xs text-[var(--text-muted)] mb-1">{t('\u0627\u0644\u062A\u0648\u0635\u064A\u0629', 'Recommendation')}</p>
-                    <p className={cn(
-                      'text-sm font-bold uppercase',
-                      detail.recommendation.toLowerCase().includes('buy') ? 'text-accent-green'
-                        : detail.recommendation.toLowerCase().includes('sell') ? 'text-accent-red'
-                        : 'text-gold'
-                    )}>
-                      {detail.recommendation.toUpperCase()}
-                    </p>
+                    <p className="text-xs text-[var(--text-muted)] mb-1">{t('التوصية', 'Recommendation')}</p>
+                    <p className={cn('text-sm font-bold uppercase', detail.recommendation.toLowerCase().includes('buy') ? 'text-accent-green' : detail.recommendation.toLowerCase().includes('sell') ? 'text-accent-red' : 'text-gold')}>{detail.recommendation.toUpperCase()}</p>
                   </div>
-                  <MetricCard label={t('\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0645\u0633\u062A\u0647\u062F\u0641', 'Target Price')} value={detail.target_mean_price?.toFixed(2) || '-'} />
-                  <MetricCard label={t('\u0639\u062F\u062F \u0627\u0644\u0645\u062D\u0644\u0644\u064A\u0646', 'Number of Analysts')} value={String(detail.analyst_count || '-')} />
+                  <MetricCard label={t('السعر المستهدف', 'Target Price')} value={detail.target_mean_price?.toFixed(2) || '-'} />
+                  <MetricCard label={t('عدد المحللين', 'Number of Analysts')} value={String(detail.analyst_count || '-')} />
                 </div>
               </section>
             )}
           </>
         )}
 
-        {/* ====== FINANCIALS TAB ====== */}
-        {activeTab === 'financials' && (
-          <>
-            {/* Financial Summary */}
-            <FinancialSummarySection ticker={ticker} language={language} t={t} />
-
-            {/* Financial Statements */}
-            <FinancialStatementsSection ticker={ticker} language={language} t={t} />
-          </>
-        )}
-
-        {/* ====== DIVIDENDS TAB ====== */}
-        {activeTab === 'dividends' && (
-          <DividendSection ticker={ticker} language={language} t={t} />
-        )}
-
-        {/* ====== NEWS & REPORTS TAB ====== */}
+        {activeTab === 'financials' && <StockFinancials ticker={ticker} language={language} t={t} />}
+        {activeTab === 'dividends' && <StockDividends ticker={ticker} language={language} t={t} />}
         {activeTab === 'news' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <RelatedNewsSection ticker={ticker} language={language} t={t} />
-            <RelatedReportsSection ticker={ticker} language={language} t={t} />
+            <StockNewsSection ticker={ticker} language={language} t={t} />
+            <StockReportsSection ticker={ticker} language={language} t={t} />
           </div>
         )}
 
-        {/* AI Chat CTA - pre-filled with ticker (always visible) */}
-        <Link
-          href={`/chat?q=${encodeURIComponent(language === 'ar' ? '\u062D\u0644\u0644 \u0633\u0647\u0645 ' + ticker : 'Analyze stock ' + ticker)}`}
-          className={cn(
-            'block p-5 rounded-xl text-center',
-            'bg-gradient-to-r from-gold/10 via-gold/5 to-gold/10',
-            'border border-gold/20',
-            'hover:from-gold/15 hover:via-gold/10 hover:to-gold/15',
-            'hover:border-gold/40',
-            'transition-all duration-300'
-          )}
-        >
-          <p className="text-sm font-bold gold-text" dir={dir}>
-            {t('\u0627\u0633\u0623\u0644 \u0639\u0646', 'Ask about')} {detail.short_name || ticker}
-          </p>
-          <p className="text-xs text-[var(--text-secondary)] mt-1" dir={dir}>
-            {t('\u0627\u0633\u062A\u062E\u062F\u0645 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629 \u0627\u0644\u0630\u0643\u064A\u0629 \u0644\u0644\u062D\u0635\u0648\u0644 \u0639\u0644\u0649 \u062A\u062D\u0644\u064A\u0644 \u0645\u0641\u0635\u0644', 'Use AI chat for detailed analysis')}
-          </p>
+        {/* AI Chat CTA */}
+        <Link href={`/chat?q=${encodeURIComponent(language === 'ar' ? 'حلل سهم ' + ticker : 'Analyze stock ' + ticker)}`}
+          className={cn('block p-5 rounded-xl text-center', 'bg-gradient-to-r from-gold/10 via-gold/5 to-gold/10', 'border border-gold/20', 'hover:from-gold/15 hover:via-gold/10 hover:to-gold/15', 'hover:border-gold/40', 'transition-all duration-300')}>
+          <p className="text-sm font-bold gold-text" dir={dir}>{t('اسأل عن', 'Ask about')} {detail.short_name || ticker}</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1" dir={dir}>{t('استخدم المحادثة الذكية للحصول على تحليل مفصل', 'Use AI chat for detailed analysis')}</p>
         </Link>
 
       </div>
