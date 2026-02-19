@@ -36,7 +36,6 @@ type NewsAction =
   | { type: 'SET_ALL_ARTICLES'; payload: NewsFeedItem[] }
   | { type: 'APPEND_ARTICLES'; payload: NewsFeedItem[] }
   | { type: 'SET_BOOKMARKS'; payload: Set<string> }
-  | { type: 'TOGGLE_BOOKMARK'; id: string }
   | { type: 'SET_LOADING_MORE'; payload: boolean }
   | { type: 'SET_SEARCH_RESULTS'; payload: NewsFeedItem[] | null }
   | { type: 'SET_SEARCH_LOADING'; payload: boolean }
@@ -70,11 +69,6 @@ function newsReducer(state: NewsState, action: NewsAction): NewsState {
     case 'SET_ALL_ARTICLES': return { ...state, allArticles: action.payload };
     case 'APPEND_ARTICLES': return { ...state, allArticles: [...state.allArticles, ...action.payload] };
     case 'SET_BOOKMARKS': return { ...state, bookmarks: action.payload };
-    case 'TOGGLE_BOOKMARK': {
-      const next = new Set(state.bookmarks);
-      if (next.has(action.id)) next.delete(action.id); else next.add(action.id);
-      return { ...state, bookmarks: next };
-    }
     case 'SET_LOADING_MORE': return { ...state, loadingMore: action.payload };
     case 'SET_SEARCH_RESULTS': return { ...state, searchResults: action.payload };
     case 'SET_SEARCH_LOADING': return { ...state, searchLoading: action.payload };
