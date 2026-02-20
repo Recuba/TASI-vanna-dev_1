@@ -124,7 +124,12 @@ export function DataTable({ data }: DataTableProps) {
                   tabIndex={0}
                   aria-sort={sortColumn === i ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                   onClick={() => handleHeaderClick(i)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleHeaderClick(i)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleHeaderClick(i);
+                    }
+                  }}
                   className={cn(
                     'px-3 py-2 text-start text-xs font-medium',
                     'uppercase tracking-wider',

@@ -65,7 +65,12 @@ export function DataTableHeader({
               'cursor-pointer select-none hover:bg-gold/5 transition-colors',
             )}
             onClick={() => onSort(col)}
-            onKeyDown={(e) => e.key === 'Enter' && onSort(col)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSort(col);
+              }
+            }}
           >
             <div className="flex items-center gap-1">
               <span>{col}</span>
