@@ -653,8 +653,7 @@ def get_pool_stats() -> Dict[str, Any]:
             from services.sqlite_pool import _pool as _sq_pool
 
             if _sq_pool is not None:
-                # SQLitePool._pool is a queue.Queue with maxsize = pool_size
-                pool_size = _sq_pool._pool.maxsize
+                pool_size = _sq_pool.pool_size
                 return {"backend": "sqlite", "pool_size": pool_size}
             return {"backend": "sqlite", "pool_size": "unknown"}
         except Exception:

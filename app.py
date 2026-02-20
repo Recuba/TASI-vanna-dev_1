@@ -626,7 +626,9 @@ async def lifespan(app):
     # Install request_id filter on root logger so all log records carry request_id
     try:
         from middleware.request_context import RequestIdFilter
-        logging.getLogger().addFilter(RequestIdFilter())
+        _root_logger = logging.getLogger()
+        if not any(isinstance(f, RequestIdFilter) for f in _root_logger.filters):
+            _root_logger.addFilter(RequestIdFilter())
     except ImportError:
         pass
 

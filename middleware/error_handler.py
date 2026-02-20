@@ -38,6 +38,11 @@ logger = logging.getLogger(__name__)
 
 _DEBUG = os.environ.get("SERVER_DEBUG", "false").lower() in ("true", "1", "yes")
 
+try:
+    from middleware.request_context import set_request_id as _set_request_id_ctx
+except ImportError:
+    _set_request_id_ctx = None
+
 # Maps exception types to (http_status, error_code).
 _EXCEPTION_MAP: dict[type, tuple[int, str]] = {
     ValueError: (400, "BAD_REQUEST"),
@@ -106,11 +111,8 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         # Ensure request_id is available for the entire request lifecycle
         request_id = _get_request_id(request)
         request.state.request_id = request_id
-        try:
-            from middleware.request_context import set_request_id as _set_rid
-            _set_rid(request_id)
-        except ImportError:
-            pass
+        if _set_request_id_ctx is not None:
+            _set_request_id_ctx(request_id)
 
         try:
             return await call_next(request)

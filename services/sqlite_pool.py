@@ -13,6 +13,7 @@ class SQLitePool:
     def __init__(self, db_path: str, pool_size: int = 5):
         self._db_path = db_path
         self._pool: queue.Queue = queue.Queue(maxsize=pool_size)
+        self.pool_size: int = pool_size
         self._lock = threading.Lock()
         for _ in range(pool_size):
             self._pool.put(self._make_conn())
