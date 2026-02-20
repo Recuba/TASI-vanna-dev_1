@@ -53,9 +53,14 @@ def pg_connection_params() -> dict:
         from database.postgres_utils import pg_connection_params
         conn = psycopg2.connect(**pg_connection_params(), connect_timeout=5)
     """
+    try:
+        port = int(os.environ.get("POSTGRES_PORT", "5432"))
+    except (ValueError, TypeError):
+        logger.warning("Invalid POSTGRES_PORT value; defaulting to 5432")
+        port = 5432
     return {
         "host": os.environ.get("POSTGRES_HOST", "localhost"),
-        "port": int(os.environ.get("POSTGRES_PORT", "5432")),
+        "port": port,
         "dbname": os.environ.get("POSTGRES_DB", "tasi_platform"),
         "user": os.environ.get("POSTGRES_USER", "tasi_user"),
         "password": os.environ.get("POSTGRES_PASSWORD", ""),

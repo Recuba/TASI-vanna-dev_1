@@ -80,7 +80,7 @@ jobs:
       - name: Run bandit
         run: >
           bandit -r .
-          --exclude ./tests,./venv,./.venv,./frontend,./vanna_docs,./vanna-skill
+          --exclude ./tests,./venv,./.venv,./frontend,./vanna_docs,./vanna-skill,./.git,./__pycache__
           --severity-level medium
           --confidence-level medium
           -f txt
