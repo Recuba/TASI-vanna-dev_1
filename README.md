@@ -35,6 +35,12 @@ Built on [Vanna 2.0](https://vanna.ai/) with Google Gemini, supporting dual SQLi
 - **Modular API client**: Domain-scoped API modules under `lib/api/` with backward-compatible shim
 - **Auth enhancements**: Token refresh, guest login, profile enrichment
 - **Enriched stock detail**: Financials, dividends, reports, news, and watchlist in one page
+- **Prometheus metrics**: `/metrics` endpoint via `prometheus-fastapi-instrumentator` (graceful fallback if not installed)
+- **Pool stats**: Connection pool size (SQLite or PostgreSQL) reported in `/health` response
+- **Structured request tracing**: `ContextVar`-based request ID injected into all log records within a request
+- **Security scan CI**: bandit static analysis with medium severity/confidence thresholds
+- **Type check CI**: mypy type checking across all backend modules
+- **Dependency lockfile**: `pip-compile`-managed `requirements.lock` with CI verification
 
 ## Quick Start
 
@@ -181,7 +187,7 @@ All settings via environment variables. See `.env.example` for the complete refe
 
 ## Testing
 
-1300+ backend tests (unit, integration, security, performance) and 225+ frontend tests plus Playwright E2E specs.
+1571+ backend tests (unit, integration, security, performance) and 231 frontend Vitest tests plus Playwright E2E specs.
 
 ```bash
 # Backend tests (all)

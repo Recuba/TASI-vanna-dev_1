@@ -33,10 +33,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── config/
 │   ├── __init__.py                 # Singleton get_settings() + re-exports
 │   ├── settings.py                 # Pydantic Settings (DatabaseSettings, LLMSettings, ServerSettings)
-│   └── logging.py                  # JSON (prod) / pretty (dev) logging configuration
+│   ├── lifecycle.py                # on_startup() / on_shutdown() with pool + Prometheus logging
+│   ├── env_validator.py            # Startup env validation with fail-fast enforcement
+│   └── logging_config.py          # JSON (prod) / pretty (dev) logging configuration
 ├── database/
 │   ├── schema.sql                  # Full PostgreSQL schema (DDL for all tables + indexes + views)
 │   ├── queries.py                  # Centralized SQL query strings
+│   ├── pool.py                     # PostgreSQL ThreadedConnectionPool singleton
+│   ├── postgres_utils.py           # Shared PG helpers: pg_available(), pg_connection_params()
 │   ├── migrate_sqlite_to_pg.py     # SQLite -> PostgreSQL data migration
 │   └── csv_to_postgres.py          # CSV -> PostgreSQL direct pipeline
 ├── services/
@@ -111,16 +115,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── providers/              # ThemeProvider, LanguageProvider
 │   │   └── styles/design-system.ts # Gold/dark design tokens
 │   └── package.json
+├── middleware/
+│   ├── chat_auth.py                # ChatAuthMiddleware: JWT enforcement on chat SSE/poll endpoints
+│   ├── request_context.py          # ContextVar request ID + RequestIdFilter for structured logging
+│   ├── error_handler.py            # Unified JSON error responses + request_id propagation
+│   ├── rate_limit.py               # Tiered rate limiting (10/30/60 rpm)
+│   └── cors.py                     # CORS configuration
 ├── templates/
 │   └── index.html                  # Legacy frontend UI (vanna-chat web component)
 ├── ingestion/                      # Data ingestion pipelines (in progress)
 ├── docker-compose.yml              # PostgreSQL 16 + app + pgAdmin (optional)
 ├── Dockerfile                      # Python 3.11 FastAPI container
-├── requirements.txt                # Python dependencies
+├── requirements.in                 # Unpinned source constraints (edit this)
+├── requirements.txt                # Pinned production dependencies (generated)
+├── requirements-dev.txt            # Development/test dependencies
+├── requirements.lock               # pip-compile lock file (verified in CI)
 ├── .env.example                    # All environment variables documented
 ├── .dockerignore
-├── test_database.py                # 20 database integrity tests (unittest)
-├── test_app_assembly_v2.py         # 24 Vanna assembly tests
+├── test_app_assembly.py            # Legacy Vanna assembly smoke tests (v1)
 ├── vanna-skill/                    # Vanna 2.0 API reference (read-only)
 │   ├── SKILL.md
 │   └── references/
@@ -143,10 +155,10 @@ docker compose up -d
 # Start with pgAdmin included
 docker compose --profile tools up -d
 
-# Run backend tests (573 tests)
+# Run backend tests (1571+ tests)
 python -m pytest tests/ -q
 
-# Run frontend tests (139 tests)
+# Run frontend tests (231 tests)
 cd frontend && npx vitest run
 
 # Frontend production build (15 pages)
@@ -262,6 +274,8 @@ The hub is started as a background task during FastAPI lifespan and its route is
 
 - **GZipMiddleware**: Compresses responses larger than 1000 bytes (added in `app.py`).
 - **X-Request-ID**: Added to all response headers for request tracing.
+- **`ChatAuthMiddleware`** (`middleware/chat_auth.py`): Enforces JWT on `/api/vanna/v2/chat_sse` and `/api/vanna/v2/chat_poll`. Only registered when `DB_BACKEND=postgres`.
+- **`RequestIdFilter`** (`middleware/request_context.py`): Injects `request_id` from a `ContextVar` into every log record. Installed at startup with a duplicate guard. `error_handler.py` sets the ContextVar on each request so all downstream log calls share the same ID.
 
 ### Docker (`docker-compose.yml`)
 - **postgres**: PostgreSQL 16 Alpine, auto-initialized with `database/schema.sql`, health-checked
@@ -280,7 +294,7 @@ The hub is started as a background task during FastAPI lifespan and its route is
 
 - The system prompt in `app.py` documents the full database schema. If schema changes, update both the column mappings AND the system prompt.
 - `csv_to_sqlite.py` skips financial statement rows where `period_date` is null -- some companies have fewer periods than others (~71% coverage, not 100%).
-- Test files have hardcoded Windows paths for the database -- they will fail on other machines without path adjustment.
+- All test files (`tests/test_database.py`, `tests/test_app_assembly_v2.py`, etc.) use `DB_SQLITE_PATH` env var for the database path. Fallback is `Path(__file__).resolve().parent.parent / "saudi_stocks.db"` which resolves correctly from `tests/` to the project root.
 - The `<vanna-chat>` component requires internet (loaded from CDN).
 - Database path in app.py is script-relative via `Path(__file__).resolve().parent / "saudi_stocks.db"`.
 - PostgreSQL-only services (`news_service.py`, `announcement_service.py`) use `psycopg2` and are not available with SQLite backend. Use `news_store.py` for SQLite news operations. `reports_service.py` supports both backends.
@@ -295,3 +309,8 @@ The hub is started as a background task during FastAPI lifespan and its route is
 - JWT secret is enforced at startup in production PostgreSQL mode -- missing `JWT_SECRET_KEY` raises `RuntimeError`.
 - SQL query strings are centralized in `database/queries.py`. Prefer using these constants over inline SQL in route handlers.
 - Pagination `limit` parameters have an upper bound of 100 (`le=100`) across all list endpoints.
+- `database/postgres_utils.py` provides `pg_available()` and `pg_connection_params()` shared helpers. Do not duplicate PG connection logic in test files — import from there instead.
+- `config/lifecycle.py` `on_startup()` logs connection pool size and Prometheus availability at startup. All checks are wrapped in `try/except` and cannot block startup.
+- Prometheus metrics are exposed at `/metrics` when `prometheus-fastapi-instrumentator` is installed. The app starts normally without it (graceful `ImportError` fallback).
+- `RequestIdFilter` is installed with a duplicate guard: `if not any(isinstance(f, RequestIdFilter) for f in root_logger.filters)`. Do not remove this guard or metrics and hot-reload will double-install it.
+- `requirements.lock` is verified in CI via `pip-compile`. If you add a dependency to `requirements.in`, regenerate with: `pip-compile requirements.in -o requirements.lock --no-annotate --strip-extras`

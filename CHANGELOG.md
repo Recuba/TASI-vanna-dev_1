@@ -4,6 +4,72 @@ All notable changes to the Ra'd AI TASI Platform are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-02-20
+
+### Added (S1–S4 Remediation Sprint — 25 tasks)
+
+**S1 — Foundations**
+- SQLite connection pool (`services/sqlite_pool.py`): thread-safe pooled connections for concurrent request handling
+- JWT validation moved to startup: `env_validator.py` enforces `JWT_SECRET_KEY` before accepting traffic (PostgreSQL mode)
+- `config/lifecycle.py`: structured startup diagnostics — logs version, Python, database backend, pool status, and Prometheus availability
+- `config/env_validator.py`: startup validation with fail-fast on missing required env vars
+- `middleware/request_context.py`: `ContextVar`-based request ID propagation so all log records within a request share the same `request_id`
+- `middleware/chat_auth.py`: `ChatAuthMiddleware` class that enforces JWT on `/api/vanna/v2/chat_sse` and `/api/vanna/v2/chat_poll` endpoints (PostgreSQL mode only)
+
+**S1 — Fixes**
+- Resolved LLM provider confusion: `settings.py` now uses `ANTHROPIC_API_KEY` consistently; removed Gemini/OpenRouter fallbacks
+- Removed stale `config/logging.py` duplicate (consolidated into `config/logging_config.py`)
+- Fixed `entrypoint.sh` silent failure: added `set -euo pipefail` and explicit error checks
+- Replaced hardcoded Windows SQLite paths in all test files and `api/db_helper.py` with env-var-driven resolution via `DB_SQLITE_PATH`
+- Fixed CI/CD: lint job now blocks all downstream jobs; tests were previously running in parallel with linting
+
+**S2 — Performance & Bug Fixes**
+- PostgreSQL connection pool (`database/pool.py`): singleton `ThreadedConnectionPool` with UUID-keyed checkout for async FastAPI safety
+- Pool stats exposed in health response: `get_pool_stats()` added to `health_service.py`, returned in `/health` endpoint
+- Batched news inserts: `store_articles()` now uses `executemany` instead of per-row `execute` (significant throughput improvement for large fetches)
+- Fixed `_sql_convert` naive string replace: now uses `sqlparse`-aware token replacement for SQLite→PostgreSQL compatibility
+- Composite indexes added: `(source_name, created_at)` on `news_articles`, `(sector)` on `companies`
+- Deduplicated cache wrappers: removed inline `@cache` usage; all caching goes through `@cache_response` from `cache_utils.py`
+- Fixed Redis failure logging: changed `log.exception()` to `log.warning(..., exc_info=True)` to avoid noisy tracebacks in expected failure scenarios
+- Frontend: memoized chart MA calculations, CommandPalette results, ArticleCard render with `React.memo` and `useMemo`
+- Frontend: converted multiple `useState` to `useReducer` for market filters state
+- Frontend: extracted `useWatchlist` hook; consolidated date/number formatters into `lib/formatters.ts`
+- Frontend: added `aria-label` to all 15+ icon-only buttons across navigation, chat, and market pages
+
+**S3 — Infrastructure**
+- Dependency lockfile: `pip-compile requirements.in -o requirements.lock` workflow; CI verifies lock is up to date
+- Split `requirements.txt` into `requirements.in` (unpinned constraints) and `requirements-dev.txt` (test/lint tools)
+- Docker: added commented production env var template to `docker-compose.yml` app service
+- Docker: pinned pgAdmin from `:latest` to `dpage/pgadmin4:8`
+- Deploy: pinned Railway CLI to `@railway/cli@3` in `deploy.yml`; added health-check rollback step on deployment failure
+- CI coverage threshold raised to 75% (from 70%)
+- Added `pg_schema_version` session fixture to `tests/conftest.py`: verifies `schema.sql` was applied in PostgreSQL CI jobs
+- Prometheus metrics: added `prometheus-fastapi-instrumentator` dependency; metrics exposed at `/metrics` with graceful `ImportError` fallback
+- Request ID ContextVar: `error_handler.py` now sets `request_id` in both `request.state` and `ContextVar` so log records include it even outside middleware
+
+**S4 — Backend Backlog**
+- Pre-rendered HTML template: `_TEMPLATE_HTML` computed at module load from `templates/index.html`, not per-request
+- `NewsScheduler` stats: added `last_run_at`, `total_articles_stored`, `run_count`, and `get_stats()` method
+
+**S4 — Frontend Backlog**
+- `useLocalStorageTTL<T>` hook (`lib/hooks/useLocalStorageTTL.ts`): generic hook with TTL envelope `{ value, expiresAt }` and SSR guard
+- Sentry PII redaction: `sentry.client.config.ts` `beforeSend` hook strips `Authorization` headers and redacts `token`/`accessToken`/`refreshToken`/`jwt` from `event.extra`
+- SWR metrics wired: `metricsMiddleware` now registered in `chartCacheConfig.use` (was defined but never applied)
+- Accessibility: Space key handling added to all `role="button"` elements in `AIChatInterface`, `DataTable`, and `DataTableHeader`; `e.preventDefault()` prevents page scroll on Space
+
+**S4 — Infra**
+- `database/postgres_utils.py` (new): shared `pg_available(timeout=3)` and `pg_connection_params()` helpers; replaces duplicated PG connection code across test files
+- Moved `test_database.py` and `test_app_assembly_v2.py` from project root to `tests/`; updated `_SQLITE_PATH` fallback to `_HERE.parent / "saudi_stocks.db"`; CI test paths updated accordingly
+- CI: added `security-scan` job (bandit, severity/confidence medium, excludes frontend/tests/venv/vanna dirs)
+- CI: added `type-check` job (mypy on `config/ services/ api/ middleware/ database/ backend/`)
+- `config/lifecycle.py`: startup now logs connection pool size and Prometheus availability
+
+### Changed
+- Test files `test_database.py` and `test_app_assembly_v2.py` moved from project root to `tests/` directory
+
+### Fixed
+- Request ID filter installed with duplicate guard (`if not any(isinstance...)`) to prevent double-registration on hot-reload
+
 ## [Unreleased] - 2026-02-18
 
 ### Added

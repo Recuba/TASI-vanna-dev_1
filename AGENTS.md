@@ -55,6 +55,8 @@ Do NOT modify files owned by other agents unless coordinating with them.
 ├── database/
 │   ├── schema.sql                  # PostgreSQL DDL (all tables + indexes + views)
 │   ├── queries.py                  # Centralized SQL query strings
+│   ├── pool.py                     # PostgreSQL ThreadedConnectionPool singleton
+│   ├── postgres_utils.py           # Shared PG helpers: pg_available(), pg_connection_params()
 │   ├── migrate_sqlite_to_pg.py     # SQLite -> PostgreSQL migration
 │   └── csv_to_postgres.py          # CSV -> PostgreSQL pipeline
 ├── services/
@@ -99,13 +101,25 @@ Do NOT modify files owned by other agents unless coordinating with them.
 │   │       │   └── utils.ts        # Shared constants & helpers
 │   │       ├── */loading.tsx       # Route loading states (news, market, charts, chat)
 │   │       └── */error.tsx         # Route error boundaries (news, market, charts, chat)
+├── middleware/
+│   ├── chat_auth.py                # ChatAuthMiddleware (JWT on chat endpoints, PG only)
+│   ├── request_context.py          # ContextVar request ID + RequestIdFilter
+│   ├── error_handler.py            # Unified JSON error responses
+│   └── rate_limit.py               # Tiered rate limiting
+├── tests/
+│   ├── conftest.py                 # Shared fixtures (DB connections, pg_schema_version)
+│   ├── test_database.py            # 23 DB integrity tests (moved from root)
+│   ├── test_app_assembly_v2.py     # 33 Vanna assembly tests (moved from root)
+│   └── ...                         # Unit/integration/security/performance tests
 ├── templates/index.html            # Legacy vanna-chat UI
 ├── docker-compose.yml              # PostgreSQL + app + pgAdmin
 ├── Dockerfile                      # Python 3.11 container
-├── requirements.txt                # Python deps
+├── requirements.in                 # Unpinned source constraints
+├── requirements.txt                # Pinned production deps (generated)
+├── requirements-dev.txt            # Development/test deps
+├── requirements.lock               # pip-compile lock file
 ├── .env.example                    # All env vars documented
-├── test_database.py                # 20 DB integrity tests
-├── test_app_assembly_v2.py         # 24 Vanna assembly tests
+├── test_app_assembly.py            # Legacy Vanna assembly smoke tests (v1)
 ├── vanna-skill/                    # Vanna 2.0 reference (read-only)
 ├── vanna_docs/                     # Scraped Vanna docs (read-only)
 ├── saudi_stocks.db                 # SQLite DB (generated)
@@ -173,8 +187,8 @@ python database/csv_to_postgres.py            # CSV -> PostgreSQL directly
 ## Testing
 
 ```bash
-python -m pytest tests/ -q                    # 573 backend tests
-cd frontend && npx vitest run                 # 139 frontend tests
+python -m pytest tests/ -q                    # 1571+ backend tests
+cd frontend && npx vitest run                 # 231 frontend tests
 cd frontend && npx next build                 # 15-page build verification
 ```
 
@@ -226,3 +240,6 @@ These are critical patterns specific to Vanna 2.0. Getting them wrong causes run
 - New SQL queries should use `database/queries.py` constants instead of inline strings where practical.
 - Use `services/cache_utils.py` `@cache_response` for caching; do not roll custom LRU cache implementations.
 - Tadawul trading week is Sunday-Thursday. Friday and Saturday are weekends (not Saturday/Sunday).
+- Use `database/postgres_utils.pg_available()` and `pg_connection_params()` for shared PostgreSQL availability checks. Do not duplicate this logic in test files or services.
+- When adding a Python dependency, add it to `requirements.in` (not `requirements.txt` directly), then regenerate: `pip-compile requirements.in -o requirements.lock --no-annotate --strip-extras`. The CI verifies the lock file matches.
+- Test files live in `tests/`. The project root has only `test_app_assembly.py` (v1 legacy). Never add new test files at root level.

@@ -646,9 +646,35 @@ For a quick terminal summary without HTML:
 python -m pytest tests/ --cov=api --cov=services --cov=backend --cov-report=term-missing -q
 ```
 
+## PostgreSQL Shared Utilities (`database/postgres_utils.py`)
+
+Common PostgreSQL availability and connection helpers are centralized to avoid duplication across test files and services.
+
+```python
+from database.postgres_utils import pg_available, pg_connection_params
+
+# Check if PG is reachable (safe to call with no PG configured — returns False)
+if pg_available(timeout=3):
+    params = pg_connection_params()
+    conn = psycopg2.connect(**params, connect_timeout=5)
+```
+
+**`pg_available(timeout=3) -> bool`**
+- Returns `False` immediately if `POSTGRES_HOST` env var is unset
+- Catches all exceptions including invalid port values; logs `debug` on failure
+- Safe to use in `@pytest.mark.skipif` decorators
+
+**`pg_connection_params() -> dict`**
+- Returns `host`, `port` (int, defaults to 5432 on invalid input), `dbname`, `user`, `password` from env
+- Does not include `connect_timeout`; callers add as needed
+
+Import this in any new code that needs to probe PG availability instead of duplicating the try/connect pattern.
+
 ## Test Organization
 
 ### Backend Tests
+
+All test files live under `tests/`. There are no test files in the project root (except the legacy `test_app_assembly.py` v1, which is not run by pytest).
 
 | Directory | Purpose | Marker |
 |---|---|---|
@@ -656,6 +682,14 @@ python -m pytest tests/ --cov=api --cov=services --cov=backend --cov-report=term
 | `tests/integration/` | Integration tests (API chains, auth flows, health, PG path) | `@pytest.mark.integration` |
 | `tests/security/` | Security tests (SQL injection, auth bypass) | - |
 | `tests/performance/` | Load and concurrency tests | `@pytest.mark.performance` |
+
+Key test files:
+
+| File | Purpose |
+|---|---|
+| `tests/test_database.py` | 23 database integrity tests (dual SQLite + PG backends) |
+| `tests/test_app_assembly_v2.py` | 33 Vanna 2.0 assembly tests (run directly with `python tests/test_app_assembly_v2.py`) |
+| `tests/conftest.py` | Shared fixtures: `sqlite_db`, `pg_conn`, `pg_schema_version` |
 
 New backend test files added in the quality sprint:
 
@@ -667,7 +701,7 @@ New backend test files added in the quality sprint:
 
 ### Frontend Tests (Vitest)
 
-Frontend tests live under `frontend/src/__tests__/`. Run with `npx vitest run` from the `frontend/` directory.
+Frontend tests live under `frontend/src/__tests__/`. Run with `npx vitest run` from the `frontend/` directory. 231 tests across 20 files.
 
 New frontend test files added in the quality sprint:
 
