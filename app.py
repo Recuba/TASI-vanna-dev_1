@@ -355,28 +355,14 @@ try:
 except ImportError as exc:
     logger.warning("Middleware modules not available, skipping: %s", exc)
 
-# Postgres mode: validate JWT for Vanna chat HTTP endpoints if present.
-# Anonymous access is allowed (token optional), but invalid tokens are rejected.
+# Chat auth: validate JWT for Vanna chat endpoints (anonymous access allowed)
 if DB_BACKEND == "postgres":
-    from fastapi import Request as _Request
-
-    @app.middleware("http")
-    async def _require_chat_auth(request: _Request, call_next):
-        if request.url.path in ("/api/vanna/v2/chat_sse", "/api/vanna/v2/chat_poll"):
-            auth_header = request.headers.get("authorization", "")
-            if auth_header.lower().startswith("bearer "):
-                token = auth_header[7:]
-                try:
-                    from auth.jwt_handler import decode_token
-
-                    decode_token(token, expected_type="access")
-                except (jwt.PyJWTError, ValueError, KeyError):
-                    return JSONResponse(
-                        status_code=401,
-                        content={"detail": "Invalid or expired authentication token"},
-                    )
-            # If no auth header, allow through (anonymous access)
-        return await call_next(request)
+    try:
+        from middleware.chat_auth import ChatAuthMiddleware
+        app.add_middleware(ChatAuthMiddleware)
+        logger.info("Chat auth middleware registered")
+    except ImportError as exc:
+        logger.warning("ChatAuthMiddleware not available: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -584,16 +570,13 @@ except ImportError as exc:
 # 10. Custom routes and static files
 # ---------------------------------------------------------------------------
 _TEMPLATE_RAW = (_HERE / "templates" / "index.html").read_text(encoding="utf-8")
+_FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
+_TEMPLATE_HTML = _TEMPLATE_RAW.replace("{{FRONTEND_URL}}", _FRONTEND_URL)
 
 
 @app.get("/", response_class=HTMLResponse)
 async def custom_index():
-    # Inject the actual frontend URL (env-driven, default to local dev)
-    frontend_url = (
-        os.environ.get("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
-    )
-    html = _TEMPLATE_RAW.replace("{{FRONTEND_URL}}", frontend_url)
-    return html
+    return _TEMPLATE_HTML
 
 
 # Serve static assets (logo, favicon, etc.)

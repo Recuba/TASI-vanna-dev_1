@@ -20,6 +20,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from datetime import datetime
 
 from config import get_settings
 from services.news_store import NewsStore
@@ -39,6 +40,9 @@ class NewsScheduler:
         self._thread: threading.Thread | None = None
         self._source_errors: dict[str, int] = {}
         self._source_errors_lock = threading.Lock()
+        self._last_run_at: datetime | None = None
+        self._total_articles_stored: int = 0
+        self._run_count: int = 0
 
     def start(self) -> None:
         """Start background thread that fetches news periodically."""
@@ -61,7 +65,10 @@ class NewsScheduler:
     def _run_loop(self) -> None:
         """Main loop: fetch immediately, then sleep between cycles."""
         # Fetch immediately on start
-        self._fetch_cycle()
+        inserted = self._fetch_cycle()
+        self._last_run_at = datetime.utcnow()
+        self._total_articles_stored += inserted
+        self._run_count += 1
 
         while self._running:
             # Sleep in small increments so stop() is responsive
@@ -71,15 +78,35 @@ class NewsScheduler:
                 time.sleep(1)
 
             if self._running:
-                self._fetch_cycle()
+                inserted = self._fetch_cycle()
+                self._last_run_at = datetime.utcnow()
+                self._total_articles_stored += inserted
+                self._run_count += 1
 
     def get_source_error_counts(self) -> dict[str, int]:
         """Return per-source error counts for health check output."""
         with self._source_errors_lock:
             return dict(self._source_errors)
 
-    def _fetch_cycle(self) -> None:
-        """One fetch cycle: run all scrapers, store results, clean old."""
+    def get_stats(self) -> dict:
+        """Return scheduler statistics (run count, last run time, articles stored)."""
+        with self._source_errors_lock:
+            source_errors = dict(self._source_errors)
+        return {
+            "run_count": self._run_count,
+            "last_run_at": self._last_run_at.isoformat() if self._last_run_at else None,
+            "total_articles_stored": self._total_articles_stored,
+            "source_errors": source_errors,
+            "is_running": self._running,
+        }
+
+    def _fetch_cycle(self) -> int:
+        """One fetch cycle: run all scrapers, store results, clean old.
+
+        Returns:
+            Number of new articles inserted during this cycle.
+        """
+        inserted = 0
         try:
             from services.news_scraper import ALL_SCRAPERS, INTER_REQUEST_DELAY
             import time as _time
@@ -124,3 +151,5 @@ class NewsScheduler:
 
         except Exception:
             logger.warning("News fetch cycle failed", exc_info=True)
+
+        return inserted
