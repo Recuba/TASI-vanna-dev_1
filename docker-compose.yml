@@ -45,6 +45,12 @@ services:
       POSTGRES_PORT: 5432
       CACHE_REDIS_URL: redis://redis:6379/0
       CACHE_ENABLED: ${CACHE_ENABLED:-false}
+      # --- Production env vars (uncomment when deploying) ---
+      # ENVIRONMENT: production
+      # AUTH_JWT_SECRET: <run: python -c "import secrets; print(secrets.token_urlsafe(64))">
+      # SENTRY_DSN: https://xxx@sentry.io/yyy
+      # PG_POOL_MIN: 5
+      # PG_POOL_MAX: 20
     ports:
       - "${SERVER_PORT:-8084}:8084"
     deploy:
@@ -103,7 +109,7 @@ services:
   # pgAdmin (optional - start with: docker compose --profile tools up)
   # ---------------------------------------------------------------------------
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:8
     container_name: tasi-pgadmin
     profiles:
       - tools

@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Railway CLI
-        run: npm install -g @railway/cli
+        run: npm install -g @railway/cli@3
 
       - name: Deploy to Railway
         run: railway up --service raid-ai-app
@@ -41,3 +41,10 @@ jobs:
           done
           echo "Health check failed after 5 attempts"
           exit 1
+
+      - name: Rollback on health check failure
+        if: failure()
+        run: railway rollback --service raid-ai-app
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
