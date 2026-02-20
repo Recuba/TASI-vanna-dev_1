@@ -56,6 +56,8 @@ export function DataTableHeader({
           <th
             key={col}
             scope="col"
+            tabIndex={0}
+            aria-sort={sortColumn === col ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
             className={cn(
               'px-3 py-2 text-start text-xs font-medium',
               'text-gold uppercase tracking-wider',
@@ -63,6 +65,7 @@ export function DataTableHeader({
               'cursor-pointer select-none hover:bg-gold/5 transition-colors',
             )}
             onClick={() => onSort(col)}
+            onKeyDown={(e) => e.key === 'Enter' && onSort(col)}
           >
             <div className="flex items-center gap-1">
               <span>{col}</span>

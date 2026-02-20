@@ -1,6 +1,7 @@
 'use client';
 
 import useSWR, { type SWRConfiguration, type KeyedMutator } from 'swr';
+import { metricsMiddleware } from '@/lib/monitoring/swr-middleware';
 
 // ---------------------------------------------------------------------------
 // Default SWR config for chart data
@@ -13,6 +14,7 @@ export const chartCacheConfig: SWRConfiguration = {
   errorRetryCount: 3,
   revalidateOnReconnect: true,
   keepPreviousData: true,
+  use: [metricsMiddleware],        // collect API timing + error-rate metrics
 };
 
 // ---------------------------------------------------------------------------

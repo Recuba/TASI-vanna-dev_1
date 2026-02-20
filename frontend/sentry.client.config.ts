@@ -37,6 +37,22 @@ Sentry.init({
       return null;
     }
 
+    // Strip auth headers so JWT tokens are never sent to Sentry
+    if (event.request?.headers) {
+      delete event.request.headers['Authorization'];
+      delete event.request.headers['authorization'];
+    }
+
+    // Strip token values from extra context (e.g., localStorage snapshots)
+    if (event.extra) {
+      const sensitiveKeys = ['token', 'accessToken', 'refreshToken', 'jwt'];
+      for (const key of sensitiveKeys) {
+        if (key in event.extra) {
+          event.extra[key] = '[REDACTED]';
+        }
+      }
+    }
+
     return event;
   },
 

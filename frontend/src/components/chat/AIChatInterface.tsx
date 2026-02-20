@@ -127,7 +127,7 @@ export function AIChatInterface() {
           ) : (
             <div className="space-y-1">
               {conversations.map((conv) => (
-                <div key={conv.id} onClick={() => handleLoadConversation(conv.id)} className={cn('flex items-center justify-between gap-2 px-3 py-2 rounded-lg cursor-pointer', 'hover:bg-[var(--bg-input)] transition-colors group/conv', getActiveConvId() === conv.id && 'bg-gold/10 border border-gold/20')}>
+                <div key={conv.id} role="button" tabIndex={0} onClick={() => handleLoadConversation(conv.id)} onKeyDown={(e) => e.key === 'Enter' && handleLoadConversation(conv.id)} className={cn('flex items-center justify-between gap-2 px-3 py-2 rounded-lg cursor-pointer', 'hover:bg-[var(--bg-input)] transition-colors group/conv', getActiveConvId() === conv.id && 'bg-gold/10 border border-gold/20')}>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[var(--text-primary)] truncate">{conv.title}</p>
                     <p className="text-[10px] text-[var(--text-muted)]">
