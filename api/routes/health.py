@@ -16,6 +16,7 @@ from api.schemas.health import ComponentHealthResponse, HealthResponse
 from services.health_service import (
     check_database,
     get_health,
+    get_pool_stats,
     get_uptime_seconds,
     HealthStatus,
 )
@@ -27,6 +28,7 @@ router = APIRouter(tags=["health"])
 async def health_check() -> HealthResponse:
     """Return structured health status for all platform components."""
     report = await asyncio.to_thread(get_health)
+    pool_stats = await asyncio.to_thread(get_pool_stats)
     status_code = 200 if report.status != HealthStatus.UNHEALTHY else 503
 
     response = HealthResponse(
@@ -43,6 +45,7 @@ async def health_check() -> HealthResponse:
             )
             for c in report.components
         ],
+        pool_stats=pool_stats,
     )
 
     if status_code == 503:

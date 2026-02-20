@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -24,3 +24,4 @@ class HealthResponse(BaseModel):
     version: str = "1.0.0"
     uptime_seconds: float = 0.0
     components: List[ComponentHealthResponse]
+    pool_stats: Optional[Dict[str, Any]] = None

@@ -622,6 +622,45 @@ def _get_build_info() -> Dict[str, Any]:
     }
 
 
+def get_pool_stats() -> Dict[str, Any]:
+    """Return connection pool statistics for the active backend.
+
+    For SQLite: returns pool_size from the SQLitePool instance.
+    For PostgreSQL: returns minconn/maxconn from ThreadedConnectionPool.
+    Always returns a dict and never raises.
+    """
+    try:
+        settings = get_settings()
+        backend = settings.db.backend
+    except Exception:
+        backend = "sqlite"
+
+    if backend == "postgres":
+        try:
+            from database.pool import _pool as _pg_pool
+
+            if _pg_pool is not None:
+                return {
+                    "backend": "postgres",
+                    "min": _pg_pool.minconn,
+                    "max": _pg_pool.maxconn,
+                }
+            return {"backend": "postgres", "pool_size": "unknown"}
+        except Exception:
+            return {"backend": "postgres", "pool_size": "unknown"}
+    else:
+        try:
+            from services.sqlite_pool import _pool as _sq_pool
+
+            if _sq_pool is not None:
+                # SQLitePool._pool is a queue.Queue with maxsize = pool_size
+                pool_size = _sq_pool._pool.maxsize
+                return {"backend": "sqlite", "pool_size": pool_size}
+            return {"backend": "sqlite", "pool_size": "unknown"}
+        except Exception:
+            return {"backend": "sqlite", "pool_size": "unknown"}
+
+
 def get_uptime_seconds() -> float:
     """Return seconds since the health service module was loaded."""
     return (datetime.utcnow() - _STARTUP_TIME).total_seconds()

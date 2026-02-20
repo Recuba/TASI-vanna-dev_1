@@ -106,6 +106,11 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         # Ensure request_id is available for the entire request lifecycle
         request_id = _get_request_id(request)
         request.state.request_id = request_id
+        try:
+            from middleware.request_context import set_request_id as _set_rid
+            _set_rid(request_id)
+        except ImportError:
+            pass
 
         try:
             return await call_next(request)

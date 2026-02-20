@@ -197,6 +197,17 @@ server = VannaFastAPIServer(agent)
 app = server.create_app()
 
 # ---------------------------------------------------------------------------
+# 8.05. Prometheus metrics (optional -- gracefully skipped if not installed)
+# ---------------------------------------------------------------------------
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator as _PIInstrumentator
+    _pfi = _PIInstrumentator(should_group_status_codes=True, should_group_untemplated=True)
+    _pfi.instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+    logger.info("Prometheus metrics exposed at /metrics")
+except ImportError:
+    logger.warning("prometheus-fastapi-instrumentator not installed; /metrics unavailable")
+
+# ---------------------------------------------------------------------------
 # 8.1. OpenAPI metadata
 # ---------------------------------------------------------------------------
 app.title = "Ra'd AI — TASI Market Analytics API"
@@ -609,6 +620,13 @@ async def lifespan(app):
         from config.logging_config import setup_logging
 
         setup_logging()
+    except ImportError:
+        pass
+
+    # Install request_id filter on root logger so all log records carry request_id
+    try:
+        from middleware.request_context import RequestIdFilter
+        logging.getLogger().addFilter(RequestIdFilter())
     except ImportError:
         pass
 
