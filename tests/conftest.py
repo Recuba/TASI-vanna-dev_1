@@ -409,3 +409,66 @@ def mock_db_conn():
     conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
 
     return {"conn": conn, "cursor": cursor}
+
+
+# ---------------------------------------------------------------------------
+# PostgreSQL schema sanity check (S3-I7)
+# ---------------------------------------------------------------------------
+#
+# Design note: the authoritative PostgreSQL schema lives in database/schema.sql.
+# In CI the test-pg job initialises the database with:
+#
+#   psql -h localhost -U tasi_user -d tasi_platform -f database/schema.sql
+#
+# before pytest is invoked, so PG integration tests do NOT need to run CREATE
+# TABLE statements themselves.  The fixture below acts as a fast sanity check
+# that the schema was actually applied before any PG test touches the database.
+# It is session-scoped, autouse=False, and silently skips when PostgreSQL is
+# unavailable (i.e. in the standard SQLite CI job).
+#
+
+
+@pytest.fixture(scope="session", autouse=False)
+def pg_schema_version(pg_conn):
+    """Verify that database/schema.sql was applied before PG tests run.
+
+    This fixture depends on ``pg_conn`` (which already skips when PostgreSQL is
+    unreachable) and checks that the ``companies`` table exists as a proxy for
+    a fully-initialised schema.  If the table is absent the test session is
+    aborted with a clear message pointing at the correct initialisation step.
+
+    Usage — request this fixture in any PG integration test class or module::
+
+        @pytest.mark.usefixtures("pg_schema_version")
+        class TestMyPGService:
+            ...
+
+    The CI test-pg job guarantees the schema is present by running::
+
+        psql ... -f database/schema.sql
+
+    before invoking pytest, so this fixture should always pass in CI.
+    """
+    cur = pg_conn.cursor()
+    cur.execute(
+        """
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_name   = 'companies'
+        )
+        """
+    )
+    (table_exists,) = cur.fetchone()
+    cur.close()
+
+    if not table_exists:
+        pytest.fail(
+            "PostgreSQL schema has not been initialised.  "
+            "Run 'psql ... -f database/schema.sql' before executing PG tests.  "
+            "In CI this is handled by the 'Initialize PostgreSQL schema' step in "
+            "the test-pg job."
+        )
+
+    return True
