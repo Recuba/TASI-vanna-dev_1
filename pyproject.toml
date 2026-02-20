@@ -3,7 +3,7 @@
 # =============================================================================
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "test_database.py", "test_app_assembly_v2.py"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

@@ -57,6 +57,40 @@ def on_startup() -> None:
     except Exception as exc:
         logger.warning("Could not load settings: %s", exc)
 
+    # Log connection pool status
+    try:
+        from config import get_settings as _get_settings
+        _settings = _get_settings()
+        if _settings.db.backend == "postgres":
+            try:
+                from database.pool import _pool
+                if _pool is not None:
+                    logger.info(
+                        "PG pool: min=%d max=%d", _pool.minconn, _pool.maxconn
+                    )
+                else:
+                    logger.info("PG pool: not yet initialized")
+            except Exception as _exc:
+                logger.debug("Could not read PG pool status: %s", _exc)
+        else:
+            try:
+                from services.sqlite_pool import _pool as _sq_pool
+                if _sq_pool is not None:
+                    logger.info("SQLite pool: size=%d", _sq_pool.pool_size)
+                else:
+                    logger.info("SQLite pool: not yet initialized")
+            except Exception as _exc:
+                logger.debug("Could not read SQLite pool status: %s", _exc)
+    except Exception as _exc:
+        logger.debug("Pool status check failed: %s", _exc)
+
+    # Log Prometheus availability
+    try:
+        import prometheus_fastapi_instrumentator  # noqa: F401
+        logger.info("Prometheus metrics: available at /metrics")
+    except ImportError:
+        logger.info("Prometheus metrics: not installed")
+
     logger.info("=" * 60)
 
 

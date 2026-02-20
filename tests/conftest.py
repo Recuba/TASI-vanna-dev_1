@@ -23,6 +23,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# test_app_assembly_v2.py is a standalone script (not a pytest-compatible module).
+# Its top-level `test_result()` function is mistakenly collected as a pytest fixture.
+# Excluding it here prevents a confusing collection error; the CI runs it directly
+# via `python tests/test_app_assembly_v2.py`.
+collect_ignore = [str(Path(__file__).parent / "test_app_assembly_v2.py")]
+
 
 # ---------------------------------------------------------------------------
 # SQLite test database

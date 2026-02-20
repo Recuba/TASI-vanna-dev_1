@@ -63,6 +63,53 @@ jobs:
         # Do not use || true — real CVEs must be explicitly acknowledged with valid IDs.
         run: pip-audit -r requirements.txt
 
+  security-scan:
+    name: Security Scan (bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install bandit
+        run: pip install bandit[toml]
+
+      - name: Run bandit
+        run: >
+          bandit -r .
+          --exclude ./tests,./venv,./.venv,./frontend,./vanna_docs,./vanna-skill
+          --severity-level medium
+          --confidence-level medium
+          -f txt
+
+  type-check:
+    name: Type Check (mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install mypy types-requests types-beautifulsoup4 types-redis types-PyYAML
+
+      - name: Run mypy
+        run: >
+          mypy config/ services/ api/ middleware/ database/ backend/
+          --ignore-missing-imports
+          --no-strict-optional
+          --follow-imports=silent
+
   python-tests:
     name: Test (SQLite)
     runs-on: ubuntu-latest
@@ -85,10 +132,10 @@ jobs:
         run: python csv_to_sqlite.py
 
       - name: Run database integrity tests
-        run: python -m pytest test_database.py -v
+        run: python -m pytest tests/test_database.py -v
 
       - name: Run Vanna assembly tests
-        run: python test_app_assembly_v2.py
+        run: python tests/test_app_assembly_v2.py
 
       - name: Run unit and integration tests
         run: python -m pytest tests/ -v --timeout=60 --ignore=tests/test_services.py --ignore=tests/test_api_routes.py --ignore=tests/performance/ --cov=api --cov=services --cov=middleware --cov=config --cov=backend --cov=ingestion --cov-report=term-missing --cov-fail-under=75
@@ -151,7 +198,7 @@ jobs:
           --pg-password tasi_pass
 
       - name: Run database integrity tests (PostgreSQL)
-        run: python -m pytest test_database.py -v
+        run: python -m pytest tests/test_database.py -v
 
       - name: Run service integration tests
         run: python -m pytest tests/test_services.py -v
