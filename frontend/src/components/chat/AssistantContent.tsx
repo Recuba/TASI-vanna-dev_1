@@ -38,7 +38,7 @@ export function AssistantContent({ message, progressText }: AssistantContentProp
       ? "I wasn't able to answer that. Try asking about a specific stock, sector, or metric."
       : 'عذرًا، لم أستطع الإجابة على هذا السؤال. جرّب السؤال عن سهم محدد أو قطاع.';
     return (
-      <div className="text-sm leading-relaxed text-[var(--text-muted)] italic">
+      <div className="text-base leading-relaxed text-[var(--text-muted)] italic">
         {fallbackText}
       </div>
     );
@@ -82,8 +82,36 @@ function ProgressBlock({ data }: { data: SSEProgressData }) {
 
 function TextBlock({ data }: { data: SSETextData }) {
   return (
-    <div className="text-sm leading-relaxed prose prose-sm prose-invert max-w-none prose-p:my-1 prose-headings:text-[var(--text-primary)] prose-a:text-gold">
-      <ReactMarkdown>{data.content}</ReactMarkdown>
+    <div className="text-base leading-relaxed prose prose-base prose-invert max-w-none prose-chat prose-p:my-1.5 prose-headings:text-[var(--text-primary)] prose-headings:font-semibold prose-a:text-gold prose-strong:text-[var(--text-primary)]">
+      <ReactMarkdown
+        components={{
+          table: ({ children }) => (
+            <div className="rounded-lg border gold-border overflow-hidden my-3">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">{children}</table>
+              </div>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-[var(--bg-input)]">{children}</thead>
+          ),
+          th: ({ children }) => (
+            <th className="px-3 py-2 text-start text-xs font-medium text-gold/70 uppercase tracking-wider border-b gold-border whitespace-nowrap">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-3 py-2 text-[var(--text-secondary)] whitespace-nowrap border-b border-[var(--bg-input)]">
+              {children}
+            </td>
+          ),
+          tr: ({ children }) => (
+            <tr className="hover:bg-gold/5 transition-colors">{children}</tr>
+          ),
+        }}
+      >
+        {data.content}
+      </ReactMarkdown>
     </div>
   );
 }

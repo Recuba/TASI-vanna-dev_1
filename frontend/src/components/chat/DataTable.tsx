@@ -183,13 +183,13 @@ export function DataTable({ data }: DataTableProps) {
                   rowIdx % 2 === 1 && 'bg-[var(--bg-input)]/30'
                 )}
               >
-                <td className="px-3 py-2 text-[var(--text-muted)] text-xs whitespace-nowrap">
+                <td className="px-3 py-2.5 text-[var(--text-muted)] text-xs whitespace-nowrap">
                   {rowIdx + 1}
                 </td>
                 {row.map((cell, cellIdx) => (
                   <td
                     key={cellIdx}
-                    className="px-3 py-2 text-[var(--text-secondary)] whitespace-nowrap"
+                    className="px-3 py-2.5 text-[var(--text-secondary)] whitespace-nowrap"
                     title={cell !== null && cell !== undefined ? String(cell) : undefined}
                   >
                     {formatCell(cell, columns[cellIdx] ?? '')}

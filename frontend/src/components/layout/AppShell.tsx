@@ -8,6 +8,7 @@ import { CommandPalette } from '@/components/common/CommandPalette';
 import { MobileBottomNav } from '@/components/common/MobileBottomNav';
 import { ToastProvider } from '@/components/common/Toast';
 import { LiveMarketWidgets } from '@/components/widgets/LiveMarketWidgets';
+import { StockTickerTape } from '@/components/widgets/StockTickerTape';
 import { OfflineBanner } from '@/components/common/OfflineBanner';
 import { useLanguage } from '@/providers/LanguageProvider';
 
@@ -31,6 +32,7 @@ export function AppShell({ children }: AppShellProps) {
     <ToastProvider>
       <div className="min-h-screen flex flex-col">
         <Header onToggleMobileSidebar={toggleMobileSidebar} />
+        <StockTickerTape />
         <LiveMarketWidgets lang={language} />
         <div className="flex flex-1">
           <Sidebar

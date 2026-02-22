@@ -51,7 +51,7 @@ export function MessageBubble({ message, onRetry, progressText }: MessageBubbleP
           )}
         >
           {isUser ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+            <p className="text-base leading-relaxed whitespace-pre-wrap">{message.content}</p>
           ) : (
             <AssistantContent message={message} progressText={message.isStreaming ? progressText : undefined} />
           )}
