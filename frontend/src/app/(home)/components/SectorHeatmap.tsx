@@ -1,21 +1,15 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 import { cn } from '@/lib/utils';
 import { useMarketHeatmap } from '@/lib/hooks/use-api';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 
-interface TreemapNode {
-  name: string;
-  size: number;
-  change_pct: number;
-  ticker: string;
-  sector: string;
-  fill: string;
-}
+// ---------------------------------------------------------------------------
+// Color scale
+// ---------------------------------------------------------------------------
 
 function getHeatmapColor(changePct: number): string {
   if (changePct >= 3) return '#1B5E20';
@@ -29,63 +23,112 @@ function getHeatmapColor(changePct: number): string {
   return '#880E4F';
 }
 
-function CustomContent(props: Record<string, unknown>) {
-  const { x, y, width, height, name, change_pct, ticker } = props as {
-    x: number; y: number; width: number; height: number;
-    name: string; change_pct: number; ticker: string;
-  };
+// ---------------------------------------------------------------------------
+// Cell component
+// ---------------------------------------------------------------------------
 
-  if (width < 30 || height < 20) return null;
-
-  const displayName = width > 80 ? (name || ticker) : ticker?.replace('.SR', '');
-  const showPct = height > 32 && width > 50;
-
-  return (
-    <g>
-      <rect x={x} y={y} width={width} height={height} fill={getHeatmapColor(change_pct)} stroke="#0E0E0E" strokeWidth={1} rx={2} />
-      <text x={x + width / 2} y={y + height / 2 - (showPct ? 5 : 0)} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={width > 60 ? 10 : 8} fontWeight="bold">
-        {displayName?.slice(0, Math.floor(width / 7)) || ''}
-      </text>
-      {showPct && (
-        <text x={x + width / 2} y={y + height / 2 + 10} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.8)" fontSize={8}>
-          {change_pct != null ? `${change_pct >= 0 ? '+' : ''}${change_pct.toFixed(1)}%` : ''}
-        </text>
-      )}
-    </g>
-  );
+interface HeatmapCellData {
+  name: string;
+  ticker: string;
+  sector: string;
+  change_pct: number;
+  market_cap: number;
+  tier: 'large' | 'mid' | 'small';
 }
 
-function HeatmapTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: TreemapNode }> }) {
-  if (!active || !payload?.[0]) return null;
-  const data = payload[0].payload;
+function HeatmapCell({ item }: { item: HeatmapCellData }) {
+  const [hovered, setHovered] = useState(false);
+  const shortTicker = item.ticker.replace('.SR', '');
+
+  const sizeClasses = {
+    large: 'w-[110px] h-[72px] sm:w-[120px] sm:h-[80px]',
+    mid:   'w-[85px]  h-[54px] sm:w-[90px]  sm:h-[60px]',
+    small: 'w-[65px]  h-[44px] sm:w-[70px]  sm:h-[50px]',
+  };
+
   return (
-    <div className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-lg px-3 py-2 shadow-lg">
-      <p className="text-sm font-bold text-[var(--text-primary)]">{data.name}</p>
-      <p className="text-xs text-[var(--text-muted)]">{data.ticker} | {data.sector}</p>
-      <p className={cn('text-xs font-bold mt-1', data.change_pct >= 0 ? 'text-accent-green' : 'text-accent-red')}>
-        {data.change_pct >= 0 ? '+' : ''}{data.change_pct?.toFixed(2)}%
-      </p>
+    <div
+      className={cn(
+        'relative rounded-sm cursor-pointer transition-all duration-150 flex flex-col items-center justify-center overflow-visible',
+        sizeClasses[item.tier],
+        hovered && 'scale-105 ring-1 ring-white/30 z-10',
+      )}
+      style={{ backgroundColor: getHeatmapColor(item.change_pct) }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span className={cn(
+        'font-bold text-white leading-tight truncate max-w-full px-1',
+        item.tier === 'large' ? 'text-[11px] sm:text-xs' : item.tier === 'mid' ? 'text-[10px] sm:text-[11px]' : 'text-[9px] sm:text-[10px]',
+      )}>
+        {shortTicker}
+      </span>
+      <span className={cn(
+        'text-white/80 leading-tight',
+        item.tier === 'small' ? 'text-[8px]' : 'text-[9px] sm:text-[10px]',
+      )}>
+        {item.change_pct >= 0 ? '+' : ''}{item.change_pct.toFixed(1)}%
+      </span>
+
+      {/* Hover tooltip */}
+      {hovered && (
+        <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] border border-[#2A2A2A] rounded-lg px-3 py-2 shadow-xl z-20 whitespace-nowrap pointer-events-none animate-fade-in">
+          <p className="text-xs font-bold text-[var(--text-primary)]">{item.name}</p>
+          <p className="text-[10px] text-[var(--text-muted)]">{item.sector}</p>
+          <p className={cn('text-[10px] font-bold', item.change_pct >= 0 ? 'text-accent-green' : 'text-accent-red')}>
+            {item.change_pct >= 0 ? '+' : ''}{item.change_pct.toFixed(2)}%
+          </p>
+          <p className="text-[10px] text-[var(--text-muted)]">
+            {(item.market_cap / 1e9).toFixed(1)}B SAR
+          </p>
+        </div>
+      )}
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Gradient legend
+// ---------------------------------------------------------------------------
+
+function GradientLegend() {
+  return (
+    <div className="flex items-center justify-center gap-2 mt-3">
+      <span className="text-[10px] text-[var(--text-muted)]">-3%+</span>
+      <div
+        className="h-2.5 w-32 sm:w-48 rounded-full"
+        style={{
+          background: 'linear-gradient(to right, #880E4F, #B71C1C, #C62828, #E53935, #616161, #4CAF50, #388E3C, #2E7D32, #1B5E20)',
+        }}
+      />
+      <span className="text-[10px] text-[var(--text-muted)]">+3%+</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 
 export function SectorHeatmap() {
   const { data: heatmapData, loading, error, refetch } = useMarketHeatmap();
   const { t } = useLanguage();
 
-  const treemapData = useMemo(() => {
+  const cells = useMemo<HeatmapCellData[]>(() => {
     if (!heatmapData) return [];
-    return heatmapData
+    const sorted = heatmapData
       .filter((item) => item.market_cap && item.market_cap > 0 && item.change_pct != null)
-      .slice(0, 100)
-      .map((item) => ({
-        name: item.name || item.ticker,
-        size: item.market_cap,
-        change_pct: item.change_pct,
-        ticker: item.ticker,
-        sector: item.sector || '',
-        fill: getHeatmapColor(item.change_pct),
-      }));
+      .sort((a, b) => b.market_cap - a.market_cap)
+      .slice(0, 100);
+
+    return sorted.map((item, idx) => ({
+      name: item.name || item.ticker,
+      ticker: item.ticker,
+      sector: item.sector || '',
+      change_pct: item.change_pct,
+      market_cap: item.market_cap,
+      tier: idx < 10 ? 'large' as const : idx < 30 ? 'mid' as const : 'small' as const,
+    }));
   }, [heatmapData]);
 
   return (
@@ -109,40 +152,21 @@ export function SectorHeatmap() {
             {t('إعادة المحاولة', 'Retry')}
           </button>
         </div>
-      ) : treemapData.length > 0 ? (
-        <div className="h-[320px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <Treemap
-              data={treemapData}
-              dataKey="size"
-              stroke="#0E0E0E"
-              content={<CustomContent />}
-            >
-              <Tooltip content={<HeatmapTooltip />} />
-            </Treemap>
-          </ResponsiveContainer>
-        </div>
+      ) : cells.length > 0 ? (
+        <Link href="/market" className="block">
+          <div className="flex flex-wrap gap-0.5 justify-center min-h-[280px]">
+            {cells.map((cell) => (
+              <HeatmapCell key={cell.ticker} item={cell} />
+            ))}
+          </div>
+        </Link>
       ) : (
         <div className="h-[320px] flex items-center justify-center">
           <p className="text-sm text-[var(--text-muted)]">{t('لا توجد بيانات', 'No data available')}</p>
         </div>
       )}
 
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
-        {[
-          { label: '-3%+', color: '#880E4F' },
-          { label: '-1.5%', color: '#C62828' },
-          { label: '0%', color: '#616161' },
-          { label: '+1.5%', color: '#388E3C' },
-          { label: '+3%+', color: '#1B5E20' },
-        ].map((item) => (
-          <div key={item.label} className="flex items-center gap-1">
-            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
-            <span className="text-[10px] text-[var(--text-muted)]">{item.label}</span>
-          </div>
-        ))}
-      </div>
+      <GradientLegend />
     </section>
   );
 }
