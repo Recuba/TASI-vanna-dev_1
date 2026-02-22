@@ -56,6 +56,22 @@ type ViewMode = 'grid' | 'list';
 type EventFilter = 'all' | 'dividend' | 'earnings';
 
 // ---------------------------------------------------------------------------
+// Helpers (continued)
+// ---------------------------------------------------------------------------
+
+/** Extract company short name from event title (format: "Company Name — Type") */
+function getCompanyShortName(event: CalendarEvent): string {
+  if (event.title) {
+    const parts = event.title.split(' — ');
+    if (parts[0]) {
+      const name = parts[0].trim();
+      return name.length > 15 ? name.slice(0, 14) + '…' : name;
+    }
+  }
+  return event.ticker.replace('.SR', '');
+}
+
+// ---------------------------------------------------------------------------
 // Event Card
 // ---------------------------------------------------------------------------
 
@@ -101,6 +117,7 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(today.getMonth());
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filter, setFilter] = useState<EventFilter>('all');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const { from, to } = useMemo(() => getMonthRange(year, month), [year, month]);
   const { data, loading } = useCalendarEvents({
@@ -190,9 +207,33 @@ export default function CalendarPage() {
 
         {/* Month Navigation */}
         <div className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-4">
+          {/* Event summary strip */}
+          {events.length > 0 && (
+            <div className="flex items-center justify-center gap-4 mb-3 text-xs">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-accent-green" />
+                <span className="text-[var(--text-muted)]">
+                  {events.filter(e => e.type === 'dividend').length} {t('توزيعات', 'dividends')}
+                </span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-gold" />
+                <span className="text-[var(--text-muted)]">
+                  {events.filter(e => e.type === 'earnings').length} {t('أرباح', 'earnings')}
+                </span>
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-4">
-            <button onClick={prevMonth} className="px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)] hover:text-gold hover:bg-[var(--bg-input)] transition-colors">
-              &lt;
+            <button
+              onClick={prevMonth}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-gold hover:bg-[var(--bg-input)] transition-colors"
+              aria-label={t('الشهر السابق', 'Previous month')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
             <div className="text-center">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">
@@ -202,8 +243,14 @@ export default function CalendarPage() {
                 {t('اليوم', 'Today')}
               </button>
             </div>
-            <button onClick={nextMonth} className="px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)] hover:text-gold hover:bg-[var(--bg-input)] transition-colors">
-              &gt;
+            <button
+              onClick={nextMonth}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-gold hover:bg-[var(--bg-input)] transition-colors"
+              aria-label={t('الشهر التالي', 'Next month')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </button>
           </div>
 
@@ -228,40 +275,84 @@ export default function CalendarPage() {
                 {days.map((day, idx) => {
                   const dayEvents = eventsByDate.get(day.date) || [];
                   const isToday = day.date === todayStr;
+                  const isSelected = day.date === selectedDate;
                   return (
-                    <div
+                    <button
                       key={idx}
+                      onClick={() => setSelectedDate(isSelected ? null : day.date)}
                       className={cn(
-                        'min-h-[70px] sm:min-h-[90px] rounded-lg p-1 text-xs border transition-colors',
-                        day.isCurrentMonth ? 'bg-[var(--bg-input)] border-[#2A2A2A]/50' : 'bg-transparent border-transparent opacity-40',
+                        'min-h-[100px] sm:min-h-[120px] rounded-lg p-1.5 text-xs border transition-colors text-start w-full',
+                        day.isCurrentMonth
+                          ? 'bg-[var(--bg-input)] border-[#2A2A2A]/50 hover:border-gold/30'
+                          : 'bg-transparent border-transparent opacity-40',
                         isToday && 'ring-1 ring-gold/50',
+                        isSelected && 'ring-2 ring-gold border-gold/40',
                       )}
                     >
-                      <div className={cn('text-[10px] font-medium mb-0.5', isToday ? 'text-gold font-bold' : 'text-[var(--text-muted)]')}>
+                      <div className={cn(
+                        'text-[11px] font-medium mb-1',
+                        isToday ? 'text-gold font-bold' : 'text-[var(--text-muted)]',
+                      )}>
                         {day.day}
                       </div>
                       <div className="space-y-0.5">
-                        {dayEvents.slice(0, 2).map((ev, i) => (
-                          <Link
+                        {dayEvents.slice(0, 3).map((ev, i) => (
+                          <div
                             key={i}
-                            href={`/stock/${encodeURIComponent(ev.ticker)}`}
                             className={cn(
-                              'block text-[9px] px-1 py-0.5 rounded truncate font-medium hover:opacity-80 transition-opacity',
-                              ev.type === 'dividend' ? 'bg-accent-green/15 text-accent-green' : 'bg-gold/15 text-gold',
+                              'flex items-center gap-1 text-[10px] sm:text-[11px] px-1 py-0.5 rounded truncate font-medium',
+                              ev.type === 'dividend'
+                                ? 'bg-accent-green/15 text-accent-green'
+                                : 'bg-gold/15 text-gold',
                             )}
                             title={ev.title}
                           >
-                            {ev.ticker.replace('.SR', '')}
-                          </Link>
+                            <span className={cn(
+                              'w-1.5 h-1.5 rounded-full flex-shrink-0',
+                              ev.type === 'dividend' ? 'bg-accent-green' : 'bg-gold',
+                            )} />
+                            <span className="truncate">{getCompanyShortName(ev)}</span>
+                          </div>
                         ))}
-                        {dayEvents.length > 2 && (
-                          <span className="text-[9px] text-[var(--text-muted)]">+{dayEvents.length - 2}</span>
+                        {dayEvents.length > 3 && (
+                          <span className="text-[10px] text-[var(--text-muted)] ps-1">
+                            +{dayEvents.length - 3} {t('المزيد', 'more')}
+                          </span>
                         )}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
+
+              {/* Selected day detail panel */}
+              {selectedDate && (eventsByDate.get(selectedDate) || []).length > 0 && (
+                <div className="mt-3 bg-[var(--bg-input)] border border-[#2A2A2A] rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">
+                      {new Date(selectedDate + 'T00:00:00').toLocaleDateString(
+                        language === 'ar' ? 'ar-SA' : 'en-US',
+                        { weekday: 'long', day: 'numeric', month: 'long' }
+                      )}
+                    </h3>
+                    <button
+                      onClick={() => setSelectedDate(null)}
+                      className="text-xs text-[var(--text-muted)] hover:text-gold transition-colors"
+                    >
+                      {t('إغلاق', 'Close')} &times;
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {(eventsByDate.get(selectedDate) || []).map((event, idx) => (
+                      <EventCard
+                        key={`${event.ticker}-${event.date}-${idx}`}
+                        event={event}
+                        language={language}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             /* List View */
