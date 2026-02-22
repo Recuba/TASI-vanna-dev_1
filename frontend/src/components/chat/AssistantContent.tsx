@@ -23,10 +23,25 @@ interface AssistantContentProps {
 }
 
 export function AssistantContent({ message, progressText }: AssistantContentProps) {
-  const { components, isStreaming } = message;
+  const { components, isStreaming, isError } = message;
 
+  // While streaming with no components yet, show loading dots
   if ((!components || components.length === 0) && isStreaming) {
     return <LoadingDots progressText={progressText} />;
+  }
+
+  // Post-stream fallback: if components is empty and not an error,
+  // show a helpful fallback so the user never sees an empty bubble
+  if ((!components || components.length === 0) && !isStreaming && !isError) {
+    const lang = typeof window !== 'undefined' ? localStorage.getItem('rad-ai-lang') : null;
+    const fallbackText = lang === 'en'
+      ? "I wasn't able to answer that. Try asking about a specific stock, sector, or metric."
+      : 'عذرًا، لم أستطع الإجابة على هذا السؤال. جرّب السؤال عن سهم محدد أو قطاع.';
+    return (
+      <div className="text-sm leading-relaxed text-[var(--text-muted)] italic">
+        {fallbackText}
+      </div>
+    );
   }
 
   return (

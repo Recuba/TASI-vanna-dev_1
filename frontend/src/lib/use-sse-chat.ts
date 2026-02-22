@@ -161,13 +161,19 @@ function normalizeSSEEvent(raw: unknown): SSEEvent | null {
         const title = (richData.title as string) || '';
         const description = (richData.description as string) || '';
         const status = richData.status as string | undefined;
-        const content = simpleText || description || title || 'Status update';
+        const content = description || title || simpleText || '';
 
-        // Error status cards -> render as text so the error is visible
+        // Error status cards -> render as visible text
         if (status === 'error') {
+          return { type: 'text', data: { content: content || 'An error occurred' } };
+        }
+        // Success/info status cards with meaningful content -> render as visible text
+        // so the user sees the AI's response instead of an empty bubble
+        if ((status === 'success' || status === 'info') && content) {
           return { type: 'text', data: { content } };
         }
-        return { type: 'progress', data: { message: content } };
+        // Other status cards without meaningful content -> transient progress
+        return { type: 'progress', data: { message: content || 'Processing...' } };
       }
 
       // Dataframes -> table
