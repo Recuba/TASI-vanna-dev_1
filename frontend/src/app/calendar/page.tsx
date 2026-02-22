@@ -139,6 +139,10 @@ export default function CalendarPage() {
     return map;
   }, [events]);
 
+  const sortedDates = useMemo(() => {
+    return Array.from(eventsByDate.keys()).sort();
+  }, [eventsByDate]);
+
   const days = useMemo(() => getMonthDays(year, month), [year, month]);
   const monthNames = language === 'ar' ? MONTH_NAMES_AR : MONTH_NAMES_EN;
   const dayNames = language === 'ar' ? DAY_NAMES_AR : DAY_NAMES_EN;
@@ -356,15 +360,53 @@ export default function CalendarPage() {
             </div>
           ) : (
             /* List View */
-            <div className="space-y-2">
+            <div className="space-y-4">
               {events.length === 0 ? (
                 <p className="text-sm text-[var(--text-muted)] text-center py-8" dir={dir}>
                   {t('لا توجد أحداث في هذا الشهر', 'No events this month')}
                 </p>
               ) : (
-                events.map((event, idx) => (
-                  <EventCard key={`${event.ticker}-${event.date}-${idx}`} event={event} language={language} />
-                ))
+                sortedDates.map((date) => {
+                  const dateEvents = eventsByDate.get(date) || [];
+                  if (dateEvents.length === 0) return null;
+                  const dateObj = new Date(date + 'T00:00:00');
+                  const isToday = date === todayStr;
+                  return (
+                    <div key={date}>
+                      <div className={cn(
+                        'flex items-center gap-2 mb-2 pb-1 border-b border-[#2A2A2A]/50',
+                        isToday && 'border-gold/30',
+                      )}>
+                        <span className={cn(
+                          'text-xs font-bold',
+                          isToday ? 'text-gold' : 'text-[var(--text-secondary)]',
+                        )}>
+                          {dateObj.toLocaleDateString(
+                            language === 'ar' ? 'ar-SA' : 'en-US',
+                            { weekday: 'short', day: 'numeric', month: 'short' }
+                          )}
+                        </span>
+                        {isToday && (
+                          <span className="text-[9px] bg-gold/15 text-gold px-1.5 py-0.5 rounded-full font-bold">
+                            {t('اليوم', 'TODAY')}
+                          </span>
+                        )}
+                        <span className="text-[10px] bg-[var(--bg-input)] text-[var(--text-muted)] px-1.5 py-0.5 rounded-full">
+                          {dateEvents.length}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {dateEvents.map((event, idx) => (
+                          <EventCard
+                            key={`${event.ticker}-${event.date}-${idx}`}
+                            event={event}
+                            language={language}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           )}
