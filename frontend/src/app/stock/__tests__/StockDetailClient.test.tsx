@@ -100,7 +100,11 @@ const sampleDetail = {
   revenue_growth: 0.05,
   recommendation: 'buy',
   target_mean_price: 35.0,
+  target_high_price: 40.0,
+  target_low_price: 30.0,
+  target_median_price: 35.0,
   analyst_count: 15,
+  exchange: 'SAU',
   currency: 'SAR',
 };
 
@@ -110,11 +114,13 @@ const sampleFinancials = {
   period_type: 'annual',
   periods: [
     {
+      period_type: 'annual',
       period_index: 0,
       period_date: '2024',
       data: { total_revenue: 500_000_000, net_income: 120_000_000 },
     },
     {
+      period_type: 'annual',
       period_index: 1,
       period_date: '2023',
       data: { total_revenue: 480_000_000, net_income: 110_000_000 },
@@ -153,34 +159,47 @@ const sampleFinancialSummary = {
 const sampleNewsData = {
   items: [
     {
-      id: 1,
+      id: '1',
+      ticker: '2222.SR',
       title: 'Aramco quarterly profits rise',
+      body: null,
       source_name: 'العربية',
+      source_url: null,
       published_at: '2024-10-01T10:00:00Z',
+      sentiment_score: 0.8,
       sentiment_label: 'positive',
+      language: 'ar',
+      created_at: null,
     },
   ],
   total: 1,
   page: 1,
   page_size: 5,
+  total_pages: 1,
 };
 
 const sampleReportsData = {
   items: [
     {
-      id: 1,
+      id: '1',
+      ticker: '2222.SR',
       title: 'Aramco 2024 Annual Report',
       summary: 'Strong performance',
       recommendation: 'buy',
       target_price: 35.0,
+      current_price_at_report: 30.0,
       author: 'Al Rajhi Capital',
+      source_name: 'Al Rajhi Capital',
       published_at: '2024-10-01T10:00:00Z',
       source_url: 'https://example.com/report',
+      report_type: 'annual',
+      created_at: null,
     },
   ],
   total: 1,
   page: 1,
   page_size: 5,
+  total_pages: 1,
 };
 
 // ---------------------------------------------------------------------------
@@ -235,13 +254,13 @@ beforeEach(() => {
 describe('StockDetailClient', () => {
   // ---- Loading state -------------------------------------------------------
 
-  it('renders loading spinner when stock detail is loading', () => {
+  it('renders loading skeleton when stock detail is loading', () => {
     mockUseStockDetail.mockReturnValue(makeAsyncResult({ data: null, loading: true }));
 
-    renderWithProviders(<StockDetailClient ticker="2222" />);
+    const { container } = renderWithProviders(<StockDetailClient ticker="2222" />);
 
-    // LoadingSpinner renders a message containing the ticker
-    expect(screen.getByText(/2222\.SR/i)).toBeInTheDocument();
+    // Loading state renders an animate-pulse skeleton (no text content)
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   // ---- Error state ---------------------------------------------------------
@@ -426,7 +445,7 @@ describe('StockDetailClient', () => {
   it('hides analyst consensus section when recommendation is missing', () => {
     mockUseStockDetail.mockReturnValue(
       makeAsyncResult({
-        data: { ...sampleDetail, recommendation: undefined },
+        data: { ...sampleDetail, recommendation: null },
       }),
     );
 

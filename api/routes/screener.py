@@ -10,13 +10,12 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from api.db_helper import afetchall, afetchone
 from database.queries import SCREENER_BASE
 from models.api_responses import STANDARD_ERRORS
-from services.cache_utils import cache_response
 
 logger = logging.getLogger(__name__)
 

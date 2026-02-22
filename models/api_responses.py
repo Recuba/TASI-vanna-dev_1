@@ -99,7 +99,7 @@ class ChartDataResponse(BaseModel):
 
 # Common responses dict for use with FastAPI's `responses` parameter:
 #   @router.get("/foo", responses=STANDARD_ERRORS)
-STANDARD_ERRORS: Dict[int, Dict[str, Any]] = {
+STANDARD_ERRORS: Dict[int | str, Dict[str, Any]] = {
     400: {
         "model": ErrorResponse,
         "description": "Bad request -- invalid parameters or input",
