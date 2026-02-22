@@ -57,6 +57,12 @@ function formatPct(val: number | null | undefined): string {
   return `${(val * 100).toFixed(1)}%`;
 }
 
+// dividend_yield from API is already in percentage form (e.g. 5.63 = 5.63%)
+function formatYield(val: number | null | undefined): string {
+  if (val === null || val === undefined) return '-';
+  return `${val.toFixed(1)}%`;
+}
+
 function exportCSV(items: ScreenerItem[]) {
   const headers = ['Ticker', 'Name', 'Sector', 'Price', 'Change%', 'Market Cap', 'P/E', 'P/B', 'ROE', 'Div Yield', 'D/E'];
   const rows = items.map((item) => [
@@ -69,7 +75,7 @@ function exportCSV(items: ScreenerItem[]) {
     item.trailing_pe?.toFixed(2) || '',
     item.price_to_book?.toFixed(2) || '',
     item.roe != null ? (item.roe * 100).toFixed(1) : '',
-    item.dividend_yield != null ? (item.dividend_yield * 100).toFixed(1) : '',
+    item.dividend_yield != null ? item.dividend_yield.toFixed(1) : '',
     item.debt_to_equity?.toFixed(2) || '',
   ]);
   const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -96,7 +102,7 @@ interface FilterPreset {
 const PRESETS: FilterPreset[] = [
   { label: 'Value Stocks', labelAr: 'أسهم القيمة', desc: 'P/E ≤ 15 · P/B ≤ 1.5', filters: { pe_max: 15, pb_max: 1.5, sort_by: 'trailing_pe', sort_dir: 'asc' } },
   { label: 'Growth Stocks', labelAr: 'أسهم النمو', desc: 'Rev +10% · ROE ≥ 15%', filters: { revenue_growth_min: 0.1, roe_min: 0.15, sort_by: 'revenue_growth', sort_dir: 'desc' } },
-  { label: 'Dividend Plays', labelAr: 'توزيعات أرباح', desc: 'Yield ≥ 3%', filters: { dividend_yield_min: 0.03, sort_by: 'dividend_yield', sort_dir: 'desc' } },
+  { label: 'Dividend Plays', labelAr: 'توزيعات أرباح', desc: 'Yield ≥ 3%', filters: { dividend_yield_min: 3, sort_by: 'dividend_yield', sort_dir: 'desc' } },
   { label: 'Low Debt', labelAr: 'ديون منخفضة', desc: 'D/E ≤ 0.5 · CR ≥ 1.5', filters: { debt_to_equity_max: 0.5, current_ratio_min: 1.5, sort_by: 'debt_to_equity', sort_dir: 'asc' } },
 ];
 
@@ -116,12 +122,13 @@ function RangeInput({ label, min, max, onMinChange, onMaxChange, step = 0.1 }: {
     <div>
       <label style={{
         fontFamily: F.mono,
-        fontSize: 11,
-        color: P.textMuted,
-        letterSpacing: "0.08em",
+        fontSize: 12,
+        color: P.textSecondary,
+        letterSpacing: "0.06em",
         textTransform: "uppercase" as const,
         display: "block",
         marginBottom: 6,
+        fontWeight: 500,
       }}>
         {label}
       </label>
@@ -138,8 +145,8 @@ function RangeInput({ label, min, max, onMinChange, onMaxChange, step = 0.1 }: {
             background: P.bg,
             border: `1px solid ${P.border}`,
             borderRadius: 3,
-            padding: "6px 10px",
-            fontSize: 12,
+            padding: "8px 10px",
+            fontSize: 13,
             fontFamily: F.mono,
             color: P.text,
             outline: "none",
@@ -157,8 +164,8 @@ function RangeInput({ label, min, max, onMinChange, onMaxChange, step = 0.1 }: {
             background: P.bg,
             border: `1px solid ${P.border}`,
             borderRadius: 3,
-            padding: "6px 10px",
-            fontSize: 12,
+            padding: "8px 10px",
+            fontSize: 13,
             fontFamily: F.mono,
             color: P.text,
             outline: "none",
@@ -534,8 +541,8 @@ export default function ScreenerPage() {
               {/* Sector */}
               <div>
                 <label style={{
-                  fontFamily: F.mono, fontSize: 11, color: P.textMuted,
-                  letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
+                  fontFamily: F.mono, fontSize: 12, color: P.textSecondary, fontWeight: 500,
+                  letterSpacing: "0.06em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
                 }}>
                   {t('القطاع', 'Sector')}
                 </label>
@@ -545,7 +552,7 @@ export default function ScreenerPage() {
                   className="luxury-select"
                   style={{
                     width: "100%", background: P.bg, border: `1px solid ${P.border}`,
-                    borderRadius: 3, padding: "6px 10px", fontSize: 12, fontFamily: F.mono,
+                    borderRadius: 3, padding: "8px 10px", fontSize: 13, fontFamily: F.mono,
                     color: P.text,
                   }}
                 >
@@ -559,8 +566,8 @@ export default function ScreenerPage() {
               {/* Recommendation */}
               <div>
                 <label style={{
-                  fontFamily: F.mono, fontSize: 11, color: P.textMuted,
-                  letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
+                  fontFamily: F.mono, fontSize: 12, color: P.textSecondary, fontWeight: 500,
+                  letterSpacing: "0.06em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
                 }}>
                   {t('التوصية', 'Recommendation')}
                 </label>
@@ -570,7 +577,7 @@ export default function ScreenerPage() {
                   className="luxury-select"
                   style={{
                     width: "100%", background: P.bg, border: `1px solid ${P.border}`,
-                    borderRadius: 3, padding: "6px 10px", fontSize: 12, fontFamily: F.mono,
+                    borderRadius: 3, padding: "8px 10px", fontSize: 13, fontFamily: F.mono,
                     color: P.text,
                   }}
                 >
@@ -632,8 +639,8 @@ export default function ScreenerPage() {
               {/* Single inputs */}
               <div>
                 <label style={{
-                  fontFamily: F.mono, fontSize: 11, color: P.textMuted,
-                  letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
+                  fontFamily: F.mono, fontSize: 12, color: P.textSecondary, fontWeight: 500,
+                  letterSpacing: "0.06em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
                 }}>
                   {t('الحد الأقصى للديون/الملكية', 'Max D/E Ratio')}
                 </label>
@@ -646,15 +653,15 @@ export default function ScreenerPage() {
                   className="range-input"
                   style={{
                     width: "100%", background: P.bg, border: `1px solid ${P.border}`,
-                    borderRadius: 3, padding: "6px 10px", fontSize: 12, fontFamily: F.mono,
+                    borderRadius: 3, padding: "8px 10px", fontSize: 13, fontFamily: F.mono,
                     color: P.text, outline: "none",
                   }}
                 />
               </div>
               <div>
                 <label style={{
-                  fontFamily: F.mono, fontSize: 11, color: P.textMuted,
-                  letterSpacing: "0.08em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
+                  fontFamily: F.mono, fontSize: 12, color: P.textSecondary, fontWeight: 500,
+                  letterSpacing: "0.06em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
                 }}>
                   {t('الحد الأدنى للنسبة الجارية', 'Min Current Ratio')}
                 </label>
@@ -667,7 +674,7 @@ export default function ScreenerPage() {
                   className="range-input"
                   style={{
                     width: "100%", background: P.bg, border: `1px solid ${P.border}`,
-                    borderRadius: 3, padding: "6px 10px", fontSize: 12, fontFamily: F.mono,
+                    borderRadius: 3, padding: "8px 10px", fontSize: 13, fontFamily: F.mono,
                     color: P.text, outline: "none",
                   }}
                 />
@@ -785,9 +792,9 @@ export default function ScreenerPage() {
                           padding: "10px 16px",
                           textAlign: "left",
                           fontFamily: F.mono,
-                          fontSize: 10,
-                          color: P.textMuted,
-                          letterSpacing: "0.08em",
+                          fontSize: 12,
+                          color: P.textSecondary,
+                          letterSpacing: "0.06em",
                           textTransform: "uppercase",
                           fontWeight: 500,
                           width: 200,
@@ -803,9 +810,9 @@ export default function ScreenerPage() {
                               padding: "10px 16px",
                               textAlign: "right",
                               fontFamily: F.mono,
-                              fontSize: 10,
-                              color: filters.sort_by === col.id ? P.gold : P.textMuted,
-                              letterSpacing: "0.08em",
+                              fontSize: 12,
+                              color: filters.sort_by === col.id ? P.gold : P.textSecondary,
+                              letterSpacing: "0.06em",
                               textTransform: "uppercase",
                               fontWeight: 500,
                               whiteSpace: "nowrap",
@@ -886,7 +893,7 @@ export default function ScreenerPage() {
                             {formatPct(item.roe)}
                           </td>
                           <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 11, color: P.textSecondary }}>
-                            {formatPct(item.dividend_yield)}
+                            {formatYield(item.dividend_yield)}
                           </td>
                           <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 11, color: P.textSecondary }}>
                             {item.debt_to_equity?.toFixed(2) ?? '-'}
