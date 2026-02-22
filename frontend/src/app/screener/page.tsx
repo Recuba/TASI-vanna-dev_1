@@ -363,9 +363,13 @@ export default function ScreenerPage() {
             <LoadingSpinner message={t('جاري البحث...', 'Searching...')} />
           </div>
         ) : error ? (
-          <div className="text-center py-12 space-y-2">
-            <p className="text-sm text-accent-red">{error}</p>
-            <button onClick={refetch} className="text-xs text-gold hover:text-gold-light">{t('إعادة المحاولة', 'Retry')}</button>
+          <div className="text-center py-12 space-y-3">
+            <svg className="mx-auto mb-2 text-accent-red" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p className="text-sm font-medium text-[var(--text-primary)]" dir={dir}>{t('تعذّر تحميل نتائج الفلترة', 'Failed to load screener results')}</p>
+            <p className="text-xs text-[var(--text-muted)]" dir={dir}>{t('الخوادم غير متاحة مؤقتاً. يرجى المحاولة لاحقاً.', 'Servers may be temporarily unavailable. Please try again later.')}</p>
+            <button onClick={refetch} className="mt-1 text-xs text-gold hover:text-gold-light underline underline-offset-2">{t('إعادة المحاولة', 'Retry')}</button>
           </div>
         ) : items.length === 0 ? (
           <div className="text-center py-12">

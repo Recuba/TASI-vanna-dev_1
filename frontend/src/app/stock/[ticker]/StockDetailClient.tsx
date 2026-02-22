@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useStockDetail } from '@/lib/hooks/use-api';
 import { TradingViewAttribution, ChartErrorBoundary, TradingViewWidget } from '@/components/charts';
-import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector } from '@/lib/stock-translations';
@@ -144,8 +143,46 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
 
   const dir = language === 'ar' ? 'rtl' : 'ltr';
 
-  if (loading) return <div className="flex-1 flex items-center justify-center"><LoadingSpinner message={t(`${ticker} جاري التحميل...`, `Loading ${ticker}...`)} /></div>;
-  if (error) return <div className="flex-1 flex items-center justify-center"><ErrorDisplay message={error} onRetry={refetch} /></div>;
+  if (loading) return (
+    <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto" dir={dir}>
+      <div className="max-w-content-lg mx-auto space-y-5 animate-pulse">
+        {/* Header skeleton */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-7 w-40 bg-[var(--bg-card)] rounded" />
+            <div className="h-4 w-56 bg-[var(--bg-card)] rounded" />
+          </div>
+          <div className="h-12 w-28 bg-[var(--bg-card)] rounded-xl" />
+        </div>
+        {/* Chart skeleton */}
+        <div className="h-[420px] bg-[var(--bg-card)] rounded-xl" />
+        {/* Tabs skeleton */}
+        <div className="flex gap-2 flex-wrap">
+          {[100, 120, 130, 90, 110, 110].map((w, i) => (
+            <div key={i} className="h-8 rounded-lg bg-[var(--bg-card)]" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Metrics skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="h-16 bg-[var(--bg-card)] rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+  if (error) return (
+    <div className="flex-1 px-4 sm:px-6 py-6 overflow-y-auto" dir={dir}>
+      <div className="max-w-content-lg mx-auto">
+        <div className="mb-6">
+          <p className="text-xs text-[var(--text-muted)] mb-1">{t('سوق تداول السعودي', 'Tadawul')}</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{ticker}</h1>
+          <p className="text-sm text-[var(--text-muted)]">{ticker.replace('.SR', '')}</p>
+        </div>
+        <ErrorDisplay message={error} onRetry={refetch} />
+      </div>
+    </div>
+  );
   if (!detail) return <div className="flex-1 flex items-center justify-center"><div className="text-center"><p className="text-lg font-bold text-[var(--text-primary)] mb-2">{ticker}</p><p className="text-sm text-[var(--text-muted)]" dir={dir}>{t('بيانات السهم غير متاحة', 'Stock data not available')}</p></div></div>;
 
   const priceChange = detail.current_price != null && detail.previous_close != null ? detail.current_price - detail.previous_close : null;

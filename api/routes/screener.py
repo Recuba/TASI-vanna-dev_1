@@ -186,7 +186,7 @@ async def search_stocks(filters: ScreenerFilters) -> ScreenerResponse:
     where_sql, where_params = _build_where_clauses(filters)
 
     # Count query
-    count_sql = f"SELECT COUNT(*) as cnt FROM ({SCREENER_BASE}{where_sql}) sub"
+    count_sql = f"SELECT COUNT(*) as cnt FROM ({SCREENER_BASE}{where_sql}) sub"  # nosec B608
     count_row = await afetchone(count_sql, tuple(where_params))
     total_count = count_row["cnt"] if count_row else 0
 

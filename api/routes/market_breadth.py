@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from api.db_helper import afetchone
 from database.queries import MARKET_BREADTH
 from models.api_responses import STANDARD_ERRORS
+from services.cache_utils import cache_response
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class MarketBreadthResponse(BaseModel):
 
 
 @router.get("/breadth", response_model=MarketBreadthResponse, responses=STANDARD_ERRORS)
+@cache_response(ttl=30)
 async def get_market_breadth() -> MarketBreadthResponse:
     """Get market breadth indicators: advance/decline counts and 52-week extremes."""
     try:

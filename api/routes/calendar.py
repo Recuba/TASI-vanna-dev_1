@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from api.db_helper import afetchall
 from models.api_responses import STANDARD_ERRORS
+from services.cache_utils import cache_response
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +82,10 @@ _EARNINGS_EVENTS_SQL = """
 
 
 @router.get("/events", response_model=CalendarResponse, responses=STANDARD_ERRORS)
+@cache_response(ttl=300)
 async def get_calendar_events(
-    date_from: str = Query(..., alias="from", description="Start date YYYY-MM-DD"),
-    date_to: str = Query(..., alias="to", description="End date YYYY-MM-DD"),
+    date_from: str = Query(..., alias="from", description="Start date YYYY-MM-DD", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    date_to: str = Query(..., alias="to", description="End date YYYY-MM-DD", pattern=r"^\d{4}-\d{2}-\d{2}$"),
     event_type: Optional[str] = Query(None, alias="type", description="Filter: dividend, earnings"),
 ) -> CalendarResponse:
     """Get financial calendar events within a date range."""

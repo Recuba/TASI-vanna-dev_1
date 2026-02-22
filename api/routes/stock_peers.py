@@ -73,6 +73,7 @@ class PeersResponse(BaseModel):
 
 
 @router.get("/{ticker}/peers", response_model=PeersResponse, responses=STANDARD_ERRORS)
+@cache_response(ttl=300)
 async def get_stock_peers(
     ticker: str,
     limit: int = Query(10, ge=1, le=20),
