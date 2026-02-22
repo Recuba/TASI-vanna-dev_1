@@ -31,6 +31,7 @@ vi.mock('@/components/charts', () => ({
       {children}
     </div>
   ),
+  TradingViewWidget: ({ symbol }: { symbol: string }) => <div data-testid="tradingview-widget">{symbol}</div>,
   TradingViewAttribution: () => <span data-testid="tv-attribution">Charts by TradingView</span>,
   ChartErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
@@ -68,6 +69,9 @@ const mockUseStockDividends = vi.spyOn(useApiModule, 'useStockDividends');
 const mockUseStockFinancialSummary = vi.spyOn(useApiModule, 'useStockFinancialSummary');
 const mockUseNewsByTicker = vi.spyOn(useApiModule, 'useNewsByTicker');
 const mockUseReportsByTicker = vi.spyOn(useApiModule, 'useReportsByTicker');
+const mockUseStockPeers = vi.spyOn(useApiModule, 'useStockPeers');
+const mockUseStockOwnership = vi.spyOn(useApiModule, 'useStockOwnership');
+const mockUseFinancialTrend = vi.spyOn(useApiModule, 'useFinancialTrend');
 
 // ---------------------------------------------------------------------------
 // Sample data fixtures
@@ -219,6 +223,9 @@ beforeEach(() => {
   mockUseStockFinancialSummary.mockReturnValue(makeAsyncResult({ data: sampleFinancialSummary }));
   mockUseNewsByTicker.mockReturnValue(makeAsyncResult({ data: sampleNewsData }));
   mockUseReportsByTicker.mockReturnValue(makeAsyncResult({ data: sampleReportsData }));
+  mockUseStockPeers.mockReturnValue(makeAsyncResult({ data: null }));
+  mockUseStockOwnership.mockReturnValue(makeAsyncResult({ data: null }));
+  mockUseFinancialTrend.mockReturnValue(makeAsyncResult({ data: null }));
 });
 
 // ---------------------------------------------------------------------------
@@ -267,7 +274,9 @@ describe('StockDetailClient', () => {
   it('renders company name and ticker badge in header', () => {
     renderWithProviders(<StockDetailClient ticker="2222" />);
 
-    expect(screen.getByRole('heading', { name: /Saudi Aramco/i })).toBeInTheDocument();
+    // Multiple headings may match (visible + print-only), so use getAllByRole
+    const headings = screen.getAllByRole('heading', { name: /Saudi Aramco/i });
+    expect(headings.length).toBeGreaterThanOrEqual(1);
     // Ticker appears in the badge next to the name
     const tickerBadges = screen.getAllByText('2222.SR');
     expect(tickerBadges.length).toBeGreaterThanOrEqual(1);

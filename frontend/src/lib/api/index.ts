@@ -13,3 +13,7 @@ export * from './stocks';
 export * from './charts';
 export * from './entities';
 export * from './auth';
+export * from './market-movers';
+export * from './screener';
+export * from './calendar';
+export * from './alerts';

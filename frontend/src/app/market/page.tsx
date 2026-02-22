@@ -1,17 +1,21 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useSectors, useEntities } from '@/lib/hooks/use-api';
-import { AreaChart, MiniSparkline, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
-import { useMarketIndex, useMiniChartData } from '@/lib/hooks/use-chart-data';
+import { AreaChart, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
+import { LazySparkline } from '@/components/charts/LazySparkline';
+import { useMarketIndex } from '@/lib/hooks/use-chart-data';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateSector, findTickersByAlias, matchesSearch } from '@/lib/stock-translations';
 import { Breadcrumb } from '@/components/common/Breadcrumb';
+import MarketMoversPanel from './components/MarketMoversPanel';
+import { useKeyboardNav } from '@/lib/hooks/use-keyboard-nav';
+import { formatNumber, formatMarketCap } from '@/lib/utils/arabic-numbers';
 // ---------------------------------------------------------------------------
 // Sort types
 // ---------------------------------------------------------------------------
@@ -20,16 +24,6 @@ type SortField = 'short_name' | 'ticker' | 'current_price' | 'change_pct' | 'mar
 type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE = 50;
-
-// ---------------------------------------------------------------------------
-// Mini sparkline wrapper
-// ---------------------------------------------------------------------------
-
-function StockSparkline({ ticker }: { ticker: string }) {
-  const { data } = useMiniChartData(ticker);
-  if (!data || data.length === 0) return null;
-  return <MiniSparkline data={data} width={60} height={28} />;
-}
 
 // ---------------------------------------------------------------------------
 // Sort icon
@@ -55,14 +49,29 @@ function SortIndicator({ field, current, dir }: { field: SortField; current: Sor
 }
 
 // ---------------------------------------------------------------------------
-// Format market cap
+// 52-week range bar
 // ---------------------------------------------------------------------------
 
-function fmtCap(val: number | null): string {
-  if (val === null || val === undefined) return '-';
-  if (val >= 1e9) return `${(val / 1e9).toFixed(1)}B`;
-  if (val >= 1e6) return `${(val / 1e6).toFixed(0)}M`;
-  return val.toFixed(0);
+function WeekRange52({
+  low, high, current,
+}: { low: number | null; high: number | null; current: number | null }) {
+  if (!low || !high || !current || high <= low) return <span className="text-xs text-[var(--text-muted)]">&mdash;</span>;
+  const pct = Math.min(100, Math.max(0, ((current - low) / (high - low)) * 100));
+  return (
+    <div className="flex flex-col gap-0.5 min-w-[80px]">
+      <div className="relative h-1.5 bg-[var(--bg-input)] rounded-full overflow-hidden">
+        <div
+          className="absolute top-0 h-full w-1.5 bg-gold rounded-full"
+          style={{ insetInlineStart: `${pct}%`, transform: 'translateX(-50%)' }}
+        />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent-red/30 via-transparent to-accent-green/30" />
+      </div>
+      <div className="flex justify-between text-[9px] text-[var(--text-muted)]">
+        <span>{low.toFixed(2)}</span>
+        <span>{high.toFixed(2)}</span>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -83,6 +92,9 @@ export default function MarketPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(initialPage);
   const { data: indexData, loading: indexLoading, source: indexSource } = useMarketIndex();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useKeyboardNav({ searchRef: searchInputRef });
 
   const { data: sectors, loading: sectorsLoading, error: sectorsError, refetch: refetchSectors } = useSectors();
 
@@ -214,6 +226,8 @@ export default function MarketPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
             <input
+              ref={searchInputRef}
+              data-search-input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -288,6 +302,9 @@ export default function MarketPage() {
           </div>
         ) : null}
 
+        {/* Market Movers Panel */}
+        <MarketMoversPanel />
+
         {/* Companies Table */}
         <section>
           <h2 className="text-sm font-bold text-gold mb-3 uppercase tracking-wider" dir={dir}>
@@ -324,6 +341,9 @@ export default function MarketPage() {
                           </span>
                         </th>
                       ))}
+                      <th scope="col" className="px-4 py-3 text-end text-xs font-medium text-gold uppercase tracking-wider w-24 hidden xl:table-cell">
+                        {t('\u0665\u0662 \u0623\u0633\u0628\u0648\u0639', '52-Week')}
+                      </th>
                       <th scope="col" className="px-4 py-3 text-end text-xs font-medium text-gold uppercase tracking-wider w-20">
                         {t('\u0627\u0644\u0631\u0633\u0645', 'Chart')}
                       </th>
@@ -333,8 +353,11 @@ export default function MarketPage() {
                     {sortedItems.map((stock, idx) => (
                       <tr
                         key={stock.ticker}
+                        data-stock-row
+                        tabIndex={-1}
                         className={cn(
                           'border-t border-[#2A2A2A]/50 hover:bg-[var(--bg-card-hover)] transition-colors',
+                          'focus:outline-none focus:bg-[var(--bg-card-hover)]',
                           idx % 2 === 1 && 'bg-[#1A1A1A]/30'
                         )}
                       >
@@ -351,7 +374,7 @@ export default function MarketPage() {
                         </td>
                         <td className="px-4 py-2.5 text-end">
                           <span className="text-sm font-bold text-[var(--text-primary)]">
-                            {stock.current_price !== null ? stock.current_price.toFixed(2) : '-'}
+                            {formatNumber(stock.current_price, { locale: language })}
                           </span>
                         </td>
                         <td className="px-4 py-2.5 text-end">
@@ -362,7 +385,7 @@ export default function MarketPage() {
                                 ? 'text-accent-green bg-accent-green/10'
                                 : 'text-accent-red bg-accent-red/10'
                             )}>
-                              {stock.change_pct >= 0 ? '+' : ''}{stock.change_pct.toFixed(2)}%
+                              {formatNumber(stock.change_pct, { locale: language, prefix: stock.change_pct >= 0 ? '+' : '' })}%
                             </span>
                           ) : (
                             <span className="text-xs text-[var(--text-muted)]">-</span>
@@ -370,11 +393,18 @@ export default function MarketPage() {
                         </td>
                         <td className="px-4 py-2.5 text-end">
                           <span className="text-xs text-[var(--text-secondary)]">
-                            {stock.market_cap !== null ? `SAR ${fmtCap(stock.market_cap)}` : '-'}
+                            {stock.market_cap !== null ? `SAR ${formatMarketCap(stock.market_cap, language)}` : '-'}
                           </span>
                         </td>
+                        <td className="px-4 py-2.5 text-end hidden xl:table-cell">
+                          <WeekRange52
+                            low={stock.week_52_low ?? null}
+                            high={stock.week_52_high ?? null}
+                            current={stock.current_price ?? null}
+                          />
+                        </td>
                         <td className="px-4 py-2.5 text-end">
-                          <StockSparkline ticker={stock.ticker} />
+                          <LazySparkline ticker={stock.ticker} />
                         </td>
                       </tr>
                     ))}
@@ -406,7 +436,7 @@ export default function MarketPage() {
                     </div>
                     <div className="text-end shrink-0">
                       <p className="text-sm font-bold text-[var(--text-primary)]">
-                        {stock.current_price !== null ? stock.current_price.toFixed(2) : '-'}
+                        {formatNumber(stock.current_price, { locale: language })}
                       </p>
                       {stock.change_pct !== null && stock.change_pct !== undefined ? (
                         <span className={cn(
@@ -415,7 +445,7 @@ export default function MarketPage() {
                             ? 'text-accent-green bg-accent-green/10'
                             : 'text-accent-red bg-accent-red/10'
                         )}>
-                          {stock.change_pct >= 0 ? '+' : ''}{stock.change_pct.toFixed(2)}%
+                          {formatNumber(stock.change_pct, { locale: language, prefix: stock.change_pct >= 0 ? '+' : '' })}%
                         </span>
                       ) : (
                         <span className="text-xs text-[var(--text-muted)]">-</span>
@@ -429,8 +459,18 @@ export default function MarketPage() {
                       {t('\u0627\u0644\u0642\u064A\u0645\u0629 \u0627\u0644\u0633\u0648\u0642\u064A\u0629', 'Market Cap')}
                     </span>
                     <span className="text-xs font-medium text-[var(--text-secondary)]">
-                      {stock.market_cap !== null ? `SAR ${fmtCap(stock.market_cap)}` : '-'}
+                      {stock.market_cap !== null ? `SAR ${formatMarketCap(stock.market_cap, language)}` : '-'}
                     </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {t('\u0665\u0662 \u0623\u0633\u0628\u0648\u0639', '52-Week')}
+                    </span>
+                    <WeekRange52
+                      low={stock.week_52_low ?? null}
+                      high={stock.week_52_high ?? null}
+                      current={stock.current_price ?? null}
+                    />
                   </div>
                 </Link>
               ))}

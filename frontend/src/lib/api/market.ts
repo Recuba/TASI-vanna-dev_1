@@ -72,6 +72,23 @@ export function getMarketHeatmap(signal?: AbortSignal): Promise<HeatmapItem[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Market Breadth
+// ---------------------------------------------------------------------------
+
+export interface MarketBreadth {
+  advancing: number;
+  declining: number;
+  unchanged: number;
+  advance_decline_ratio: number | null;
+  new_52w_highs: number;
+  new_52w_lows: number;
+}
+
+export function getMarketBreadth(signal?: AbortSignal): Promise<MarketBreadth> {
+  return request('/api/v1/market/breadth', undefined, undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
 // Market Overview (World 360)
 // ---------------------------------------------------------------------------
 

@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { HEALTH_POLL_INTERVAL_MS } from '@/lib/config';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { prefetchRoute } from '@/lib/performance/utils';
+import { AlertBell } from '@/components/alerts/AlertBell';
 
 interface HeaderProps {
   onToggleMobileSidebar?: () => void;
@@ -211,6 +212,9 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
             )}
           </button>
           </Tooltip>
+
+          {/* Alert bell */}
+          <AlertBell />
 
           {/* Status indicator */}
           <Tooltip

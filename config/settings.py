@@ -182,7 +182,7 @@ class ScraperSettings(BaseSettings):
     inter_request_delay: float = 1.5
     max_articles_per_source: int = 10
     max_full_article_fetches: int = 5
-    fetch_interval_seconds: int = 1800
+    fetch_interval_seconds: int = 300
     cleanup_age_days: int = 7
     user_agent: str = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

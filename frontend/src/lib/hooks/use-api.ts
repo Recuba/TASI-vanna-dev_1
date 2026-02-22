@@ -41,6 +41,19 @@ import {
   type FinancialsResponse,
   type StockComparison,
   type BatchQuote,
+  getMarketBreadth,
+  type MarketBreadth,
+  getStockPeers,
+  type PeersResponse,
+  getStockOwnership,
+  type OwnershipData,
+  getFinancialTrend,
+  type FinancialTrendResponse,
+  searchScreener,
+  type ScreenerFilters,
+  type ScreenerResponse,
+  getCalendarEvents,
+  type CalendarResponse,
 } from '@/lib/api-client';
 
 // ---------------------------------------------------------------------------
@@ -249,6 +262,11 @@ export function useMarketHeatmap() {
   return useAsync<HeatmapItem[]>((signal) => getMarketHeatmap(signal), []);
 }
 
+/** Market breadth with 30-second auto-refresh */
+export function useMarketBreadth() {
+  return useAsync<MarketBreadth>((signal) => getMarketBreadth(signal), [], 30_000);
+}
+
 // ---------------------------------------------------------------------------
 // Stock data hooks
 // ---------------------------------------------------------------------------
@@ -295,6 +313,30 @@ export function useBatchQuotes(tickers: string[]) {
   );
 }
 
+/** Peer companies in the same sector */
+export function useStockPeers(ticker: string, limit?: number) {
+  return useAsync<PeersResponse>(
+    (signal) => getStockPeers(ticker, limit, signal),
+    [ticker, limit],
+  );
+}
+
+/** Stock ownership breakdown */
+export function useStockOwnership(ticker: string) {
+  return useAsync<OwnershipData>(
+    (signal) => getStockOwnership(ticker, signal),
+    [ticker],
+  );
+}
+
+/** Financial trend data for charting */
+export function useFinancialTrend(ticker: string) {
+  return useAsync<FinancialTrendResponse>(
+    (signal) => getFinancialTrend(ticker, signal),
+    [ticker],
+  );
+}
+
 /** News articles for a specific ticker */
 export function useNewsByTicker(ticker: string, params?: { page?: number; page_size?: number }) {
   return useAsync<NewsListResponse>(
@@ -308,5 +350,29 @@ export function useReportsByTicker(ticker: string, params?: { page?: number; pag
   return useAsync<ReportListResponse>(
     (signal) => getReportsByTicker(ticker, params, signal),
     [ticker, params?.page, params?.page_size],
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Screener hooks
+// ---------------------------------------------------------------------------
+
+/** Stock screener with filter criteria */
+export function useScreener(filters: ScreenerFilters) {
+  return useAsync<ScreenerResponse>(
+    (signal) => searchScreener(filters, signal),
+    [JSON.stringify(filters)],
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Calendar hooks
+// ---------------------------------------------------------------------------
+
+/** Financial calendar events */
+export function useCalendarEvents(params: { from: string; to: string; type?: string }) {
+  return useAsync<CalendarResponse>(
+    (signal) => getCalendarEvents(params, signal),
+    [params.from, params.to, params.type],
   );
 }

@@ -30,7 +30,7 @@ async def news_stream(
 ) -> StreamingResponse:
     """SSE endpoint that emits events when new articles appear.
 
-    Polls the NewsStore every 30 seconds and sends an event containing
+    Polls the NewsStore every 10 seconds and sends an event containing
     the new article count whenever the latest article ID changes.
     Clients should reconnect on error.
     """
@@ -81,7 +81,7 @@ async def news_stream(
             except Exception:
                 logger.debug("SSE poll error", exc_info=True)
 
-            await asyncio.sleep(30)
+            await asyncio.sleep(10)
 
     return StreamingResponse(
         event_generator(),

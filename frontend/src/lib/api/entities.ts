@@ -16,6 +16,8 @@ export interface CompanySummary {
   current_price: number | null;
   market_cap: number | null;
   change_pct: number | null;
+  week_52_high: number | null;
+  week_52_low: number | null;
 }
 
 export interface EntityListResponse {
@@ -48,6 +50,9 @@ export interface CompanyDetail {
   revenue_growth: number | null;
   recommendation: string | null;
   target_mean_price: number | null;
+  target_high_price: number | null;
+  target_low_price: number | null;
+  target_median_price: number | null;
   analyst_count: number | null;
 }
 

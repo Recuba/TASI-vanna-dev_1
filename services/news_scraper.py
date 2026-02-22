@@ -157,6 +157,41 @@ def analyze_sentiment(title: str, body: str) -> tuple[float, str]:
 
 
 # ---------------------------------------------------------------------------
+# Market-Impact Scoring
+# ---------------------------------------------------------------------------
+
+# Keywords by impact level
+_HIGH_IMPACT_KEYWORDS = [
+    "أرباح", "خسائر", "إيرادات", "نتائج مالية", "ربع سنوي",
+    "سنوي", "اكتتاب", "IPO", "إدراج", "طرح", "هيئة السوق",
+    "تنظيمي", "لوائح", "استحواذ", "اندماج", "تصفية",
+    "إفلاس", "إيقاف", "تعليق التداول", "عقوبة",
+    "earnings", "IPO", "regulatory", "merger", "acquisition",
+]
+_MEDIUM_IMPACT_KEYWORDS = [
+    "محللين", "توصية", "تحليل", "توزيعات", "أرباح نقدية",
+    "عائد", "ترقية", "تخفيض تصنيف", "سعر مستهدف",
+    "analyst", "dividend", "target price", "upgrade", "downgrade",
+    "شراكة", "اتفاقية", "عقد", "تمويل",
+]
+
+
+def score_market_impact(title: str, body: str) -> str:
+    """Score the market impact of an article.
+
+    Returns "high", "medium", or "low".
+    """
+    text = f"{title} {body}".lower()
+    for kw in _HIGH_IMPACT_KEYWORDS:
+        if kw.lower() in text:
+            return "high"
+    for kw in _MEDIUM_IMPACT_KEYWORDS:
+        if kw.lower() in text:
+            return "medium"
+    return "low"
+
+
+# ---------------------------------------------------------------------------
 # Ticker Extraction
 # ---------------------------------------------------------------------------
 
@@ -1045,6 +1080,9 @@ def fetch_all_news() -> List[dict]:
         ticker = extract_ticker(title, body)
         if ticker:
             article["ticker"] = ticker
+
+        # Market-impact scoring
+        article["impact_score"] = score_market_impact(title, body)
 
         paraphrased.append(article)
 

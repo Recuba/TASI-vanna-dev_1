@@ -188,3 +188,45 @@ ENTITY_FULL_DETAIL = """
     LEFT JOIN analyst_data a ON a.ticker = c.ticker
     WHERE c.ticker = ?
 """
+
+# ---------------------------------------------------------------------------
+# market_breadth queries
+# ---------------------------------------------------------------------------
+
+MARKET_BREADTH = """
+    SELECT
+        SUM(CASE WHEN m.previous_close > 0 AND m.current_price > m.previous_close THEN 1 ELSE 0 END) AS advancing,
+        SUM(CASE WHEN m.previous_close > 0 AND m.current_price < m.previous_close THEN 1 ELSE 0 END) AS declining,
+        SUM(CASE WHEN m.previous_close > 0 AND m.current_price = m.previous_close THEN 1 ELSE 0 END) AS unchanged,
+        SUM(CASE WHEN m.current_price >= m.week_52_high AND m.week_52_high IS NOT NULL THEN 1 ELSE 0 END) AS new_52w_highs,
+        SUM(CASE WHEN m.current_price <= m.week_52_low AND m.week_52_low IS NOT NULL THEN 1 ELSE 0 END) AS new_52w_lows
+    FROM market_data m
+    WHERE m.current_price IS NOT NULL AND m.previous_close IS NOT NULL AND m.previous_close > 0
+"""
+
+# ---------------------------------------------------------------------------
+# screener queries
+# ---------------------------------------------------------------------------
+
+SCREENER_BASE = """
+    SELECT
+        c.ticker, c.short_name, c.sector, c.industry,
+        m.current_price, m.previous_close, m.market_cap, m.volume,
+        CASE WHEN m.previous_close > 0
+             THEN ((m.current_price - m.previous_close) / m.previous_close) * 100
+             ELSE NULL
+        END AS change_pct,
+        v.trailing_pe, v.forward_pe, v.price_to_book, v.price_to_sales,
+        p.roe, p.profit_margin, p.revenue_growth, p.earnings_growth,
+        d.dividend_yield,
+        f.debt_to_equity, f.current_ratio, f.total_revenue,
+        a.recommendation, a.target_mean_price, a.analyst_count
+    FROM companies c
+    LEFT JOIN market_data m ON m.ticker = c.ticker
+    LEFT JOIN valuation_metrics v ON v.ticker = c.ticker
+    LEFT JOIN profitability_metrics p ON p.ticker = c.ticker
+    LEFT JOIN dividend_data d ON d.ticker = c.ticker
+    LEFT JOIN financial_summary f ON f.ticker = c.ticker
+    LEFT JOIN analyst_data a ON a.ticker = c.ticker
+    WHERE m.current_price IS NOT NULL
+"""

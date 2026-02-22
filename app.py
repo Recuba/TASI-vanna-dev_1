@@ -521,6 +521,29 @@ except ImportError as exc:
     logger.warning("Market overview route not available: %s", exc)
 
 # ---------------------------------------------------------------------------
+# 9e2. Market movers routes — registered BEFORE market_analytics so the
+#      combined /api/v1/market/movers endpoint wins (FastAPI first-match).
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.market_movers import router as market_movers_router
+
+    app.include_router(market_movers_router)
+    logger.info("Market movers routes registered at /api/v1/market/movers")
+except ImportError as exc:
+    logger.warning("Market movers routes not available: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 9e3. Market breadth route (Dual-backend -- works with any backend)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.market_breadth import router as market_breadth_router
+
+    app.include_router(market_breadth_router)
+    logger.info("Market breadth route registered at /api/v1/market/breadth")
+except ImportError as exc:
+    logger.warning("Market breadth route not available: %s", exc)
+
+# ---------------------------------------------------------------------------
 # 9e. Market analytics routes (Dual-backend (SQLite/PostgreSQL) -- works with any backend)
 # ---------------------------------------------------------------------------
 try:
@@ -541,6 +564,50 @@ try:
     logger.info("Stock data routes registered at /api/v1/stocks")
 except ImportError as exc:
     logger.warning("Stock data routes not available: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 9f2. Stock peers route (Dual-backend -- works with any backend)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.stock_peers import router as stock_peers_router
+
+    app.include_router(stock_peers_router)
+    logger.info("Stock peers route registered at /api/v1/stocks/{ticker}/peers")
+except ImportError as exc:
+    logger.warning("Stock peers route not available: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 9f3. Stock screener route (Dual-backend -- works with any backend)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.screener import router as screener_router
+
+    app.include_router(screener_router)
+    logger.info("Stock screener route registered at /api/v1/screener/search")
+except ImportError as exc:
+    logger.warning("Stock screener route not available: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 9f4. Calendar route (Dual-backend -- works with any backend)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.calendar import router as calendar_router
+
+    app.include_router(calendar_router)
+    logger.info("Calendar route registered at /api/v1/calendar/events")
+except ImportError as exc:
+    logger.warning("Calendar route not available: %s", exc)
+
+# ---------------------------------------------------------------------------
+# 9f5. Alerts route (PostgreSQL-only, requires JWT)
+# ---------------------------------------------------------------------------
+try:
+    from api.routes.alerts import router as alerts_router
+
+    app.include_router(alerts_router)
+    logger.info("Alerts route registered at /api/v1/alerts")
+except ImportError as exc:
+    logger.warning("Alerts route not available: %s", exc)
 
 # ---------------------------------------------------------------------------
 # 9g. SQLite entities routes (registered only when using SQLite backend)

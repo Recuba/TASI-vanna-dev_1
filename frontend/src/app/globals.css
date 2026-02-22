@@ -225,19 +225,25 @@ body {
   /* Hide non-content elements */
   header,
   footer,
-  nav,
+  nav:not([role="tablist"]),
   aside,
   .sidebar,
-  button,
   [role="navigation"],
-  [data-print-hide] {
+  [data-print-hide],
+  [data-print-hidden] {
     display: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 1.5cm;
+    size: A4;
   }
 
   /* Force readable colors */
   body,
   html {
-    background: white !important;
+    background: #fff !important;
     color: #000 !important;
   }
 
@@ -247,11 +253,49 @@ body {
     print-color-adjust: exact;
   }
 
+  /* Reset dark backgrounds for print */
+  main,
+  [class*="bg-[#0E0E0E]"],
+  [class*="bg-[var("] {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Print header branding */
+  body::before {
+    content: "Ra'd AI \2014  Saudi Stock Market Platform";
+    display: block;
+    font-size: 10pt;
+    color: #666;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+
   /* Main content fills the page */
   main {
     width: 100% !important;
     margin: 0 !important;
     padding: 0.5in !important;
+  }
+
+  /* Tables */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 9pt;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 4px 8px;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  th {
+    background: #f5f5f5 !important;
+    font-weight: bold;
   }
 
   /* Keep charts and tables visible */
@@ -262,6 +306,12 @@ body {
   img {
     max-width: 100% !important;
     page-break-inside: avoid;
+  }
+
+  /* Page breaks */
+  h1, h2, h3 {
+    page-break-after: avoid;
+    color: #000 !important;
   }
 
   /* Clean up card borders for print */
@@ -275,16 +325,32 @@ body {
     background: none !important;
   }
 
-  /* Links: show URL */
-  a[href]:after {
-    content: " (" attr(href) ")";
-    font-size: 0.8em;
-    color: #666;
+  /* Links: no decoration */
+  a {
+    color: #000 !important;
+    text-decoration: none;
   }
 
   a[href^="#"]:after,
   a[href^="/"]:after {
     content: "";
+  }
+
+  /* Text color overrides for readability */
+  [class*="text-[var("] {
+    color: #000 !important;
+  }
+
+  [class*="text-accent-green"] {
+    color: #16a34a !important;
+  }
+
+  [class*="text-accent-red"] {
+    color: #dc2626 !important;
+  }
+
+  [class*="text-gold"] {
+    color: #92400e !important;
   }
 }
 

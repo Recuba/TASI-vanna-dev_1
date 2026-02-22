@@ -9,6 +9,7 @@ import { GlobalKeyboardShortcuts } from '@/components/common/GlobalKeyboardShort
 import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { AppShell } from '@/components/layout/AppShell';
 import NextTopLoader from 'nextjs-toploader';
+import { BackToTop } from '@/components/common/BackToTop';
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   subsets: ['arabic', 'latin'],
@@ -42,6 +43,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" dir="ltr" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('rad-ai-theme');if(t==='light'){document.documentElement.classList.remove('dark')}else{document.documentElement.classList.add('dark')}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body
         className={`${ibmPlexArabic.variable} ${inter.variable} font-english antialiased`}
       >
@@ -65,6 +73,7 @@ export default function RootLayout({
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
+        <BackToTop />
       </body>
     </html>
   );

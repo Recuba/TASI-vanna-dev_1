@@ -143,3 +143,71 @@ export function compareStocks(
 export function getBatchQuotes(tickers: string[], signal?: AbortSignal): Promise<BatchQuote[]> {
   return request(`/api/v1/stocks/quotes${qs({ tickers: tickers.join(',') })}`, undefined, undefined, signal);
 }
+
+// ---------------------------------------------------------------------------
+// Stock Peers
+// ---------------------------------------------------------------------------
+
+export interface PeerItem {
+  ticker: string;
+  short_name: string | null;
+  sector: string | null;
+  current_price: number | null;
+  market_cap: number | null;
+  change_pct: number | null;
+  trailing_pe: number | null;
+  price_to_book: number | null;
+  roe: number | null;
+  revenue_growth: number | null;
+  dividend_yield: number | null;
+}
+
+export interface PeersResponse {
+  ticker: string;
+  sector: string | null;
+  peers: PeerItem[];
+  count: number;
+}
+
+export function getStockPeers(ticker: string, limit?: number, signal?: AbortSignal): Promise<PeersResponse> {
+  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/peers${qs({ limit })}`, undefined, undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// Stock Ownership
+// ---------------------------------------------------------------------------
+
+export interface OwnershipData {
+  ticker: string;
+  pct_held_insiders: number | null;
+  pct_held_institutions: number | null;
+  float_shares: number | null;
+  shares_outstanding: number | null;
+}
+
+export function getStockOwnership(ticker: string, signal?: AbortSignal): Promise<OwnershipData> {
+  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/ownership`, undefined, undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// Financial Trend
+// ---------------------------------------------------------------------------
+
+export interface TrendPeriod {
+  date: string | null;
+  value: number | null;
+}
+
+export interface TrendMetric {
+  name: string;
+  periods: TrendPeriod[];
+}
+
+export interface FinancialTrendResponse {
+  ticker: string;
+  metrics: TrendMetric[];
+}
+
+export function getFinancialTrend(ticker: string, signal?: AbortSignal): Promise<FinancialTrendResponse> {
+  return request(`/api/v1/stocks/${encodeURIComponent(ticker)}/financials/trend`, undefined, undefined, signal);
+}

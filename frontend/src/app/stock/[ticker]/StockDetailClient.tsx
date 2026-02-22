@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useStockDetail } from '@/lib/hooks/use-api';
-import { CandlestickChart, ChartWrapper, TradingViewAttribution, ChartErrorBoundary } from '@/components/charts';
-import { useOHLCVData } from '@/lib/hooks/use-chart-data';
+import { TradingViewAttribution, ChartErrorBoundary, TradingViewWidget } from '@/components/charts';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { ErrorDisplay } from '@/components/common/error-display';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -17,6 +16,12 @@ import { StockFinancials } from './components/StockFinancials';
 import { StockDividends } from './components/StockDividends';
 import { StockNewsSection } from './components/StockNewsSection';
 import { StockReportsSection } from './components/StockReportsSection';
+import { StockPeersTab } from './components/StockPeersTab';
+import { StockOwnershipTab } from './components/StockOwnershipTab';
+import { StockEstimatesTab } from './components/StockEstimatesTab';
+import { FinancialTrendChart } from './components/FinancialTrendChart';
+import { AlertModal } from '@/components/alerts/AlertModal';
+import { useAlerts } from '@/lib/hooks/use-alerts';
 
 // ---------------------------------------------------------------------------
 // Watchlist helpers
@@ -77,12 +82,15 @@ function normalizeTicker(raw: string): string {
   return /^\d+$/.test(trimmed) ? `${trimmed}.SR` : trimmed;
 }
 
-type PageTab = 'overview' | 'financials' | 'dividends' | 'news';
+type PageTab = 'overview' | 'financials' | 'dividends' | 'peers' | 'ownership' | 'estimates' | 'news';
 
 const PAGE_TABS: { id: PageTab; labelAr: string; labelEn: string }[] = [
   { id: 'overview', labelAr: 'نظرة عامة', labelEn: 'Overview' },
   { id: 'financials', labelAr: 'البيانات المالية', labelEn: 'Financials' },
   { id: 'dividends', labelAr: 'التوزيعات', labelEn: 'Dividends' },
+  { id: 'peers', labelAr: 'مقارنة القطاع', labelEn: 'Peers' },
+  { id: 'ownership', labelAr: 'الملكية', labelEn: 'Ownership' },
+  { id: 'estimates', labelAr: 'تقديرات', labelEn: 'Estimates' },
   { id: 'news', labelAr: 'الأخبار والتقارير', labelEn: 'News & Reports' },
 ];
 
@@ -95,7 +103,6 @@ interface StockDetailClientProps { ticker: string; }
 export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps) {
   const ticker = normalizeTicker(rawTicker);
   const { data: detail, loading, error, refetch } = useStockDetail(ticker);
-  const { data: ohlcvData, loading: chartLoading, source: chartSource } = useOHLCVData(ticker);
   const { t, language } = useLanguage();
   const { showToast } = useToast();
   const router = useRouter();
@@ -124,6 +131,8 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
 
   const [activeTab, setActiveTab] = useState<PageTab>('overview');
   const [shareCopied, setShareCopied] = useState(false);
+  const [alertModalOpen, setAlertModalOpen] = useState(false);
+  const { addAlert } = useAlerts();
 
   const handleShare = useCallback(async () => {
     const shareTitle = `${detail?.short_name || ticker} - Ra'd AI`;
@@ -146,6 +155,12 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
   return (
     <div className="flex-1 px-4 sm:px-6 py-4 overflow-y-auto">
       <div className="max-w-content-lg mx-auto space-y-5">
+
+        {/* Print-only header */}
+        <div className="hidden print:block mb-4">
+          <h1 className="text-2xl font-bold">{detail.short_name || ticker} ({ticker})</h1>
+          <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-SA')}</p>
+        </div>
 
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] flex-wrap" dir={dir}>
@@ -178,9 +193,19 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
                 <p className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">{detail.current_price?.toFixed(2) || '-'}<span className="text-sm text-[var(--text-muted)] ms-1">{detail.currency || 'SAR'}</span></p>
                 {priceChange !== null && (<p className={cn('text-sm font-bold mt-0.5', isUp ? 'text-accent-green' : 'text-accent-red')}>{isUp ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePct?.toFixed(2)}%)<span className="text-[10px] ms-1">{isUp ? '▲' : '▼'}</span></p>)}
               </div>
+              <Tooltip text={t('طباعة / تصدير PDF', 'Print / Export PDF')} position="bottom">
+                <button onClick={() => window.print()} className={cn('p-2 rounded-md transition-colors mt-1 print:hidden', 'text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)]')} aria-label={t('طباعة', 'Print')}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
+                </button>
+              </Tooltip>
               <Tooltip text={shareCopied ? t('تم نسخ الرابط', 'Link copied') : t('مشاركة', 'Share')} position="bottom">
-                <button onClick={handleShare} className={cn('p-2 rounded-md transition-colors mt-1', 'text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)]')} aria-label={t('مشاركة', 'Share')}>
+                <button onClick={handleShare} className={cn('p-2 rounded-md transition-colors mt-1 print:hidden', 'text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)]')} aria-label={t('مشاركة', 'Share')}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                </button>
+              </Tooltip>
+              <Tooltip text={t('إنشاء تنبيه سعر', 'Create price alert')} position="bottom">
+                <button onClick={() => setAlertModalOpen(true)} className={cn('p-2 rounded-md transition-colors mt-1 print:hidden', 'text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)]')} aria-label={t('تنبيه سعر', 'Price alert')}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0" /></svg>
                 </button>
               </Tooltip>
             </div>
@@ -196,7 +221,7 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
         </div>
 
         {/* Tab Navigation */}
-        <nav className="flex gap-1 bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-1.5 overflow-x-auto" role="tablist">
+        <nav className="flex gap-1 bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-1.5 overflow-x-auto print:hidden" role="tablist">
           {PAGE_TABS.map((tab) => (
             <button key={tab.id} role="tab" aria-selected={activeTab === tab.id} onClick={() => setActiveTab(tab.id)}
               className={cn('px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all', activeTab === tab.id ? 'bg-gold/15 text-gold border border-gold/30' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-input)]')}>
@@ -209,12 +234,15 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
         {activeTab === 'overview' && (
           <>
             <section className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-4">
-              <ChartErrorBoundary fallbackHeight={400}>
-                <ChartWrapper title={t('الرسم البياني', 'Price Chart')} source={chartSource}>
-                  <CandlestickChart data={ohlcvData || []} height={400} ticker={ticker} loading={chartLoading} />
-                </ChartWrapper>
+              <ChartErrorBoundary fallbackHeight={500}>
+                <TradingViewWidget
+                  symbol={`TADAWUL:${ticker.replace('.SR', '')}`}
+                  height={500}
+                  hideTopToolbar={false}
+                  hideSideToolbar={false}
+                />
               </ChartErrorBoundary>
-              <div className="flex items-center justify-between -mt-1">
+              <div className="flex items-center justify-between mt-2">
                 <Link href={`/charts?ticker=${encodeURIComponent(ticker)}`} className="text-xs text-gold hover:text-gold-light transition-colors font-medium" dir={dir}>{t('عرض الرسم البياني الكامل', 'View full chart')}</Link>
                 <TradingViewAttribution />
               </div>
@@ -256,8 +284,17 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
           </>
         )}
 
-        {activeTab === 'financials' && <StockFinancials ticker={ticker} language={language} t={t} />}
+        {activeTab === 'financials' && (
+          <>
+            <FinancialTrendChart ticker={ticker} language={language} t={t} />
+            <StockFinancials ticker={ticker} language={language} t={t} />
+          </>
+        )}
         {activeTab === 'dividends' && <StockDividends ticker={ticker} language={language} t={t} />}
+        {activeTab === 'peers' && <StockPeersTab ticker={ticker} language={language} t={t} />}
+        {activeTab === 'ownership' && <StockOwnershipTab ticker={ticker} language={language} t={t} />}
+        {activeTab === 'estimates' && <StockEstimatesTab ticker={ticker} language={language} t={t} />}
+
         {activeTab === 'news' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <StockNewsSection ticker={ticker} language={language} t={t} />
@@ -267,12 +304,20 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
 
         {/* AI Chat CTA */}
         <Link href={`/chat?q=${encodeURIComponent(language === 'ar' ? 'حلل سهم ' + ticker : 'Analyze stock ' + ticker)}`}
-          className={cn('block p-5 rounded-xl text-center', 'bg-gradient-to-r from-gold/10 via-gold/5 to-gold/10', 'border border-gold/20', 'hover:from-gold/15 hover:via-gold/10 hover:to-gold/15', 'hover:border-gold/40', 'transition-all duration-300')}>
+          className={cn('block p-5 rounded-xl text-center print:hidden', 'bg-gradient-to-r from-gold/10 via-gold/5 to-gold/10', 'border border-gold/20', 'hover:from-gold/15 hover:via-gold/10 hover:to-gold/15', 'hover:border-gold/40', 'transition-all duration-300')}>
           <p className="text-sm font-bold gold-text" dir={dir}>{t('اسأل عن', 'Ask about')} {detail.short_name || ticker}</p>
           <p className="text-xs text-[var(--text-secondary)] mt-1" dir={dir}>{t('استخدم المحادثة الذكية للحصول على تحليل مفصل', 'Use AI chat for detailed analysis')}</p>
         </Link>
 
       </div>
+
+      <AlertModal
+        open={alertModalOpen}
+        onClose={() => setAlertModalOpen(false)}
+        onAdd={addAlert}
+        defaultTicker={ticker}
+        currentPrice={detail.current_price ?? undefined}
+      />
     </div>
   );
 }

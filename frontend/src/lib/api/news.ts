@@ -42,6 +42,7 @@ export interface NewsFeedItem {
   published_at: string | null;
   sentiment_score: number | null;
   sentiment_label: string | null;
+  impact_score?: string | null;
   priority: number;
   language: string;
   created_at: string | null;

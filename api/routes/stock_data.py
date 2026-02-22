@@ -408,3 +408,120 @@ async def get_batch_quotes(
         )
         for r in rows
     ]
+
+
+# ---------------------------------------------------------------------------
+# Financial Trend endpoint
+# ---------------------------------------------------------------------------
+
+class TrendPeriod(BaseModel):
+    date: Optional[str] = None
+    value: Optional[float] = None
+
+
+class TrendMetric(BaseModel):
+    name: str
+    periods: List[TrendPeriod] = []
+
+
+class FinancialTrendResponse(BaseModel):
+    ticker: str
+    metrics: List[TrendMetric] = []
+
+
+_TREND_METRICS = {
+    "income_statement": [
+        ("total_revenue", "Total Revenue"),
+        ("net_income", "Net Income"),
+        ("basic_eps", "EPS"),
+        ("operating_income", "Operating Income"),
+    ],
+    "balance_sheet": [
+        ("total_assets", "Total Assets"),
+        ("total_liabilities", "Total Liabilities"),
+        ("total_equity", "Total Equity"),
+    ],
+    "cash_flow": [
+        ("operating_cash_flow", "Operating Cash Flow"),
+        ("free_cash_flow", "Free Cash Flow"),
+        ("capital_expenditures", "Capital Expenditures"),
+    ],
+}
+
+
+@router.get(
+    "/{ticker}/financials/trend",
+    response_model=FinancialTrendResponse,
+    responses=STANDARD_ERRORS,
+)
+async def get_financial_trend(ticker: str) -> FinancialTrendResponse:
+    """Get multi-period financial trend data for charting."""
+    ticker = validate_ticker(ticker)
+    exists = await afetchone(COMPANY_EXISTS, (ticker,))
+    if not exists:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    all_metrics: List[TrendMetric] = []
+
+    for table, metric_defs in _TREND_METRICS.items():
+        cols = [m[0] for m in metric_defs]
+        col_str = ", ".join(["period_date"] + cols)
+        rows = await afetchall(
+            f"SELECT {col_str} FROM {table} WHERE ticker = ? AND period_type = 'annual' ORDER BY period_index ASC",
+            (ticker,),
+        )
+        for col_name, display_name in metric_defs:
+            periods = []
+            for row in rows:
+                val = row.get(col_name)
+                periods.append(TrendPeriod(
+                    date=row.get("period_date"),
+                    value=float(val) if val is not None else None,
+                ))
+            if any(p.value is not None for p in periods):
+                all_metrics.append(TrendMetric(name=display_name, periods=periods))
+
+    return FinancialTrendResponse(ticker=ticker, metrics=all_metrics)
+
+
+# ---------------------------------------------------------------------------
+# Ownership endpoint
+# ---------------------------------------------------------------------------
+
+class OwnershipResponse(BaseModel):
+    ticker: str
+    pct_held_insiders: Optional[float] = None
+    pct_held_institutions: Optional[float] = None
+    float_shares: Optional[float] = None
+    shares_outstanding: Optional[float] = None
+
+
+_OWNERSHIP_QUERY = """
+    SELECT pct_held_insiders, pct_held_institutions, float_shares, shares_outstanding
+    FROM market_data WHERE ticker = ?
+"""
+
+
+@router.get(
+    "/{ticker}/ownership",
+    response_model=OwnershipResponse,
+    responses=STANDARD_ERRORS,
+)
+async def get_ownership(ticker: str) -> OwnershipResponse:
+    """Get ownership breakdown for a stock."""
+    ticker = validate_ticker(ticker)
+    exists = await afetchone(COMPANY_EXISTS, (ticker,))
+    if not exists:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    row = await afetchone(_OWNERSHIP_QUERY, (ticker,))
+    if not row:
+        return OwnershipResponse(ticker=ticker)
+
+    return OwnershipResponse(
+        ticker=ticker,
+        pct_held_insiders=float(row["pct_held_insiders"]) if row.get("pct_held_insiders") is not None else None,
+        pct_held_institutions=float(row["pct_held_institutions"]) if row.get("pct_held_institutions") is not None else None,
+        float_shares=float(row["float_shares"]) if row.get("float_shares") is not None else None,
+        shares_outstanding=float(row["shares_outstanding"]) if row.get("shares_outstanding") is not None else None,
+    )
