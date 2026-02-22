@@ -215,7 +215,8 @@ class TestCheckDatabase:
                     result = check_database()
 
         assert result.name == "database"
-        assert result.status == HealthStatus.HEALTHY
+        # Pool not initialized → health service returns UNHEALTHY (no direct-connection fallback)
+        assert result.status == HealthStatus.UNHEALTHY
 
     def test_database_exception_returns_unhealthy(self, tmp_path):
         from services.health_service import check_database, HealthStatus
@@ -779,7 +780,7 @@ class TestValidateEnv:
         with patch.dict(os.environ, env, clear=True):
             errors, warnings = validate_env()
 
-        assert any("AUTH_JWT_SECRET" in w for w in warnings)
+        assert any("AUTH_JWT_SECRET" in e for e in errors)
 
     def test_jwt_secret_not_required_in_development(self):
         from config.env_validator import validate_env

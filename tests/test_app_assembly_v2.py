@@ -26,7 +26,7 @@ if _PROJECT_ROOT not in sys.path:
 test_results = []
 
 
-def test_result(test_name: str, passed: bool, message: str = ""):
+def _record_result(test_name: str, passed: bool, message: str = ""):
     """Record a test result."""
     status = "PASS" if passed else "FAIL"
     test_results.append((test_name, passed, message))
@@ -51,25 +51,25 @@ print("=" * 70 + "\n")
 try:
     from vanna import Agent, AgentConfig, ToolRegistry
 
-    test_result("1.1 Core imports (Agent, AgentConfig, ToolRegistry)", True)
+    _record_result("1.1 Core imports (Agent, AgentConfig, ToolRegistry)", True)
 except Exception as e:
-    test_result("1.1 Core imports (Agent, AgentConfig, ToolRegistry)", False, str(e))
+    _record_result("1.1 Core imports (Agent, AgentConfig, ToolRegistry)", False, str(e))
 
 # Test 1.2: SystemPromptBuilder import
 try:
     from vanna.core.system_prompt.base import SystemPromptBuilder
 
-    test_result("1.2 SystemPromptBuilder import", True)
+    _record_result("1.2 SystemPromptBuilder import", True)
 except Exception as e:
-    test_result("1.2 SystemPromptBuilder import", False, str(e))
+    _record_result("1.2 SystemPromptBuilder import", False, str(e))
 
 # Test 1.3: UserResolver imports
 try:
     from vanna.core.user.resolver import UserResolver, RequestContext, User
 
-    test_result("1.3 UserResolver imports (UserResolver, RequestContext, User)", True)
+    _record_result("1.3 UserResolver imports (UserResolver, RequestContext, User)", True)
 except Exception as e:
-    test_result(
+    _record_result(
         "1.3 UserResolver imports (UserResolver, RequestContext, User)", False, str(e)
     )
 
@@ -77,57 +77,57 @@ except Exception as e:
 try:
     from vanna.integrations.local.agent_memory.in_memory import DemoAgentMemory
 
-    test_result("1.4 DemoAgentMemory import", True)
+    _record_result("1.4 DemoAgentMemory import", True)
 except Exception as e:
-    test_result("1.4 DemoAgentMemory import", False, str(e))
+    _record_result("1.4 DemoAgentMemory import", False, str(e))
 
 # Test 1.5: OpenAILlmService import
 try:
     from vanna.integrations.openai import OpenAILlmService
 
-    test_result("1.5 OpenAILlmService import", True)
+    _record_result("1.5 OpenAILlmService import", True)
 except Exception as e:
-    test_result("1.5 OpenAILlmService import", False, str(e))
+    _record_result("1.5 OpenAILlmService import", False, str(e))
 
 # Test 1.6: SqliteRunner import
 try:
     from vanna.integrations.sqlite import SqliteRunner
 
-    test_result("1.6 SqliteRunner import", True)
+    _record_result("1.6 SqliteRunner import", True)
 except Exception as e:
-    test_result("1.6 SqliteRunner import", False, str(e))
+    _record_result("1.6 SqliteRunner import", False, str(e))
 
 # Test 1.7: VannaFastAPIServer import
 try:
     from vanna.servers.fastapi import VannaFastAPIServer
 
-    test_result("1.7 VannaFastAPIServer import", True)
+    _record_result("1.7 VannaFastAPIServer import", True)
 except Exception as e:
-    test_result("1.7 VannaFastAPIServer import", False, str(e))
+    _record_result("1.7 VannaFastAPIServer import", False, str(e))
 
 # Test 1.8: RunSqlTool import
 try:
     from vanna.tools import RunSqlTool
 
-    test_result("1.8 RunSqlTool import", True)
+    _record_result("1.8 RunSqlTool import", True)
 except Exception as e:
-    test_result("1.8 RunSqlTool import", False, str(e))
+    _record_result("1.8 RunSqlTool import", False, str(e))
 
 # Test 1.9: AnthropicLlmService import
 try:
     from vanna.integrations.anthropic import AnthropicLlmService
 
-    test_result("1.9 AnthropicLlmService import", True)
+    _record_result("1.9 AnthropicLlmService import", True)
 except Exception as e:
-    test_result("1.9 AnthropicLlmService import", False, str(e))
+    _record_result("1.9 AnthropicLlmService import", False, str(e))
 
 # Test 1.10: PostgresRunner import
 try:
     from vanna.integrations.postgres import PostgresRunner
 
-    test_result("1.10 PostgresRunner import", True)
+    _record_result("1.10 PostgresRunner import", True)
 except Exception as e:
-    test_result("1.10 PostgresRunner import", False, str(e))
+    _record_result("1.10 PostgresRunner import", False, str(e))
 
 
 # ===========================================================================
@@ -184,14 +184,14 @@ try:
                 break
 
     # The service was constructed successfully, which is the main test
-    test_result(
+    _record_result(
         "2.1 OpenAILlmService accepts base_url and default_headers params",
         True,
         f"Construction successful (base_url detected: {base_url_found}, headers detected: {headers_found})",
     )
 
 except Exception as e:
-    test_result(
+    _record_result(
         "2.1 OpenAILlmService accepts base_url and default_headers params",
         False,
         str(e),
@@ -205,13 +205,13 @@ try:
         model="claude-sonnet-4-5-20250929",
         api_key="test-key-for-construction",
     )
-    test_result(
+    _record_result(
         "2.2 AnthropicLlmService construction",
         True,
         "Constructed with claude-sonnet-4-5-20250929 model",
     )
 except Exception as e:
-    test_result("2.2 AnthropicLlmService construction", False, str(e))
+    _record_result("2.2 AnthropicLlmService construction", False, str(e))
 
 
 # ===========================================================================
@@ -227,20 +227,20 @@ try:
 
     # Check if database file exists (use script-relative path)
     if not os.path.exists(_SQLITE_PATH):
-        test_result(
+        _record_result(
             "3.1 SqliteRunner connection to saudi_stocks.db",
             False,
             f"Database file not found at {_SQLITE_PATH}",
         )
     else:
         sql_runner = SqliteRunner(_SQLITE_PATH)
-        test_result(
+        _record_result(
             "3.1 SqliteRunner connection to saudi_stocks.db",
             True,
             f"Connected to database at {_SQLITE_PATH}",
         )
 except Exception as e:
-    test_result("3.1 SqliteRunner connection to saudi_stocks.db", False, str(e))
+    _record_result("3.1 SqliteRunner connection to saudi_stocks.db", False, str(e))
 
 # Test 3.2: PostgresRunner construction (skipped if PG not available)
 if PG_AVAILABLE:
@@ -254,15 +254,15 @@ if PG_AVAILABLE:
             password=os.environ.get("POSTGRES_PASSWORD", ""),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
         )
-        test_result(
+        _record_result(
             "3.2 PostgresRunner construction",
             True,
             f"Connected to PostgreSQL at {os.environ.get('POSTGRES_HOST')}",
         )
     except Exception as e:
-        test_result("3.2 PostgresRunner construction", False, str(e))
+        _record_result("3.2 PostgresRunner construction", False, str(e))
 else:
-    test_result(
+    _record_result(
         "3.2 PostgresRunner construction",
         True,
         "SKIPPED - PostgreSQL not available (set POSTGRES_HOST)",
@@ -291,11 +291,11 @@ try:
         tools.register_local_tool(
             RunSqlTool(sql_runner=sql_runner), access_groups=["admin", "user"]
         )
-        test_result(
+        _record_result(
             "4.1 ToolRegistry.register_local_tool method exists and works", True
         )
     else:
-        test_result(
+        _record_result(
             "4.1 ToolRegistry.register_local_tool method exists and works",
             False,
             "register_local_tool method not found",
@@ -303,17 +303,17 @@ try:
 
     # Test 4.2: Verify 'register' method does NOT exist (should use register_local_tool)
     if not hasattr(tools, "register"):
-        test_result("4.2 ToolRegistry uses register_local_tool (not register)", True)
+        _record_result("4.2 ToolRegistry uses register_local_tool (not register)", True)
     else:
         # If register exists, it might be an alias or different method
-        test_result(
+        _record_result(
             "4.2 ToolRegistry uses register_local_tool (not register)",
             True,
             "Note: 'register' method also exists but register_local_tool is correct",
         )
 
 except Exception as e:
-    test_result(
+    _record_result(
         "4.1 ToolRegistry.register_local_tool method exists and works", False, str(e)
     )
 
@@ -330,11 +330,11 @@ try:
     tools_with_viz.register_local_tool(
         VisualizeDataTool(), access_groups=["admin", "user"]
     )
-    test_result(
+    _record_result(
         "4.3 ToolRegistry registers both RunSqlTool and VisualizeDataTool", True
     )
 except Exception as e:
-    test_result(
+    _record_result(
         "4.3 ToolRegistry registers both RunSqlTool and VisualizeDataTool",
         False,
         str(e),
@@ -362,9 +362,9 @@ try:
 
     # Verify it's a subclass
     if issubclass(DefaultUserResolver, UserResolver):
-        test_result("5.1 DefaultUserResolver is proper subclass of UserResolver", True)
+        _record_result("5.1 DefaultUserResolver is proper subclass of UserResolver", True)
     else:
-        test_result(
+        _record_result(
             "5.1 DefaultUserResolver is proper subclass of UserResolver",
             False,
             "Not a valid subclass",
@@ -376,24 +376,24 @@ try:
         sig = inspect.signature(resolver.resolve_user)
         params = list(sig.parameters.keys())
         if "request_context" in params:
-            test_result(
+            _record_result(
                 "5.2 DefaultUserResolver.resolve_user has correct signature", True
             )
         else:
-            test_result(
+            _record_result(
                 "5.2 DefaultUserResolver.resolve_user has correct signature",
                 False,
                 f"Expected 'request_context' parameter, found: {params}",
             )
     else:
-        test_result(
+        _record_result(
             "5.2 DefaultUserResolver.resolve_user has correct signature",
             False,
             "resolve_user method not found",
         )
 
 except Exception as e:
-    test_result(
+    _record_result(
         "5.1 DefaultUserResolver is proper subclass of UserResolver", False, str(e)
     )
 
@@ -420,9 +420,9 @@ try:
 
     # Verify it's a subclass
     if issubclass(SaudiStocksSystemPromptBuilder, SystemPromptBuilder):
-        test_result("6.1 SaudiStocksSystemPromptBuilder is proper subclass", True)
+        _record_result("6.1 SaudiStocksSystemPromptBuilder is proper subclass", True)
     else:
-        test_result(
+        _record_result(
             "6.1 SaudiStocksSystemPromptBuilder is proper subclass",
             False,
             "Not a valid subclass",
@@ -434,25 +434,25 @@ try:
         sig = inspect.signature(builder.build_system_prompt)
         params = list(sig.parameters.keys())
         if "user" in params and "tools" in params:
-            test_result(
+            _record_result(
                 "6.2 SaudiStocksSystemPromptBuilder.build_system_prompt has correct signature",
                 True,
             )
         else:
-            test_result(
+            _record_result(
                 "6.2 SaudiStocksSystemPromptBuilder.build_system_prompt has correct signature",
                 False,
                 f"Expected 'user' and 'tools' parameters, found: {params}",
             )
     else:
-        test_result(
+        _record_result(
             "6.2 SaudiStocksSystemPromptBuilder.build_system_prompt has correct signature",
             False,
             "build_system_prompt method not found",
         )
 
 except Exception as e:
-    test_result("6.1 SaudiStocksSystemPromptBuilder is proper subclass", False, str(e))
+    _record_result("6.1 SaudiStocksSystemPromptBuilder is proper subclass", False, str(e))
 
 
 # ===========================================================================
@@ -507,7 +507,7 @@ try:
         config=test_config,
     )
 
-    test_result("7.1 Agent construction with all required parameters", True)
+    _record_result("7.1 Agent construction with all required parameters", True)
 
     # Test 7.2: Verify agent has expected attributes
     if (
@@ -515,19 +515,19 @@ try:
         and hasattr(agent, "tool_registry")
         and hasattr(agent, "config")
     ):
-        test_result(
+        _record_result(
             "7.2 Agent has expected attributes (llm_service, tool_registry, config)",
             True,
         )
     else:
-        test_result(
+        _record_result(
             "7.2 Agent has expected attributes (llm_service, tool_registry, config)",
             False,
             "Missing expected attributes",
         )
 
 except Exception as e:
-    test_result("7.1 Agent construction with all required parameters", False, str(e))
+    _record_result("7.1 Agent construction with all required parameters", False, str(e))
     traceback.print_exc()
 
 # Test 7.3: Agent with AnthropicLlmService (production-like assembly)
@@ -574,10 +574,10 @@ try:
         system_prompt_builder=ProdPromptBuilder(),
         config=AgentConfig(stream_responses=True, max_tool_iterations=10),
     )
-    test_result("7.3 Agent with AnthropicLlmService (production-like)", True)
+    _record_result("7.3 Agent with AnthropicLlmService (production-like)", True)
 
 except Exception as e:
-    test_result("7.3 Agent with AnthropicLlmService (production-like)", False, str(e))
+    _record_result("7.3 Agent with AnthropicLlmService (production-like)", False, str(e))
     traceback.print_exc()
 
 # Test 7.4: Agent assembly with PostgresRunner (skipped if PG not available)
@@ -632,12 +632,12 @@ if PG_AVAILABLE:
             system_prompt_builder=PGPromptBuilder(),
             config=AgentConfig(stream_responses=True, max_tool_iterations=10),
         )
-        test_result("7.4 Agent assembly with PostgresRunner", True)
+        _record_result("7.4 Agent assembly with PostgresRunner", True)
     except Exception as e:
-        test_result("7.4 Agent assembly with PostgresRunner", False, str(e))
+        _record_result("7.4 Agent assembly with PostgresRunner", False, str(e))
         traceback.print_exc()
 else:
-    test_result(
+    _record_result(
         "7.4 Agent assembly with PostgresRunner",
         True,
         "SKIPPED - PostgreSQL not available (set POSTGRES_HOST)",
@@ -658,7 +658,7 @@ try:
     # Use the agent created in previous test
     server = VannaFastAPIServer(agent)
 
-    test_result("8.1 VannaFastAPIServer construction", True)
+    _record_result("8.1 VannaFastAPIServer construction", True)
 
     # Test 8.2: Verify server has app or create_app method
     has_app_direct = hasattr(server, "app")
@@ -673,21 +673,21 @@ try:
     app = None
     if has_app_direct:
         app = server.app
-        test_result(
+        _record_result(
             "8.2 VannaFastAPIServer provides access to FastAPI app",
             True,
             "Via 'app' attribute",
         )
     elif has_create_app:
         app = server.create_app()
-        test_result(
+        _record_result(
             "8.2 VannaFastAPIServer provides access to FastAPI app",
             True,
             "Via 'create_app()' method",
         )
     elif has_get_app:
         app = server.get_app()
-        test_result(
+        _record_result(
             "8.2 VannaFastAPIServer provides access to FastAPI app",
             True,
             "Via 'get_app()' method",
@@ -695,14 +695,14 @@ try:
     else:
         # Check if app is created internally
         server_attrs = [attr for attr in dir(server) if not attr.startswith("_")]
-        test_result(
+        _record_result(
             "8.2 VannaFastAPIServer provides access to FastAPI app",
             False,
             f"No app access method found. Available: {', '.join(server_attrs[:10])}",
         )
 
 except Exception as e:
-    test_result("8.1 VannaFastAPIServer construction", False, str(e))
+    _record_result("8.1 VannaFastAPIServer construction", False, str(e))
     traceback.print_exc()
 
 
@@ -725,20 +725,20 @@ try:
         has_chat_sse = any("/chat" in route for route in routes)
         if has_chat_sse:
             chat_routes = [r for r in routes if "/chat" in r]
-            test_result(
+            _record_result(
                 "9.1 FastAPI app has chat/SSE endpoint", True, f"Routes: {chat_routes}"
             )
         else:
-            test_result(
+            _record_result(
                 "9.1 FastAPI app has chat/SSE endpoint", False, "No chat routes found"
             )
 
         # Check for health check endpoint
         has_health = any("/health" in route for route in routes)
         if has_health:
-            test_result("9.2 FastAPI app has health check endpoint", True)
+            _record_result("9.2 FastAPI app has health check endpoint", True)
         else:
-            test_result(
+            _record_result(
                 "9.2 FastAPI app has health check endpoint",
                 False,
                 "No health route found",
@@ -750,17 +750,17 @@ try:
             print(f"      - {route}")
 
     else:
-        test_result(
+        _record_result(
             "9.1 FastAPI app has chat/SSE endpoint", False, "FastAPI app not accessible"
         )
-        test_result(
+        _record_result(
             "9.2 FastAPI app has health check endpoint",
             False,
             "FastAPI app not accessible",
         )
 
 except Exception as e:
-    test_result("9.1 FastAPI app route inspection", False, str(e))
+    _record_result("9.1 FastAPI app route inspection", False, str(e))
     traceback.print_exc()
 
 
@@ -781,9 +781,9 @@ try:
     )
 
     if hasattr(config, "stream_responses") and config.stream_responses == True:
-        test_result("10.1 AgentConfig has stream_responses=True", True)
+        _record_result("10.1 AgentConfig has stream_responses=True", True)
     else:
-        test_result(
+        _record_result(
             "10.1 AgentConfig has stream_responses=True",
             False,
             f"stream_responses = {getattr(config, 'stream_responses', 'NOT FOUND')}",
@@ -791,16 +791,16 @@ try:
 
     # Test 10.2: AgentConfig has max_tool_iterations=10
     if hasattr(config, "max_tool_iterations") and config.max_tool_iterations == 10:
-        test_result("10.2 AgentConfig has max_tool_iterations=10", True)
+        _record_result("10.2 AgentConfig has max_tool_iterations=10", True)
     else:
-        test_result(
+        _record_result(
             "10.2 AgentConfig has max_tool_iterations=10",
             False,
             f"max_tool_iterations = {getattr(config, 'max_tool_iterations', 'NOT FOUND')}",
         )
 
 except Exception as e:
-    test_result("10.1 AgentConfig configuration", False, str(e))
+    _record_result("10.1 AgentConfig configuration", False, str(e))
 
 
 # ===========================================================================
@@ -814,34 +814,34 @@ print("=" * 70 + "\n")
 try:
     backend = os.environ.get("DB_BACKEND", "sqlite").lower()
     if backend in ("sqlite", "postgres"):
-        test_result("11.1 DB_BACKEND env var is valid", True, f"DB_BACKEND={backend}")
+        _record_result("11.1 DB_BACKEND env var is valid", True, f"DB_BACKEND={backend}")
     else:
-        test_result(
+        _record_result(
             "11.1 DB_BACKEND env var is valid",
             False,
             f"Unexpected DB_BACKEND={backend}, expected 'sqlite' or 'postgres'",
         )
 except Exception as e:
-    test_result("11.1 DB_BACKEND env var is valid", False, str(e))
+    _record_result("11.1 DB_BACKEND env var is valid", False, str(e))
 
 # Test 11.2: PostgreSQL env vars present when PG backend active
 if os.environ.get("DB_BACKEND", "sqlite").lower() == "postgres":
     pg_vars = ["POSTGRES_HOST", "POSTGRES_DB", "POSTGRES_USER"]
     missing = [v for v in pg_vars if not os.environ.get(v)]
     if not missing:
-        test_result(
+        _record_result(
             "11.2 PostgreSQL env vars present for PG backend",
             True,
             f"POSTGRES_HOST={os.environ.get('POSTGRES_HOST')}",
         )
     else:
-        test_result(
+        _record_result(
             "11.2 PostgreSQL env vars present for PG backend",
             False,
             f"Missing: {missing}",
         )
 else:
-    test_result(
+    _record_result(
         "11.2 PostgreSQL env vars present for PG backend",
         True,
         "SKIPPED - DB_BACKEND=sqlite (PG env vars not required)",
