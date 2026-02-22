@@ -150,7 +150,7 @@ test.describe('Price Alerts Page', () => {
     await page.locator('button').filter({ hasText: /Create Alert|إنشاء التنبيه/ }).click();
 
     await expect(page.getByText(/All Alerts|جميع التنبيهات/)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText('2222')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText('2222').first()).toBeVisible({ timeout: 5_000 });
   });
 
   test('newly created alert shows ACTIVE status badge', async ({ page }) => {
@@ -162,7 +162,7 @@ test.describe('Price Alerts Page', () => {
     await page.locator('input[type="number"]').first().fill('35.00');
     await page.locator('button').filter({ hasText: /Create Alert|إنشاء التنبيه/ }).click();
 
-    await expect(page.getByText(/^ACTIVE$|^نشط$/)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/^ACTIVE$|^نشط$/).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('alert can be paused using the pause button', async ({ page }) => {
@@ -174,13 +174,13 @@ test.describe('Price Alerts Page', () => {
     await page.locator('input[type="number"]').first().fill('35.00');
     await page.locator('button').filter({ hasText: /Create Alert|إنشاء التنبيه/ }).click();
 
-    await expect(page.getByText(/^ACTIVE$|^نشط$/)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/^ACTIVE$|^نشط$/).first()).toBeVisible({ timeout: 10_000 });
 
     const pauseBtn = page.locator('button[title*="Pause"], button[title*="إيقاف"]').first();
     await expect(pauseBtn).toBeVisible({ timeout: 5_000 });
     await pauseBtn.click();
 
-    await expect(page.getByText(/^PAUSED$|^متوقف$/)).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(/^PAUSED$|^متوقف$/).first()).toBeVisible({ timeout: 5_000 });
   });
 
   test('alert can be removed with the delete button', async ({ page }) => {

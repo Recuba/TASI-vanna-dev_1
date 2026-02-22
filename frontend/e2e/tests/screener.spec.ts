@@ -37,6 +37,9 @@ async function mockScreenerApis(page: Page) {
   await page.route('**/api/v1/market/sectors**', (route: Route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_SECTORS) }),
   );
+  await page.route('**/api/entities/sectors**', (route: Route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_SECTORS) }),
+  );
   await page.route('**/health**', (route: Route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'healthy' }) }),
   );
@@ -58,8 +61,8 @@ async function gotoScreener(page: Page) {
   // Wait for the page-level h1 (not the header logo)
   const heading = page.locator('h1').filter({ hasText: /Stock Screener|فرز الأسهم/ });
   await expect(heading).toBeVisible({ timeout: 30_000 });
-  // Also wait for screener data to finish loading
-  await expect(page.getByText('Saudi Aramco')).toBeVisible({ timeout: 20_000 });
+  // Also wait for screener data to finish loading (strict: use first match to avoid duplicates)
+  await expect(page.getByText('Saudi Aramco').first()).toBeVisible({ timeout: 20_000 });
 }
 
 // ---------------------------------------------------------------------------
@@ -134,7 +137,7 @@ test.describe('Stock Screener Page', () => {
   test('results table renders rows from mock data', async ({ page }) => {
     await gotoScreener(page);
 
-    await expect(page.getByText('Al Rajhi Bank')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText('Al Rajhi Bank').first()).toBeVisible({ timeout: 5_000 });
   });
 
   test('Export CSV button is visible when results are loaded', async ({ page }) => {
