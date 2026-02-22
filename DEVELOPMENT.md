@@ -189,7 +189,7 @@ All scraper settings are centralized in `config/settings.py` under `ScraperSetti
 | `SCRAPER_INTER_REQUEST_DELAY` | `1.5` | Delay between requests (rate limiting) |
 | `SCRAPER_MAX_ARTICLES_PER_SOURCE` | `10` | Max articles per source per cycle |
 | `SCRAPER_MAX_FULL_ARTICLE_FETCHES` | `5` | Max full-body fetches per source |
-| `SCRAPER_FETCH_INTERVAL_SECONDS` | `1800` | Scheduler interval (30 min default) |
+| `SCRAPER_FETCH_INTERVAL_SECONDS` | `300` | Scheduler interval (5 min default) |
 | `SCRAPER_CLEANUP_AGE_DAYS` | `7` | Auto-delete articles older than N days |
 | `SCRAPER_DEDUP_THRESHOLD` | `0.55` | Title similarity threshold for dedup |
 
@@ -277,6 +277,10 @@ Domain modules:
 | `api/widgets.ts` | `getWidgetQuotes` |
 | `api/reports.ts` | `getReports`, `getReport` |
 | `api/announcements.ts` | `getAnnouncements` |
+| `api/entities.ts` | `searchEntities`, `Entity` type |
+| `api/screener.ts` | `searchScreener`, `ScreenerFilters`, `ScreenerResult` types |
+| `api/alerts.ts` | `AlertItem`, `AlertCreate` types |
+| `api/market-movers.ts` | `getMarketMovers`, `MarketMover` type |
 
 ### Auth System
 
@@ -293,13 +297,18 @@ Auth service (`services/auth_service.py`) was updated to support:
 
 ### Stock Detail Page
 
-The stock detail page (`frontend/src/app/stocks/[ticker]/page.tsx`) now includes:
+The stock detail page (`frontend/src/app/stock/[ticker]/StockDetailClient.tsx`) includes:
 
-- **Financials tab**: Balance sheet, income statement, and cash flow in tabbed panels
+- **TradingView Advanced Chart**: Primary chart with TADAWUL symbol mapping, dark theme, Riyadh timezone. Falls back to CandlestickChart on load failure.
+- **Financials tab**: Balance sheet, income statement, and cash flow with multi-year trend charts (`FinancialTrendChart`)
 - **Dividends tab**: Historical dividend table with yield trend sparkline
+- **Peers tab**: Top 10 same-sector companies compared by P/E, P/B, ROE, dividend yield, market cap
+- **Ownership tab**: Donut chart showing insider/institution/float breakdown
+- **Estimates tab**: Analyst target price trend (high/low/mean area chart)
 - **Reports section**: Related analyst reports linked to the ticker
 - **News feed**: Latest news articles filtered by ticker/company name
 - **Watchlist toggle**: Add/remove from watchlist with toast notification
+- **Alert button**: Bell icon to create price alerts for the stock via `AlertModal`
 
 ## Frontend Patterns
 
@@ -701,7 +710,7 @@ New backend test files added in the quality sprint:
 
 ### Frontend Tests (Vitest)
 
-Frontend tests live under `frontend/src/__tests__/`. Run with `npx vitest run` from the `frontend/` directory. 231 tests across 20 files.
+Frontend tests live under `frontend/src/__tests__/`. Run with `npx vitest run` from the `frontend/` directory. 231 tests across 20 test files.
 
 New frontend test files added in the quality sprint:
 
@@ -741,3 +750,67 @@ python -m pytest tests/security/ -q
 # Performance tests only
 python -m pytest tests/performance/ -q
 ```
+
+## Stock Screener
+
+The screener (`frontend/src/app/screener/page.tsx`) provides multi-criteria stock filtering with these features:
+
+- **Filter panel**: Range sliders for P/E, P/B, ROE, dividend yield, market cap; sector multi-select; analyst recommendation chips
+- **Preset filters**: Value (low P/E + P/B), Growth (high ROE + revenue growth), Dividend (high yield + low payout), Low Debt (low D/E + high current ratio)
+- **Results table**: Sortable columns with pagination, mobile card view
+- **CSV export**: Download filtered results as CSV
+
+Backend endpoint `POST /api/v1/screener/search` builds parameterized WHERE clauses from filter criteria. All parameters are bound (no SQL injection risk).
+
+## Financial Calendar
+
+The calendar page (`frontend/src/app/calendar/page.tsx`) shows financial events:
+
+- **Monthly grid view**: Calendar grid with event dots color-coded by type (earnings = blue, dividends = green)
+- **List view toggle**: Switch between grid and chronological list
+- **Event type filters**: Chips to filter by earnings dates, dividend ex-dates
+- **Month navigation**: Previous/next month buttons with current month display
+
+Backend endpoint `GET /api/v1/calendar/events?month=&year=&type=` extracts dates from `dividend_data.ex_dividend_date` and `income_statement.period_date`.
+
+## Portfolio Tracker
+
+The portfolio page (`frontend/src/app/portfolio/page.tsx`) provides client-side portfolio management:
+
+- **localStorage storage**: Uses the same `useSyncExternalStore` pattern as watchlist and alerts (key: `rad-ai-portfolio-transactions`)
+- **Holdings calculation**: Aggregates buy/sell transactions per ticker, calculates cost basis (buys add cost, sells proportionally reduce avg cost)
+- **Live prices**: `useBatchQuotes()` hook provides 30-second auto-refreshing prices for all held tickers
+- **Summary cards**: Total portfolio value, total cost, unrealized P&L (with percentage), day change
+- **Allocation pie chart**: Recharts `<PieChart>` with donut layout showing portfolio weights per ticker
+- **Transaction history**: Expandable per-ticker transaction list with delete capability
+
+### Adding a Transaction
+
+The `AddTransactionModal` component accepts: type (buy/sell), ticker, quantity, price per share, fees, date, and notes. Transactions are stored as an array in localStorage.
+
+## Price Alerts
+
+The alerts system uses localStorage for client-side alert management with live price evaluation:
+
+### Architecture
+
+```
+localStorage (rad-ai-price-alerts)
+  └── useAlerts() hook
+        ├── useBatchQuotes() for live prices (30s refresh)
+        ├── Price evaluation (price_above / price_below)
+        ├── Triggered tracking (rad-ai-triggered-alerts)
+        └── AlertBell component (header badge + dropdown)
+```
+
+### Components
+
+| Component | Location | Purpose |
+|---|---|---|
+| `AlertBell` | `frontend/src/components/alerts/AlertBell.tsx` | Header bell icon with unread count badge, dropdown with triggered alerts |
+| `AlertModal` | `frontend/src/components/alerts/AlertModal.tsx` | Create alert form (ticker, condition, threshold) |
+| Alerts page | `frontend/src/app/alerts/page.tsx` | Full alerts management: triggered section, all alerts table, toggle/delete |
+
+### Backend Stubs
+
+The backend `api/routes/alerts.py` provides CRUD endpoints that require JWT authentication. In SQLite mode, all endpoints return HTTP 501 (Not Implemented). The frontend handles all alert logic client-side via localStorage. Future PostgreSQL integration will use the `user_alerts` table already defined in `database/schema.sql`.

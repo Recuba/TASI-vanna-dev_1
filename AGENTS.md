@@ -24,7 +24,7 @@ These are non-negotiable prerequisites. Do not skip them, even for "small" chang
 - **Database:** SQLite (dev) / PostgreSQL 16 (prod), controlled by `DB_BACKEND` env var
 - **Configuration:** `pydantic-settings` (`config/settings.py`)
 - **Frontend (legacy):** Single-page HTML (`templates/index.html`) using `<vanna-chat>` web component
-- **Frontend (production):** Next.js 14 + TypeScript + Tailwind CSS (`frontend/`) — 15 pages, RTL Arabic, SSE news feed
+- **Frontend (production):** Next.js 14 + TypeScript + Tailwind CSS (`frontend/`) — 20 pages, RTL Arabic, SSE news feed
 - **Server:** Uvicorn on port 8084
 - **Container:** Docker Compose (PostgreSQL + app + optional pgAdmin)
 - **Data Pipeline:** pandas + numpy for CSV normalization
@@ -62,7 +62,7 @@ Do NOT modify files owned by other agents unless coordinating with them.
 ├── services/
 │   ├── health_service.py           # Health checks (DB, LLM)
 │   ├── news_store.py               # SQLite news storage (sync + async)
-│   ├── news_scraper.py             # 5-source Arabic news scraper
+│   ├── news_scraper.py             # 9-source Arabic news scraper (5-min interval)
 │   ├── news_scheduler.py           # Background news fetch scheduler
 │   ├── news_service.py             # News CRUD (PostgreSQL only)
 │   ├── reports_service.py          # Technical reports CRUD
@@ -83,6 +83,12 @@ Do NOT modify files owned by other agents unless coordinating with them.
 │   │   └── widgets.py              # QuoteItem Pydantic model
 │   ├── routes/                     # FastAPI async route handlers
 │   │   ├── widgets_stream.py       # /api/v1/widgets/stream (SSE)
+│   │   ├── market_breadth.py       # /api/v1/market/breadth
+│   │   ├── market_movers.py        # /api/v1/market/movers
+│   │   ├── stock_peers.py          # /api/v1/stocks/{ticker}/peers
+│   │   ├── screener.py             # POST /api/v1/screener/search
+│   │   ├── calendar.py             # /api/v1/calendar/events
+│   │   ├── alerts.py               # /api/v1/alerts (CRUD, JWT-only)
 │   │   └── ...
 │   └── db_helper.py                # Async DB wrappers
 ├── frontend/                       # Next.js 14 app (production)
@@ -95,12 +101,18 @@ Do NOT modify files owned by other agents unless coordinating with them.
 │   │   │   └── common/
 │   │   │       └── ConnectionStatusBadge.tsx  # Live/offline indicator
 │   │   └── app/
+│   │       ├── (home)/             # Homepage components (heatmap, movers, news, breadth)
 │   │       ├── news/               # News module (decomposed)
 │   │       │   ├── components/     # ArticleCard, FilterBar, etc.
 │   │       │   ├── hooks/          # useNewsFilters
 │   │       │   └── utils.ts        # Shared constants & helpers
-│   │       ├── */loading.tsx       # Route loading states (news, market, charts, chat)
-│   │       └── */error.tsx         # Route error boundaries (news, market, charts, chat)
+│   │       ├── screener/           # Stock screener (filters, presets, CSV export)
+│   │       ├── calendar/           # Financial calendar (grid/list, month nav)
+│   │       ├── portfolio/          # Portfolio tracker (localStorage, pie chart)
+│   │       ├── alerts/             # Price alerts management
+│   │       ├── stock/[ticker]/components/  # Peers, Ownership, Estimates, FinancialTrend
+│   │       ├── */loading.tsx       # Route loading states (all pages)
+│   │       └── */error.tsx         # Route error boundaries (all pages)
 ├── middleware/
 │   ├── chat_auth.py                # ChatAuthMiddleware (JWT on chat endpoints, PG only)
 │   ├── request_context.py          # ContextVar request ID + RequestIdFilter
@@ -188,8 +200,8 @@ python database/csv_to_postgres.py            # CSV -> PostgreSQL directly
 
 ```bash
 python -m pytest tests/ -q                    # 1571+ backend tests
-cd frontend && npx vitest run                 # 231 frontend tests
-cd frontend && npx next build                 # 15-page build verification
+cd frontend && npx vitest run                 # 231 frontend tests (20 test files)
+cd frontend && npx next build                 # 20-page build verification
 ```
 
 All tests must pass before merging changes.

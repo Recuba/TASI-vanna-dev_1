@@ -47,7 +47,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── __init__.py
 │   ├── health_service.py           # Health checks (DB connectivity, LLM status)
 │   ├── news_store.py               # SQLite news storage (sync + async wrappers)
-│   ├── news_scraper.py             # 5-source Arabic news scraper
+│   ├── news_scraper.py             # 9-source Arabic news scraper (5-min interval)
 │   ├── news_scheduler.py           # Background news fetch scheduler
 │   ├── news_paraphraser.py         # Arabic synonym substitution
 │   ├── news_service.py             # News CRUD (PostgreSQL only)
@@ -78,7 +78,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── charts_analytics.py     # Chart data endpoints
 │   │   ├── market_analytics.py     # Market analytics endpoints
 │   │   ├── stock_data.py           # Stock data endpoints
+│   │   ├── stock_peers.py          # /api/v1/stocks/{ticker}/peers
 │   │   ├── sqlite_entities.py      # Entity search (SQLite)
+│   │   ├── market_breadth.py       # /api/v1/market/breadth
+│   │   ├── market_movers.py        # /api/v1/market/movers
+│   │   ├── screener.py             # POST /api/v1/screener/search
+│   │   ├── calendar.py             # /api/v1/calendar/events
+│   │   ├── alerts.py               # /api/v1/alerts (CRUD, JWT-only)
 │   │   └── ...                     # auth, health, reports, announcements
 │   └── db_helper.py                # Async DB query wrappers (asyncio.to_thread)
 ├── frontend/                       # Next.js 14 app (production)
@@ -97,20 +103,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   │   │   │   ├── SkeletonCard.tsx
 │   │   │   │   │   └── index.ts
 │   │   │   │   └── [id]/page.tsx   # Article detail page
+│   │   │   ├── (home)/             # Homepage components (heatmap, movers, news, breadth)
 │   │   │   ├── charts/             # TradingView + TASI charts
 │   │   │   ├── market/             # Market overview
 │   │   │   ├── chat/               # AI chat interface
+│   │   │   ├── screener/           # Stock screener (filters, presets, CSV export)
+│   │   │   ├── calendar/           # Financial calendar (grid/list, month nav)
+│   │   │   ├── portfolio/          # Portfolio tracker (localStorage, pie chart)
+│   │   │   ├── alerts/             # Price alerts management
+│   │   │   ├── stock/[ticker]/components/  # Peers, Ownership, Estimates, FinancialTrend
 │   │   │   └── ...                 # admin, login, reports, etc.
 │   │   ├── components/             # Shared components
 │   │   │   ├── layout/             # Header, Footer, Sidebar
 │   │   │   ├── charts/             # Chart wrappers
 │   │   │   ├── chat/               # AI chat components
 │   │   │   ├── widgets/            # LiveMarketWidgets (SSE market ticker)
-│   │   │   └── common/             # Command palette, ConnectionStatusBadge, etc.
+│   │   │   ├── alerts/             # AlertBell, AlertModal components
+│   │   │   └── common/             # Command palette, ConnectionStatusBadge, BackToTop
 │   │   ├── lib/
-│   │   │   ├── api-client.ts       # API functions with AbortController
+│   │   │   ├── api/                # Domain-scoped API modules (stocks, news, screener, alerts, etc.)
+│   │   │   ├── api-client.ts       # Backward-compatible shim re-exporting from api/
 │   │   │   ├── config.ts           # Runtime config (env-driven)
-│   │   │   ├── hooks/use-api.ts    # Data fetching hooks
+│   │   │   ├── hooks/              # use-api, use-alerts, use-portfolio, use-keyboard-nav
 │   │   │   └── utils.ts            # Utility functions
 │   │   ├── providers/              # ThemeProvider, LanguageProvider
 │   │   └── styles/design-system.ts # Gold/dark design tokens
@@ -161,7 +175,7 @@ python -m pytest tests/ -q
 # Run frontend tests (231 tests)
 cd frontend && npx vitest run
 
-# Frontend production build (15 pages)
+# Frontend production build (20 pages)
 cd frontend && npx next build
 
 # Rebuild SQLite database from CSV
@@ -217,7 +231,7 @@ The `VannaFastAPIServer.create_app()` creates the FastAPI app. Vanna's default "
 
 **SQLite services** (work with both backends):
 - `news_store.py` - SQLite news storage with sync methods + async wrappers (`aget_*` via `asyncio.to_thread`). The sync methods are deprecated in favor of their async counterparts for use in FastAPI handlers.
-- `news_scraper.py` - Scrapes 5 Arabic news sources (config-driven via `ScraperSettings`)
+- `news_scraper.py` - Scrapes 9 Arabic news sources with 5-minute interval (config-driven via `ScraperSettings`)
 - `news_scheduler.py` - Background daemon thread for periodic news fetching
 - `news_paraphraser.py` - Arabic synonym substitution for content diversity
 - `db_compat.py` - SQLite/PostgreSQL abstraction layer
@@ -239,16 +253,22 @@ All route handlers are `async def`. Synchronous database calls (sqlite3, psycopg
 
 ### Frontend
 - **Legacy** (`templates/index.html`): Custom Ra'd AI design with gold palette (#D4A84B), dark background (#0E0E0E), Tajawal font. Embeds `<vanna-chat>` web component loaded as ES module from CDN.
-- **Production** (`frontend/`): Next.js 14 app with TypeScript, Tailwind CSS, gold/dark design system. 15 pages. Features include:
+- **Production** (`frontend/`): Next.js 14 app with TypeScript, Tailwind CSS, gold/dark design system. 20 pages. Features include:
   - Full Arabic RTL support via Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`) with lint enforcement (`npm run lint:rtl`)
-  - Real-time news feed via SSE (`/api/v1/news/stream`)
+  - Real-time news feed via SSE (`/api/v1/news/stream`) with 10-second poll interval
   - Live market widgets via SSE (`/api/v1/widgets/stream`) with reconnection backoff
+  - Information-dense homepage: TASI ticker bar, sector heatmap (Recharts Treemap), market movers, mini news feed, market breadth bar
+  - Stock screener: multi-filter search (P/E, P/B, ROE, yield, market cap, sector), sortable results, preset filters (Value/Growth/Dividend/Low Debt), CSV export
+  - Financial calendar: monthly grid/list views for dividend ex-dates and earnings dates with event type filters
+  - Portfolio tracker: localStorage-based holdings table, allocation pie chart, P&L tracking, live batch quotes, transaction history
+  - Price alerts: localStorage-based alerts with price-above/below conditions, AlertBell in header with triggered-alert badge
+  - Enriched stock detail: TradingView Advanced Chart, financials with trend charts, dividends, peers comparison, ownership breakdown, analyst estimates
   - Navigation progress bar (NextTopLoader, gold #D4A84B)
   - Connection status badge (live/reconnecting/offline)
   - AbortController on all fetch calls (race-condition-safe), including header health polling
   - Virtual scrolling for large lists
   - Mobile-responsive card view for market data tables
-  - Route-level `loading.tsx` and `error.tsx` for news, market, charts, and chat
+  - Route-level `loading.tsx` and `error.tsx` for all pages
   - localStorage quota resilience in chat hook
   - Env-driven runtime config (`frontend/src/lib/config.ts`)
 
@@ -314,3 +334,8 @@ The hub is started as a background task during FastAPI lifespan and its route is
 - Prometheus metrics are exposed at `/metrics` when `prometheus-fastapi-instrumentator` is installed. The app starts normally without it (graceful `ImportError` fallback).
 - `RequestIdFilter` is installed with a duplicate guard: `if not any(isinstance(f, RequestIdFilter) for f in root_logger.filters)`. Do not remove this guard or metrics and hot-reload will double-install it.
 - `requirements.lock` is verified in CI via `pip-compile`. If you add a dependency to `requirements.in`, regenerate with: `pip-compile requirements.in -o requirements.lock --no-annotate --strip-extras`
+- Portfolio, alerts, and watchlist all use the same localStorage + `useSyncExternalStore` pattern with `rad-ai-*` key prefix. The external store pattern (`subscribe`, `emitChange`, `getSnapshot`, `getServerSnapshot`) enables cross-component reactivity.
+- The alerts backend endpoint (`api/routes/alerts.py`) returns 501 in SQLite mode. All alert functionality is handled client-side via localStorage. The backend endpoints are JWT-required stubs for future PostgreSQL integration.
+- The screener endpoint (`POST /api/v1/screener/search`) uses parameterized WHERE clauses. All filter parameters are bound, not interpolated.
+- The market movers endpoint caches results for 60 seconds. The homepage heatmap and movers widget share the same `/api/v1/market/movers` endpoint.
+- The stock detail page uses `TradingViewWidget` with `TADAWUL:` symbol prefix (stripping `.SR` suffix). Falls back to `CandlestickChart` on TradingView load failure.

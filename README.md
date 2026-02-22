@@ -14,7 +14,7 @@ Built on [Vanna 2.0](https://vanna.ai/) with Google Gemini, supporting dual SQLi
 - Financial statements (balance sheet, income statement, cash flow) with multi-period history
 - Market data, valuation metrics, analyst consensus, dividends
 - **Live Market Widgets**: Real-time crypto, metals, oil, and global indices via SSE with auto-reconnection
-- Real-time news feed with Server-Sent Events (SSE) from 5 Arabic sources
+- Real-time news feed with Server-Sent Events (SSE) from 9 Arabic sources (5-minute scraper interval, 10-second SSE poll)
 - **Connection status indicators**: Live/reconnecting/offline badge on SSE streams
 - Full Arabic RTL support with Tailwind CSS logical properties and lint enforcement
 - **Navigation progress bar**: Gold-themed top-loading indicator for page transitions
@@ -34,7 +34,12 @@ Built on [Vanna 2.0](https://vanna.ai/) with Google Gemini, supporting dual SQLi
 - **Component decomposition**: Charts and Markets pages split into focused subcomponents for maintainability
 - **Modular API client**: Domain-scoped API modules under `lib/api/` with backward-compatible shim
 - **Auth enhancements**: Token refresh, guest login, profile enrichment
-- **Enriched stock detail**: Financials, dividends, reports, news, and watchlist in one page
+- **Enriched stock detail**: TradingView Advanced Chart, financials with trend charts, dividends, peers comparison, ownership breakdown, analyst estimates, reports, news, and watchlist — all in one page
+- **Stock Screener**: Multi-filter search (P/E, P/B, ROE, yield, market cap, sector, etc.) with sortable results, preset filters (Value/Growth/Dividend/Low Debt), and CSV export
+- **Financial Calendar**: Monthly grid/list views for dividend ex-dates and earnings dates with event type filters
+- **Portfolio Tracker**: localStorage-based portfolio with holdings table, allocation pie chart, P&L tracking, live batch quotes, and transaction history
+- **Price Alerts**: localStorage-based alerts with price-above/below conditions, AlertBell in header with triggered-alert badge, automatic 30-second price checking
+- **Information-dense homepage**: TASI ticker bar, sector heatmap (Recharts Treemap), market movers widget, mini news feed, market breadth bar
 - **Prometheus metrics**: `/metrics` endpoint via `prometheus-fastapi-instrumentator` (graceful fallback if not installed)
 - **Pool stats**: Connection pool size (SQLite or PostgreSQL) reported in `/health` response
 - **Structured request tracing**: `ContextVar`-based request ID injected into all log records within a request
@@ -187,7 +192,7 @@ All settings via environment variables. See `.env.example` for the complete refe
 
 ## Testing
 
-1571+ backend tests (unit, integration, security, performance) and 231 frontend Vitest tests plus Playwright E2E specs.
+1571+ backend tests (unit, integration, security, performance) and 231 frontend Vitest tests (20 test files) plus Playwright E2E specs.
 
 ```bash
 # Backend tests (all)
@@ -202,7 +207,7 @@ cd frontend && npx vitest run
 # Frontend E2E tests (Playwright)
 cd frontend && npx playwright test
 
-# Frontend build verification (15 pages)
+# Frontend build verification (20 pages)
 cd frontend && npx next build
 
 # RTL lint check (catch physical direction classes)

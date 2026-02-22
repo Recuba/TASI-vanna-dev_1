@@ -4,6 +4,65 @@ All notable changes to the Ra'd AI TASI Platform are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] - 2026-02-22
+
+### Added (Argaam-Level Upgrade — 5 Phases, 26 tasks)
+
+**Phase 1 — Information-Dense Homepage + News Upgrade**
+- News scraper expanded from 5 to 9 Arabic sources (Tadawul RSS, CMA, Saudi Gazette, CNBC Arabia via Google News RSS proxy)
+- Scraper interval reduced from 30 minutes to 5 minutes (`ScraperSettings.fetch_interval_seconds` 1800→300)
+- SSE news poll interval reduced from 30 seconds to 10 seconds for near-real-time delivery
+- Market breadth endpoint (`GET /api/v1/market/breadth`): advancing, declining, unchanged counts with advance/decline ratio
+- Market movers endpoint (`GET /api/v1/market/movers`): top gainers, losers, and most active stocks with 60-second cache
+- Homepage rebuilt as information-dense dashboard: TASI ticker bar, sector heatmap (Recharts Treemap), market movers widget, mini news feed, market breadth bar
+- 5 new homepage components in `frontend/src/app/(home)/components/`: `TASITickerBar`, `SectorHeatmap`, `MiniNewsFeed`, `MarketBreadthBar`, `MarketMoversWidget`
+- `LazySparkline` component (`frontend/src/components/charts/`) for lightweight inline sparkline charts
+- `BackToTop` component (`frontend/src/components/common/`) for scroll-to-top button
+
+**Phase 2 — Stock Detail Page Upgrade**
+- Stock peers endpoint (`GET /api/v1/stocks/{ticker}/peers`): top 10 same-sector companies with P/E, P/B, ROE, dividend yield, market cap comparison
+- Stock detail page enriched with TradingView Advanced Chart (TADAWUL symbols, dark theme, Riyadh timezone) replacing CandlestickChart
+- New stock detail tabs: Peers comparison table, Ownership donut chart, Analyst estimates with target price trend
+- Financial trend charts (`FinancialTrendChart` component): multi-year line charts for revenue, net income, EPS
+- 4 new stock detail components: `StockPeersTab`, `StockOwnershipTab`, `StockEstimatesTab`, `FinancialTrendChart`
+
+**Phase 3 — Stock Screener**
+- Screener endpoint (`POST /api/v1/screener/search`): dynamic parameterized SQL filters for P/E, P/B, ROE, dividend yield, market cap, sector, recommendation, revenue growth, debt-to-equity, current ratio
+- Screener page with filter panel (range sliders, sector multi-select, recommendation chips), sortable results table, pagination, mobile card view
+- Preset filters: Value, Growth, Dividend, Low Debt
+- CSV export for screener results
+- `frontend/src/lib/api/screener.ts` API module and `FilterPanel`, `ScreenerResults` components
+
+**Phase 4 — Financial Calendar + Portfolio Tracker**
+- Calendar endpoint (`GET /api/v1/calendar/events`): dividend ex-dates and earnings dates extracted from `dividend_data` and `income_statement` tables
+- Calendar page with monthly grid view, list view toggle, event type filter chips (earnings, dividends)
+- Portfolio tracker page with localStorage-based holdings management using `useSyncExternalStore` pattern
+- Portfolio features: summary cards (total value, cost, P&L, day change), holdings table, allocation pie chart (Recharts PieChart), transaction history
+- `AddTransactionModal` component for buy/sell transaction entry
+- `use-portfolio.ts` hook with cost-basis calculation (buy adds cost, sell proportionally reduces)
+- Live batch price quotes via `useBatchQuotes()` with 30-second auto-refresh
+- Calendar and Portfolio added to sidebar and header navigation
+
+**Phase 5 — Real-Time Price Alerts**
+- Alerts CRUD endpoint (`/api/v1/alerts`): GET, POST, PUT, DELETE with JWT authentication (returns 501 for SQLite mode)
+- Alerts page with triggered alerts section, active alerts table, per-alert toggle/delete actions
+- `AlertBell` component in header: bell icon with unread count badge, dropdown with triggered alerts list
+- `AlertModal` component: create alert form with ticker, price_above/price_below toggle, threshold input
+- `use-alerts.ts` hook: localStorage-based alert management with `useSyncExternalStore`, price evaluation against live batch quotes
+- Alert bell integrated into stock detail page for per-stock alert creation
+- Frontend alert types (`AlertItem`, `AlertCreate`) in `frontend/src/lib/api/alerts.ts`
+- `frontend/src/lib/api/entities.ts` updated with entity search functions and `Entity` type
+- `frontend/src/lib/api/market-movers.ts` API module for market movers data
+
+### Changed
+- Frontend page count increased from 15 to 20 (added screener, calendar, portfolio, alerts, redesigned homepage)
+- Stock detail page: TradingView Advanced Chart replaces CandlestickChart as primary chart (CandlestickChart kept as fallback)
+- Homepage completely rebuilt from hero/about/CTA layout to information-dense dashboard with 5 widget panels
+- News scraper expanded from 5 to 9 sources with market-impact scoring
+- Sidebar navigation expanded with Calendar, Portfolio, and Alerts entries
+
+---
+
 ## [Unreleased] - 2026-02-20
 
 ### Added (S1–S4 Remediation Sprint — 25 tasks)
