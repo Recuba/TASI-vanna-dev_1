@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 import { useMarketMovers } from '@/lib/hooks/use-api';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { LoadingSpinner } from '@/components/common/loading-spinner';

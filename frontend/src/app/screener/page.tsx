@@ -2,10 +2,8 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useSectors, useScreener } from '@/lib/hooks/use-api';
-import { LoadingSpinner } from '@/components/common/loading-spinner';
 import type { ScreenerFilters, ScreenerItem } from '@/lib/api/screener';
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import { useMarketBreadth } from '@/lib/hooks/use-api';
 import { useLanguage } from '@/providers/LanguageProvider';
 

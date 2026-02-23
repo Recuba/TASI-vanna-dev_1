@@ -2,10 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useCalendarEvents } from '@/lib/hooks/use-api';
-import { LoadingSpinner } from '@/components/common/loading-spinner';
 import type { CalendarEvent } from '@/lib/api/calendar';
 
 // ---------------------------------------------------------------------------

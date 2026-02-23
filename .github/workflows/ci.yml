@@ -17,10 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.10"
 
       - name: Install ruff
         run: pip install ruff
@@ -37,9 +37,11 @@ jobs:
       - name: Verify lock file is up to date
         run: |
           pip-compile requirements.in -o /tmp/requirements.lock.check --no-annotate --strip-extras --quiet
-          if ! diff -q requirements.lock /tmp/requirements.lock.check > /dev/null 2>&1; then
-            echo "requirements.lock is stale. Run: pip-compile requirements.in -o requirements.lock"
-            diff requirements.lock /tmp/requirements.lock.check | head -30
+          # Strip comments and platform-specific packages (colorama=Windows, uvloop=Linux)
+          normalize() { grep -v '^#' "$1" | grep -v '^colorama==' | grep -v '^uvloop=='; }
+          if ! diff -q <(normalize requirements.lock) <(normalize /tmp/requirements.lock.check) > /dev/null 2>&1; then
+            echo "requirements.lock is stale. Run: pip-compile requirements.in -o requirements.lock --upgrade"
+            diff <(normalize requirements.lock) <(normalize /tmp/requirements.lock.check) | head -30
             exit 1
           fi
           echo "requirements.lock is up to date"

@@ -613,7 +613,7 @@ function TopMoversPanel({ items, filter, onFilterChange, isRtl }: TopMoversPanel
    ═══════════════════════════════════════════════════════════════ */
 
 export default function HeatmapPage() {
-  const { t, isRTL: isRtl } = useLanguage();
+  const { isRTL: isRtl } = useLanguage();
   const { data: heatmapData, loading: hmLoading, error: hmError, refetch: hmRefetch } = useMarketHeatmap();
   const { data: sectorData } = useSectorPerformance();
   const { data: breadthData } = useMarketBreadth();
