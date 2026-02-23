@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useSectors, useScreener } from '@/lib/hooks/use-api';
 import type { ScreenerFilters, ScreenerItem } from '@/lib/api/screener';
+import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
 // Design tokens
