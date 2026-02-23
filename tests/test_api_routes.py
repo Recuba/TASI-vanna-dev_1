@@ -354,7 +354,14 @@ class TestAPIRoutesWithTestClient(unittest.TestCase):
         from fastapi.testclient import TestClient
         from app import app
 
-        cls.client = TestClient(app)
+        # Use context manager to trigger FastAPI lifespan (init_pg_pool, etc.)
+        client = TestClient(app)
+        client.__enter__()
+        cls.client = client
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.client.__exit__(None, None, None)
 
     def test_health_endpoint(self):
         resp = self.client.get("/health")
