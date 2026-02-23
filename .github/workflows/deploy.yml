@@ -19,7 +19,7 @@ jobs:
         run: npm install -g @railway/cli@3
 
       - name: Deploy to Railway
-        run: railway up --service raid-ai-app
+        run: railway up --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
@@ -41,10 +41,3 @@ jobs:
           done
           echo "Health check failed after 5 attempts"
           exit 1
-
-      - name: Rollback on health check failure
-        if: failure()
-        run: railway rollback --service raid-ai-app
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
