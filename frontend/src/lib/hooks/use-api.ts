@@ -306,9 +306,10 @@ export function useStockComparison(tickers: string[], metrics: string[]) {
 
 /** Batch quotes for multiple tickers with 30-second auto-refresh */
 export function useBatchQuotes(tickers: string[]) {
+  const key = tickers.join(',');
   return useAsync<BatchQuote[]>(
-    (signal) => getBatchQuotes(tickers, signal),
-    [tickers.join(',')],
+    (signal) => (tickers.length === 0 ? Promise.resolve([]) : getBatchQuotes(tickers, signal)),
+    [key],
     30_000,
   );
 }

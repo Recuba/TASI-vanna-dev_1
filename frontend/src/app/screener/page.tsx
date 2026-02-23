@@ -122,7 +122,7 @@ function RangeInput({ label, min, max, onMinChange, onMaxChange, step = 0.1 }: {
     <div>
       <label style={{
         fontFamily: F.mono,
-        fontSize: 12,
+        fontSize: 13,
         color: P.textSecondary,
         letterSpacing: "0.06em",
         textTransform: "uppercase" as const,
@@ -265,29 +265,16 @@ export default function ScreenerPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: P.bg, color: P.text, fontFamily: F.ui }}>
-      {/* Google Fonts */}
-      <style>{`
+      {/* Styles — dangerouslySetInnerHTML bypasses React SSR text-node diffing, preventing hydration mismatches */}
+      <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Noto+Kufi+Arabic:wght@300;400;500;600;700&display=swap');
 
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { opacity: 0.3; }
-          50% { opacity: 0.7; }
-          100% { opacity: 0.3; }
-        }
-        @keyframes spinGold {
-          to { transform: rotate(360deg); }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shimmer { 0% { opacity: 0.3; } 50% { opacity: 0.7; } 100% { opacity: 0.3; } }
+        @keyframes spinGold { to { transform: rotate(360deg); } }
 
         * { box-sizing: border-box; }
-
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(197, 179, 138, 0.15); border-radius: 2px; }
@@ -297,22 +284,14 @@ export default function ScreenerPage() {
         .range-input:focus { border-color: ${P.gold} !important; box-shadow: 0 0 0 2px rgba(197, 179, 138, 0.08) !important; }
 
         .luxury-select {
-          appearance: none;
-          -webkit-appearance: none;
+          appearance: none; -webkit-appearance: none;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235A574F'/%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: right 10px center;
-          padding-right: 28px !important;
-          cursor: pointer;
+          background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; cursor: pointer;
         }
         .luxury-select:focus { border-color: ${P.gold} !important; box-shadow: 0 0 0 2px rgba(197, 179, 138, 0.08) !important; outline: none; }
 
         .preset-card { transition: all 0.25s ease; }
-        .preset-card:hover {
-          border-color: ${P.borderHover} !important;
-          box-shadow: 0 0 20px ${P.goldSubtle};
-          transform: translateY(-1px);
-        }
+        .preset-card:hover { border-color: ${P.borderHover} !important; box-shadow: 0 0 20px ${P.goldSubtle}; transform: translateY(-1px); }
 
         .sort-th { transition: color 0.15s ease; cursor: pointer; }
         .sort-th:hover { color: ${P.gold} !important; }
@@ -333,7 +312,7 @@ export default function ScreenerPage() {
         .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .screener-content { animation: slideUp 0.4s ease both; }
-      `}</style>
+      `}} />
 
       {/* Ambient background */}
       <div style={{
@@ -362,7 +341,7 @@ export default function ScreenerPage() {
             <div>
               <div style={{
                 fontFamily: F.mono,
-                fontSize: 10,
+                fontSize: 13,
                 color: P.gold,
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
@@ -383,7 +362,7 @@ export default function ScreenerPage() {
               </h1>
               <p style={{
                 fontFamily: F.mono,
-                fontSize: 11,
+                fontSize: 13,
                 color: P.textMuted,
                 marginTop: 5,
                 letterSpacing: "0.05em",
@@ -404,7 +383,7 @@ export default function ScreenerPage() {
                   border: `1px solid ${P.border}`,
                   color: P.textSecondary,
                   fontFamily: F.mono,
-                  fontSize: 11,
+                  fontSize: 13,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
                   cursor: "pointer",
@@ -445,7 +424,7 @@ export default function ScreenerPage() {
                     border: `1px solid ${P.border}`,
                     color: P.textSecondary,
                     fontFamily: F.mono,
-                    fontSize: 11,
+                    fontSize: 13,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     cursor: "pointer",
@@ -492,7 +471,7 @@ export default function ScreenerPage() {
                 </div>
                 <div style={{
                   fontFamily: F.mono,
-                  fontSize: 11,
+                  fontSize: 13,
                   color: P.textMuted,
                   marginTop: 3,
                   letterSpacing: "0.05em",
@@ -513,7 +492,7 @@ export default function ScreenerPage() {
                   cursor: "pointer",
                   flexShrink: 0,
                   fontFamily: F.mono,
-                  fontSize: 10,
+                  fontSize: 13,
                   color: P.red,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
@@ -532,7 +511,9 @@ export default function ScreenerPage() {
           <div className="screener-content" style={{
             margin: "0 40px",
             background: P.surface,
-            border: `1px solid ${P.border}`,
+            borderLeft: `1px solid ${P.border}`,
+            borderRight: `1px solid ${P.border}`,
+            borderBottom: `1px solid ${P.border}`,
             borderTop: `2px solid ${P.gold}`,
             borderRadius: "0 0 4px 4px",
             padding: "20px 24px",
@@ -541,7 +522,7 @@ export default function ScreenerPage() {
               {/* Sector */}
               <div>
                 <label style={{
-                  fontFamily: F.mono, fontSize: 12, color: P.textSecondary, fontWeight: 500,
+                  fontFamily: F.mono, fontSize: 13, color: P.textSecondary, fontWeight: 500,
                   letterSpacing: "0.06em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
                 }}>
                   {t('القطاع', 'Sector')}
@@ -566,7 +547,7 @@ export default function ScreenerPage() {
               {/* Recommendation */}
               <div>
                 <label style={{
-                  fontFamily: F.mono, fontSize: 12, color: P.textSecondary, fontWeight: 500,
+                  fontFamily: F.mono, fontSize: 13, color: P.textSecondary, fontWeight: 500,
                   letterSpacing: "0.06em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
                 }}>
                   {t('التوصية', 'Recommendation')}
@@ -639,7 +620,7 @@ export default function ScreenerPage() {
               {/* Single inputs */}
               <div>
                 <label style={{
-                  fontFamily: F.mono, fontSize: 12, color: P.textSecondary, fontWeight: 500,
+                  fontFamily: F.mono, fontSize: 13, color: P.textSecondary, fontWeight: 500,
                   letterSpacing: "0.06em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
                 }}>
                   {t('الحد الأقصى للديون/الملكية', 'Max D/E Ratio')}
@@ -660,7 +641,7 @@ export default function ScreenerPage() {
               </div>
               <div>
                 <label style={{
-                  fontFamily: F.mono, fontSize: 12, color: P.textSecondary, fontWeight: 500,
+                  fontFamily: F.mono, fontSize: 13, color: P.textSecondary, fontWeight: 500,
                   letterSpacing: "0.06em", textTransform: "uppercase" as const, display: "block", marginBottom: 6,
                 }}>
                   {t('الحد الأدنى للنسبة الجارية', 'Min Current Ratio')}
@@ -698,12 +679,14 @@ export default function ScreenerPage() {
               <div style={{
                 width: 32,
                 height: 32,
-                border: `1px solid ${P.border}`,
+                borderLeft: `1px solid ${P.border}`,
+                borderRight: `1px solid ${P.border}`,
+                borderBottom: `1px solid ${P.border}`,
                 borderTop: `1px solid ${P.gold}`,
                 borderRadius: "50%",
                 animation: "spinGold 1s linear infinite",
               }} />
-              <p style={{ fontFamily: F.mono, fontSize: 11, color: P.textMuted, letterSpacing: "0.15em", textTransform: "uppercase" }}>
+              <p style={{ fontFamily: F.mono, fontSize: 13, color: P.textMuted, letterSpacing: "0.15em", textTransform: "uppercase" }}>
                 {t('جاري البحث...', 'Searching...')}
               </p>
             </div>
@@ -730,7 +713,7 @@ export default function ScreenerPage() {
               <p style={{ fontFamily: F.display, fontSize: 18, color: P.text, marginBottom: 8 }} dir={dir}>
                 {t('تعذّر تحميل نتائج الفلترة', 'Failed to load screener results')}
               </p>
-              <p style={{ fontFamily: F.mono, fontSize: 10, color: P.textMuted, letterSpacing: "0.05em", marginBottom: 20 }} dir={dir}>
+              <p style={{ fontFamily: F.mono, fontSize: 13, color: P.textMuted, letterSpacing: "0.05em", marginBottom: 20 }} dir={dir}>
                 {t('الخوادم غير متاحة مؤقتاً. يرجى المحاولة لاحقاً.', 'Servers may be temporarily unavailable. Please try again later.')}
               </p>
               <button
@@ -742,7 +725,7 @@ export default function ScreenerPage() {
                   border: `1px solid ${P.border}`,
                   color: P.gold,
                   fontFamily: F.mono,
-                  fontSize: 10,
+                  fontSize: 13,
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
                   cursor: "pointer",
@@ -770,7 +753,7 @@ export default function ScreenerPage() {
               <p style={{ fontFamily: F.display, fontSize: 18, color: P.textSecondary }} dir={dir}>
                 {t('لا توجد نتائج مطابقة', 'No matching stocks found')}
               </p>
-              <p style={{ fontFamily: F.mono, fontSize: 10, color: P.textMuted, marginTop: 8, letterSpacing: "0.05em" }} dir={dir}>
+              <p style={{ fontFamily: F.mono, fontSize: 13, color: P.textMuted, marginTop: 8, letterSpacing: "0.05em" }} dir={dir}>
                 {t('حاول تعديل معايير الفلترة', 'Try adjusting your filter criteria')}
               </p>
             </div>
@@ -789,10 +772,10 @@ export default function ScreenerPage() {
                     <thead>
                       <tr style={{ background: P.bg, borderBottom: `1px solid ${P.border}` }}>
                         <th style={{
-                          padding: "10px 16px",
+                          padding: "13px 16px",
                           textAlign: "left",
                           fontFamily: F.mono,
-                          fontSize: 12,
+                          fontSize: 13,
                           color: P.textSecondary,
                           letterSpacing: "0.06em",
                           textTransform: "uppercase",
@@ -807,10 +790,10 @@ export default function ScreenerPage() {
                             onClick={() => toggleSort(col.id)}
                             className="sort-th"
                             style={{
-                              padding: "10px 16px",
+                              padding: "13px 16px",
                               textAlign: "right",
                               fontFamily: F.mono,
-                              fontSize: 12,
+                              fontSize: 13,
                               color: filters.sort_by === col.id ? P.gold : P.textSecondary,
                               letterSpacing: "0.06em",
                               textTransform: "uppercase",
@@ -839,12 +822,12 @@ export default function ScreenerPage() {
                             background: "transparent",
                           }}
                         >
-                          <td style={{ padding: "10px 16px" }}>
+                          <td style={{ padding: "13px 16px" }}>
                             <Link
                               href={`/stock/${encodeURIComponent(item.ticker)}`}
                               style={{
                                 fontFamily: F.display,
-                                fontSize: 14,
+                                fontSize: 15,
                                 fontWeight: 600,
                                 color: P.text,
                                 textDecoration: "none",
@@ -857,7 +840,7 @@ export default function ScreenerPage() {
                             </Link>
                             <div style={{
                               fontFamily: F.mono,
-                              fontSize: 10,
+                              fontSize: 13,
                               color: P.textMuted,
                               marginTop: 2,
                               letterSpacing: "0.06em",
@@ -865,14 +848,14 @@ export default function ScreenerPage() {
                               {item.ticker.replace('.SR', '')}{item.sector && ` · ${item.sector}`}
                             </div>
                           </td>
-                          <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 12, color: P.text }}>
+                          <td style={{ padding: "13px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 13, color: P.text }}>
                             {item.current_price?.toFixed(2) ?? '-'}
                           </td>
                           <td style={{
-                            padding: "10px 16px",
+                            padding: "13px 16px",
                             textAlign: "right",
                             fontFamily: F.mono,
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: 600,
                             color: (item.change_pct ?? 0) >= 0 ? P.green : P.red,
                           }}>
@@ -880,22 +863,22 @@ export default function ScreenerPage() {
                               ? `${item.change_pct >= 0 ? '+' : ''}${item.change_pct.toFixed(2)}%`
                               : '-'}
                           </td>
-                          <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 11, color: P.textSecondary }}>
+                          <td style={{ padding: "13px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 13, color: P.textSecondary }}>
                             {formatNumber(item.market_cap)}
                           </td>
-                          <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 11, color: P.textSecondary }}>
+                          <td style={{ padding: "13px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 13, color: P.textSecondary }}>
                             {item.trailing_pe?.toFixed(1) ?? '-'}
                           </td>
-                          <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 11, color: P.textSecondary }}>
+                          <td style={{ padding: "13px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 13, color: P.textSecondary }}>
                             {item.price_to_book?.toFixed(2) ?? '-'}
                           </td>
-                          <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 11, color: P.textSecondary }}>
+                          <td style={{ padding: "13px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 13, color: P.textSecondary }}>
                             {formatPct(item.roe)}
                           </td>
-                          <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 11, color: P.textSecondary }}>
+                          <td style={{ padding: "13px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 13, color: P.textSecondary }}>
                             {formatYield(item.dividend_yield)}
                           </td>
-                          <td style={{ padding: "10px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 11, color: P.textSecondary }}>
+                          <td style={{ padding: "13px 16px", textAlign: "right", fontFamily: F.mono, fontSize: 13, color: P.textSecondary }}>
                             {item.debt_to_equity?.toFixed(2) ?? '-'}
                           </td>
                         </tr>
@@ -926,17 +909,17 @@ export default function ScreenerPage() {
                         <div style={{ fontFamily: F.display, fontSize: 15, fontWeight: 600, color: P.text }}>
                           {item.short_name || item.ticker}
                         </div>
-                        <div style={{ fontFamily: F.mono, fontSize: 10, color: P.textMuted, marginTop: 2, letterSpacing: "0.06em" }}>
+                        <div style={{ fontFamily: F.mono, fontSize: 13, color: P.textMuted, marginTop: 2, letterSpacing: "0.06em" }}>
                           {item.ticker.replace('.SR', '')}{item.sector && ` · ${item.sector}`}
                         </div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 600, color: P.text }}>
+                        <div style={{ fontFamily: F.mono, fontSize: 15, fontWeight: 600, color: P.text }}>
                           {item.current_price?.toFixed(2) ?? '-'}
                         </div>
                         <div style={{
                           fontFamily: F.mono,
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: 600,
                           color: (item.change_pct ?? 0) >= 0 ? P.green : P.red,
                           marginTop: 2,
@@ -958,7 +941,7 @@ export default function ScreenerPage() {
                           <div style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, letterSpacing: "0.1em", textTransform: "uppercase" }}>
                             {label}
                           </div>
-                          <div style={{ fontFamily: F.mono, fontSize: 11, color: P.textSecondary, marginTop: 1 }}>
+                          <div style={{ fontFamily: F.mono, fontSize: 13, color: P.textSecondary, marginTop: 1 }}>
                             {value}
                           </div>
                         </div>
@@ -982,7 +965,7 @@ export default function ScreenerPage() {
                       border: `1px solid ${P.border}`,
                       color: P.textSecondary,
                       fontFamily: F.mono,
-                      fontSize: 11,
+                      fontSize: 13,
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
                       cursor: "pointer",
@@ -990,7 +973,7 @@ export default function ScreenerPage() {
                   >
                     {t('السابق', 'Previous')}
                   </button>
-                  <span style={{ fontFamily: F.mono, fontSize: 11, color: P.textMuted, letterSpacing: "0.1em" }}>
+                  <span style={{ fontFamily: F.mono, fontSize: 13, color: P.textMuted, letterSpacing: "0.1em" }}>
                     {currentPage}
                     <span style={{ margin: "0 6px", color: P.textMuted, opacity: 0.4 }}>/</span>
                     {totalPages}
@@ -1006,7 +989,7 @@ export default function ScreenerPage() {
                       border: `1px solid ${P.border}`,
                       color: P.textSecondary,
                       fontFamily: F.mono,
-                      fontSize: 11,
+                      fontSize: 13,
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
                       cursor: "pointer",
