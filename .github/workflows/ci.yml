@@ -17,10 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install ruff
         run: pip install ruff
@@ -36,11 +36,13 @@ jobs:
 
       - name: Verify lock file is up to date
         run: |
+          # Copy existing lock so pip-compile respects pinned versions
+          cp requirements.lock /tmp/requirements.lock.check
           pip-compile requirements.in -o /tmp/requirements.lock.check --no-annotate --strip-extras --quiet
           # Strip comments and platform-specific packages (colorama=Windows, uvloop=Linux)
           normalize() { grep -v '^#' "$1" | grep -v '^colorama==' | grep -v '^uvloop=='; }
           if ! diff -q <(normalize requirements.lock) <(normalize /tmp/requirements.lock.check) > /dev/null 2>&1; then
-            echo "requirements.lock is stale. Run: pip-compile requirements.in -o requirements.lock --upgrade"
+            echo "requirements.lock is stale. Run: pip-compile requirements.in -o requirements.lock --no-annotate --strip-extras"
             diff <(normalize requirements.lock) <(normalize /tmp/requirements.lock.check) | head -30
             exit 1
           fi
@@ -63,7 +65,7 @@ jobs:
       - name: Audit dependencies for known vulnerabilities
         # requirements.lock provides the reproducible pinned set audited here.
         # Do not use || true — real CVEs must be explicitly acknowledged with valid IDs.
-        run: pip-audit -r requirements.txt
+        run: pip-audit -r requirements.lock
 
   security-scan:
     name: Security Scan (bandit)
