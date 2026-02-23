@@ -54,7 +54,7 @@ def init_pg_pool(dsn: str, minconn: int = 2, maxconn: int = 10) -> None:
     maxconn:
         Maximum number of connections allowed (default 10).
     """
-    from database.pool import init_pool as _init_pool, is_pool_initialized
+    from database.pool import is_pool_initialized
 
     if is_pool_initialized():
         logger.debug("PostgreSQL connection pool already initialized -- skipping")
@@ -62,7 +62,6 @@ def init_pg_pool(dsn: str, minconn: int = 2, maxconn: int = 10) -> None:
 
     # database.pool.init_pool accepts a db_settings object; we pass a thin
     # namespace built from the DSN so callers only need the connection string.
-    import psycopg2
     from psycopg2.pool import ThreadedConnectionPool as _TCP
 
     # Parse DSN into keyword args understood by psycopg2

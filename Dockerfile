@@ -53,8 +53,8 @@ USER appuser
 
 EXPOSE 8084
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:8084/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
+  CMD curl -f http://localhost:8084/health/live || exit 1
 
 # Use tini as init process to handle signals (SIGTERM) properly
 ENTRYPOINT ["tini", "--"]

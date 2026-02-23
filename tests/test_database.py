@@ -15,13 +15,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
+from database.postgres_utils import pg_available as _pg_available
+
 # ---------------------------------------------------------------------------
 # Backend helpers
 # ---------------------------------------------------------------------------
 _HERE = Path(__file__).resolve().parent
 _SQLITE_PATH = os.environ.get("DB_SQLITE_PATH", str(_HERE.parent / "saudi_stocks.db"))
-
-from database.postgres_utils import pg_available as _pg_available
 
 
 def _get_sqlite_conn():
