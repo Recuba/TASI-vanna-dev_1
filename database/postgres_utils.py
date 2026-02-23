@@ -5,6 +5,7 @@ These helpers are intentionally lightweight and import-safe:
 they only import psycopg2 inside functions so the module can be
 imported even when psycopg2 is not installed (SQLite-only installs).
 """
+
 from __future__ import annotations
 
 import logging

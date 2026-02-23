@@ -1,4 +1,5 @@
 """Thread-safe SQLite connection pool with WAL mode."""
+
 import queue
 import sqlite3
 import threading

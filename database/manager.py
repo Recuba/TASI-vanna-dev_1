@@ -116,7 +116,9 @@ class DatabaseManager:
             try:
                 conn.rollback()
             except Exception as rollback_exc:
-                logger.debug("rollback failed during exception handling: %s", rollback_exc)
+                logger.debug(
+                    "rollback failed during exception handling: %s", rollback_exc
+                )
             raise
         finally:
             conn.close()
@@ -139,7 +141,9 @@ class DatabaseManager:
             try:
                 await asyncio.to_thread(conn.rollback)
             except Exception as rollback_exc:
-                logger.debug("async rollback failed during exception handling: %s", rollback_exc)
+                logger.debug(
+                    "async rollback failed during exception handling: %s", rollback_exc
+                )
             raise
         finally:
             await asyncio.to_thread(conn.close)

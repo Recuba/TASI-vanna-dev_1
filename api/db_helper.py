@@ -84,8 +84,10 @@ def _convert_sql(sql: str) -> str:
     corrupting LIKE patterns and other literal strings.
     """
     if is_postgres():
+
         def _replace(m: re.Match) -> str:
             return "%s" if m.group(0) == "?" else m.group(0)
+
         return _PLACEHOLDER_RE.sub(_replace, sql)
     return sql
 
@@ -142,6 +144,7 @@ def _sync_fetchall(sql: str, params: Params = None) -> List[Dict[str, Any]]:
             conn.close()
     else:
         from services.sqlite_pool import get_pool
+
         with get_pool().connection() as conn:
             return fetchall(conn, sql, params)
 
@@ -156,6 +159,7 @@ def _sync_fetchone(sql: str, params: Params = None) -> Optional[Dict[str, Any]]:
             conn.close()
     else:
         from services.sqlite_pool import get_pool
+
         with get_pool().connection() as conn:
             return fetchone(conn, sql, params)
 

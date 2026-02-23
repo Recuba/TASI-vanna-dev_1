@@ -209,7 +209,7 @@ class NewsStore:
         rows = conn.execute(
             f"""SELECT * FROM news_articles{where}
                 ORDER BY created_at DESC, priority ASC
-                LIMIT ? OFFSET ?""",
+                LIMIT ? OFFSET ?""",  # nosec B608
             params,
         ).fetchall()
         return [dict(row) for row in rows]
@@ -235,7 +235,7 @@ class NewsStore:
         conn = self._connect()
         placeholders = ",".join("?" for _ in ids)
         rows = conn.execute(
-            f"SELECT * FROM news_articles WHERE id IN ({placeholders})"
+            f"SELECT * FROM news_articles WHERE id IN ({placeholders})"  # nosec B608
             " ORDER BY created_at DESC",
             ids,
         ).fetchall()
@@ -258,7 +258,8 @@ class NewsStore:
         )
         where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
         row = conn.execute(
-            f"SELECT COUNT(*) FROM news_articles{where}", params
+            f"SELECT COUNT(*) FROM news_articles{where}",  # nosec B608
+            params,
         ).fetchone()
         return row[0] if row else 0
 
@@ -292,7 +293,7 @@ class NewsStore:
             f"""SELECT * FROM news_articles
                 WHERE {where}
                 ORDER BY created_at DESC, priority ASC
-                LIMIT ? OFFSET ?""",
+                LIMIT ? OFFSET ?""",  # nosec B608
             params,
         ).fetchall()
         return [dict(row) for row in rows]
@@ -321,7 +322,8 @@ class NewsStore:
             where += " AND " + " AND ".join(extra_clauses)
             params.extend(extra_params)
         row = conn.execute(
-            f"SELECT COUNT(*) FROM news_articles WHERE {where}", params
+            f"SELECT COUNT(*) FROM news_articles WHERE {where}",  # nosec B608
+            params,
         ).fetchone()
         return row[0] if row else 0
 

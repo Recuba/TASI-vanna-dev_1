@@ -98,7 +98,7 @@ def _get(url: str, headers: dict | None = None) -> tuple[int, bytes]:
     """Perform a GET request, return (status_code, body_bytes)."""
     req = urllib.request.Request(url, headers=headers or {})
     try:
-        resp = urllib.request.urlopen(req, timeout=TIMEOUT)
+        resp = urllib.request.urlopen(req, timeout=TIMEOUT)  # nosec B310
         return resp.status, resp.read()
     except urllib.error.HTTPError as e:
         return e.code, e.read()
@@ -230,7 +230,7 @@ def test_guest_login(base: str) -> None:
         url, data=b"", headers={"Content-Type": "application/json"}, method="POST"
     )
     try:
-        resp = urllib.request.urlopen(req, timeout=TIMEOUT)
+        resp = urllib.request.urlopen(req, timeout=TIMEOUT)  # nosec B310
         status = resp.status
         body = resp.read()
     except urllib.error.HTTPError as e:

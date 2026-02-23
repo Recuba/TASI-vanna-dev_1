@@ -72,12 +72,10 @@ class LLMSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LLM_")
 
     provider: Literal["anthropic", "gemini", "openai"] = Field(
-        default="gemini",
-        description="LLM provider: anthropic | gemini | openai"
+        default="gemini", description="LLM provider: anthropic | gemini | openai"
     )
     model: str = Field(
-        default="gemini-2.0-flash-exp",
-        description="Model name — provider-specific"
+        default="gemini-2.0-flash-exp", description="Model name — provider-specific"
     )
     api_key: str = ""
     max_tool_iterations: int = 10
@@ -197,7 +195,7 @@ class ServerSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="SERVER_")
 
-    host: str = "0.0.0.0"
+    host: str = "0.0.0.0"  # noqa: S104  # nosec B104 -- bind-all required for containers
     port: int = 8084
     debug: bool = False
     environment: str = Field(
@@ -238,6 +236,7 @@ class Settings(BaseSettings):
         if self.llm.api_key:
             return self.llm.api_key
         import os
+
         if self.llm.provider == "anthropic":
             return self.anthropic_api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         if self.llm.provider == "gemini":

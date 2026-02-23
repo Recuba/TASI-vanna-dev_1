@@ -88,7 +88,7 @@ def _build_key(prefix: str, func_name: str, args: tuple, kwargs: dict) -> str:
         key_args = key_args[1:]
 
     raw = json.dumps({"a": key_args, "k": kwargs}, sort_keys=True, default=str)
-    arg_hash = hashlib.md5(raw.encode()).hexdigest()[:12]
+    arg_hash = hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()[:12]
     return f"{prefix}:{func_name}:{arg_hash}"
 
 

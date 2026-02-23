@@ -19,7 +19,7 @@ Usage::
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Callable, Optional
 
 from backend.services.audit.correlation import get_current_request_id
 from backend.services.audit.models import QueryAuditEvent
@@ -52,7 +52,7 @@ class QueryAuditLogger:
 
     def __init__(
         self,
-        db_connection_factory: Optional[callable] = None,
+        db_connection_factory: Optional[Callable] = None,
     ) -> None:
         self._db_factory = db_connection_factory
 

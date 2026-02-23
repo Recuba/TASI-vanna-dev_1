@@ -160,7 +160,7 @@ def migrate_table(
         columns = all_columns
 
     # Read all rows from SQLite
-    rows = sqlite_conn.execute(f"SELECT * FROM {table}").fetchall()
+    rows = sqlite_conn.execute(f"SELECT * FROM {table}").fetchall()  # nosec B608
     total = len(rows)
 
     if total == 0:

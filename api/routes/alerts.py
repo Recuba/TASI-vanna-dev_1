@@ -57,6 +57,7 @@ class AlertListResponse(BaseModel):
 # Dependency: get current user from JWT
 # ---------------------------------------------------------------------------
 
+
 def _get_user_id_from_request():
     """Placeholder — in production, extract user_id from JWT token."""
     # This would normally parse the Authorization header.
@@ -64,7 +65,7 @@ def _get_user_id_from_request():
     raise HTTPException(
         status_code=501,
         detail="Alerts API requires JWT authentication (PostgreSQL backend only). "
-               "Use localStorage alerts for anonymous/SQLite mode.",
+        "Use localStorage alerts for anonymous/SQLite mode.",
     )
 
 

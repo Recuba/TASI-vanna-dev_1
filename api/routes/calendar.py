@@ -84,9 +84,21 @@ _EARNINGS_EVENTS_SQL = """
 @router.get("/events", response_model=CalendarResponse, responses=STANDARD_ERRORS)
 @cache_response(ttl=300)
 async def get_calendar_events(
-    date_from: str = Query(..., alias="from", description="Start date YYYY-MM-DD", pattern=r"^\d{4}-\d{2}-\d{2}$"),
-    date_to: str = Query(..., alias="to", description="End date YYYY-MM-DD", pattern=r"^\d{4}-\d{2}-\d{2}$"),
-    event_type: Optional[str] = Query(None, alias="type", description="Filter: dividend, earnings"),
+    date_from: str = Query(
+        ...,
+        alias="from",
+        description="Start date YYYY-MM-DD",
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+    ),
+    date_to: str = Query(
+        ...,
+        alias="to",
+        description="End date YYYY-MM-DD",
+        pattern=r"^\d{4}-\d{2}-\d{2}$",
+    ),
+    event_type: Optional[str] = Query(
+        None, alias="type", description="Filter: dividend, earnings"
+    ),
 ) -> CalendarResponse:
     """Get financial calendar events within a date range."""
 
@@ -104,26 +116,30 @@ async def get_calendar_events(
                 desc_parts.append(f"Rate: {rate:.2f}")
             if yld is not None:
                 desc_parts.append(f"Yield: {yld * 100:.1f}%")
-            events.append(CalendarEvent(
-                date=r["date"],
-                type="dividend",
-                ticker=r["ticker"],
-                title=f"{name} — Ex-Dividend",
-                description=", ".join(desc_parts) if desc_parts else None,
-            ))
+            events.append(
+                CalendarEvent(
+                    date=r["date"],
+                    type="dividend",
+                    ticker=r["ticker"],
+                    title=f"{name} — Ex-Dividend",
+                    description=", ".join(desc_parts) if desc_parts else None,
+                )
+            )
 
     # Earnings events
     if event_type is None or event_type == "earnings":
         rows = await afetchall(_EARNINGS_EVENTS_SQL, (date_from, date_to))
         for r in rows:
             name = r.get("short_name") or r["ticker"]
-            events.append(CalendarEvent(
-                date=r["date"],
-                type="earnings",
-                ticker=r["ticker"],
-                title=f"{name} — Quarterly Earnings",
-                description=f"Period: {r.get('period_type', 'quarterly')}",
-            ))
+            events.append(
+                CalendarEvent(
+                    date=r["date"],
+                    type="earnings",
+                    ticker=r["ticker"],
+                    title=f"{name} — Quarterly Earnings",
+                    description=f"Period: {r.get('period_type', 'quarterly')}",
+                )
+            )
 
     # Sort all events by date
     events.sort(key=lambda e: e.date)

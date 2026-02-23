@@ -4,6 +4,7 @@ Validates JWT bearer tokens for Vanna chat endpoints.
 Anonymous access is allowed — a missing token passes through,
 but a present-and-invalid token returns 401.
 """
+
 import logging
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -20,9 +21,13 @@ class ChatAuthMiddleware(BaseHTTPMiddleware):
             auth_header = request.headers.get("authorization", "")
             if auth_header.lower().startswith("bearer "):
                 token = auth_header[7:]
-                logger.debug("ChatAuthMiddleware: validating bearer token for %s", request.url.path)
+                logger.debug(
+                    "ChatAuthMiddleware: validating bearer token for %s",
+                    request.url.path,
+                )
                 try:
                     from auth.jwt_handler import decode_token
+
                     decode_token(token, expected_type="access")
                 except Exception as exc:
                     logger.debug("ChatAuthMiddleware: token validation failed: %s", exc)

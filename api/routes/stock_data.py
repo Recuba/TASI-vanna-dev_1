@@ -393,7 +393,9 @@ async def get_batch_quotes(
     ticker_list = validate_ticker_list(tickers, min_count=1, max_count=50)
 
     placeholders = ",".join("?" for _ in ticker_list)
-    rows = await afetchall(BATCH_QUOTES_SQL.format(placeholders=placeholders), tuple(ticker_list))
+    rows = await afetchall(
+        BATCH_QUOTES_SQL.format(placeholders=placeholders), tuple(ticker_list)
+    )
 
     return [
         QuoteItem(
@@ -413,6 +415,7 @@ async def get_batch_quotes(
 # ---------------------------------------------------------------------------
 # Financial Trend endpoint
 # ---------------------------------------------------------------------------
+
 
 class TrendPeriod(BaseModel):
     date: Optional[str] = None
@@ -474,10 +477,12 @@ async def get_financial_trend(ticker: str) -> FinancialTrendResponse:
             periods = []
             for row in rows:
                 val = row.get(col_name)
-                periods.append(TrendPeriod(
-                    date=row.get("period_date"),
-                    value=float(val) if val is not None else None,
-                ))
+                periods.append(
+                    TrendPeriod(
+                        date=row.get("period_date"),
+                        value=float(val) if val is not None else None,
+                    )
+                )
             if any(p.value is not None for p in periods):
                 all_metrics.append(TrendMetric(name=display_name, periods=periods))
 
@@ -487,6 +492,7 @@ async def get_financial_trend(ticker: str) -> FinancialTrendResponse:
 # ---------------------------------------------------------------------------
 # Ownership endpoint
 # ---------------------------------------------------------------------------
+
 
 class OwnershipResponse(BaseModel):
     ticker: str
@@ -520,8 +526,16 @@ async def get_ownership(ticker: str) -> OwnershipResponse:
 
     return OwnershipResponse(
         ticker=ticker,
-        pct_held_insiders=float(row["pct_held_insiders"]) if row.get("pct_held_insiders") is not None else None,
-        pct_held_institutions=float(row["pct_held_institutions"]) if row.get("pct_held_institutions") is not None else None,
-        float_shares=float(row["float_shares"]) if row.get("float_shares") is not None else None,
-        shares_outstanding=float(row["shares_outstanding"]) if row.get("shares_outstanding") is not None else None,
+        pct_held_insiders=float(row["pct_held_insiders"])
+        if row.get("pct_held_insiders") is not None
+        else None,
+        pct_held_institutions=float(row["pct_held_institutions"])
+        if row.get("pct_held_institutions") is not None
+        else None,
+        float_shares=float(row["float_shares"])
+        if row.get("float_shares") is not None
+        else None,
+        shares_outstanding=float(row["shares_outstanding"])
+        if row.get("shares_outstanding") is not None
+        else None,
     )

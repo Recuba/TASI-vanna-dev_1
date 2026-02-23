@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -97,7 +97,7 @@ class CostController:
         output_cost_per_m: float = _DEFAULT_OUTPUT_COST_PER_M,
         limits: Optional[CostLimitConfig] = None,
     ) -> None:
-        self._redis = None
+        self._redis: Any = None
         self._input_cost_per_m = input_cost_per_m
         self._output_cost_per_m = output_cost_per_m
         self._limits = limits or CostLimitConfig()

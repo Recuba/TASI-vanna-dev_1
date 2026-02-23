@@ -25,7 +25,7 @@ router = APIRouter(tags=["health"])
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check() -> HealthResponse:
+async def health_check() -> HealthResponse | JSONResponse:
     """Return structured health status for all platform components."""
     report = await asyncio.to_thread(get_health)
     pool_stats = await asyncio.to_thread(get_pool_stats)

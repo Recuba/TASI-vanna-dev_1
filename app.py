@@ -201,11 +201,16 @@ app = server.create_app()
 # ---------------------------------------------------------------------------
 try:
     from prometheus_fastapi_instrumentator import Instrumentator as _PIInstrumentator
-    _pfi = _PIInstrumentator(should_group_status_codes=True, should_group_untemplated=True)
+
+    _pfi = _PIInstrumentator(
+        should_group_status_codes=True, should_group_untemplated=True
+    )
     _pfi.instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
     logger.info("Prometheus metrics exposed at /metrics")
 except ImportError:
-    logger.warning("prometheus-fastapi-instrumentator not installed; /metrics unavailable")
+    logger.warning(
+        "prometheus-fastapi-instrumentator not installed; /metrics unavailable"
+    )
 
 # ---------------------------------------------------------------------------
 # 8.1. OpenAPI metadata
@@ -359,6 +364,7 @@ except ImportError as exc:
 if DB_BACKEND == "postgres":
     try:
         from middleware.chat_auth import ChatAuthMiddleware
+
         app.add_middleware(ChatAuthMiddleware)
         logger.info("Chat auth middleware registered")
     except ImportError as exc:
@@ -637,7 +643,9 @@ except ImportError as exc:
 # 10. Custom routes and static files
 # ---------------------------------------------------------------------------
 _TEMPLATE_RAW = (_HERE / "templates" / "index.html").read_text(encoding="utf-8")
-_FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
+_FRONTEND_URL = (
+    os.environ.get("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
+)
 _TEMPLATE_HTML = _TEMPLATE_RAW.replace("{{FRONTEND_URL}}", _FRONTEND_URL)
 
 
@@ -676,6 +684,7 @@ async def lifespan(app):
     # Install request_id filter on root logger so all log records carry request_id
     try:
         from middleware.request_context import RequestIdFilter
+
         _root_logger = logging.getLogger()
         if not any(isinstance(f, RequestIdFilter) for f in _root_logger.filters):
             _root_logger.addFilter(RequestIdFilter())
@@ -873,5 +882,5 @@ if __name__ == "__main__":
     import uvicorn
 
     _port = _settings.server.port if _settings else int(os.environ.get("PORT", "8084"))
-    _host = _settings.server.host if _settings else "0.0.0.0"
+    _host = _settings.server.host if _settings else "0.0.0.0"  # nosec B104
     uvicorn.run(app, host=_host, port=_port)

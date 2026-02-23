@@ -64,20 +64,17 @@ JOIN market_data m ON c.ticker = m.ticker
 """
 
 _TOP_GAINERS_SQL = (
-    _BASE_SELECT
-    + "WHERE m.previous_close > 0 AND m.current_price > 0 "
+    _BASE_SELECT + "WHERE m.previous_close > 0 AND m.current_price > 0 "
     "ORDER BY change_pct DESC LIMIT 15"
 )
 
 _TOP_LOSERS_SQL = (
-    _BASE_SELECT
-    + "WHERE m.previous_close > 0 AND m.current_price > 0 "
+    _BASE_SELECT + "WHERE m.previous_close > 0 AND m.current_price > 0 "
     "ORDER BY change_pct ASC LIMIT 15"
 )
 
 _MOST_ACTIVE_SQL = (
-    _BASE_SELECT
-    + "WHERE m.volume IS NOT NULL AND m.current_price > 0 "
+    _BASE_SELECT + "WHERE m.volume IS NOT NULL AND m.current_price > 0 "
     "ORDER BY m.volume DESC LIMIT 15"
 )
 
@@ -92,12 +89,22 @@ def _row_to_mover(row: dict) -> MoverStock:
         ticker=row["ticker"],
         short_name=row.get("short_name"),
         sector=row.get("sector"),
-        current_price=float(row["current_price"]) if row.get("current_price") is not None else None,
-        change_pct=round(float(row["change_pct"]), 2) if row.get("change_pct") is not None else None,
+        current_price=float(row["current_price"])
+        if row.get("current_price") is not None
+        else None,
+        change_pct=round(float(row["change_pct"]), 2)
+        if row.get("change_pct") is not None
+        else None,
         volume=int(row["volume"]) if row.get("volume") is not None else None,
-        market_cap=float(row["market_cap"]) if row.get("market_cap") is not None else None,
-        week_52_high=float(row["week_52_high"]) if row.get("week_52_high") is not None else None,
-        week_52_low=float(row["week_52_low"]) if row.get("week_52_low") is not None else None,
+        market_cap=float(row["market_cap"])
+        if row.get("market_cap") is not None
+        else None,
+        week_52_high=float(row["week_52_high"])
+        if row.get("week_52_high") is not None
+        else None,
+        week_52_low=float(row["week_52_low"])
+        if row.get("week_52_low") is not None
+        else None,
     )
 
 

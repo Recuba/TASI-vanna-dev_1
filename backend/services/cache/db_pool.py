@@ -56,7 +56,7 @@ class DatabasePoolManager:
             pool_pre_ping=True,
             echo=cfg.echo,
         )
-        self._session_factory = sessionmaker(
+        self._session_factory = sessionmaker(  # type: ignore[call-overload]
             bind=self._engine,
             class_=AsyncSession,
             expire_on_commit=False,

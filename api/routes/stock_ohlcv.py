@@ -118,6 +118,7 @@ async def stock_ohlcv_health(
     cache_status = cache_info["cache_status"]
     cb_info = get_circuit_breaker_status()
 
+    status: Literal["ok", "degraded"]
     if cb_info["circuit_state"] == "open":
         status = "degraded"
         message = "Data source temporarily unavailable; serving cached data."

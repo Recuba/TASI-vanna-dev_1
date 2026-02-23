@@ -45,8 +45,8 @@ class HealthReport:
     components: list = field(default_factory=list)
     build_info: Dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> dict:
-        result = {
+    def to_dict(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {
             "status": self.status.value,
             "service": self.service,
             "version": self.version,

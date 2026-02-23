@@ -113,7 +113,7 @@ class GZipCacheMiddleware(BaseHTTPMiddleware):
 
         # Read the body from the streaming response
         body_parts: list[bytes] = []
-        async for chunk in response.body_iterator:  # type: ignore[union-attr]
+        async for chunk in response.body_iterator:  # type: ignore[attr-defined,union-attr]
             if isinstance(chunk, str):
                 chunk = chunk.encode("utf-8")
             body_parts.append(chunk)

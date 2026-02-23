@@ -23,11 +23,27 @@ router = APIRouter(prefix="/api/v1/screener", tags=["screener"])
 
 # Allowed sort columns to prevent SQL injection
 _ALLOWED_SORT_COLUMNS = {
-    "ticker", "short_name", "sector", "current_price", "change_pct",
-    "market_cap", "volume", "trailing_pe", "forward_pe", "price_to_book",
-    "price_to_sales", "roe", "profit_margin", "revenue_growth",
-    "earnings_growth", "dividend_yield", "debt_to_equity", "current_ratio",
-    "total_revenue", "target_mean_price", "analyst_count",
+    "ticker",
+    "short_name",
+    "sector",
+    "current_price",
+    "change_pct",
+    "market_cap",
+    "volume",
+    "trailing_pe",
+    "forward_pe",
+    "price_to_book",
+    "price_to_sales",
+    "roe",
+    "profit_margin",
+    "revenue_growth",
+    "earnings_growth",
+    "dividend_yield",
+    "debt_to_equity",
+    "current_ratio",
+    "total_revenue",
+    "target_mean_price",
+    "analyst_count",
 }
 
 
@@ -38,6 +54,7 @@ _ALLOWED_SORT_COLUMNS = {
 
 class ScreenerFilters(BaseModel):
     """Filter criteria for the stock screener."""
+
     sector: Optional[str] = Field(None, description="Filter by sector name")
     pe_min: Optional[float] = Field(None, description="Minimum trailing P/E")
     pe_max: Optional[float] = Field(None, description="Maximum trailing P/E")
@@ -45,15 +62,29 @@ class ScreenerFilters(BaseModel):
     pb_max: Optional[float] = Field(None, description="Maximum P/B ratio")
     roe_min: Optional[float] = Field(None, description="Minimum ROE")
     roe_max: Optional[float] = Field(None, description="Maximum ROE")
-    dividend_yield_min: Optional[float] = Field(None, description="Minimum dividend yield")
-    dividend_yield_max: Optional[float] = Field(None, description="Maximum dividend yield")
+    dividend_yield_min: Optional[float] = Field(
+        None, description="Minimum dividend yield"
+    )
+    dividend_yield_max: Optional[float] = Field(
+        None, description="Maximum dividend yield"
+    )
     market_cap_min: Optional[float] = Field(None, description="Minimum market cap")
     market_cap_max: Optional[float] = Field(None, description="Maximum market cap")
-    revenue_growth_min: Optional[float] = Field(None, description="Minimum revenue growth")
-    revenue_growth_max: Optional[float] = Field(None, description="Maximum revenue growth")
-    debt_to_equity_max: Optional[float] = Field(None, description="Maximum debt-to-equity ratio")
-    current_ratio_min: Optional[float] = Field(None, description="Minimum current ratio")
-    recommendation: Optional[str] = Field(None, description="Analyst recommendation (buy/hold/sell)")
+    revenue_growth_min: Optional[float] = Field(
+        None, description="Minimum revenue growth"
+    )
+    revenue_growth_max: Optional[float] = Field(
+        None, description="Maximum revenue growth"
+    )
+    debt_to_equity_max: Optional[float] = Field(
+        None, description="Maximum debt-to-equity ratio"
+    )
+    current_ratio_min: Optional[float] = Field(
+        None, description="Minimum current ratio"
+    )
+    recommendation: Optional[str] = Field(
+        None, description="Analyst recommendation (buy/hold/sell)"
+    )
     sort_by: str = Field("market_cap", description="Column to sort by")
     sort_dir: str = Field("desc", description="Sort direction: asc or desc")
     limit: int = Field(50, ge=1, le=100, description="Number of results")
@@ -179,7 +210,9 @@ async def search_stocks(filters: ScreenerFilters) -> ScreenerResponse:
     """Search and filter stocks using multiple criteria."""
 
     # Validate sort column
-    sort_by = filters.sort_by if filters.sort_by in _ALLOWED_SORT_COLUMNS else "market_cap"
+    sort_by = (
+        filters.sort_by if filters.sort_by in _ALLOWED_SORT_COLUMNS else "market_cap"
+    )
     sort_dir = "ASC" if filters.sort_dir.lower() == "asc" else "DESC"
 
     where_sql, where_params = _build_where_clauses(filters)
@@ -202,29 +235,35 @@ async def search_stocks(filters: ScreenerFilters) -> ScreenerResponse:
 
     items = []
     for r in rows:
-        items.append(ScreenerItem(
-            ticker=r["ticker"],
-            short_name=r.get("short_name"),
-            sector=r.get("sector"),
-            industry=r.get("industry"),
-            current_price=r.get("current_price"),
-            change_pct=round(r["change_pct"], 2) if r.get("change_pct") is not None else None,
-            market_cap=r.get("market_cap"),
-            volume=r.get("volume"),
-            trailing_pe=r.get("trailing_pe"),
-            forward_pe=r.get("forward_pe"),
-            price_to_book=r.get("price_to_book"),
-            roe=r.get("roe"),
-            profit_margin=r.get("profit_margin"),
-            revenue_growth=r.get("revenue_growth"),
-            dividend_yield=r.get("dividend_yield"),
-            debt_to_equity=r.get("debt_to_equity"),
-            current_ratio=r.get("current_ratio"),
-            total_revenue=r.get("total_revenue"),
-            recommendation=r.get("recommendation"),
-            target_mean_price=r.get("target_mean_price"),
-            analyst_count=int(r["analyst_count"]) if r.get("analyst_count") is not None else None,
-        ))
+        items.append(
+            ScreenerItem(
+                ticker=r["ticker"],
+                short_name=r.get("short_name"),
+                sector=r.get("sector"),
+                industry=r.get("industry"),
+                current_price=r.get("current_price"),
+                change_pct=round(r["change_pct"], 2)
+                if r.get("change_pct") is not None
+                else None,
+                market_cap=r.get("market_cap"),
+                volume=r.get("volume"),
+                trailing_pe=r.get("trailing_pe"),
+                forward_pe=r.get("forward_pe"),
+                price_to_book=r.get("price_to_book"),
+                roe=r.get("roe"),
+                profit_margin=r.get("profit_margin"),
+                revenue_growth=r.get("revenue_growth"),
+                dividend_yield=r.get("dividend_yield"),
+                debt_to_equity=r.get("debt_to_equity"),
+                current_ratio=r.get("current_ratio"),
+                total_revenue=r.get("total_revenue"),
+                recommendation=r.get("recommendation"),
+                target_mean_price=r.get("target_mean_price"),
+                analyst_count=int(r["analyst_count"])
+                if r.get("analyst_count") is not None
+                else None,
+            )
+        )
 
     # Build applied filters summary
     filters_applied: Dict[str, Any] = {}

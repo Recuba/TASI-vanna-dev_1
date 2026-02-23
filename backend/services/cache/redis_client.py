@@ -80,7 +80,7 @@ class RedisManager:
             )
             self._client = Redis(connection_pool=self._pool)
             # Verify connectivity
-            await self._client.ping()
+            await self._client.ping()  # type: ignore[misc]
             self._connected = True
             logger.info(
                 "Redis connected: url=%s pool_max=%d",
@@ -96,7 +96,7 @@ class RedisManager:
         """Close the Redis client and drain the connection pool."""
         if self._client is not None:
             try:
-                await self._client.aclose()
+                await self._client.aclose()  # type: ignore[attr-defined]
             except RedisError as exc:
                 logger.warning("Error closing Redis client: %s", exc)
             finally:
@@ -104,7 +104,7 @@ class RedisManager:
 
         if self._pool is not None:
             try:
-                await self._pool.aclose()
+                await self._pool.aclose()  # type: ignore[attr-defined]
             except RedisError as exc:
                 logger.warning("Error closing Redis pool: %s", exc)
             finally:
@@ -237,7 +237,7 @@ class RedisManager:
         start = time.monotonic()
         try:
             client = await self._ensure_connection()
-            await client.ping()
+            await client.ping()  # type: ignore[misc]
             latency_ms = round((time.monotonic() - start) * 1000, 2)
 
             info = await client.info(section="memory")

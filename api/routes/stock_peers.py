@@ -103,14 +103,28 @@ async def get_stock_peers(
             ticker=r["ticker"],
             short_name=r.get("short_name"),
             sector=r.get("sector"),
-            current_price=float(r["current_price"]) if r.get("current_price") is not None else None,
-            market_cap=float(r["market_cap"]) if r.get("market_cap") is not None else None,
-            change_pct=round(float(r["change_pct"]), 2) if r.get("change_pct") is not None else None,
-            trailing_pe=round(float(r["trailing_pe"]), 2) if r.get("trailing_pe") is not None else None,
-            price_to_book=round(float(r["price_to_book"]), 2) if r.get("price_to_book") is not None else None,
+            current_price=float(r["current_price"])
+            if r.get("current_price") is not None
+            else None,
+            market_cap=float(r["market_cap"])
+            if r.get("market_cap") is not None
+            else None,
+            change_pct=round(float(r["change_pct"]), 2)
+            if r.get("change_pct") is not None
+            else None,
+            trailing_pe=round(float(r["trailing_pe"]), 2)
+            if r.get("trailing_pe") is not None
+            else None,
+            price_to_book=round(float(r["price_to_book"]), 2)
+            if r.get("price_to_book") is not None
+            else None,
             roe=round(float(r["roe"]), 4) if r.get("roe") is not None else None,
-            revenue_growth=round(float(r["revenue_growth"]), 4) if r.get("revenue_growth") is not None else None,
-            dividend_yield=round(float(r["dividend_yield"]), 4) if r.get("dividend_yield") is not None else None,
+            revenue_growth=round(float(r["revenue_growth"]), 4)
+            if r.get("revenue_growth") is not None
+            else None,
+            dividend_yield=round(float(r["dividend_yield"]), 4)
+            if r.get("dividend_yield") is not None
+            else None,
         )
         for r in rows
     ]

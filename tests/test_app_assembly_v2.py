@@ -67,7 +67,9 @@ except Exception as e:
 try:
     from vanna.core.user.resolver import UserResolver, RequestContext, User
 
-    _record_result("1.3 UserResolver imports (UserResolver, RequestContext, User)", True)
+    _record_result(
+        "1.3 UserResolver imports (UserResolver, RequestContext, User)", True
+    )
 except Exception as e:
     _record_result(
         "1.3 UserResolver imports (UserResolver, RequestContext, User)", False, str(e)
@@ -362,7 +364,9 @@ try:
 
     # Verify it's a subclass
     if issubclass(DefaultUserResolver, UserResolver):
-        _record_result("5.1 DefaultUserResolver is proper subclass of UserResolver", True)
+        _record_result(
+            "5.1 DefaultUserResolver is proper subclass of UserResolver", True
+        )
     else:
         _record_result(
             "5.1 DefaultUserResolver is proper subclass of UserResolver",
@@ -452,7 +456,9 @@ try:
         )
 
 except Exception as e:
-    _record_result("6.1 SaudiStocksSystemPromptBuilder is proper subclass", False, str(e))
+    _record_result(
+        "6.1 SaudiStocksSystemPromptBuilder is proper subclass", False, str(e)
+    )
 
 
 # ===========================================================================
@@ -577,7 +583,9 @@ try:
     _record_result("7.3 Agent with AnthropicLlmService (production-like)", True)
 
 except Exception as e:
-    _record_result("7.3 Agent with AnthropicLlmService (production-like)", False, str(e))
+    _record_result(
+        "7.3 Agent with AnthropicLlmService (production-like)", False, str(e)
+    )
     traceback.print_exc()
 
 # Test 7.4: Agent assembly with PostgresRunner (skipped if PG not available)
@@ -814,7 +822,9 @@ print("=" * 70 + "\n")
 try:
     backend = os.environ.get("DB_BACKEND", "sqlite").lower()
     if backend in ("sqlite", "postgres"):
-        _record_result("11.1 DB_BACKEND env var is valid", True, f"DB_BACKEND={backend}")
+        _record_result(
+            "11.1 DB_BACKEND env var is valid", True, f"DB_BACKEND={backend}"
+        )
     else:
         _record_result(
             "11.1 DB_BACKEND env var is valid",

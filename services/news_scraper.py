@@ -162,17 +162,51 @@ def analyze_sentiment(title: str, body: str) -> tuple[float, str]:
 
 # Keywords by impact level
 _HIGH_IMPACT_KEYWORDS = [
-    "أرباح", "خسائر", "إيرادات", "نتائج مالية", "ربع سنوي",
-    "سنوي", "اكتتاب", "IPO", "إدراج", "طرح", "هيئة السوق",
-    "تنظيمي", "لوائح", "استحواذ", "اندماج", "تصفية",
-    "إفلاس", "إيقاف", "تعليق التداول", "عقوبة",
-    "earnings", "IPO", "regulatory", "merger", "acquisition",
+    "أرباح",
+    "خسائر",
+    "إيرادات",
+    "نتائج مالية",
+    "ربع سنوي",
+    "سنوي",
+    "اكتتاب",
+    "IPO",
+    "إدراج",
+    "طرح",
+    "هيئة السوق",
+    "تنظيمي",
+    "لوائح",
+    "استحواذ",
+    "اندماج",
+    "تصفية",
+    "إفلاس",
+    "إيقاف",
+    "تعليق التداول",
+    "عقوبة",
+    "earnings",
+    "IPO",
+    "regulatory",
+    "merger",
+    "acquisition",
 ]
 _MEDIUM_IMPACT_KEYWORDS = [
-    "محللين", "توصية", "تحليل", "توزيعات", "أرباح نقدية",
-    "عائد", "ترقية", "تخفيض تصنيف", "سعر مستهدف",
-    "analyst", "dividend", "target price", "upgrade", "downgrade",
-    "شراكة", "اتفاقية", "عقد", "تمويل",
+    "محللين",
+    "توصية",
+    "تحليل",
+    "توزيعات",
+    "أرباح نقدية",
+    "عائد",
+    "ترقية",
+    "تخفيض تصنيف",
+    "سعر مستهدف",
+    "analyst",
+    "dividend",
+    "target price",
+    "upgrade",
+    "downgrade",
+    "شراكة",
+    "اتفاقية",
+    "عقد",
+    "تمويل",
 ]
 
 
@@ -534,6 +568,18 @@ class BaseNewsScraper(ABC):
         return soup_element.get_text(strip=True)
 
     @staticmethod
+    def _get_attr(tag, attr: str, default: str = "") -> str:
+        """Safely get a string attribute from a BS4 tag.
+
+        ``Tag.get()`` may return ``str | list[str]``; this helper always
+        returns a plain ``str``.
+        """
+        val = tag.get(attr, default)
+        if isinstance(val, list):
+            return val[0] if val else default
+        return val or default
+
+    @staticmethod
     def _absolute_url(base: str, href: str) -> str:
         """Convert a relative URL to absolute."""
         if not href:
@@ -609,7 +655,7 @@ class GoogleNewsRssScraper(BaseNewsScraper):
                     link = link_el.get_text(strip=True) if link_el else ""
                     pub_date = pub_date_el.get_text(strip=True) if pub_date_el else None
                     source_text = source_el.get_text(strip=True) if source_el else ""
-                    source_href = source_el.get("url", "") if source_el else ""
+                    source_href = self._get_attr(source_el, "url") if source_el else ""
                     body = ""
                     if description_el:
                         # Google wraps description in HTML; extract text
@@ -762,7 +808,7 @@ class ArgaamScraper(BaseNewsScraper):
             "[class*='article'] a, [class*='news'] a, "
             "a[href*='/article/'], a[href*='/news/']"
         ):
-            href = item.get("href", "")
+            href = self._get_attr(item, "href")
             if not href or href == "#":
                 continue
 
@@ -783,7 +829,7 @@ class ArgaamScraper(BaseNewsScraper):
 
             time_el = item.select_one("time, [class*='date'], [class*='time']")
             published = (
-                time_el.get("datetime", self._extract_text(time_el))
+                self._get_attr(time_el, "datetime", self._extract_text(time_el))
                 if time_el
                 else None
             )
@@ -831,7 +877,7 @@ class MaaalScraper(BaseNewsScraper):
             if not link:
                 continue
 
-            href = link.get("href", "")
+            href = self._get_attr(link, "href")
             if not href or href == "#" or href == "/":
                 continue
 
@@ -861,7 +907,7 @@ class MaaalScraper(BaseNewsScraper):
                 "time, [class*='date'], [class*='time'], [datetime]"
             )
             published = (
-                time_el.get("datetime", self._extract_text(time_el))
+                self._get_attr(time_el, "datetime", self._extract_text(time_el))
                 if time_el
                 else None
             )
@@ -874,7 +920,7 @@ class MaaalScraper(BaseNewsScraper):
                 "a[href*='/news/'], a[href*='/2026/'], a[href*='/2025/'], "
                 "a[href*='/archives/'], a[href*='/?p=']"
             ):
-                href = link.get("href", "")
+                href = self._get_attr(link, "href")
                 url = self._absolute_url(self.source_url, href)
                 if url in seen_urls:
                     continue
@@ -905,14 +951,14 @@ class MubasherScraper(BaseNewsScraper):
             "[class*='news'], [class*='article'], [class*='story']"
         ):
             if item.name == "a":
-                href = item.get("href", "")
+                href = self._get_attr(item, "href")
                 title = self._extract_text(item)
                 link = item
             else:
                 link = item.select_one("a[href]")
                 if not link:
                     continue
-                href = link.get("href", "")
+                href = self._get_attr(link, "href")
                 title_el = item.select_one(
                     "h1, h2, h3, h4, [class*='title'], [class*='headline']"
                 )
@@ -947,7 +993,7 @@ class MubasherScraper(BaseNewsScraper):
                 else None
             )
             published = (
-                time_el.get("datetime", self._extract_text(time_el))
+                self._get_attr(time_el, "datetime", self._extract_text(time_el))
                 if time_el
                 else None
             )
@@ -957,7 +1003,7 @@ class MubasherScraper(BaseNewsScraper):
         # Strategy 2: direct news links
         if not articles:
             for link in soup.select("a[href*='/news/'], a[href*='/article/']"):
-                href = link.get("href", "")
+                href = self._get_attr(link, "href")
                 url = self._absolute_url(self.source_url, href)
                 if url in seen_urls:
                     continue

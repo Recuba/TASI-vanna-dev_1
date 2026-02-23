@@ -750,7 +750,7 @@ def main():
             print(f"Populating {table_name}...")
             sub = extract_simple_table(df, col_map)
             safe_to_sql(sub, table_name, conn)
-            count = cur.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+            count = cur.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]  # nosec B608
             print(f"  -> {count} rows inserted")
 
         conn.commit()
@@ -770,7 +770,7 @@ def main():
                 if "id" in result_df.columns:
                     result_df.drop(columns=["id"], inplace=True)
                 safe_to_sql(result_df, table_name, conn)
-            count = cur.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+            count = cur.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]  # nosec B608
             print(f"  -> {count} rows inserted")
 
         conn.commit()
@@ -807,7 +807,7 @@ def main():
         ]
         total_rows = 0
         for tbl in all_tables:
-            count = cur.execute(f"SELECT COUNT(*) FROM {tbl}").fetchone()[0]
+            count = cur.execute(f"SELECT COUNT(*) FROM {tbl}").fetchone()[0]  # nosec B608
             print(f"  {tbl:<28} {count:>10,}")
             total_rows += count
         print("-" * 60)

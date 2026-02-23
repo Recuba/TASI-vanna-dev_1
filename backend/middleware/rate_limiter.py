@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 import time
 from collections import defaultdict, deque
-from typing import Optional
+from typing import Any, Optional
 
 from backend.middleware.models import RateLimitResult
 
@@ -39,7 +39,7 @@ class RateLimiter:
     """
 
     def __init__(self, redis_url: Optional[str] = None) -> None:
-        self._redis = None
+        self._redis: Any = None
         self._redis_url = redis_url
 
         # In-memory fallback structures

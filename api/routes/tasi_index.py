@@ -117,6 +117,7 @@ async def tasi_health() -> TASIHealthResponse:
     cb_info = get_circuit_breaker_status()
 
     # Degraded when circuit is open, or cache is not fresh AND yfinance is unavailable
+    status: Literal["ok", "degraded"]
     if cb_info["circuit_state"] == "open":
         status = "degraded"
         message = "Data source temporarily unavailable; serving cached data."
