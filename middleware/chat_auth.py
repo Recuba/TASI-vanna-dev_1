@@ -22,10 +22,10 @@ class ChatAuthMiddleware(BaseHTTPMiddleware):
                 token = auth_header[7:]
                 logger.debug("ChatAuthMiddleware: validating bearer token for %s", request.url.path)
                 try:
-                    import jwt
                     from auth.jwt_handler import decode_token
                     decode_token(token, expected_type="access")
-                except Exception:
+                except Exception as exc:
+                    logger.debug("ChatAuthMiddleware: token validation failed: %s", exc)
                     return JSONResponse(
                         status_code=401,
                         content={"detail": "Invalid or expired authentication token"},

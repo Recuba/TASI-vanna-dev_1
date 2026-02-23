@@ -116,7 +116,7 @@ def get_connection():
     try:
         yield conn
         conn.commit()
-    except Exception:
+    except Exception:  # noqa: BLE001 — re-raises after rollback
         conn.rollback()
         raise
     finally:
@@ -145,14 +145,14 @@ class _PooledConnection:
         key = object.__getattribute__(self, "_key")
         try:
             conn.rollback()
-        except Exception:
+        except Exception:  # noqa: BLE001 — connection teardown, errors are non-fatal
             pass
         try:
             pool.putconn(conn, key=key)
-        except Exception:
+        except Exception:  # noqa: BLE001 — pool return failed, fall back to hard close
             try:
                 conn.close()
-            except Exception:
+            except Exception:  # noqa: BLE001 — connection may already be dead
                 pass
 
     def cursor(self, *args, **kwargs):

@@ -1,0 +1,12 @@
+id: no-as-any-cast
+language: TypeScript
+severity: warning
+message: |
+  Avoid `as any` casts — they disable type checking entirely.
+  Prefer a specific type assertion, `unknown`, or a proper type guard.
+rule:
+  kind: as_expression
+  has:
+    kind: predefined_type
+    regex: ^any$
+    stopBy: end

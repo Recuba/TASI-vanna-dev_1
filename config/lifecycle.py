@@ -106,7 +106,7 @@ def on_shutdown() -> None:
     for handler in logging.root.handlers:
         try:
             handler.flush()
-        except Exception:
+        except Exception:  # noqa: BLE001 — shutdown teardown, nothing useful to do
             pass
 
     logger.info("Shutdown complete")

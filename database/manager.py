@@ -79,6 +79,7 @@ class DatabaseManager:
             if is_pool_initialized():
                 return get_pool_connection()
         except ImportError:
+            # optional dependency: pool module unavailable, fall back to direct connection
             pass
 
         import psycopg2
@@ -114,8 +115,8 @@ class DatabaseManager:
         except Exception:
             try:
                 conn.rollback()
-            except Exception:
-                pass
+            except Exception as rollback_exc:
+                logger.debug("rollback failed during exception handling: %s", rollback_exc)
             raise
         finally:
             conn.close()
@@ -137,8 +138,8 @@ class DatabaseManager:
         except Exception:
             try:
                 await asyncio.to_thread(conn.rollback)
-            except Exception:
-                pass
+            except Exception as rollback_exc:
+                logger.debug("async rollback failed during exception handling: %s", rollback_exc)
             raise
         finally:
             await asyncio.to_thread(conn.close)

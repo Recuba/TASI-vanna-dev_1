@@ -1,0 +1,9 @@
+id: no-ts-ignore
+language: TypeScript
+severity: error
+message: |
+  @ts-ignore suppresses TypeScript errors without explanation.
+  Use @ts-expect-error with a reason, or fix the underlying type issue.
+rule:
+  kind: comment
+  regex: "@ts-ignore"

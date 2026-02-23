@@ -1,0 +1,163 @@
+# Ra'd AI — ast-grep Structural Audit Rules
+# Run: ast-grep scan --config analysis/ast-grep-audit/rules.yml frontend/src
+# Run: ast-grep scan --config analysis/ast-grep-audit/rules.yml services/ api/ database/
+
+---
+
+# ──────────────────────────────────────────────────────────────────────────────
+# TypeScript / TSX rules
+# ──────────────────────────────────────────────────────────────────────────────
+
+- id: no-console-log-ts
+  language: TypeScript
+  severity: warning
+  message: |
+    Use console.debug() for dev-only traces (filtered in browser DevTools
+    by default) or a structured logger for production diagnostics.
+    Avoid console.log() in production source files.
+  rule:
+    kind: call_expression
+    all:
+      - has:
+          field: function
+          kind: member_expression
+          all:
+            - has:
+                field: object
+                kind: identifier
+                regex: ^console$
+            - has:
+                field: property
+                kind: property_identifier
+                regex: ^log$
+
+- id: no-console-log-tsx
+  language: TypeScript  # ast-grep treats TSX as TypeScript
+  severity: warning
+  message: Same as no-console-log-ts — avoid console.log in production components.
+  rule:
+    kind: call_expression
+    all:
+      - has:
+          field: function
+          kind: member_expression
+          all:
+            - has:
+                field: object
+                kind: identifier
+                regex: ^console$
+            - has:
+                field: property
+                kind: property_identifier
+                regex: ^log$
+
+- id: no-ts-ignore
+  language: TypeScript
+  severity: error
+  message: |
+    @ts-ignore suppresses TypeScript errors without explanation.
+    Use @ts-expect-error with a reason, or fix the underlying type issue.
+  rule:
+    kind: comment
+    regex: "@ts-ignore"
+
+- id: prefer-ts-expect-error-over-ignore
+  language: TypeScript
+  severity: warning
+  message: |
+    @ts-expect-error is preferred over @ts-ignore: it fails if the error
+    disappears (so the suppression can be removed). Always include a reason.
+  rule:
+    kind: comment
+    regex: "@ts-expect-error$"  # no reason text following it
+
+- id: no-as-any-cast
+  language: TypeScript
+  severity: warning
+  message: |
+    Avoid `as any` casts — they disable type checking entirely.
+    Prefer a specific type assertion, `unknown`, or a proper type guard.
+  rule:
+    kind: as_expression
+    has:
+      kind: predefined_type
+      regex: ^any$
+      stopBy: end
+
+- id: border-shorthand-conflict
+  language: TypeScript
+  severity: warning
+  message: |
+    Using both `border:` (shorthand) and `borderTop:`/`borderBottom:` etc.
+    on the same style object causes React to drop the non-shorthand rule.
+    Replace `border:` with explicit `borderLeft`, `borderRight`, `borderBottom` + `borderTop`.
+  rule:
+    kind: object
+    all:
+      - has:
+          kind: pair
+          has:
+            kind: property_identifier
+            regex: ^border$
+            stopBy: end
+          stopBy: end
+      - has:
+          kind: pair
+          has:
+            kind: property_identifier
+            regex: ^border(Top|Bottom|Left|Right)$
+            stopBy: end
+          stopBy: end
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Python rules
+# ──────────────────────────────────────────────────────────────────────────────
+
+- id: py-except-pass-no-log
+  language: Python
+  severity: warning
+  message: |
+    `except ...: pass` silently swallows exceptions.
+    In cleanup/teardown code add `logger.debug("...", exc)` so failures are
+    traceable. In intentional fallback paths, add a comment explaining why.
+  rule:
+    all:
+      - kind: except_clause
+      - has:
+          kind: pass_statement
+          stopBy: end
+      - not:
+          has:
+            kind: comment
+            stopBy: end
+
+- id: py-bare-print-in-services
+  language: Python
+  severity: warning
+  message: |
+    Use `logger.*()` instead of `print()` in service/API/database modules.
+    `print()` bypasses structured JSON logging and request-ID propagation.
+  rule:
+    kind: call
+    has:
+      field: function
+      kind: identifier
+      regex: ^print$
+
+- id: py-broad-except-no-binding
+  language: Python
+  severity: info
+  message: |
+    `except Exception:` without `as e` loses the exception value.
+    Bind it (`except Exception as exc:`) so it can be logged if needed.
+  rule:
+    all:
+      - kind: except_clause
+      - not:
+          has:
+            kind: as_pattern
+            stopBy: end
+      - not:
+          has:
+            kind: pass_statement  # already caught by py-except-pass-no-log
+            stopBy: end

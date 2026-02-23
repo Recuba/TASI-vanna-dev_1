@@ -130,9 +130,9 @@ class NewsAggregationService:
                 cur.executemany(sql, rows)
             conn.commit()
             return len(articles)
-        except Exception:
+        except Exception as exc:  # noqa: BLE001 — re-raises after rollback
             conn.rollback()
-            logger.error("Failed to store %d articles", len(articles), exc_info=True)
+            logger.error("Failed to store %d articles: %s", len(articles), exc, exc_info=True)
             raise
         finally:
             conn.close()

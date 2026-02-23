@@ -88,7 +88,7 @@ export function measureRender(label: string): () => void {
       performance.measure(measureName, startMark, endMark);
       const entry = performance.getEntriesByName(measureName).pop();
       if (entry && process.env.NODE_ENV === 'development') {
-        console.log(`[perf] ${label}: ${entry.duration.toFixed(2)}ms`);
+        console.debug(`[perf] ${label}: ${entry.duration.toFixed(2)}ms`);
       }
     } catch {
       // Ignore if marks were cleared

@@ -1,0 +1,24 @@
+id: border-shorthand-conflict
+language: TypeScript
+severity: warning
+message: |
+  Using both `border:` (shorthand) and `borderTop:`/`borderBottom:` etc.
+  on the same style object causes React to drop the non-shorthand rule.
+  Replace `border:` with explicit `borderLeft`, `borderRight`, `borderBottom` + `borderTop`.
+rule:
+  kind: object
+  all:
+    - has:
+        kind: pair
+        has:
+          kind: property_identifier
+          regex: ^border$
+          stopBy: end
+        stopBy: end
+    - has:
+        kind: pair
+        has:
+          kind: property_identifier
+          regex: ^border(Top|Bottom|Left|Right)$
+          stopBy: end
+        stopBy: end

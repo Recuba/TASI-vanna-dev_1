@@ -88,7 +88,7 @@ class NewsStore:
         if conn is not None:
             try:
                 conn.close()
-            except Exception:
+            except Exception:  # noqa: BLE001 — thread-local conn teardown, non-fatal
                 pass
             self._local.conn = None
 

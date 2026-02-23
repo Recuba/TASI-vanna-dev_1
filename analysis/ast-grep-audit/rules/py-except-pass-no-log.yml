@@ -1,0 +1,17 @@
+id: py-except-pass-no-log
+language: Python
+severity: warning
+message: |
+  `except ...: pass` silently swallows exceptions.
+  In cleanup/teardown code add `logger.debug("...", exc)` so failures are
+  traceable. In intentional fallback paths, add a comment explaining why.
+rule:
+  all:
+    - kind: except_clause
+    - has:
+        kind: pass_statement
+        stopBy: end
+    - not:
+        has:
+          kind: comment
+          stopBy: end

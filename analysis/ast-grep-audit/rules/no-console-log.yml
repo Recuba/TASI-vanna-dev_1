@@ -1,0 +1,20 @@
+id: no-console-log
+language: TypeScript
+severity: warning
+message: |
+  Use console.debug() for dev-only traces or a structured logger.
+  Avoid console.log() in production source files.
+rule:
+  kind: call_expression
+  has:
+    field: function
+    kind: member_expression
+    all:
+      - has:
+          field: object
+          kind: identifier
+          regex: "^console$"
+      - has:
+          field: property
+          kind: property_identifier
+          regex: "^log$"

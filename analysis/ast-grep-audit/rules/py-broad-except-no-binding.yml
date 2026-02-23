@@ -1,0 +1,17 @@
+id: py-broad-except-no-binding
+language: Python
+severity: info
+message: |
+  `except Exception:` without `as e` loses the exception value.
+  Bind it (`except Exception as exc:`) so it can be logged if needed.
+rule:
+  all:
+    - kind: except_clause
+    - not:
+        has:
+          kind: as_pattern
+          stopBy: end
+    - not:
+        has:
+          kind: pass_statement  # already caught by py-except-pass-no-log
+          stopBy: end

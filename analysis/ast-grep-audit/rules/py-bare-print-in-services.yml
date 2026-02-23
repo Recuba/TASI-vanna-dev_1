@@ -1,0 +1,12 @@
+id: py-bare-print-in-services
+language: Python
+severity: warning
+message: |
+  Use `logger.*()` instead of `print()` in service/API/database modules.
+  `print()` bypasses structured JSON logging and request-ID propagation.
+rule:
+  kind: call
+  has:
+    field: function
+    kind: identifier
+    regex: ^print$

@@ -47,6 +47,7 @@ def get_read_connection():
             if is_pool_initialized():
                 return get_pool_connection()
         except ImportError:
+            # optional dependency: pool module unavailable, fall back to direct connection
             pass
 
         # Fallback to direct connection

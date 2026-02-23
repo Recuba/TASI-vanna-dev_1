@@ -138,5 +138,5 @@ async def _redis_event_generator(request: Request, redis):
         try:
             await asyncio.to_thread(pubsub.unsubscribe, _REDIS_CHANNEL)
             await asyncio.to_thread(pubsub.close)
-        except Exception:
-            pass
+        except Exception as cleanup_exc:
+            logger.debug("pubsub cleanup error (non-fatal): %s", cleanup_exc)

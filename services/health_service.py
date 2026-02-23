@@ -527,6 +527,7 @@ def check_news_scraper() -> ComponentHealth:
                                     datetime.utcnow() - last_dt
                                 ).total_seconds()
                         except (ValueError, TypeError):
+                            # malformed timestamp: leave last_scrape_age as None
                             pass
 
                     active_sources = (
@@ -553,6 +554,7 @@ def check_news_scraper() -> ComponentHealth:
                                 datetime.utcnow() - last_dt
                             ).total_seconds()
                         except (ValueError, TypeError):
+                            # malformed timestamp: leave last_scrape_age as None
                             pass
 
                     source_rows = _sqlite_query(
