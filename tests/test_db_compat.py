@@ -224,8 +224,10 @@ class TestGetReadConnectionSQLite:
         mock_settings.db.backend = "sqlite"
         mock_settings.db.resolved_sqlite_path = db_path
 
-        with patch("services.db_compat.is_postgres", return_value=False), \
-             patch("services.db_compat.get_settings", return_value=mock_settings):
+        with (
+            patch("services.db_compat.is_postgres", return_value=False),
+            patch("services.db_compat.get_settings", return_value=mock_settings),
+        ):
             conn = get_read_connection()
             try:
                 assert isinstance(conn, sqlite3.Connection)
@@ -243,9 +245,11 @@ class TestGetReadConnectionSQLite:
         db_path = str(tmp_path / "test.db")
         sqlite3.connect(db_path).close()
 
-        with patch("services.db_compat.is_postgres", return_value=False), \
-             patch("services.db_compat.get_settings", return_value=None), \
-             patch("services.db_compat._SQLITE_PATH", db_path):
+        with (
+            patch("services.db_compat.is_postgres", return_value=False),
+            patch("services.db_compat.get_settings", return_value=None),
+            patch("services.db_compat._SQLITE_PATH", db_path),
+        ):
             conn = get_read_connection()
             try:
                 assert isinstance(conn, sqlite3.Connection)
@@ -258,18 +262,30 @@ class TestGetReadConnectionPostgres:
 
     def test_uses_pool_when_available(self):
         mock_conn = MagicMock()
-        with patch("services.db_compat.is_postgres", return_value=True), \
-             patch("services.db_compat.get_pool_connection", return_value=mock_conn, create=True), \
-             patch("services.db_compat.is_pool_initialized", return_value=True, create=True):
+        with (
+            patch("services.db_compat.is_postgres", return_value=True),
+            patch(
+                "services.db_compat.get_pool_connection",
+                return_value=mock_conn,
+                create=True,
+            ),
+            patch(
+                "services.db_compat.is_pool_initialized", return_value=True, create=True
+            ),
+        ):
             # We need to patch the import inside the function
             import services.db_compat as mod
+
             with patch.object(mod, "is_postgres", return_value=True):
-                with patch.dict("sys.modules", {
-                    "database.pool": MagicMock(
-                        is_pool_initialized=MagicMock(return_value=True),
-                        get_pool_connection=MagicMock(return_value=mock_conn),
-                    )
-                }):
+                with patch.dict(
+                    "sys.modules",
+                    {
+                        "database.pool": MagicMock(
+                            is_pool_initialized=MagicMock(return_value=True),
+                            get_pool_connection=MagicMock(return_value=mock_conn),
+                        )
+                    },
+                ):
                     conn = get_read_connection()
                     assert conn is mock_conn
 
@@ -282,8 +298,10 @@ class TestGetReadConnectionPostgres:
         mock_settings.db.pg_user = "user"
         mock_settings.db.pg_password = "pass"
 
-        with patch("services.db_compat.is_postgres", return_value=True), \
-             patch("services.db_compat.get_settings", return_value=mock_settings):
+        with (
+            patch("services.db_compat.is_postgres", return_value=True),
+            patch("services.db_compat.get_settings", return_value=mock_settings),
+        ):
             # Make pool import raise ImportError
             with patch.dict("sys.modules", {"database.pool": None}):
                 with patch("psycopg2.connect", return_value=mock_conn) as mock_connect:

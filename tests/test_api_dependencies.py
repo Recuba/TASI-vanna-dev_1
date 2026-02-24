@@ -55,7 +55,9 @@ class TestInitPgPool:
         ) as mock_cls:
             from api.dependencies import init_pg_pool
 
-            init_pg_pool("postgresql://myuser:mypass@myhost:5433/mydb", minconn=1, maxconn=5)
+            init_pg_pool(
+                "postgresql://myuser:mypass@myhost:5433/mydb", minconn=1, maxconn=5
+            )
 
         mock_cls.assert_called_once_with(
             1,
@@ -161,10 +163,9 @@ class TestGetDbConnection:
         monkeypatch.setenv("DB_BACKEND", "postgres")
 
         mock_pooled_conn = MagicMock()
-        with patch(
-            "database.pool.is_pool_initialized", return_value=True
-        ), patch(
-            "database.pool.get_pool_connection", return_value=mock_pooled_conn
+        with (
+            patch("database.pool.is_pool_initialized", return_value=True),
+            patch("database.pool.get_pool_connection", return_value=mock_pooled_conn),
         ):
             from api.dependencies import get_db_connection
 
@@ -309,20 +310,21 @@ class TestWidgetsStream:
         snapshot_json = '{"quotes": [{"symbol": "BTC", "price": 50000}]}'
         mock_request = MagicMock()
         # Disconnect after first event
-        mock_request.is_disconnected = MagicMock(
-            side_effect=[False, True]
-        )
+        mock_request.is_disconnected = MagicMock(side_effect=[False, True])
 
         import asyncio
 
         event = asyncio.Event()
 
-        with patch(
-            "services.widgets.quotes_hub.get_latest_snapshot",
-            return_value=snapshot_json,
-        ), patch(
-            "services.widgets.quotes_hub.get_snapshot_event",
-            return_value=event,
+        with (
+            patch(
+                "services.widgets.quotes_hub.get_latest_snapshot",
+                return_value=snapshot_json,
+            ),
+            patch(
+                "services.widgets.quotes_hub.get_snapshot_event",
+                return_value=event,
+            ),
         ):
             gen = _memory_event_generator(mock_request)
             first = await gen.__anext__()
@@ -336,20 +338,21 @@ class TestWidgetsStream:
         from api.routes.widgets_stream import _memory_event_generator
 
         mock_request = MagicMock()
-        mock_request.is_disconnected = MagicMock(
-            side_effect=[False, True]
-        )
+        mock_request.is_disconnected = MagicMock(side_effect=[False, True])
 
         import asyncio
 
         event = asyncio.Event()
 
-        with patch(
-            "services.widgets.quotes_hub.get_latest_snapshot",
-            return_value=None,
-        ), patch(
-            "services.widgets.quotes_hub.get_snapshot_event",
-            return_value=event,
+        with (
+            patch(
+                "services.widgets.quotes_hub.get_latest_snapshot",
+                return_value=None,
+            ),
+            patch(
+                "services.widgets.quotes_hub.get_snapshot_event",
+                return_value=event,
+            ),
         ):
             gen = _memory_event_generator(mock_request)
             first = await gen.__anext__()
@@ -362,6 +365,7 @@ class TestWidgetsStream:
         from api.routes.widgets_stream import _memory_event_generator
 
         mock_request = MagicMock()
+
         # is_disconnected is awaited, so must return a coroutine
         async def always_disconnected():
             return True
@@ -372,12 +376,15 @@ class TestWidgetsStream:
 
         event = asyncio.Event()
 
-        with patch(
-            "services.widgets.quotes_hub.get_latest_snapshot",
-            return_value='{"data": 1}',
-        ), patch(
-            "services.widgets.quotes_hub.get_snapshot_event",
-            return_value=event,
+        with (
+            patch(
+                "services.widgets.quotes_hub.get_latest_snapshot",
+                return_value='{"data": 1}',
+            ),
+            patch(
+                "services.widgets.quotes_hub.get_snapshot_event",
+                return_value=event,
+            ),
         ):
             gen = _memory_event_generator(mock_request)
             items = []
@@ -424,6 +431,7 @@ class TestNewsStream:
         from api.routes import news_stream
 
         mock_store = MagicMock()
+
         # aget_latest_news is async
         async def fake_latest(*args, **kwargs):
             return []
@@ -431,6 +439,7 @@ class TestNewsStream:
         mock_store.aget_latest_news = fake_latest
 
         mock_request = MagicMock()
+
         # is_disconnected is awaited, must return coroutine
         async def always_disconnected():
             return True
@@ -483,8 +492,10 @@ class TestNewsStream:
         mock_request = MagicMock()
         mock_request.is_disconnected = fake_disconnected
 
-        with patch.object(news_stream, "get_store", return_value=mock_store), \
-             patch("api.routes.news_stream.asyncio.sleep", return_value=None):
+        with (
+            patch.object(news_stream, "get_store", return_value=mock_store),
+            patch("api.routes.news_stream.asyncio.sleep", return_value=None),
+        ):
             resp = await news_stream.news_stream(mock_request, source=None)
 
             items = []

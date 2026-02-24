@@ -100,10 +100,9 @@ class TestFetchCycle:
         """Successful fetch cycle stores articles and cleans old ones."""
         fake_scrapers = [FakeScraper]
 
-        with patch(
-            "services.news_scraper.ALL_SCRAPERS", fake_scrapers
-        ), patch(
-            "services.news_scraper.INTER_REQUEST_DELAY", 0
+        with (
+            patch("services.news_scraper.ALL_SCRAPERS", fake_scrapers),
+            patch("services.news_scraper.INTER_REQUEST_DELAY", 0),
         ):
             inserted = scheduler._fetch_cycle()
 
@@ -121,10 +120,9 @@ class TestFetchCycle:
         """Failing scrapers increment error counts but don't break the cycle."""
         fake_scrapers = [FakeScraper, FailingScraper]
 
-        with patch(
-            "services.news_scraper.ALL_SCRAPERS", fake_scrapers
-        ), patch(
-            "services.news_scraper.INTER_REQUEST_DELAY", 0
+        with (
+            patch("services.news_scraper.ALL_SCRAPERS", fake_scrapers),
+            patch("services.news_scraper.INTER_REQUEST_DELAY", 0),
         ):
             inserted = scheduler._fetch_cycle()
 
@@ -139,10 +137,9 @@ class TestFetchCycle:
     @patch("services.news_scheduler.time")
     def test_fetch_cycle_all_scrapers_fail(self, mock_time, scheduler, mock_store):
         """When all scrapers fail, no articles are stored."""
-        with patch(
-            "services.news_scraper.ALL_SCRAPERS", [FailingScraper]
-        ), patch(
-            "services.news_scraper.INTER_REQUEST_DELAY", 0
+        with (
+            patch("services.news_scraper.ALL_SCRAPERS", [FailingScraper]),
+            patch("services.news_scraper.INTER_REQUEST_DELAY", 0),
         ):
             inserted = scheduler._fetch_cycle()
 
@@ -154,10 +151,9 @@ class TestFetchCycle:
     @patch("services.news_scheduler.time")
     def test_fetch_cycle_no_scrapers(self, mock_time, scheduler, mock_store):
         """Empty scraper list results in no articles."""
-        with patch(
-            "services.news_scraper.ALL_SCRAPERS", []
-        ), patch(
-            "services.news_scraper.INTER_REQUEST_DELAY", 0
+        with (
+            patch("services.news_scraper.ALL_SCRAPERS", []),
+            patch("services.news_scraper.INTER_REQUEST_DELAY", 0),
         ):
             inserted = scheduler._fetch_cycle()
 
@@ -167,10 +163,9 @@ class TestFetchCycle:
     @patch("services.news_scheduler.time")
     def test_fetch_cycle_cumulative_errors(self, mock_time, scheduler, mock_store):
         """Error counts accumulate across cycles."""
-        with patch(
-            "services.news_scraper.ALL_SCRAPERS", [FailingScraper]
-        ), patch(
-            "services.news_scraper.INTER_REQUEST_DELAY", 0
+        with (
+            patch("services.news_scraper.ALL_SCRAPERS", [FailingScraper]),
+            patch("services.news_scraper.INTER_REQUEST_DELAY", 0),
         ):
             scheduler._fetch_cycle()
             scheduler._fetch_cycle()
@@ -183,10 +178,9 @@ class TestFetchCycle:
         """If store.store_articles raises, cycle catches and returns 0."""
         mock_store.store_articles.side_effect = Exception("DB write failed")
 
-        with patch(
-            "services.news_scraper.ALL_SCRAPERS", [FakeScraper]
-        ), patch(
-            "services.news_scraper.INTER_REQUEST_DELAY", 0
+        with (
+            patch("services.news_scraper.ALL_SCRAPERS", [FakeScraper]),
+            patch("services.news_scraper.INTER_REQUEST_DELAY", 0),
         ):
             inserted = scheduler._fetch_cycle()
 
@@ -272,10 +266,9 @@ class TestSchedulerStats:
 
     def test_stats_after_manual_fetch(self, scheduler, mock_store):
         """Stats update after a manual _fetch_cycle call."""
-        with patch(
-            "services.news_scraper.ALL_SCRAPERS", [FakeScraper]
-        ), patch(
-            "services.news_scraper.INTER_REQUEST_DELAY", 0
+        with (
+            patch("services.news_scraper.ALL_SCRAPERS", [FakeScraper]),
+            patch("services.news_scraper.INTER_REQUEST_DELAY", 0),
         ):
             inserted = scheduler._fetch_cycle()
 

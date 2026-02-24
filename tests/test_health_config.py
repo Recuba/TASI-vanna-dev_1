@@ -1192,7 +1192,9 @@ class TestCheckNews:
         from services.health_service import check_news, HealthStatus
 
         with (
-            patch("services.health_service._is_pg_backend", side_effect=Exception("boom")),
+            patch(
+                "services.health_service._is_pg_backend", side_effect=Exception("boom")
+            ),
         ):
             result = check_news()
 
@@ -1215,9 +1217,7 @@ class TestCheckTasiIndex:
         cb_info = {"circuit_state": "closed", "consecutive_failures": 0}
 
         with (
-            patch(
-                "services.tasi_index.get_cache_status", return_value=cache_info
-            ),
+            patch("services.tasi_index.get_cache_status", return_value=cache_info),
             patch(
                 "services.tasi_index.get_circuit_breaker_status", return_value=cb_info
             ),
@@ -1235,9 +1235,7 @@ class TestCheckTasiIndex:
         cb_info = {"circuit_state": "open", "consecutive_failures": 5}
 
         with (
-            patch(
-                "services.tasi_index.get_cache_status", return_value=cache_info
-            ),
+            patch("services.tasi_index.get_cache_status", return_value=cache_info),
             patch(
                 "services.tasi_index.get_circuit_breaker_status", return_value=cb_info
             ),
@@ -1254,9 +1252,7 @@ class TestCheckTasiIndex:
         cb_info = {"circuit_state": "closed", "consecutive_failures": 0}
 
         with (
-            patch(
-                "services.tasi_index.get_cache_status", return_value=cache_info
-            ),
+            patch("services.tasi_index.get_cache_status", return_value=cache_info),
             patch(
                 "services.tasi_index.get_circuit_breaker_status", return_value=cb_info
             ),
@@ -1278,7 +1274,11 @@ class TestCheckTasiIndex:
                 pass
 
         # Simpler approach: directly check import error path
-        original_import = __builtins__.__import__ if hasattr(__builtins__, '__import__') else __import__
+        original_import = (
+            __builtins__.__import__
+            if hasattr(__builtins__, "__import__")
+            else __import__
+        )
 
         def fail_import(name, *args, **kwargs):
             if name == "services.tasi_index":

@@ -327,9 +327,7 @@ class TestCheckDatabaseHelper:
         mock_result.status = HealthStatus.HEALTHY
         mock_result.message = "sqlite connected"
 
-        with patch(
-            "services.health_service.check_database", return_value=mock_result
-        ):
+        with patch("services.health_service.check_database", return_value=mock_result):
             result = await _check_database()
 
         assert result.name == "database"
@@ -345,9 +343,7 @@ class TestCheckDatabaseHelper:
         mock_result.status = HealthStatus.UNHEALTHY
         mock_result.message = "connection refused"
 
-        with patch(
-            "services.health_service.check_database", return_value=mock_result
-        ):
+        with patch("services.health_service.check_database", return_value=mock_result):
             result = await _check_database()
 
         assert result.name == "database"
@@ -380,9 +376,7 @@ class TestCheckRedisHelper:
         mock_result.status = HealthStatus.HEALTHY
         mock_result.message = "connected"
 
-        with patch(
-            "services.health_service.check_redis", return_value=mock_result
-        ):
+        with patch("services.health_service.check_redis", return_value=mock_result):
             result = await _check_redis()
 
         assert result.name == "redis"
@@ -397,9 +391,7 @@ class TestCheckRedisHelper:
         mock_result.status = HealthStatus.DEGRADED
         mock_result.message = "cache disabled"
 
-        with patch(
-            "services.health_service.check_redis", return_value=mock_result
-        ):
+        with patch("services.health_service.check_redis", return_value=mock_result):
             result = await _check_redis()
 
         # DEGRADED != UNHEALTHY, so ready=True
@@ -414,9 +406,7 @@ class TestCheckRedisHelper:
         mock_result.status = HealthStatus.UNHEALTHY
         mock_result.message = "connection refused"
 
-        with patch(
-            "services.health_service.check_redis", return_value=mock_result
-        ):
+        with patch("services.health_service.check_redis", return_value=mock_result):
             result = await _check_redis()
 
         assert result.ready is False
@@ -447,9 +437,7 @@ class TestCheckLlmHelper:
         mock_result.status = HealthStatus.HEALTHY
         mock_result.message = "provider=anthropic"
 
-        with patch(
-            "services.health_service.check_llm", return_value=mock_result
-        ):
+        with patch("services.health_service.check_llm", return_value=mock_result):
             result = await _check_llm()
 
         assert result.name == "vanna_llm"
@@ -464,9 +452,7 @@ class TestCheckLlmHelper:
         mock_result.status = HealthStatus.DEGRADED
         mock_result.message = "no api key"
 
-        with patch(
-            "services.health_service.check_llm", return_value=mock_result
-        ):
+        with patch("services.health_service.check_llm", return_value=mock_result):
             result = await _check_llm()
 
         # DEGRADED != HEALTHY, so ready=False

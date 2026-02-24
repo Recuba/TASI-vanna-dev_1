@@ -429,9 +429,7 @@ class TestCompressLargeResponse:
 
     def test_custom_level(self):
         body = b"y" * 5000
-        result, was_compressed = compress_large_response(
-            body, threshold=100, level=1
-        )
+        result, was_compressed = compress_large_response(body, threshold=100, level=1)
         assert was_compressed is True
         assert decompress_bytes(result) == body
 
@@ -455,7 +453,12 @@ class TestGZipCacheMiddleware:
         request.headers = {"accept-encoding": accept_encoding}
         return request
 
-    def _make_response(self, body: bytes, content_type: str = "application/json", status_code: int = 200):
+    def _make_response(
+        self,
+        body: bytes,
+        content_type: str = "application/json",
+        status_code: int = 200,
+    ):
         response = MagicMock()
         response.headers = {"content-type": content_type}
         response.status_code = status_code
@@ -505,7 +508,6 @@ class TestGZipCacheMiddleware:
         response = self._make_response(body, "application/json")
         call_next = AsyncMock(return_value=response)
 
-
         result = await mw.dispatch(request, call_next)
         assert result.headers.get("content-encoding") == "gzip"
         assert result.headers.get("x-compressed") == "true"
@@ -523,7 +525,9 @@ class TestGZipCacheMiddleware:
 
         result = await mw.dispatch(request, call_next)
         # Should not have gzip encoding
-        assert result.headers.get("content-encoding") is None or "gzip" not in result.headers.get("content-encoding", "")
+        assert result.headers.get(
+            "content-encoding"
+        ) is None or "gzip" not in result.headers.get("content-encoding", "")
 
     @pytest.mark.asyncio
     async def test_compresses_text_html(self):
@@ -636,8 +640,11 @@ class TestJWTUserResolver:
         ctx.get_header.return_value = "Bearer valid-token"
 
         mock_payload = {"sub": "user-42", "email": "test@example.com"}
-        with patch("app.decode_token", mock_payload.copy) if False else \
-             patch("auth.jwt_handler.decode_token", return_value=mock_payload):
+        with (
+            patch("app.decode_token", mock_payload.copy)
+            if False
+            else patch("auth.jwt_handler.decode_token", return_value=mock_payload)
+        ):
             user = await resolver.resolve_user(ctx)
 
         assert user.id == "user-42"
@@ -750,8 +757,7 @@ class TestCreateSqlRunner:
     def test_sqlite_runner_creation(self):
         from app import _create_sql_runner
 
-        with patch("app.DB_BACKEND", "sqlite"), \
-             patch("app._settings") as mock_settings:
+        with patch("app.DB_BACKEND", "sqlite"), patch("app._settings") as mock_settings:
             mock_settings.db.resolved_sqlite_path = Path("/tmp/test.db")
             runner = _create_sql_runner()
         # Should be a SqliteRunner (check type name)
@@ -760,9 +766,11 @@ class TestCreateSqlRunner:
     def test_postgres_runner_creation(self):
         from app import _create_sql_runner
 
-        with patch("app.DB_BACKEND", "postgres"), \
-             patch("app._settings") as mock_settings, \
-             patch("app.PostgresRunner") as mock_pg_runner:
+        with (
+            patch("app.DB_BACKEND", "postgres"),
+            patch("app._settings") as mock_settings,
+            patch("app.PostgresRunner") as mock_pg_runner,
+        ):
             mock_settings.db.pg_host = "localhost"
             mock_settings.db.pg_database = "testdb"
             mock_settings.db.pg_user = "user"
@@ -780,16 +788,21 @@ class TestCreateSqlRunner:
     def test_postgres_runner_no_settings_fallback(self):
         from app import _create_sql_runner
 
-        with patch("app.DB_BACKEND", "postgres"), \
-             patch("app._settings", None), \
-             patch("app.PostgresRunner") as mock_pg_runner, \
-             patch.dict("os.environ", {
-                 "POSTGRES_HOST": "fallback-host",
-                 "POSTGRES_DB": "fallback-db",
-                 "POSTGRES_USER": "fallback-user",
-                 "POSTGRES_PASSWORD": "fallback-pass",
-                 "POSTGRES_PORT": "5433",
-             }):
+        with (
+            patch("app.DB_BACKEND", "postgres"),
+            patch("app._settings", None),
+            patch("app.PostgresRunner") as mock_pg_runner,
+            patch.dict(
+                "os.environ",
+                {
+                    "POSTGRES_HOST": "fallback-host",
+                    "POSTGRES_DB": "fallback-db",
+                    "POSTGRES_USER": "fallback-user",
+                    "POSTGRES_PASSWORD": "fallback-pass",
+                    "POSTGRES_PORT": "5433",
+                },
+            ),
+        ):
             _create_sql_runner()
             mock_pg_runner.assert_called_once_with(
                 host="fallback-host",
@@ -802,9 +815,11 @@ class TestCreateSqlRunner:
     def test_sqlite_runner_no_settings_fallback(self):
         from app import _create_sql_runner, _HERE
 
-        with patch("app.DB_BACKEND", "sqlite"), \
-             patch("app._settings", None), \
-             patch("app.SqliteRunner") as mock_sqlite_runner:
+        with (
+            patch("app.DB_BACKEND", "sqlite"),
+            patch("app._settings", None),
+            patch("app.SqliteRunner") as mock_sqlite_runner,
+        ):
             _create_sql_runner()
             mock_sqlite_runner.assert_called_once_with(str(_HERE / "saudi_stocks.db"))
 
@@ -819,43 +834,45 @@ class TestAppStructure:
 
     def test_app_exists(self):
         from app import app
+
         assert app is not None
 
     def test_app_title(self):
         from app import app
+
         assert "Ra'd AI" in app.title
 
     def test_app_version(self):
         from app import app
+
         assert app.version == "2.0.0"
 
     def test_app_has_routes(self):
         from app import app
+
         assert len(app.routes) > 0
 
     def test_custom_index_route_exists(self):
         from app import app
-        route_paths = [
-            getattr(r, "path", None) for r in app.routes
-        ]
+
+        route_paths = [getattr(r, "path", None) for r in app.routes]
         assert "/" in route_paths
 
     def test_favicon_route_exists(self):
         from app import app
-        route_paths = [
-            getattr(r, "path", None) for r in app.routes
-        ]
+
+        route_paths = [getattr(r, "path", None) for r in app.routes]
         assert "/favicon.ico" in route_paths
 
     def test_health_route_exists(self):
         from app import app
-        route_paths = [
-            getattr(r, "path", None) for r in app.routes
-        ]
+
+        route_paths = [getattr(r, "path", None) for r in app.routes]
         assert "/health" in route_paths
 
     def test_openapi_tags_defined(self):
         from app import app
+
         tag_names = [t["name"] for t in app.openapi_tags]
         assert "health" in tag_names
         assert "auth" in tag_names
@@ -864,20 +881,29 @@ class TestAppStructure:
     def test_vanna_default_route_removed(self):
         """Vanna's default GET / route should be removed (replaced by custom_index)."""
         from app import app
+
         # Count GET "/" routes - should be exactly 1 (our custom one)
         get_root_routes = [
-            r for r in app.routes
-            if hasattr(r, "path") and r.path == "/"
-            and hasattr(r, "methods") and "GET" in r.methods
+            r
+            for r in app.routes
+            if hasattr(r, "path")
+            and r.path == "/"
+            and hasattr(r, "methods")
+            and "GET" in r.methods
         ]
         assert len(get_root_routes) == 1
 
     def test_gzip_middleware_added(self):
         """GZipMiddleware should be in the middleware stack."""
         from app import app
-        middleware_classes = [m.cls.__name__ for m in app.user_middleware if hasattr(m, 'cls')]
+
+        middleware_classes = [
+            m.cls.__name__ for m in app.user_middleware if hasattr(m, "cls")
+        ]
         # Check that GZipMiddleware is somewhere in the stack
-        has_gzip = any("GZip" in name or "gzip" in name.lower() for name in middleware_classes)
+        has_gzip = any(
+            "GZip" in name or "gzip" in name.lower() for name in middleware_classes
+        )
         # Also check via the raw middleware list
         if not has_gzip:
             # It might be added via add_middleware which goes into middleware_stack
@@ -896,6 +922,7 @@ class TestCustomRoutes:
     @pytest.mark.asyncio
     async def test_custom_index_returns_html(self):
         from app import custom_index
+
         result = await custom_index()
         assert isinstance(result, str)
         assert len(result) > 0
@@ -903,6 +930,7 @@ class TestCustomRoutes:
     @pytest.mark.asyncio
     async def test_favicon_returns_response(self):
         from app import favicon
+
         result = await favicon()
         # Should be either FileResponse or HTMLResponse
         assert result is not None
@@ -931,12 +959,13 @@ class TestLifespan:
             except asyncio.CancelledError:
                 pass
 
-        with patch("app.DB_BACKEND", "sqlite"), \
-             patch("app._settings") as mock_settings, \
-             patch("services.widgets.quotes_hub.run_quotes_hub", _noop_hub), \
-             patch("services.news_store.NewsStore"), \
-             patch("services.news_scheduler.NewsScheduler") as mock_sched_cls:
-
+        with (
+            patch("app.DB_BACKEND", "sqlite"),
+            patch("app._settings") as mock_settings,
+            patch("services.widgets.quotes_hub.run_quotes_hub", _noop_hub),
+            patch("services.news_store.NewsStore"),
+            patch("services.news_scheduler.NewsScheduler") as mock_sched_cls,
+        ):
             mock_settings.cache.enabled = False
             mock_settings.db.resolved_sqlite_path = Path("/tmp/test.db")
 
@@ -957,10 +986,11 @@ class TestLifespan:
         mock_app = MagicMock()
         mock_app.routes = []
 
-        with patch("app.DB_BACKEND", "sqlite"), \
-             patch("app._settings") as mock_settings, \
-             patch("app.asyncio.create_task", side_effect=ImportError("no module")):
-
+        with (
+            patch("app.DB_BACKEND", "sqlite"),
+            patch("app._settings") as mock_settings,
+            patch("app.asyncio.create_task", side_effect=ImportError("no module")),
+        ):
             mock_settings.cache.enabled = False
 
             # Should not raise even if imports fail

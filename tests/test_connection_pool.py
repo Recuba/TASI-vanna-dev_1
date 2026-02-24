@@ -408,6 +408,7 @@ class TestSQLitePoolModuleFunctions:
     def reset_sqlite_pool(self):
         """Reset the module global before/after each test."""
         import services.sqlite_pool as mod
+
         original = mod._pool
         mod._pool = None
         yield

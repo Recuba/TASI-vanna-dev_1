@@ -139,9 +139,7 @@ class TestLoadTickerMapFromDb:
             db_path = f.name
         try:
             conn = sqlite3.connect(db_path)
-            conn.execute(
-                "CREATE TABLE companies (ticker TEXT, short_name TEXT)"
-            )
+            conn.execute("CREATE TABLE companies (ticker TEXT, short_name TEXT)")
             conn.execute(
                 "INSERT INTO companies VALUES ('1234', 'شركة التجارة العربية')"
             )
@@ -173,9 +171,7 @@ class TestLoadTickerMapFromDb:
             db_path = f.name
         try:
             conn = sqlite3.connect(db_path)
-            conn.execute(
-                "CREATE TABLE companies (ticker TEXT, short_name TEXT)"
-            )
+            conn.execute("CREATE TABLE companies (ticker TEXT, short_name TEXT)")
             conn.execute("INSERT INTO companies VALUES ('1111', '')")
             conn.commit()
             conn.close()
@@ -795,11 +791,15 @@ class TestFetchAllNewsEnrich:
             "priority": 1,
             "language": "ar",
         }
-        with patch.object(AlarabiyaScraper, "fetch_articles", return_value=[fake_article]):
+        with patch.object(
+            AlarabiyaScraper, "fetch_articles", return_value=[fake_article]
+        ):
             with patch.object(AsharqBusinessScraper, "fetch_articles", return_value=[]):
                 with patch.object(ArgaamScraper, "fetch_articles", return_value=[]):
                     with patch.object(MaaalScraper, "fetch_articles", return_value=[]):
-                        with patch.object(MubasherScraper, "fetch_articles", return_value=[]):
+                        with patch.object(
+                            MubasherScraper, "fetch_articles", return_value=[]
+                        ):
                             result = fetch_all_news()
         assert len(result) >= 1
         article = result[0]
@@ -821,11 +821,15 @@ class TestFetchAllNewsEnrich:
             "priority": 1,
             "language": "ar",
         }
-        with patch.object(AlarabiyaScraper, "fetch_articles", return_value=[fake_article]):
+        with patch.object(
+            AlarabiyaScraper, "fetch_articles", return_value=[fake_article]
+        ):
             with patch.object(AsharqBusinessScraper, "fetch_articles", return_value=[]):
                 with patch.object(ArgaamScraper, "fetch_articles", return_value=[]):
                     with patch.object(MaaalScraper, "fetch_articles", return_value=[]):
-                        with patch.object(MubasherScraper, "fetch_articles", return_value=[]):
+                        with patch.object(
+                            MubasherScraper, "fetch_articles", return_value=[]
+                        ):
                             result = fetch_all_news()
         # Should still return the article even when paraphrase fails
         assert len(result) >= 1
@@ -941,11 +945,13 @@ class TestNewsStoreGetArticlesByIds:
         os.unlink(self.db_path)
 
     def test_get_multiple_by_ids(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر أ", id="id-a"),
-            _make_test_article(title="خبر ب", id="id-b"),
-            _make_test_article(title="خبر ج", id="id-c"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر أ", id="id-a"),
+                _make_test_article(title="خبر ب", id="id-b"),
+                _make_test_article(title="خبر ج", id="id-c"),
+            ]
+        )
         result = self.store.get_articles_by_ids(["id-a", "id-c"])
         assert len(result) == 2
         titles = {a["title"] for a in result}
@@ -975,39 +981,51 @@ class TestNewsStoreBuildFilters:
         os.unlink(self.db_path)
 
     def test_filter_by_sentiment(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر إيجابي", sentiment_label="إيجابي", sentiment_score=0.5),
-            _make_test_article(title="خبر سلبي", sentiment_label="سلبي", sentiment_score=-0.5),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(
+                    title="خبر إيجابي", sentiment_label="إيجابي", sentiment_score=0.5
+                ),
+                _make_test_article(
+                    title="خبر سلبي", sentiment_label="سلبي", sentiment_score=-0.5
+                ),
+            ]
+        )
         result = self.store.get_latest_news(sentiment_label="إيجابي")
         assert len(result) == 1
         assert result[0]["sentiment_label"] == "إيجابي"
 
     def test_filter_by_date_from(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر جديد 1"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر جديد 1"),
+            ]
+        )
         # date_from in the future should return nothing
         result = self.store.get_latest_news(date_from="2099-01-01")
         assert len(result) == 0
 
     def test_filter_by_date_to(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر حديث"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر حديث"),
+            ]
+        )
         # date_to in the past should return nothing
         result = self.store.get_latest_news(date_to="2000-01-01")
         assert len(result) == 0
 
     def test_combined_filters(self):
-        self.store.store_articles([
-            _make_test_article(
-                title="خبر مركب",
-                source_name="أرقام",
-                sentiment_label="محايد",
-                sentiment_score=0.0,
-            ),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(
+                    title="خبر مركب",
+                    source_name="أرقام",
+                    sentiment_label="محايد",
+                    sentiment_score=0.0,
+                ),
+            ]
+        )
         result = self.store.get_latest_news(
             source="أرقام",
             sentiment_label="محايد",
@@ -1029,42 +1047,52 @@ class TestNewsStoreSearchFilters:
         os.unlink(self.db_path)
 
     def test_search_with_source_filter(self):
-        self.store.store_articles([
-            _make_test_article(title="أرامكو تعلن", source_name="العربية"),
-            _make_test_article(title="أرامكو تنمو", source_name="أرقام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="أرامكو تعلن", source_name="العربية"),
+                _make_test_article(title="أرامكو تنمو", source_name="أرقام"),
+            ]
+        )
         result = self.store.search_articles("أرامكو", source="العربية")
         assert len(result) == 1
         assert result[0]["source_name"] == "العربية"
 
     def test_search_with_special_chars(self):
-        self.store.store_articles([
-            _make_test_article(title="test_underscore and 50% discount"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="test_underscore and 50% discount"),
+            ]
+        )
         result = self.store.search_articles("50%")
         assert len(result) == 1
 
     def test_count_search_basic(self):
-        self.store.store_articles([
-            _make_test_article(title="أرامكو تعلن عن أرباح"),
-            _make_test_article(title="أرامكو تنمو وتتطور"),
-            _make_test_article(title="سابك تحقق نتائج"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="أرامكو تعلن عن أرباح"),
+                _make_test_article(title="أرامكو تنمو وتتطور"),
+                _make_test_article(title="سابك تحقق نتائج"),
+            ]
+        )
         count = self.store.count_search("أرامكو")
         assert count == 2
 
     def test_count_search_with_filters(self):
-        self.store.store_articles([
-            _make_test_article(title="أرامكو أ", source_name="العربية"),
-            _make_test_article(title="أرامكو ب", source_name="أرقام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="أرامكو أ", source_name="العربية"),
+                _make_test_article(title="أرامكو ب", source_name="أرقام"),
+            ]
+        )
         count = self.store.count_search("أرامكو", source="العربية")
         assert count == 1
 
     def test_count_search_no_match(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر عام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر عام"),
+            ]
+        )
         count = self.store.count_search("nonexistent")
         assert count == 0
 
@@ -1084,27 +1112,33 @@ class TestNewsStoreAsync:
 
     @pytest.mark.asyncio
     async def test_aget_latest_news(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر غير متزامن 1"),
-            _make_test_article(title="خبر غير متزامن 2"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر غير متزامن 1"),
+                _make_test_article(title="خبر غير متزامن 2"),
+            ]
+        )
         result = await self.store.aget_latest_news(limit=10)
         assert len(result) == 2
 
     @pytest.mark.asyncio
     async def test_acount_articles(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر أ"),
-            _make_test_article(title="خبر ب"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر أ"),
+                _make_test_article(title="خبر ب"),
+            ]
+        )
         count = await self.store.acount_articles()
         assert count == 2
 
     @pytest.mark.asyncio
     async def test_aget_article_by_id(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر محدد", id="async-id-1"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر محدد", id="async-id-1"),
+            ]
+        )
         result = await self.store.aget_article_by_id("async-id-1")
         assert result is not None
         assert result["title"] == "خبر محدد"
@@ -1116,37 +1150,45 @@ class TestNewsStoreAsync:
 
     @pytest.mark.asyncio
     async def test_asearch_articles(self):
-        self.store.store_articles([
-            _make_test_article(title="أرامكو تعلن"),
-            _make_test_article(title="سابك تنمو"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="أرامكو تعلن"),
+                _make_test_article(title="سابك تنمو"),
+            ]
+        )
         result = await self.store.asearch_articles(query="أرامكو")
         assert len(result) == 1
 
     @pytest.mark.asyncio
     async def test_acount_search(self):
-        self.store.store_articles([
-            _make_test_article(title="أرامكو أ"),
-            _make_test_article(title="أرامكو ب"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="أرامكو أ"),
+                _make_test_article(title="أرامكو ب"),
+            ]
+        )
         count = await self.store.acount_search(query="أرامكو")
         assert count == 2
 
     @pytest.mark.asyncio
     async def test_aget_sources(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر 1", source_name="العربية"),
-            _make_test_article(title="خبر 2", source_name="أرقام"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر 1", source_name="العربية"),
+                _make_test_article(title="خبر 2", source_name="أرقام"),
+            ]
+        )
         sources = await self.store.aget_sources()
         assert len(sources) == 2
 
     @pytest.mark.asyncio
     async def test_aget_articles_by_ids(self):
-        self.store.store_articles([
-            _make_test_article(title="خبر أ", id="a-id"),
-            _make_test_article(title="خبر ب", id="b-id"),
-        ])
+        self.store.store_articles(
+            [
+                _make_test_article(title="خبر أ", id="a-id"),
+                _make_test_article(title="خبر ب", id="b-id"),
+            ]
+        )
         result = await self.store.aget_articles_by_ids(["a-id", "b-id"])
         assert len(result) == 2
 

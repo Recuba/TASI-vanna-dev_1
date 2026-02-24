@@ -351,9 +351,7 @@ class TestBuildWhereClauses:
     def test_roe_range(self):
         from api.routes.screener import _build_where_clauses
 
-        sql, params = _build_where_clauses(
-            self._make_filters(roe_min=0.1, roe_max=0.5)
-        )
+        sql, params = _build_where_clauses(self._make_filters(roe_min=0.1, roe_max=0.5))
         assert "p.roe >= ?" in sql
         assert "p.roe <= ?" in sql
 
@@ -387,27 +385,21 @@ class TestBuildWhereClauses:
     def test_debt_to_equity_max(self):
         from api.routes.screener import _build_where_clauses
 
-        sql, params = _build_where_clauses(
-            self._make_filters(debt_to_equity_max=1.5)
-        )
+        sql, params = _build_where_clauses(self._make_filters(debt_to_equity_max=1.5))
         assert "f.debt_to_equity <= ?" in sql
         assert 1.5 in params
 
     def test_current_ratio_min(self):
         from api.routes.screener import _build_where_clauses
 
-        sql, params = _build_where_clauses(
-            self._make_filters(current_ratio_min=1.0)
-        )
+        sql, params = _build_where_clauses(self._make_filters(current_ratio_min=1.0))
         assert "f.current_ratio >= ?" in sql
         assert 1.0 in params
 
     def test_recommendation_filter(self):
         from api.routes.screener import _build_where_clauses
 
-        sql, params = _build_where_clauses(
-            self._make_filters(recommendation="buy")
-        )
+        sql, params = _build_where_clauses(self._make_filters(recommendation="buy"))
         assert "LOWER(a.recommendation) = LOWER(?)" in sql
         assert "buy" in params
 
@@ -472,18 +464,19 @@ class TestScreenerSearch:
     def test_basic_search_returns_200(self):
         count_row = {"cnt": 1}
         data_rows = [self._sample_row()]
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value=count_row,
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=data_rows,
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value=count_row,
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=data_rows,
+            ),
         ):
-            resp = self.client.post(
-                "/api/v1/screener/search", json={}
-            )
+            resp = self.client.post("/api/v1/screener/search", json={})
 
         assert resp.status_code == 200
         body = resp.json()
@@ -492,14 +485,17 @@ class TestScreenerSearch:
         assert body["items"][0]["ticker"] == "2222.SR"
 
     def test_empty_results(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 0},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 0},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ),
         ):
             resp = self.client.post("/api/v1/screener/search", json={})
 
@@ -509,14 +505,17 @@ class TestScreenerSearch:
         assert body["items"] == []
 
     def test_sector_filter_applied(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[self._sample_row()],
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[self._sample_row()],
+            ),
         ):
             resp = self.client.post(
                 "/api/v1/screener/search", json={"sector": "Energy"}
@@ -526,14 +525,17 @@ class TestScreenerSearch:
         assert body["filters_applied"]["sector"] == "Energy"
 
     def test_multiple_filters_applied(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[self._sample_row()],
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[self._sample_row()],
+            ),
         ):
             resp = self.client.post(
                 "/api/v1/screener/search",
@@ -546,15 +548,18 @@ class TestScreenerSearch:
         assert "pe_max" in body["filters_applied"]
 
     def test_sort_by_invalid_column_defaults_to_market_cap(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 0},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
-        ) as mock_fetch:
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 0},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ) as mock_fetch,
+        ):
             resp = self.client.post(
                 "/api/v1/screener/search",
                 json={"sort_by": "DROP TABLE;--"},
@@ -567,15 +572,18 @@ class TestScreenerSearch:
         assert "market_cap" in sql_used
 
     def test_sort_by_valid_column(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 0},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
-        ) as mock_fetch:
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 0},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ) as mock_fetch,
+        ):
             resp = self.client.post(
                 "/api/v1/screener/search",
                 json={"sort_by": "trailing_pe", "sort_dir": "asc"},
@@ -587,15 +595,18 @@ class TestScreenerSearch:
         assert "ASC" in sql_used
 
     def test_sort_dir_defaults_to_desc(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 0},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
-        ) as mock_fetch:
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 0},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ) as mock_fetch,
+        ):
             resp = self.client.post(
                 "/api/v1/screener/search",
                 json={"sort_dir": "desc"},
@@ -606,15 +617,18 @@ class TestScreenerSearch:
         assert "DESC" in sql_used
 
     def test_pagination(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 100},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
-        ) as mock_fetch:
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 100},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ) as mock_fetch,
+        ):
             resp = self.client.post(
                 "/api/v1/screener/search",
                 json={"limit": 10, "offset": 20},
@@ -627,33 +641,30 @@ class TestScreenerSearch:
         assert 20 in data_params
 
     def test_limit_max_100(self):
-        resp = self.client.post(
-            "/api/v1/screener/search", json={"limit": 200}
-        )
+        resp = self.client.post("/api/v1/screener/search", json={"limit": 200})
         assert resp.status_code == 422
 
     def test_limit_min_1(self):
-        resp = self.client.post(
-            "/api/v1/screener/search", json={"limit": 0}
-        )
+        resp = self.client.post("/api/v1/screener/search", json={"limit": 0})
         assert resp.status_code == 422
 
     def test_offset_min_0(self):
-        resp = self.client.post(
-            "/api/v1/screener/search", json={"offset": -1}
-        )
+        resp = self.client.post("/api/v1/screener/search", json={"offset": -1})
         assert resp.status_code == 422
 
     def test_change_pct_rounding(self):
         row = self._sample_row(change_pct=0.3149)
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[row],
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[row],
+            ),
         ):
             resp = self.client.post("/api/v1/screener/search", json={})
 
@@ -661,14 +672,17 @@ class TestScreenerSearch:
 
     def test_null_change_pct(self):
         row = self._sample_row(change_pct=None)
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[row],
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[row],
+            ),
         ):
             resp = self.client.post("/api/v1/screener/search", json={})
 
@@ -676,28 +690,34 @@ class TestScreenerSearch:
 
     def test_null_analyst_count(self):
         row = self._sample_row(analyst_count=None)
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[row],
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[row],
+            ),
         ):
             resp = self.client.post("/api/v1/screener/search", json={})
 
         assert resp.json()["items"][0]["analyst_count"] is None
 
     def test_count_returns_none_fallback_zero(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value=None,
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value=None,
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ),
         ):
             resp = self.client.post("/api/v1/screener/search", json={})
 
@@ -705,14 +725,17 @@ class TestScreenerSearch:
         assert resp.json()["total_count"] == 0
 
     def test_filters_applied_excludes_pagination(self):
-        with patch(
-            "api.routes.screener.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 0},
-        ), patch(
-            "api.routes.screener.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
+        with (
+            patch(
+                "api.routes.screener.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 0},
+            ),
+            patch(
+                "api.routes.screener.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ),
         ):
             resp = self.client.post(
                 "/api/v1/screener/search",
@@ -804,14 +827,17 @@ class TestListEntities:
                 market_cap=3e11,
             ),
         ]
-        with patch(
-            "api.routes.sqlite_entities.afetchone",
-            new_callable=AsyncMock,
-            return_value=count_row,
-        ), patch(
-            "api.routes.sqlite_entities.afetchall",
-            new_callable=AsyncMock,
-            return_value=data_rows,
+        with (
+            patch(
+                "api.routes.sqlite_entities.afetchone",
+                new_callable=AsyncMock,
+                return_value=count_row,
+            ),
+            patch(
+                "api.routes.sqlite_entities.afetchall",
+                new_callable=AsyncMock,
+                return_value=data_rows,
+            ),
         ):
             resp = self.client.get("/api/entities")
 
@@ -822,14 +848,17 @@ class TestListEntities:
         assert body["items"][0]["ticker"] == "2222.SR"
 
     def test_empty_results(self):
-        with patch(
-            "api.routes.sqlite_entities.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 0},
-        ), patch(
-            "api.routes.sqlite_entities.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
+        with (
+            patch(
+                "api.routes.sqlite_entities.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 0},
+            ),
+            patch(
+                "api.routes.sqlite_entities.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ),
         ):
             resp = self.client.get("/api/entities")
 
@@ -840,15 +869,18 @@ class TestListEntities:
         assert body["items"] == []
 
     def test_sector_filter(self):
-        with patch(
-            "api.routes.sqlite_entities.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.sqlite_entities.afetchall",
-            new_callable=AsyncMock,
-            return_value=[self._sample_row()],
-        ) as mock_fetch:
+        with (
+            patch(
+                "api.routes.sqlite_entities.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.sqlite_entities.afetchall",
+                new_callable=AsyncMock,
+                return_value=[self._sample_row()],
+            ) as mock_fetch,
+        ):
             resp = self.client.get("/api/entities?sector=Energy")
 
         assert resp.status_code == 200
@@ -856,15 +888,18 @@ class TestListEntities:
         assert "LIKE" in sql_used
 
     def test_search_filter(self):
-        with patch(
-            "api.routes.sqlite_entities.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.sqlite_entities.afetchall",
-            new_callable=AsyncMock,
-            return_value=[self._sample_row()],
-        ) as mock_fetch:
+        with (
+            patch(
+                "api.routes.sqlite_entities.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.sqlite_entities.afetchall",
+                new_callable=AsyncMock,
+                return_value=[self._sample_row()],
+            ) as mock_fetch,
+        ):
             resp = self.client.get("/api/entities?search=Aramco")
 
         assert resp.status_code == 200
@@ -872,15 +907,18 @@ class TestListEntities:
         assert "ticker LIKE" in sql_used or "short_name LIKE" in sql_used
 
     def test_pagination_params(self):
-        with patch(
-            "api.routes.sqlite_entities.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 100},
-        ), patch(
-            "api.routes.sqlite_entities.afetchall",
-            new_callable=AsyncMock,
-            return_value=[],
-        ) as mock_fetch:
+        with (
+            patch(
+                "api.routes.sqlite_entities.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 100},
+            ),
+            patch(
+                "api.routes.sqlite_entities.afetchall",
+                new_callable=AsyncMock,
+                return_value=[],
+            ) as mock_fetch,
+        ):
             resp = self.client.get("/api/entities?limit=10&offset=20")
 
         assert resp.status_code == 200
@@ -894,14 +932,17 @@ class TestListEntities:
 
     def test_null_change_pct(self):
         row = self._sample_row(change_pct=None)
-        with patch(
-            "api.routes.sqlite_entities.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.sqlite_entities.afetchall",
-            new_callable=AsyncMock,
-            return_value=[row],
+        with (
+            patch(
+                "api.routes.sqlite_entities.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.sqlite_entities.afetchall",
+                new_callable=AsyncMock,
+                return_value=[row],
+            ),
         ):
             resp = self.client.get("/api/entities")
 
@@ -909,14 +950,17 @@ class TestListEntities:
 
     def test_change_pct_rounding(self):
         row = self._sample_row(change_pct=1.5678)
-        with patch(
-            "api.routes.sqlite_entities.afetchone",
-            new_callable=AsyncMock,
-            return_value={"cnt": 1},
-        ), patch(
-            "api.routes.sqlite_entities.afetchall",
-            new_callable=AsyncMock,
-            return_value=[row],
+        with (
+            patch(
+                "api.routes.sqlite_entities.afetchone",
+                new_callable=AsyncMock,
+                return_value={"cnt": 1},
+            ),
+            patch(
+                "api.routes.sqlite_entities.afetchall",
+                new_callable=AsyncMock,
+                return_value=[row],
+            ),
         ):
             resp = self.client.get("/api/entities")
 

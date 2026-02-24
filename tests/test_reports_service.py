@@ -150,10 +150,9 @@ class TestStoreReport:
         mock_conn = MagicMock(spec=sqlite3.Connection)
         mock_conn.execute.side_effect = sqlite3.OperationalError("disk full")
         # Make _is_sqlite return True
-        with patch.object(
-            TechnicalReportsService, "_is_sqlite", return_value=True
-        ), patch.object(
-            TechnicalReportsService, "_ensure_table"
+        with (
+            patch.object(TechnicalReportsService, "_is_sqlite", return_value=True),
+            patch.object(TechnicalReportsService, "_ensure_table"),
         ):
             svc = TechnicalReportsService(lambda: mock_conn)
             with pytest.raises(sqlite3.OperationalError, match="disk full"):
@@ -178,10 +177,9 @@ class TestStoreReports:
     def test_bulk_store_error_triggers_rollback(self):
         mock_conn = MagicMock(spec=sqlite3.Connection)
         mock_conn.executemany.side_effect = sqlite3.OperationalError("fail")
-        with patch.object(
-            TechnicalReportsService, "_is_sqlite", return_value=True
-        ), patch.object(
-            TechnicalReportsService, "_ensure_table"
+        with (
+            patch.object(TechnicalReportsService, "_is_sqlite", return_value=True),
+            patch.object(TechnicalReportsService, "_ensure_table"),
         ):
             svc = TechnicalReportsService(lambda: mock_conn)
             with pytest.raises(sqlite3.OperationalError):
@@ -275,9 +273,7 @@ class TestGetReportsByTicker:
                 title="New", ticker="2222.SR", published_at=datetime(2025, 6, 1)
             )
         )
-        results = svc.get_reports_by_ticker(
-            "2222.SR", since=datetime(2025, 1, 1)
-        )
+        results = svc.get_reports_by_ticker("2222.SR", since=datetime(2025, 1, 1))
         assert len(results) == 1
         assert results[0].title == "New"
 
@@ -508,7 +504,9 @@ class TestReportsServicePostgres:
         mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
         mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
 
-        TechnicalReportsService._executemany(mock_conn, "INSERT INTO t VALUES (%s)", [("a",), ("b",)])
+        TechnicalReportsService._executemany(
+            mock_conn, "INSERT INTO t VALUES (%s)", [("a",), ("b",)]
+        )
         mock_cursor.executemany.assert_called_once()
 
 
@@ -628,7 +626,9 @@ class TestDatabaseManagerPostgres:
         db = DatabaseManager(backend="postgres", pg_settings=None)
         # Make pool import raise ImportError so it falls through to direct connect
         with patch.dict("sys.modules", {"database.pool": None}):
-            with pytest.raises(RuntimeError, match="PostgreSQL settings not configured"):
+            with pytest.raises(
+                RuntimeError, match="PostgreSQL settings not configured"
+            ):
                 db._get_raw_connection()
 
     def test_uses_pool_when_available(self):

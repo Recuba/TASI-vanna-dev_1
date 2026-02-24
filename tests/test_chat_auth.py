@@ -170,7 +170,9 @@ class TestValidTokenAccess:
     def test_valid_token_decode_called_with_expected_type(self, client):
         """Middleware calls decode_token with expected_type='access'."""
         token = _make_token()
-        with patch(_DECODE_PATCH, return_value={"sub": "u", "type": "access"}) as mock_decode:
+        with patch(
+            _DECODE_PATCH, return_value={"sub": "u", "type": "access"}
+        ) as mock_decode:
             client.get(
                 "/api/vanna/v2/chat_sse",
                 headers={"Authorization": f"Bearer {token}"},

@@ -434,6 +434,7 @@ class TestAuditServiceConn:
 # 2. api/routes/entities.py
 # ======================================================================
 
+
 def _build_entities_app():
     """Create a minimal FastAPI app with the entities router."""
     from api.routes.entities import router
@@ -1027,9 +1028,7 @@ class TestAuthRefresh:
 
         app = _build_auth_app()
         client = TestClient(app)
-        resp = client.post(
-            "/api/auth/refresh", json={"refresh_token": "expired-token"}
-        )
+        resp = client.post("/api/auth/refresh", json={"refresh_token": "expired-token"})
         assert resp.status_code == 401
         assert "expired" in resp.json()["detail"].lower()
 
@@ -1041,9 +1040,7 @@ class TestAuthRefresh:
 
         app = _build_auth_app()
         client = TestClient(app)
-        resp = client.post(
-            "/api/auth/refresh", json={"refresh_token": "invalid-token"}
-        )
+        resp = client.post("/api/auth/refresh", json={"refresh_token": "invalid-token"})
         assert resp.status_code == 401
 
     @patch("api.routes.auth.decode_token")
@@ -1063,9 +1060,7 @@ class TestAuthRefresh:
 
         app = _build_auth_app()
         client = TestClient(app)
-        resp = client.post(
-            "/api/auth/refresh", json={"refresh_token": "no-sub-token"}
-        )
+        resp = client.post("/api/auth/refresh", json={"refresh_token": "no-sub-token"})
         assert resp.status_code == 401
         assert "claims" in resp.json()["detail"].lower()
 
@@ -1084,7 +1079,9 @@ class TestAuthRefresh:
     @patch("api.routes.auth.create_access_token", return_value="new-at")
     @patch("api.routes.auth._get_auth_service")
     @patch("api.routes.auth.decode_token")
-    def test_refresh_non_guest_with_service(self, mock_decode, mock_svc_fn, mock_at, mock_rt):
+    def test_refresh_non_guest_with_service(
+        self, mock_decode, mock_svc_fn, mock_at, mock_rt
+    ):
         from services.auth_service import AuthResult
 
         mock_decode.return_value = {
@@ -1093,14 +1090,14 @@ class TestAuthRefresh:
             "type": "refresh",
         }
         mock_svc = MagicMock()
-        mock_svc.verify_user_active.return_value = AuthResult(success=True, user_id="real-user-1")
+        mock_svc.verify_user_active.return_value = AuthResult(
+            success=True, user_id="real-user-1"
+        )
         mock_svc_fn.return_value = mock_svc
 
         app = _build_auth_app()
         client = TestClient(app)
-        resp = client.post(
-            "/api/auth/refresh", json={"refresh_token": "valid-refresh"}
-        )
+        resp = client.post("/api/auth/refresh", json={"refresh_token": "valid-refresh"})
         assert resp.status_code == 200
 
     @patch("api.routes.auth._get_auth_service")
@@ -1121,16 +1118,16 @@ class TestAuthRefresh:
 
         app = _build_auth_app()
         client = TestClient(app)
-        resp = client.post(
-            "/api/auth/refresh", json={"refresh_token": "valid-refresh"}
-        )
+        resp = client.post("/api/auth/refresh", json={"refresh_token": "valid-refresh"})
         assert resp.status_code == 401
 
     @patch("api.routes.auth.create_refresh_token", return_value="new-rt")
     @patch("api.routes.auth.create_access_token", return_value="new-at")
     @patch("api.routes.auth._get_auth_service", return_value=None)
     @patch("api.routes.auth.decode_token")
-    def test_refresh_non_guest_no_service(self, mock_decode, mock_svc_fn, mock_at, mock_rt):
+    def test_refresh_non_guest_no_service(
+        self, mock_decode, mock_svc_fn, mock_at, mock_rt
+    ):
         """Non-guest user refresh when service is None (SQLite mode) - should still succeed."""
         mock_decode.return_value = {
             "sub": "user-1",
@@ -1140,9 +1137,7 @@ class TestAuthRefresh:
 
         app = _build_auth_app()
         client = TestClient(app)
-        resp = client.post(
-            "/api/auth/refresh", json={"refresh_token": "valid-refresh"}
-        )
+        resp = client.post("/api/auth/refresh", json={"refresh_token": "valid-refresh"})
         assert resp.status_code == 200
 
 

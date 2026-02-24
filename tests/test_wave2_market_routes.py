@@ -316,9 +316,7 @@ class TestStockDataQuotes:
             },
         ]
         client = self._make_client()
-        resp = client.get(
-            "/api/v1/stocks/quotes", params={"tickers": "2222.SR"}
-        )
+        resp = client.get("/api/v1/stocks/quotes", params={"tickers": "2222.SR"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
@@ -338,9 +336,7 @@ class TestStockDataQuotes:
             },
         ]
         client = self._make_client()
-        resp = client.get(
-            "/api/v1/stocks/quotes", params={"tickers": "2222.SR"}
-        )
+        resp = client.get("/api/v1/stocks/quotes", params={"tickers": "2222.SR"})
         assert resp.status_code == 200
         data = resp.json()
         assert data[0]["change_pct"] is None
@@ -350,17 +346,13 @@ class TestStockDataQuotes:
     def test_quotes_empty(self, mock_fetchall):
         mock_fetchall.return_value = []
         client = self._make_client()
-        resp = client.get(
-            "/api/v1/stocks/quotes", params={"tickers": "9999.SR"}
-        )
+        resp = client.get("/api/v1/stocks/quotes", params={"tickers": "9999.SR"})
         assert resp.status_code == 200
         assert resp.json() == []
 
     def test_quotes_invalid_ticker(self):
         client = self._make_client()
-        resp = client.get(
-            "/api/v1/stocks/quotes", params={"tickers": "INVALID"}
-        )
+        resp = client.get("/api/v1/stocks/quotes", params={"tickers": "INVALID"})
         assert resp.status_code == 400
 
 
@@ -564,7 +556,9 @@ class TestMarketMovers:
             },
         ]
         client = self._make_client()
-        resp = client.get("/api/v1/market/movers", params={"type": "gainers", "limit": 5})
+        resp = client.get(
+            "/api/v1/market/movers", params={"type": "gainers", "limit": 5}
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["type"] == "gainers"
@@ -889,12 +883,15 @@ class TestMarketOverview:
         mock_yf.Ticker.return_value = mock_ticker
 
         with patch.dict("sys.modules", {"yfinance": mock_yf}):
-            result = _fetch_instrument_sync("BTC", {
-                "ticker": "BTC-USD",
-                "nameAr": "بيتكوين",
-                "nameEn": "Bitcoin",
-                "category": "Crypto",
-            })
+            result = _fetch_instrument_sync(
+                "BTC",
+                {
+                    "ticker": "BTC-USD",
+                    "nameAr": "بيتكوين",
+                    "nameEn": "Bitcoin",
+                    "category": "Crypto",
+                },
+            )
 
         assert result["key"] == "BTC"
         assert result["value"] == 103.0
@@ -909,6 +906,7 @@ class TestMarketOverview:
         with patch.dict("sys.modules", {"yfinance": None}):
             # Make the import raise ImportError
             import builtins
+
             original_import = builtins.__import__
 
             def mock_import(name, *args, **kwargs):
@@ -917,12 +915,15 @@ class TestMarketOverview:
                 return original_import(name, *args, **kwargs)
 
             with patch("builtins.__import__", side_effect=mock_import):
-                result = _fetch_instrument_sync("BTC", {
-                    "ticker": "BTC-USD",
-                    "nameAr": "بيتكوين",
-                    "nameEn": "Bitcoin",
-                    "category": "Crypto",
-                })
+                result = _fetch_instrument_sync(
+                    "BTC",
+                    {
+                        "ticker": "BTC-USD",
+                        "nameAr": "بيتكوين",
+                        "nameEn": "Bitcoin",
+                        "category": "Crypto",
+                    },
+                )
                 assert result["error"] == "yfinance not installed"
 
     def test_fetch_instrument_sync_exception(self):
@@ -933,12 +934,15 @@ class TestMarketOverview:
         mock_yf.Ticker.side_effect = RuntimeError("API error")
 
         with patch.dict("sys.modules", {"yfinance": mock_yf}):
-            result = _fetch_instrument_sync("GOLD", {
-                "ticker": "GC=F",
-                "nameAr": "الذهب",
-                "nameEn": "Gold",
-                "category": "Commodity",
-            })
+            result = _fetch_instrument_sync(
+                "GOLD",
+                {
+                    "ticker": "GC=F",
+                    "nameAr": "الذهب",
+                    "nameEn": "Gold",
+                    "category": "Commodity",
+                },
+            )
             assert "error" in result
 
     def test_fetch_instrument_sync_empty_hist(self):
@@ -952,12 +956,15 @@ class TestMarketOverview:
         mock_yf.Ticker.return_value = mock_ticker
 
         with patch.dict("sys.modules", {"yfinance": mock_yf}):
-            result = _fetch_instrument_sync("WTI", {
-                "ticker": "CL=F",
-                "nameAr": "نفط خام",
-                "nameEn": "WTI Oil",
-                "category": "Energy",
-            })
+            result = _fetch_instrument_sync(
+                "WTI",
+                {
+                    "ticker": "CL=F",
+                    "nameAr": "نفط خام",
+                    "nameEn": "WTI Oil",
+                    "category": "Energy",
+                },
+            )
             assert result["error"] == "No data returned from yfinance"
 
     def test_fetch_instrument_sync_sr_currency(self):
@@ -974,12 +981,15 @@ class TestMarketOverview:
         mock_yf.Ticker.return_value = mock_ticker
 
         with patch.dict("sys.modules", {"yfinance": mock_yf}):
-            result = _fetch_instrument_sync("TASI", {
-                "ticker": "^TASI.SR",
-                "nameAr": "تاسي",
-                "nameEn": "TASI Index",
-                "category": "Saudi",
-            })
+            result = _fetch_instrument_sync(
+                "TASI",
+                {
+                    "ticker": "^TASI.SR",
+                    "nameAr": "تاسي",
+                    "nameEn": "TASI Index",
+                    "category": "Saudi",
+                },
+            )
             assert result["currency"] == "SAR"
 
     def test_fetch_instrument_sync_single_close(self):
@@ -996,12 +1006,15 @@ class TestMarketOverview:
         mock_yf.Ticker.return_value = mock_ticker
 
         with patch.dict("sys.modules", {"yfinance": mock_yf}):
-            result = _fetch_instrument_sync("BTC", {
-                "ticker": "BTC-USD",
-                "nameAr": "بيتكوين",
-                "nameEn": "Bitcoin",
-                "category": "Crypto",
-            })
+            result = _fetch_instrument_sync(
+                "BTC",
+                {
+                    "ticker": "BTC-USD",
+                    "nameAr": "بيتكوين",
+                    "nameEn": "Bitcoin",
+                    "category": "Crypto",
+                },
+            )
             assert result["change"] is None
 
     def test_fetch_instrument_sync_prev_zero(self):
@@ -1018,12 +1031,15 @@ class TestMarketOverview:
         mock_yf.Ticker.return_value = mock_ticker
 
         with patch.dict("sys.modules", {"yfinance": mock_yf}):
-            result = _fetch_instrument_sync("BTC", {
-                "ticker": "BTC-USD",
-                "nameAr": "بيتكوين",
-                "nameEn": "Bitcoin",
-                "category": "Crypto",
-            })
+            result = _fetch_instrument_sync(
+                "BTC",
+                {
+                    "ticker": "BTC-USD",
+                    "nameAr": "بيتكوين",
+                    "nameEn": "Bitcoin",
+                    "category": "Crypto",
+                },
+            )
             assert result["change"] is None
 
     def test_instruments_dict(self):
@@ -1048,7 +1064,9 @@ class TestMarketOverview:
         app.include_router(router)
 
         # Override the cache to avoid caching issues
-        with patch("api.routes.market_overview.cache_response", lambda **kw: lambda f: f):
+        with patch(
+            "api.routes.market_overview.cache_response", lambda **kw: lambda f: f
+        ):
             # Re-import to get uncached version
             pass
 
@@ -1465,9 +1483,7 @@ class TestChartsRoutes:
             {"label": "Company A", "value": 8.5},
         ]
         client = self._make_client()
-        resp = client.get(
-            "/api/charts/dividend-yield-top", params={"limit": 1}
-        )
+        resp = client.get("/api/charts/dividend-yield-top", params={"limit": 1})
         assert resp.status_code == 200
         assert len(resp.json()["data"]) == 1
 

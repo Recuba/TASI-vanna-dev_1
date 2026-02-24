@@ -186,6 +186,7 @@ class TestNewsAggregationService:
         rows = call_args[0][1]
         # The entities_extracted should be wrapped in psycopg2.extras.Json
         from psycopg2.extras import Json
+
         assert isinstance(rows[0]["entities_extracted"], Json)
 
     def test_store_articles_rollback_on_error(self):
@@ -799,7 +800,9 @@ class TestUserServiceWatchlistMethods:
     def test_create_watchlist_success(self):
         row = _watchlist_row(name="My List", tickers=["2222.SR"])
         self.cursor.fetchone.return_value = row
-        result = self.svc.create_watchlist("user-1", name="My List", tickers=["2222.SR"])
+        result = self.svc.create_watchlist(
+            "user-1", name="My List", tickers=["2222.SR"]
+        )
         assert isinstance(result, Watchlist)
         assert result.name == "My List"
         self.conn.commit.assert_called_once()
@@ -836,7 +839,9 @@ class TestUserServiceWatchlistMethods:
     def test_update_watchlist_tickers_only(self):
         row = _watchlist_row(tickers=["2222.SR", "1010.SR"])
         self.cursor.fetchone.return_value = row
-        result = self.svc.update_watchlist("wl-1", "user-1", tickers=["2222.SR", "1010.SR"])
+        result = self.svc.update_watchlist(
+            "wl-1", "user-1", tickers=["2222.SR", "1010.SR"]
+        )
         assert result is not None
         sql_arg = self.cursor.execute.call_args[0][0]
         assert "tickers = %(tickers)s" in sql_arg
@@ -905,7 +910,9 @@ class TestUserServiceAlertMethods:
     # -- create_alert ---------------------------------------------------------
 
     def test_create_alert_success(self):
-        row = _alert_row(ticker="2222.SR", alert_type="price_above", threshold_value=35.0)
+        row = _alert_row(
+            ticker="2222.SR", alert_type="price_above", threshold_value=35.0
+        )
         self.cursor.fetchone.return_value = row
         result = self.svc.create_alert("user-1", "2222.SR", "price_above", 35.0)
         assert isinstance(result, UserAlert)
