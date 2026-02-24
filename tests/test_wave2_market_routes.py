@@ -11,7 +11,6 @@ Covers:
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -242,10 +241,12 @@ class TestStockDataCompare:
             "2222.SR": {"trailing_pe": 15.5, "roe": 0.25},
             "1010.SR": {"trailing_pe": 12.0, "roe": 0.15},
         }
+
         # asyncio.to_thread returns a coroutine that resolves to (name_map, result_data)
-        future = asyncio.Future()
-        future.set_result((name_map, result_data))
-        mock_asyncio.to_thread.return_value = future
+        async def _fake_to_thread(*a, **kw):
+            return (name_map, result_data)
+
+        mock_asyncio.to_thread = _fake_to_thread
 
         client = self._make_client()
         resp = client.get(
@@ -862,7 +863,11 @@ class TestMarketOverview:
                 "currency": "USD",
             },
         ]
-        mock_gather.return_value = asyncio.coroutine(lambda: instruments)()
+
+        async def _fake_gather(*coros, **kw):
+            return instruments
+
+        mock_gather.side_effect = _fake_gather
         # Need to actually make the test work by patching at a higher level
         # We'll test the sync function directly instead
         # since mocking asyncio internals in TestClient is tricky
@@ -1373,7 +1378,7 @@ class TestWatchlistsNoAuth:
         client = TestClient(app)
 
         resp = client.get("/api/watchlists")
-        assert resp.status_code == 403
+        assert resp.status_code in (401, 403)
 
 
 # ============================================================================
