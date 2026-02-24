@@ -51,7 +51,12 @@ Do NOT modify files owned by other agents unless coordinating with them.
 ├── config/
 │   ├── __init__.py                 # get_settings() singleton
 │   ├── settings.py                 # Pydantic Settings classes
-│   └── logging.py                  # JSON/pretty log formatters
+│   ├── lifecycle.py                # on_startup() / on_shutdown() lifespan handlers
+│   ├── env_validator.py            # Startup env validation with fail-fast enforcement
+│   ├── error_tracking.py          # Pluggable error tracking integration
+│   ├── prompts.py                  # System prompt constants
+│   ├── logging_config.py          # JSON/pretty log formatters
+│   └── allowed_tables.json        # SQL allowlist for query validation
 ├── database/
 │   ├── schema.sql                  # PostgreSQL DDL (all tables + indexes + views)
 │   ├── queries.py                  # Centralized SQL query strings

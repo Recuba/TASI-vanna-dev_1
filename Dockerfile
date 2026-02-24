@@ -44,6 +44,7 @@ COPY models/ models/
 COPY auth/ auth/
 COPY cache/ cache/
 COPY middleware/ middleware/
+COPY backend/ backend/
 COPY ingestion/ ingestion/
 
 RUN chmod +x entrypoint.sh && \

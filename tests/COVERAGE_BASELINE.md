@@ -1,6 +1,7 @@
 # Test Coverage Baseline
 
 Baseline coverage percentages for the Ra'd AI Platform as of 2026-02-13.
+**Updated 2026-02-24**: Backend test count grew from 496 to 1477 (coverage sprint added xbrl_processor, price_loader, stock_ohlcv, redis_client, scheduler tests). Frontend vitest suite now at 231 tests (20 files).
 
 ## Backend (Python) -- Module Coverage
 
@@ -25,6 +26,14 @@ Baseline coverage percentages for the Ra'd AI Platform as of 2026-02-13.
 | `app/`            | ~30%     | Page-level tests limited                 |
 
 ## Test Summary
+
+| Suite                        | Tests  | Pass | Skip | Fail | Notes                                        |
+|------------------------------|--------|------|------|------|----------------------------------------------|
+| `tests/` (backend total)     | 1477   | 1477 | 9    | 0    | As of 2026-02-24; includes coverage sprint   |
+| Frontend vitest              | 231    | 231  | 0    | 0    | 20 test files                                |
+| **Total**                    | **1708** | **1708** | **9** | **0** |                                    |
+
+### Historical Baseline (2026-02-13, pre-coverage-sprint)
 
 | Suite                        | Tests | Pass | Skip | Fail |
 |------------------------------|-------|------|------|------|

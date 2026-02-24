@@ -49,6 +49,11 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('rad-ai-theme');if(t==='light'){document.documentElement.classList.remove('dark')}else{document.documentElement.classList.add('dark')}}catch(e){}})();`,
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var l=localStorage.getItem('rad-ai-lang');var d=l==='en'?'ltr':'rtl';var lang=l==='en'?'en':'ar';document.documentElement.setAttribute('dir',d);document.documentElement.setAttribute('lang',lang)}catch(e){}})();`,
+          }}
+        />
       </head>
       <body
         className={`${ibmPlexArabic.variable} ${inter.variable} font-english antialiased`}

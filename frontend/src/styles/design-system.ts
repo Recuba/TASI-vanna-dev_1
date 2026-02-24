@@ -2,6 +2,28 @@
  * Ra'd AI Design System Tokens
  * Extracted from the existing templates/index.html Ra'd AI theme.
  * Single source of truth for colors, spacing, typography, and layout constants.
+ *
+ * ---------------------------------------------------------------------------
+ * Luxury Page Variant Tokens
+ * ---------------------------------------------------------------------------
+ * Several pages use intentionally divergent local `P` (palette) and `F` (font)
+ * token objects rather than importing from this file. These pages have a
+ * distinct "luxury dark" visual treatment:
+ *
+ *   - frontend/src/app/screener/page.tsx
+ *   - frontend/src/app/calendar/page.tsx
+ *   - frontend/src/app/(home)/components/SectorHeatmap.tsx
+ *
+ * Key differences from the global design system:
+ *   - Background: #07080C (deeper than bg.dark #0E0E0E)
+ *   - Gold: #C5B38A (warmer/muted vs primary gold #D4A84B)
+ *   - Typography: Cormorant Garamond serif display font (not available globally)
+ *   - Green/red: softer muted variants (#6BCB8B / #E06C6C)
+ *
+ * This divergence is intentional and documents a second design language used
+ * for data-dense pages. Do NOT unify these without designer approval, as the
+ * two palettes serve different UX purposes.
+ * ---------------------------------------------------------------------------
  */
 
 // ---------------------------------------------------------------------------

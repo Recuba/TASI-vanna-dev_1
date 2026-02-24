@@ -200,3 +200,16 @@ class ChartHeavyUser(HttpUser):
     @tag("health")
     def check_health(self):
         self.client.get("/health", name="/health")
+
+
+# ===========================================================================
+# pytest-compatible load test stubs
+#
+# NOTE: Locust's monkey.patch_all() (applied at module import above when
+# locust is installed) conflicts with FastAPI TestClient's threading model.
+# The functional pytest load tests therefore live in a separate file:
+#
+#   tests/performance/test_load_pytest.py
+#
+# This file remains the authoritative Locust scenario definition.
+# ===========================================================================

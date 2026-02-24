@@ -3,6 +3,15 @@
 -r requirements.txt
 -r requirements-test.txt
 
+# Linting
+ruff>=0.4.0,<1.0
+
+# Type checking
+mypy>=1.8.0,<2.0
+types-requests>=2.31.0
+types-beautifulsoup4>=4.12.0
+types-redis>=4.6.0
+
 # Load testing
 locust>=2.20.0,<3.0
 

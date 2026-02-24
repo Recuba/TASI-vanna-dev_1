@@ -11,7 +11,7 @@
 | # | Finding | Severity | Priority | File(s) | Current State | Fix Required | Status |
 |---|---------|----------|----------|---------|---------------|-------------|--------|
 | SA-01 | Watchlist/Alert IDOR via X-User-Id | CRITICAL | P0 | `api/routes/watchlists.py` | **FIXED** -- All read endpoints now use `Depends(get_current_user)` instead of X-User-Id header | No further action | RESOLVED |
-| SA-02 | Marked.js without DOMPurify | HIGH | P1 | `templates/index.html` | `marked.parse()` output inserted via innerHTML without sanitization | Add DOMPurify CDN + sanitize in `renderMd()` | PENDING (DO NOT MODIFY -- templates/index.html is out of scope) |
+| SA-02 | Marked.js without DOMPurify | HIGH | P1 | `templates/index.html` | DOMPurify CDN loaded at line 17; `renderMd()` calls `DOMPurify.sanitize()` at lines 1126-1127 | Remaining gap: if DOMPurify CDN unavailable, line 1129 returns unsanitized HTML (add SEC-06 SRI to mitigate) | RESOLVED (partial) |
 | SA-03 | TASI health leaked infra details | MEDIUM | P1 | `api/routes/tasi_index.py` | **FIXED** -- Returns only `{status, message}`, diagnostics logged server-side | No further action | RESOLVED |
 | SA-04 | JWT secret defaults to random on restart | MEDIUM | P1 | `config/settings.py`, `app.py` | **FIXED** -- `AuthSettings` has `model_validator` warning; `app.py` lifespan checks `AUTH_JWT_SECRET` in PG mode | No further action | RESOLVED |
 | SA-05 | CORS origins missing production domain | LOW | P2 | `config/settings.py` | **FIXED** -- Default `cors_origins` now includes `raid-ai-app-production.up.railway.app` and Vercel frontend | No further action | RESOLVED |
@@ -71,10 +71,10 @@ The middleware stack is properly ordered (outermost first):
 
 ## Remaining Action Items
 
-### P1: DOMPurify for Marked.js (SA-02)
-- **Owner**: frontend-harden team
-- **Note**: `templates/index.html` is marked as DO NOT MODIFY for this agent
-- **Action**: Add DOMPurify script tag and wrap `marked.parse()` output in `DOMPurify.sanitize()`
+### ~~P1: DOMPurify for Marked.js (SA-02)~~ RESOLVED
+- DOMPurify CDN script added at `templates/index.html` line 17
+- `renderMd()` wraps output in `DOMPurify.sanitize()` at lines 1126-1127
+- Remaining risk: CDN failure leaves line 1129 returning unsanitized HTML -- mitigate with SRI (SEC-06)
 
 ### P2: Tiered Rate Limiting
 - **Owner**: security-harden agent (Task 3)

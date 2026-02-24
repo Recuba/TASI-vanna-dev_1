@@ -79,7 +79,7 @@ railway login
 railway link
 
 # Deploy
-railway up --service raid-ai-app
+railway up --detach
 
 # Check deployment status
 railway status
@@ -92,7 +92,7 @@ railway status
    - Checks if `companies` table exists in PostgreSQL
    - If not: runs `database/schema.sql` to create tables, then `csv_to_postgres.py` to load data
 3. Uvicorn starts on `$PORT` (Railway assigns this automatically)
-4. Health check validates at `/health`
+4. Health check validates at `/health/live` (liveness probe)
 
 ---
 
@@ -224,9 +224,9 @@ Triggered on: CI workflow completes successfully on `master`
 
 Steps:
 1. Installs Railway CLI
-2. Deploys to Railway (`railway up --service raid-ai-app`)
+2. Deploys to Railway (`railway up --detach`)
 3. Waits 30s for stabilization
-4. Runs health check (5 retries, 15s intervals)
+4. Runs health check at `/health/live` (5 retries, 15s intervals)
 
 ### Deploy Flow
 
@@ -260,7 +260,7 @@ python test_app_assembly_v2.py
 # 3. Deploy via Railway CLI
 export RAILWAY_TOKEN=<your-token>
 export RAILWAY_PROJECT_ID=<your-project-id>
-railway up --service raid-ai-app
+railway up --detach
 
 # 4. Monitor deployment logs
 railway logs --follow
@@ -305,7 +305,7 @@ curl -s -X POST "$BASE_URL/api/vanna/v2/chat_sse" \
 
 ### Verification Checklist
 
-- [ ] `/health` returns 200
+- [ ] `/health/live` returns 200
 - [ ] Homepage loads at `/`
 - [ ] Chat responds to a test query
 - [ ] TASI chart data endpoint returns data
@@ -322,7 +322,7 @@ curl -s -X POST "$BASE_URL/api/vanna/v2/chat_sse" \
 Railway provides:
 - **Deploy logs**: Real-time log streaming (structured JSON logs auto-parsed)
 - **Metrics**: CPU, memory, network per service
-- **Health checks**: Configured in `railway.toml` at `/health`
+- **Health checks**: Configured in `railway.toml`; CI/CD uses `/health/live` for post-deploy probes
 
 ### Log Monitoring
 
@@ -340,7 +340,7 @@ railway logs --since 1h
 ### Uptime Monitoring (Recommended)
 
 Set up an external uptime monitor (Betterstack, UptimeRobot, or similar):
-- Monitor URL: `https://raid-ai-app-production.up.railway.app/health`
+- Monitor URL: `https://raid-ai-app-production.up.railway.app/health/live`
 - Check interval: 3 minutes
 - Alert on: 3 consecutive failures
 - Alert channels: Email, Slack, or webhook

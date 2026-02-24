@@ -35,6 +35,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── settings.py                 # Pydantic Settings (DatabaseSettings, LLMSettings, ServerSettings)
 │   ├── lifecycle.py                # on_startup() / on_shutdown() with pool + Prometheus logging
 │   ├── env_validator.py            # Startup env validation with fail-fast enforcement
+│   ├── prompts.py                  # Extracted system prompt constants (SAUDI_STOCKS_SYSTEM_PROMPT, PG_NOTES)
 │   └── logging_config.py          # JSON (prod) / pretty (dev) logging configuration
 ├── database/
 │   ├── schema.sql                  # Full PostgreSQL schema (DDL for all tables + indexes + views)
@@ -47,7 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── __init__.py
 │   ├── health_service.py           # Health checks (DB connectivity, LLM status)
 │   ├── news_store.py               # SQLite news storage (sync + async wrappers)
-│   ├── news_scraper.py             # 9-source Arabic news scraper (5-min interval)
+│   ├── news_scraper.py             # 5-source Arabic news scraper (5-min default interval)
 │   ├── news_scheduler.py           # Background news fetch scheduler
 │   ├── news_paraphraser.py         # Arabic synonym substitution
 │   ├── news_service.py             # News CRUD (PostgreSQL only)
@@ -59,6 +60,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── tasi_index.py               # TASI index data service
 │   ├── yfinance_base.py            # Shared yfinance cache + circuit breaker
 │   ├── cache_utils.py              # Unified @cache_response decorator (LRU + TTL)
+│   ├── sqlite_pool.py              # Thread-safe SQLite connection pool (WAL mode)
 │   └── widgets/
 │       ├── __init__.py
 │       ├── quotes_hub.py           # QuotesHub: market quote orchestrator (Redis pub/sub)
@@ -71,6 +73,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── api/
 │   ├── models/
 │   │   └── widgets.py              # QuoteItem Pydantic model
+│   ├── dependencies.py             # FastAPI dependency injection (init_pg_pool, get_db_connection)
 │   ├── routes/                     # FastAPI route handlers (async)
 │   │   ├── news_feed.py            # /api/v1/news/feed (SQLite news API)
 │   │   ├── news_stream.py          # /api/v1/news/stream (SSE endpoint)
@@ -87,6 +90,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── alerts.py               # /api/v1/alerts (CRUD, JWT-only)
 │   │   └── ...                     # auth, health, reports, announcements
 │   └── db_helper.py                # Async DB query wrappers (asyncio.to_thread)
+├── auth/                           # Authentication module
+│   ├── __init__.py
+│   ├── jwt_handler.py              # JWT encode/decode helpers
+│   ├── password.py                 # bcrypt password hashing
+│   ├── models.py                   # Auth Pydantic models
+│   └── dependencies.py             # FastAPI auth dependencies
+├── chart_engine/                   # Custom Plotly chart generation
+│   ├── __init__.py
+│   └── raid_chart_generator.py     # RaidChartGenerator (gold-themed Plotly charts)
+├── models/                         # Shared Pydantic models
+│   ├── __init__.py
+│   ├── validators.py               # Ticker regex + input validators
+│   └── api_responses.py            # Standardized API response schemas (ErrorDetail, ErrorResponse)
 ├── frontend/                       # Next.js 14 app (production)
 │   ├── src/
 │   │   ├── app/                    # Next.js app router pages
@@ -132,6 +148,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── middleware/
 │   ├── chat_auth.py                # ChatAuthMiddleware: JWT enforcement on chat SSE/poll endpoints
 │   ├── request_context.py          # ContextVar request ID + RequestIdFilter for structured logging
+│   ├── request_logging.py          # Structured request logging (JSON prod / pretty dev)
 │   ├── error_handler.py            # Unified JSON error responses + request_id propagation
 │   ├── rate_limit.py               # Tiered rate limiting (10/30/60 rpm)
 │   └── cors.py                     # CORS configuration
@@ -191,7 +208,7 @@ python database/csv_to_postgres.py
 cd frontend && npm run lint:rtl
 ```
 
-**Environment setup:** Copy `.env.example` to `.env` and configure. At minimum set `GEMINI_API_KEY`. See `.env.example` for all available settings. For the frontend, copy `frontend/.env.local.example` to `frontend/.env.local`.
+**Environment setup:** Copy `.env.example` to `.env` and configure. At minimum set `ANTHROPIC_API_KEY` (the app uses `AnthropicLlmService` in `app.py`). See `.env.example` for all available settings. For the frontend, copy `frontend/.env.local.example` to `frontend/.env.local`.
 
 ## Architecture
 
@@ -221,7 +238,7 @@ Financial statements use `period_type` ('annual'/'quarterly'/'ttm') and `period_
 Assembles a Vanna 2.0 `Agent` with 5 components:
 1. `AnthropicLlmService` - Claude Sonnet 4.5
 2. `ToolRegistry` with `RunSqlTool` + `VisualizeDataTool` (access_groups: admin, user)
-3. `DefaultUserResolver` - returns single default user (no auth)
+3. `JWTUserResolver` - resolves user from JWT token (anonymous fallback if no token)
 4. `DemoAgentMemory` - in-memory conversation storage
 5. `SaudiStocksSystemPromptBuilder` - schema documentation (includes PostgreSQL notes when using PG backend)
 
@@ -231,7 +248,7 @@ The `VannaFastAPIServer.create_app()` creates the FastAPI app. Vanna's default "
 
 **SQLite services** (work with both backends):
 - `news_store.py` - SQLite news storage with sync methods + async wrappers (`aget_*` via `asyncio.to_thread`). The sync methods are deprecated in favor of their async counterparts for use in FastAPI handlers.
-- `news_scraper.py` - Scrapes 9 Arabic news sources with 5-minute interval (config-driven via `ScraperSettings`)
+- `news_scraper.py` - Scrapes 5 Arabic news sources (Al Arabiya, Asharq Business, Argaam, Maaal, Mubasher) with 5-minute default scheduler interval (config-driven via `ScraperSettings.fetch_interval_seconds`)
 - `news_scheduler.py` - Background daemon thread for periodic news fetching
 - `news_paraphraser.py` - Arabic synonym substitution for content diversity
 - `db_compat.py` - SQLite/PostgreSQL abstraction layer
@@ -257,7 +274,7 @@ All route handlers are `async def`. Synchronous database calls (sqlite3, psycopg
   - Full Arabic RTL support via Tailwind logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`) with lint enforcement (`npm run lint:rtl`)
   - Real-time news feed via SSE (`/api/v1/news/stream`) with 10-second poll interval
   - Live market widgets via SSE (`/api/v1/widgets/stream`) with reconnection backoff
-  - Information-dense homepage: TASI ticker bar, sector heatmap (Recharts Treemap), market movers, mini news feed, market breadth bar
+  - Information-dense homepage: TASI ticker bar, sector heatmap (custom flexbox tiles with gradient color scale, not Recharts Treemap), market movers, mini news feed, market breadth bar
   - Stock screener: multi-filter search (P/E, P/B, ROE, yield, market cap, sector), sortable results, preset filters (Value/Growth/Dividend/Low Debt), CSV export
   - Financial calendar: monthly grid/list views for dividend ex-dates and earnings dates with event type filters
   - Portfolio tracker: localStorage-based holdings table, allocation pie chart, P&L tracking, live batch quotes, transaction history
@@ -304,7 +321,7 @@ The hub is started as a background task during FastAPI lifespan and its route is
 
 ## Key Vanna 2.0 Patterns
 
-- **Tool registration**: Use `tools.register_local_tool(tool, access_groups=[...])` - the `.register()` method does NOT exist in Vanna 2.0.2
+- **Tool registration**: Use `tools.register_local_tool(tool, access_groups=[...])` - the `.register()` method does NOT exist in Vanna 2.0.2. Note: `vanna-skill/SKILL.md` Quick Start examples show `tools.register()` as simplified pseudocode -- always use `register_local_tool()` in actual code.
 - **SystemPromptBuilder**: Abstract method signature is `build_system_prompt(self, user, tools)`, not `build()`
 - **Agent constructor requires all of**: `llm_service`, `tool_registry`, `user_resolver`, `agent_memory`
 - **Streaming**: `AgentConfig(stream_responses=True)` enables SSE streaming; `max_tool_iterations=10` caps tool calls per query
@@ -312,7 +329,7 @@ The hub is started as a background task during FastAPI lifespan and its route is
 
 ## Gotchas
 
-- The system prompt in `app.py` documents the full database schema. If schema changes, update both the column mappings AND the system prompt.
+- The system prompt is defined in `config/prompts.py` (imported by `app.py`). If the schema changes, update both the column mappings in `csv_to_sqlite.py` AND the `SAUDI_STOCKS_SYSTEM_PROMPT` constant in `config/prompts.py`.
 - `csv_to_sqlite.py` skips financial statement rows where `period_date` is null -- some companies have fewer periods than others (~71% coverage, not 100%).
 - All test files (`tests/test_database.py`, `tests/test_app_assembly_v2.py`, etc.) use `DB_SQLITE_PATH` env var for the database path. Fallback is `Path(__file__).resolve().parent.parent / "saudi_stocks.db"` which resolves correctly from `tests/` to the project root.
 - The `<vanna-chat>` component requires internet (loaded from CDN).
@@ -326,7 +343,7 @@ The hub is started as a background task during FastAPI lifespan and its route is
 - The `QuotesHub` background task is started during FastAPI lifespan. If you add new SSE producers, register them similarly in `app.py`'s lifespan handler.
 - Tadawul trading days are Sunday-Thursday. Friday and Saturday are weekends (not the Western Saturday/Sunday).
 - Health check routes are wrapped in `asyncio.to_thread()` to prevent blocking during database health probes.
-- JWT secret is enforced at startup in production PostgreSQL mode -- missing `JWT_SECRET_KEY` raises `RuntimeError`.
+- JWT secret is enforced at startup in production mode -- missing `AUTH_JWT_SECRET` causes `env_validator.py` to emit a startup error (checked via `ENVIRONMENT=production`). The variable name is `AUTH_JWT_SECRET`, not `JWT_SECRET_KEY`.
 - SQL query strings are centralized in `database/queries.py`. Prefer using these constants over inline SQL in route handlers.
 - Pagination `limit` parameters have an upper bound of 100 (`le=100`) across all list endpoints.
 - `database/postgres_utils.py` provides `pg_available()` and `pg_connection_params()` shared helpers. Do not duplicate PG connection logic in test files — import from there instead.

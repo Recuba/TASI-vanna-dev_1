@@ -54,7 +54,7 @@ echo ""
 
 # ---- Step 3: Set environment variables ----
 echo "Step 3: Setting environment variables..."
-export DB_BACKEND=postgresql
+export DB_BACKEND=postgres
 export POSTGRES_HOST=localhost
 export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 export POSTGRES_DB="${POSTGRES_DB:-tasi_platform}"

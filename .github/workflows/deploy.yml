@@ -25,10 +25,11 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
       - name: Post-deploy health check
+        id: health_check
         run: |
           echo "Waiting 30s for deployment to stabilize..."
           sleep 30
-          HEALTH_URL="${{ vars.DEPLOY_URL || 'https://raid-ai-app-production.up.railway.app' }}/health"
+          HEALTH_URL="${{ vars.DEPLOY_URL || 'https://raid-ai-app-production.up.railway.app' }}/health/live"
           echo "Checking health at $HEALTH_URL"
           for i in 1 2 3 4 5; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || true)
@@ -41,3 +42,12 @@ jobs:
           done
           echo "Health check failed after 5 attempts"
           exit 1
+
+      - name: Remove failed deployment on health check failure
+        if: failure() && steps.health_check.outcome == 'failure'
+        run: |
+          echo "Health check failed — removing the latest deployment to revert to previous."
+          railway down --yes
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
