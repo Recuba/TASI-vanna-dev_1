@@ -9,9 +9,7 @@ Coverage sprint wave 2 — targets statement coverage for:
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timedelta, timezone
-from types import SimpleNamespace
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -828,9 +826,8 @@ class TestAuthGetAuthService:
 
     @patch("api.routes.auth.logger")
     def test_get_auth_service_failure_returns_none(self, mock_logger):
-        from api.routes.auth import _get_auth_service
 
-        with patch("api.routes.auth._get_auth_service") as mock_fn:
+        with patch("api.routes.auth._get_auth_service") as _:
             # Test the actual function by patching its dependencies
             pass
 
@@ -843,8 +840,6 @@ class TestAuthGetAuthService:
     def test_get_auth_service_import_error(self):
         """When dependencies aren't available, returns None."""
         from api.routes import auth as auth_module
-
-        original = auth_module._get_auth_service
 
         # Patch at a deeper level
         with patch.object(auth_module, "_get_auth_service", return_value=None):

@@ -5,12 +5,10 @@ Covers TTLCache (put/get/expiry/eviction), the @cache_response decorator
 (sync + async), Redis integration, and Redis failure fallback.
 """
 
-import asyncio
-import json
 import sys
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -18,7 +16,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from services.cache_utils import TTLCache, _make_key, cache_response, configure_redis
+from services.cache_utils import TTLCache, _make_key, cache_response, configure_redis  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -311,7 +309,6 @@ class TestCacheResponseWithRedis:
     """Tests for @cache_response when Redis client is configured."""
 
     def test_redis_stores_and_retrieves(self, mock_redis):
-        import services.cache_utils as cu
 
         configure_redis(mock_redis)
 
@@ -337,7 +334,6 @@ class TestCacheResponseWithRedis:
         assert mock_redis.get.called
 
     def test_redis_failure_falls_back_to_memory(self):
-        import services.cache_utils as cu
 
         failing_redis = MagicMock()
         failing_redis.get.side_effect = ConnectionError("Redis down")

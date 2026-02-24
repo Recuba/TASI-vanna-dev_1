@@ -7,10 +7,8 @@ actually starting threads.
 """
 
 import sys
-import threading
-import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 

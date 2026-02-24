@@ -6,7 +6,6 @@ record_request counter, and dependency check helpers.
 """
 
 import sys
-import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

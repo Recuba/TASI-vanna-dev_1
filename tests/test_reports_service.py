@@ -610,7 +610,7 @@ class TestDatabaseManagerAsync:
 
         async def _run():
             with patch.object(db, "_get_raw_connection", return_value=mock_conn):
-                async with db.aconnection() as conn:
+                async with db.aconnection() as _:
                     raise ValueError("async oops")
 
         with pytest.raises(ValueError):

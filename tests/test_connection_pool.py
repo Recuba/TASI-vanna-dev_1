@@ -254,11 +254,10 @@ class TestClosePool:
 # SQLitePool tests (services/sqlite_pool.py)
 # ===========================================================================
 
-import sqlite3
-import threading
-import queue
+import sqlite3  # noqa: E402
+import threading  # noqa: E402
 
-from services.sqlite_pool import SQLitePool, init_pool as sqlite_init_pool, get_pool
+from services.sqlite_pool import SQLitePool, init_pool as sqlite_init_pool, get_pool  # noqa: E402
 
 
 class TestSQLitePoolCreation:
@@ -345,7 +344,7 @@ class TestSQLitePoolAcquireRelease:
         pool = SQLitePool(db_path, pool_size=1)
 
         with pytest.raises(ValueError):
-            with pool.connection() as conn:
+            with pool.connection() as _:
                 raise ValueError("test error")
 
         # Connection should still be returned to pool

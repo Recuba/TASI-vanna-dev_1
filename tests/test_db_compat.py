@@ -285,7 +285,6 @@ class TestGetReadConnectionPostgres:
         with patch("services.db_compat.is_postgres", return_value=True), \
              patch("services.db_compat.get_settings", return_value=mock_settings):
             # Make pool import raise ImportError
-            import importlib
             with patch.dict("sys.modules", {"database.pool": None}):
                 with patch("psycopg2.connect", return_value=mock_conn) as mock_connect:
                     conn = get_read_connection()

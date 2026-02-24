@@ -1676,7 +1676,6 @@ class TestErrorHandlerMappedExceptions:
 
         with patch.dict(os.environ, {"SERVER_DEBUG": "true"}):
             # Need to reimport to pick up env var
-            import importlib
             import middleware.error_handler as eh
 
             original_debug = eh._DEBUG
@@ -2087,7 +2086,6 @@ class TestSetupLogging:
         # Add a dummy handler
         dummy = logging.StreamHandler()
         root.addHandler(dummy)
-        old_count = len(root.handlers)
 
         setup_logging(json_output=True)
         # Handlers should be cleared and replaced with just 1

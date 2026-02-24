@@ -15,10 +15,8 @@ import asyncio
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -872,7 +870,6 @@ class TestMarketOverview:
         ]
         mock_gather.return_value = asyncio.coroutine(lambda: instruments)()
         # Need to actually make the test work by patching at a higher level
-        client = self._make_client()
         # We'll test the sync function directly instead
         # since mocking asyncio internals in TestClient is tricky
 
@@ -1067,8 +1064,6 @@ class TestMarketOverview:
 def _make_watchlist_app():
     """Create a FastAPI app with watchlists router and auth overrides."""
     from api.routes.watchlists import router
-    from auth.dependencies import get_current_user
-    from api.dependencies import get_user_service
 
     app = FastAPI()
     app.include_router(router)

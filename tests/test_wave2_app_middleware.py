@@ -14,7 +14,7 @@ import sys
 import time
 from collections import deque
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -22,16 +22,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.middleware.rate_limiter import RateLimiter, _CLEANUP_INTERVAL
-from backend.middleware.cost_controller import (
+from backend.middleware.rate_limiter import RateLimiter, _CLEANUP_INTERVAL  # noqa: E402
+from backend.middleware.cost_controller import (  # noqa: E402
     CostController,
     CostLimitConfig,
-    UsageSummary,
-    _DEFAULT_INPUT_COST_PER_M,
-    _DEFAULT_OUTPUT_COST_PER_M,
 )
-from backend.middleware.models import RateLimitResult
-from backend.services.cache.compression import (
+from backend.services.cache.compression import (  # noqa: E402
     compress_bytes,
     compress_large_response,
     decompress_bytes,
@@ -509,7 +505,6 @@ class TestGZipCacheMiddleware:
         response = self._make_response(body, "application/json")
         call_next = AsyncMock(return_value=response)
 
-        from starlette.responses import Response as StarletteResponse
 
         result = await mw.dispatch(request, call_next)
         assert result.headers.get("content-encoding") == "gzip"

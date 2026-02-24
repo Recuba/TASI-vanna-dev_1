@@ -13,7 +13,6 @@ Covers:
 
 from __future__ import annotations
 
-import importlib
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -236,7 +235,7 @@ class TestServiceSingletons:
 
         get_news_service.cache_clear()
         try:
-            with patch("api.dependencies.get_db_connection") as mock_get_conn:
+            with patch("api.dependencies.get_db_connection") as _:
                 s1 = get_news_service()
                 s2 = get_news_service()
             assert s1 is s2

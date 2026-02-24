@@ -28,7 +28,6 @@ from services.news_scraper import (
     ArgaamScraper,
     AsharqBusinessScraper,
     BaseNewsScraper,
-    GoogleNewsRssScraper,
     MaaalScraper,
     MubasherScraper,
     _deduplicate,
@@ -836,7 +835,7 @@ class TestFetchAllNewsEnrich:
 # PART 2: news_store.py -- uncovered methods and edge cases
 # ===================================================================
 
-from services.news_store import NewsStore
+from services.news_store import NewsStore  # noqa: E402
 
 
 def _make_test_article(
@@ -1173,7 +1172,6 @@ class TestGetRedis:
     """Cover _get_redis function."""
 
     def test_returns_none_when_no_cache_module(self):
-        from api.routes.widgets_stream import _get_redis
 
         with patch.dict("sys.modules", {"cache": None}):
             # Force ImportError path
