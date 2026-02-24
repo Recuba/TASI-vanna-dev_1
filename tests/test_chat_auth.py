@@ -27,11 +27,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import jwt
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
+import jwt  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
-from middleware.chat_auth import ChatAuthMiddleware, _PROTECTED_PATHS
+from middleware.chat_auth import ChatAuthMiddleware, _PROTECTED_PATHS  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Patch target: decode_token lives in auth.jwt_handler
