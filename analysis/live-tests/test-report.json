@@ -1,0 +1,301 @@
+{
+  "timestamp": "2026-02-22T06:17:49.166Z",
+  "frontend_url": "http://localhost:3000",
+  "backend_available": false,
+  "summary": {
+    "passed": 40,
+    "failed": 0,
+    "info": 7,
+    "total": 47
+  },
+  "results": [
+    {
+      "test": "Homepage HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Homepage title",
+      "status": "PASS",
+      "detail": "\"Ra'd AI - Saudi Stock Market AI Analyst\""
+    },
+    {
+      "test": "Header visible",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Navigation links",
+      "status": "PASS",
+      "detail": "39 links found"
+    },
+    {
+      "test": "Theme background",
+      "status": "INFO",
+      "detail": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "test": "Document direction",
+      "status": "PASS",
+      "detail": "rtl"
+    },
+    {
+      "test": "Arabic content present",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Homepage full screenshot",
+      "status": "INFO",
+      "detail": "Saved"
+    },
+    {
+      "test": "Market page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Market data containers",
+      "status": "PASS",
+      "detail": "Tables: 1, Cards: 48"
+    },
+    {
+      "test": "Search/filter inputs",
+      "status": "PASS",
+      "detail": "1 inputs found"
+    },
+    {
+      "test": "Screener page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Screener buttons",
+      "status": "PASS",
+      "detail": "14 buttons. Sample: Ctrl+K, EN, الفلاتر, أسهم القيمة, أسهم النمو"
+    },
+    {
+      "test": "Preset filter click",
+      "status": "PASS",
+      "detail": "Found 3 preset buttons"
+    },
+    {
+      "test": "Calendar page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Calendar grid elements",
+      "status": "PASS",
+      "detail": "2 elements found"
+    },
+    {
+      "test": "Calendar navigation buttons",
+      "status": "PASS",
+      "detail": "2 nav buttons"
+    },
+    {
+      "test": "Portfolio page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Portfolio empty state",
+      "status": "INFO",
+      "detail": "0 empty state indicators"
+    },
+    {
+      "test": "Portfolio add modal opens",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Alerts page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Alerts form elements",
+      "status": "INFO",
+      "detail": "0 inputs/selects"
+    },
+    {
+      "test": "Watchlist page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "News page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "News article cards",
+      "status": "PASS",
+      "detail": "47 cards (backend is down, may show loading/error)"
+    },
+    {
+      "test": "Charts page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Chart elements",
+      "status": "PASS",
+      "detail": "55 chart/iframe elements"
+    },
+    {
+      "test": "Stock detail page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Stock detail tabs",
+      "status": "INFO",
+      "detail": "0 tabs"
+    },
+    {
+      "test": "Stock ticker/name displayed",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Chat page HTTP status",
+      "status": "PASS",
+      "detail": "Status: 200"
+    },
+    {
+      "test": "Chat input elements",
+      "status": "PASS",
+      "detail": "1 inputs"
+    },
+    {
+      "test": "Sidebar/Nav visible",
+      "status": "INFO",
+      "detail": ""
+    },
+    {
+      "test": "Logo visible",
+      "status": "INFO",
+      "detail": ""
+    },
+    {
+      "test": "Theme toggle",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Mobile homepage renders",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Mobile hamburger menu",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Mobile menu opens on click",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Mobile screener renders",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Mobile market renders",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Mobile portfolio renders",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Mobile stock detail renders",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Tablet homepage renders",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Tablet screener renders",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Keyboard focus navigation",
+      "status": "PASS",
+      "detail": "Focused: A \"RARa'd AIرعد للذكاء الاصطناعي\""
+    },
+    {
+      "test": "404 page status code",
+      "status": "PASS",
+      "detail": "Status: 404"
+    },
+    {
+      "test": "Custom 404 content",
+      "status": "PASS",
+      "detail": ""
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to fetch RSC payload for http://localhost:3000/. Falling back to browser navigation. TypeError: Failed to fetch\n    at fetchServerResponse (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/router-reducer/fetch-server-response.js:59:27)\n    at fastRefreshReducerImpl (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/router-reducer/reducers/fast-refresh-reducer.js:33:67)\n    at clientReducer (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/router-reducer/router-reducer.js:41:67)\n    at Object.action (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/shared/lib/router/action-queue.js:150:55)\n    at runAction (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/shared/lib/router/action-queue.js:56:38)\n    at dispatchAction (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/shared/lib/router/action-queue.js:113:9)\n    at Object.dispatch (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/shared/lib/router/action-queue.js:145:40)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/use-reducer-with-devtools.js:130:21)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:304:25)\n    at startTransition (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react/cjs/react.development.js:2597:25)\n    at Object.fastRefresh (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:303:48)\n    at eval (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:277:28)\n    at startTransition (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react/cjs/react.development.js:2597:25)\n    at processMessage (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:276:44)\n    at WebSocket.handler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:395:17)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ],
+  "pageCrashes": []
+}
