@@ -1,0 +1,8 @@
+{
+  "enabledMcpjsonServers": [
+    "pdf-tools",
+    "n8n-mcp",
+    "Neon"
+  ],
+  "enableAllProjectMcpServers": true
+}

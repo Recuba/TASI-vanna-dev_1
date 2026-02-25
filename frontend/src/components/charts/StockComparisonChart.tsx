@@ -298,7 +298,7 @@ function StockComparisonChartInner({
               </span>
             </div>
           ))}
-          <span className="text-[10px] dark:text-[#606060] text-gray-400">{t('أساس 100', 'Base 100')}</span>
+          <span className="text-[13.5px] dark:text-[#606060] text-gray-400">{t('أساس 100', 'Base 100')}</span>
         </div>
 
         {/* Period selector */}

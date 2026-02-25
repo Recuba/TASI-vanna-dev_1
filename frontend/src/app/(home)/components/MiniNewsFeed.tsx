@@ -28,7 +28,7 @@ function ImpactBadge({ score }: { score?: string }) {
   if (!score || score === 'low') return null;
   return (
     <span className={cn(
-      'text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase',
+      'text-[12.5px] font-bold px-1.5 py-0.5 rounded-full uppercase',
       score === 'high' ? 'bg-accent-red/20 text-accent-red' : 'bg-accent-warning/20 text-accent-warning'
     )}>
       {score}
@@ -75,10 +75,10 @@ export function MiniNewsFeed() {
                     {article.title}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] text-[var(--text-muted)]">
+                    <span className="text-[13.5px] text-[var(--text-muted)]">
                       {article.source_name}
                     </span>
-                    <span className="text-[10px] text-[var(--text-muted)]">
+                    <span className="text-[13.5px] text-[var(--text-muted)]">
                       {article.published_at ? timeAgo(article.published_at, language) : ''}
                     </span>
                     <ImpactBadge score={article.impact_score ?? undefined} />

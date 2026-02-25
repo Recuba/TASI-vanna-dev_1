@@ -264,7 +264,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       {/* Bottom section: branding + collapse toggle */}
       <div className="border-t gold-border p-2 space-y-1">
         {!collapsed && (
-          <div className="px-3 py-2 text-[10px] text-[var(--text-muted)] leading-relaxed">
+          <div className="px-3 py-2 text-[13.5px] text-[var(--text-muted)] leading-relaxed">
             <span className="gold-text font-bold">Ra&apos;d AI</span>
             <span className="mx-1">v2.0</span>
           </div>

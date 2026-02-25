@@ -169,23 +169,23 @@ function HeatmapTile({ item, size, sizeMode }: TileProps) {
             animation: 'tooltipReveal 0.1s ease',
           }}
         >
-          <p style={{ fontFamily: F.ui, fontWeight: 600, fontSize: 11, color: P.goldBright, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ fontFamily: F.ui, fontWeight: 600, fontSize: 14.5, color: P.goldBright, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {item.name || shortTicker}
           </p>
-          <p style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, marginBottom: 6, letterSpacing: '0.06em' }}>
+          <p style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted, marginBottom: 6, letterSpacing: '0.06em' }}>
             {item.sector || '—'}
           </p>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-            <span style={{ fontFamily: F.mono, fontSize: 10, color: P.textSecondary }}>CHG</span>
-            <span style={{ fontFamily: F.mono, fontSize: 11, fontWeight: 700, color: colors.textColor }}>
+            <span style={{ fontFamily: F.mono, fontSize: 13.5, color: P.textSecondary }}>CHG</span>
+            <span style={{ fontFamily: F.mono, fontSize: 14.5, fontWeight: 700, color: colors.textColor }}>
               {pctSign(change)}
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 4 }}>
-            <span style={{ fontFamily: F.mono, fontSize: 10, color: P.textSecondary }}>
+            <span style={{ fontFamily: F.mono, fontSize: 13.5, color: P.textSecondary }}>
               {sizeMode === 'cap' ? 'CAP' : 'VOL'}
             </span>
-            <span style={{ fontFamily: F.mono, fontSize: 10, color: P.text }}>
+            <span style={{ fontFamily: F.mono, fontSize: 13.5, color: P.text }}>
               {sizeMode === 'cap'
                 ? (item.market_cap ? formatNum(item.market_cap) + ' SAR' : '—')
                 : (item.volume ? formatNum(item.volume) : '—')}
@@ -294,7 +294,7 @@ function SectorTabStrip({ sectors, active, onChange, isRtl }: SectorTabProps) {
           >
             <span style={{
               fontFamily: isRtl ? F.arabic : F.mono,
-              fontSize: 9,
+              fontSize: 12.5,
               fontWeight: isActive ? 600 : 400,
               color: isActive ? P.goldBright : P.textSecondary,
               letterSpacing: isRtl ? 0 : '0.06em',
@@ -304,7 +304,7 @@ function SectorTabStrip({ sectors, active, onChange, isRtl }: SectorTabProps) {
             {!isAll && (
               <span style={{
                 fontFamily: F.mono,
-                fontSize: 8,
+                fontSize: 11.5,
                 fontWeight: 600,
                 color: isPos ? P.green : P.red,
                 background: isPos ? P.greenMuted : P.redMuted,
@@ -347,7 +347,7 @@ function SizeModeToggle({ mode, onChange, isRtl }: { mode: SizeMode; onChange: (
             paddingInline: 12,
             paddingBlock: 5,
             fontFamily: isRtl ? F.arabic : F.mono,
-            fontSize: 9,
+            fontSize: 12.5,
             letterSpacing: isRtl ? 0 : '0.1em',
             fontWeight: mode === opt.v ? 600 : 400,
             color: mode === opt.v ? P.goldBright : P.textMuted,
@@ -406,10 +406,10 @@ function BreadthRow({ breadth, isRtl }: { breadth: MarketBreadth; isRtl: boolean
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' as const, alignItems: 'center' }}>
         {stats.map((s) => (
           <div key={s.label} style={{ display: 'flex', flexDirection: 'column' as const, gap: 2 }}>
-            <span style={{ fontFamily: F.mono, fontSize: 8, color: P.textMuted, letterSpacing: '0.1em' }}>
+            <span style={{ fontFamily: F.mono, fontSize: 11.5, color: P.textMuted, letterSpacing: '0.1em' }}>
               {s.label}
             </span>
-            <span style={{ fontFamily: F.mono, fontSize: 13, fontWeight: 700, color: s.color }}>
+            <span style={{ fontFamily: F.mono, fontSize: 16.5, fontWeight: 700, color: s.color }}>
               {s.value}
             </span>
           </div>
@@ -430,7 +430,7 @@ function GradientLegend({ isRtl }: { isRtl: boolean }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, paddingBlock: 4 }}>
-      <span style={{ fontFamily: F.mono, fontSize: 9, color: P.red }}>
+      <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.red }}>
         {isRtl ? 'انخفاض' : 'DECLINE'}
       </span>
       <div style={{ position: 'relative' }}>
@@ -442,11 +442,11 @@ function GradientLegend({ isRtl }: { isRtl: boolean }) {
         }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, width: 200 }}>
           {ticks.map((t) => (
-            <span key={t} style={{ fontFamily: F.mono, fontSize: 8, color: P.textMuted }}>{t}</span>
+            <span key={t} style={{ fontFamily: F.mono, fontSize: 11.5, color: P.textMuted }}>{t}</span>
           ))}
         </div>
       </div>
-      <span style={{ fontFamily: F.mono, fontSize: 9, color: P.green }}>
+      <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.green }}>
         {isRtl ? 'ارتفاع' : 'ADVANCE'}
       </span>
     </div>
@@ -486,20 +486,20 @@ function MoverItem({ item, rank, isRtl }: MoverItemProps) {
         transition: 'background 0.12s ease',
         cursor: 'pointer',
       }}>
-        <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, width: 14, textAlign: 'right', flexShrink: 0 }}>
+        <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted, width: 14, textAlign: 'right', flexShrink: 0 }}>
           {rank}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontFamily: F.mono, fontSize: 11, fontWeight: 600, color: P.goldBright, letterSpacing: '0.04em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontFamily: F.mono, fontSize: 14.5, fontWeight: 600, color: P.goldBright, letterSpacing: '0.04em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {shortTicker}
           </p>
-          <p style={{ fontFamily: isRtl ? F.arabic : F.ui, fontSize: 9, color: P.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
+          <p style={{ fontFamily: isRtl ? F.arabic : F.ui, fontSize: 12.5, color: P.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
             {item.name || shortTicker}
           </p>
         </div>
         <span style={{
           fontFamily: F.mono,
-          fontSize: 11,
+          fontSize: 14.5,
           fontWeight: 700,
           color: isPos ? P.green : P.red,
           background: isPos ? P.greenMuted : P.redMuted,
@@ -559,7 +559,7 @@ function TopMoversPanel({ items, filter, onFilterChange, isRtl }: TopMoversPanel
         paddingBlock: 12,
         borderBottom: `1px solid ${P.border}`,
       }}>
-        <span style={{ fontFamily: F.mono, fontSize: 9, color: P.gold, letterSpacing: '0.2em' }}>
+        <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.gold, letterSpacing: '0.2em' }}>
           {isRtl ? 'أبرز الأسهم' : 'TOP MOVERS'}
         </span>
         <div style={{ display: 'flex', gap: 2 }}>
@@ -571,7 +571,7 @@ function TopMoversPanel({ items, filter, onFilterChange, isRtl }: TopMoversPanel
                 paddingInline: 8,
                 paddingBlock: 3,
                 fontFamily: isRtl ? F.arabic : F.mono,
-                fontSize: 8,
+                fontSize: 11.5,
                 letterSpacing: isRtl ? 0 : '0.08em',
                 fontWeight: filter === opt.v ? 600 : 400,
                 color: filter === opt.v
@@ -595,7 +595,7 @@ function TopMoversPanel({ items, filter, onFilterChange, isRtl }: TopMoversPanel
       {/* List */}
       <div style={{ maxHeight: 480, overflowY: 'auto', scrollbarWidth: 'thin' as const, scrollbarColor: `${P.border} transparent` }}>
         {filtered.length === 0 ? (
-          <p style={{ fontFamily: F.mono, fontSize: 10, color: P.textMuted, textAlign: 'center', padding: 20 }}>
+          <p style={{ fontFamily: F.mono, fontSize: 13.5, color: P.textMuted, textAlign: 'center', padding: 20 }}>
             {isRtl ? 'لا توجد بيانات' : 'NO DATA'}
           </p>
         ) : (
@@ -718,7 +718,7 @@ export default function HeatmapPage() {
           {/* ── PAGE HEADER ─────────────────────────────────── */}
           <header style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 12 }}>
             <div>
-              <p style={{ fontFamily: F.mono, fontSize: 9, color: P.gold, letterSpacing: '0.22em', marginBottom: 6 }}>
+              <p style={{ fontFamily: F.mono, fontSize: 12.5, color: P.gold, letterSpacing: '0.22em', marginBottom: 6 }}>
                 {isRtl ? 'سوق الأسهم السعودية' : 'SAUDI STOCK EXCHANGE · TADAWUL'}
               </p>
               <h1 style={{
@@ -735,29 +735,29 @@ export default function HeatmapPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'flex-end', gap: 6 }}>
               {lastUpdated && (
-                <p style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, letterSpacing: '0.08em' }}>
+                <p style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted, letterSpacing: '0.08em' }}>
                   {isRtl ? 'آخر تحديث' : 'LAST UPDATED'}{' '}
                   {lastUpdated.toLocaleTimeString(isRtl ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               )}
               <div style={{ display: 'flex', gap: 16 }}>
                 <div style={{ textAlign: 'center' as const }}>
-                  <p style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, letterSpacing: '0.08em', marginBottom: 2 }}>
+                  <p style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted, letterSpacing: '0.08em', marginBottom: 2 }}>
                     {isRtl ? 'ارتفع' : 'UP'}
                   </p>
-                  <p style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: P.green }}>{gainersCount}</p>
+                  <p style={{ fontFamily: F.mono, fontSize: 17.5, fontWeight: 700, color: P.green }}>{gainersCount}</p>
                 </div>
                 <div style={{ textAlign: 'center' as const }}>
-                  <p style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, letterSpacing: '0.08em', marginBottom: 2 }}>
+                  <p style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted, letterSpacing: '0.08em', marginBottom: 2 }}>
                     {isRtl ? 'انخفض' : 'DOWN'}
                   </p>
-                  <p style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: P.red }}>{losersCount}</p>
+                  <p style={{ fontFamily: F.mono, fontSize: 17.5, fontWeight: 700, color: P.red }}>{losersCount}</p>
                 </div>
                 <div style={{ textAlign: 'center' as const }}>
-                  <p style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, letterSpacing: '0.08em', marginBottom: 2 }}>
+                  <p style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted, letterSpacing: '0.08em', marginBottom: 2 }}>
                     {isRtl ? 'متوسط' : 'AVG CHG'}
                   </p>
-                  <p style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 700, color: avgChange >= 0 ? P.green : P.red }}>
+                  <p style={{ fontFamily: F.mono, fontSize: 17.5, fontWeight: 700, color: avgChange >= 0 ? P.green : P.red }}>
                     {pctSign(avgChange)}
                   </p>
                 </div>
@@ -805,7 +805,7 @@ export default function HeatmapPage() {
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 8 }}>
                   <SizeModeToggle mode={sizeMode} onChange={setSizeMode} isRtl={isRtl} />
-                  <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>
+                  <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>
                     {isRtl
                       ? `${filteredItems.length} سهم · إجمالي ${formatNum(totalCap)} ر.س`
                       : `${filteredItems.length} stocks · ${formatNum(totalCap)} SAR total`}
@@ -828,14 +828,14 @@ export default function HeatmapPage() {
                   </div>
                 ) : hmError ? (
                   <div style={{ height: 360, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                    <p style={{ fontFamily: F.mono, fontSize: 11, color: P.red }}>
+                    <p style={{ fontFamily: F.mono, fontSize: 14.5, color: P.red }}>
                       {isRtl ? 'خطأ في التحميل' : 'Failed to load data'}
                     </p>
                     <button
                       onClick={hmRefetch}
                       style={{
                         fontFamily: F.mono,
-                        fontSize: 9,
+                        fontSize: 12.5,
                         letterSpacing: '0.1em',
                         color: P.gold,
                         background: P.goldSubtle,
@@ -850,7 +850,7 @@ export default function HeatmapPage() {
                   </div>
                 ) : filteredItems.length === 0 ? (
                   <div style={{ height: 360, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <p style={{ fontFamily: F.mono, fontSize: 11, color: P.textMuted }}>
+                    <p style={{ fontFamily: F.mono, fontSize: 14.5, color: P.textMuted }}>
                       {isRtl ? 'لا توجد بيانات' : 'NO DATA'}
                     </p>
                   </div>
@@ -909,7 +909,7 @@ export default function HeatmapPage() {
                 paddingBlock: 12,
                 borderBottom: `1px solid ${P.border}`,
               }}>
-                <span style={{ fontFamily: F.mono, fontSize: 9, color: P.gold, letterSpacing: '0.2em' }}>
+                <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.gold, letterSpacing: '0.2em' }}>
                   {isRtl ? 'أداء القطاعات' : 'SECTOR PERFORMANCE'}
                 </span>
               </div>
@@ -927,7 +927,7 @@ export default function HeatmapPage() {
                       ].map((h) => (
                         <th key={h} style={{
                           fontFamily: F.mono,
-                          fontSize: 8,
+                          fontSize: 11.5,
                           fontWeight: 500,
                           color: P.textMuted,
                           letterSpacing: '0.1em',
@@ -954,13 +954,13 @@ export default function HeatmapPage() {
                           onMouseEnter={(e) => { e.currentTarget.style.background = P.surfaceElevated; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                         >
-                          <td style={{ paddingInline: 14, paddingBlock: 10, fontFamily: F.ui, fontSize: 12, fontWeight: 500, color: P.text, whiteSpace: 'nowrap' as const }}>
+                          <td style={{ paddingInline: 14, paddingBlock: 10, fontFamily: F.ui, fontSize: 15.5, fontWeight: 500, color: P.text, whiteSpace: 'nowrap' as const }}>
                             {s.sector}
                           </td>
                           <td style={{ paddingInline: 14, paddingBlock: 10 }}>
                             <span style={{
                               fontFamily: F.mono,
-                              fontSize: 11,
+                              fontSize: 14.5,
                               fontWeight: 700,
                               color: isPos ? P.green : P.red,
                               background: isPos ? P.greenMuted : P.redMuted,
@@ -971,20 +971,20 @@ export default function HeatmapPage() {
                               {pctSign(s.avg_change_pct)}
                             </span>
                           </td>
-                          <td style={{ paddingInline: 14, paddingBlock: 10, fontFamily: F.mono, fontSize: 10, color: P.textSecondary }}>
+                          <td style={{ paddingInline: 14, paddingBlock: 10, fontFamily: F.mono, fontSize: 13.5, color: P.textSecondary }}>
                             {formatNum(s.total_volume)}
                           </td>
-                          <td style={{ paddingInline: 14, paddingBlock: 10, fontFamily: F.mono, fontSize: 10, color: P.textSecondary }}>
+                          <td style={{ paddingInline: 14, paddingBlock: 10, fontFamily: F.mono, fontSize: 13.5, color: P.textSecondary }}>
                             {formatNum(s.total_market_cap)} SAR
                           </td>
-                          <td style={{ paddingInline: 14, paddingBlock: 10, fontFamily: F.mono, fontSize: 10, color: P.textMuted }}>
+                          <td style={{ paddingInline: 14, paddingBlock: 10, fontFamily: F.mono, fontSize: 13.5, color: P.textMuted }}>
                             {s.company_count}
                           </td>
                           <td style={{ paddingInline: 14, paddingBlock: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontFamily: F.mono, fontSize: 10, color: P.green }}>{s.gainers}</span>
-                              <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>/</span>
-                              <span style={{ fontFamily: F.mono, fontSize: 10, color: P.red }}>{s.losers}</span>
+                              <span style={{ fontFamily: F.mono, fontSize: 13.5, color: P.green }}>{s.gainers}</span>
+                              <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>/</span>
+                              <span style={{ fontFamily: F.mono, fontSize: 13.5, color: P.red }}>{s.losers}</span>
                             </div>
                           </td>
                         </tr>
@@ -1001,7 +1001,7 @@ export default function HeatmapPage() {
             marginTop: 24,
             textAlign: 'center' as const,
             fontFamily: F.mono,
-            fontSize: 9,
+            fontSize: 12.5,
             color: P.textMuted,
             letterSpacing: '0.08em',
           }}>

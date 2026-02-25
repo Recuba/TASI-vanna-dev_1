@@ -66,7 +66,7 @@ export function MarketBreadthBar() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <span style={{
           fontFamily: F.mono,
-          fontSize: 9,
+          fontSize: 12.5,
           color: P.gold,
           letterSpacing: '0.2em',
           textTransform: 'uppercase' as const,
@@ -76,7 +76,7 @@ export function MarketBreadthBar() {
         {data.advance_decline_ratio != null && (
           <span style={{
             fontFamily: F.mono,
-            fontSize: 12,
+            fontSize: 15.5,
             fontWeight: 700,
             color: isPositive ? P.green : P.red,
             letterSpacing: '0.04em',
@@ -125,10 +125,10 @@ export function MarketBreadthBar() {
             display: 'inline-block',
             flexShrink: 0,
           }} />
-          <span style={{ fontFamily: F.mono, fontSize: 11, color: P.green, fontWeight: 700 }}>
+          <span style={{ fontFamily: F.mono, fontSize: 14.5, color: P.green, fontWeight: 700 }}>
             {data.advancing}
           </span>
-          <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>
+          <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>
             {t('صاعد', 'ADV')}
           </span>
         </div>
@@ -141,10 +141,10 @@ export function MarketBreadthBar() {
             display: 'inline-block',
             flexShrink: 0,
           }} />
-          <span style={{ fontFamily: F.mono, fontSize: 11, color: P.textSecondary, fontWeight: 700 }}>
+          <span style={{ fontFamily: F.mono, fontSize: 14.5, color: P.textSecondary, fontWeight: 700 }}>
             {data.unchanged}
           </span>
-          <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>
+          <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>
             {t('مستقر', 'UCH')}
           </span>
         </div>
@@ -157,21 +157,21 @@ export function MarketBreadthBar() {
             display: 'inline-block',
             flexShrink: 0,
           }} />
-          <span style={{ fontFamily: F.mono, fontSize: 11, color: P.red, fontWeight: 700 }}>
+          <span style={{ fontFamily: F.mono, fontSize: 14.5, color: P.red, fontWeight: 700 }}>
             {data.declining}
           </span>
-          <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>
+          <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>
             {t('هابط', 'DEC')}
           </span>
         </div>
 
         {/* 52W Highs/Lows */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>
+          <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>
             {t('أعلى 52', '52H')}{' '}
             <span style={{ color: P.green, fontWeight: 700 }}>{data.new_52w_highs}</span>
           </span>
-          <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>
+          <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>
             {t('أدنى 52', '52L')}{' '}
             <span style={{ color: P.red, fontWeight: 700 }}>{data.new_52w_lows}</span>
           </span>

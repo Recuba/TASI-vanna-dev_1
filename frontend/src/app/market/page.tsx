@@ -66,7 +66,7 @@ function WeekRange52({
         />
         <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent-red/30 via-transparent to-accent-green/30" />
       </div>
-      <div className="flex justify-between text-[9px] text-[var(--text-muted)]">
+      <div className="flex justify-between text-[12.5px] text-[var(--text-muted)]">
         <span>{low.toFixed(2)}</span>
         <span>{high.toFixed(2)}</span>
       </div>
@@ -296,7 +296,7 @@ export default function MarketPage() {
                 )}
               >
                 {translateSector(s.sector, language)}
-                <span className="text-[10px] opacity-70 ms-1">({s.company_count})</span>
+                <span className="text-[13.5px] opacity-70 ms-1">({s.company_count})</span>
               </button>
             ))}
           </div>

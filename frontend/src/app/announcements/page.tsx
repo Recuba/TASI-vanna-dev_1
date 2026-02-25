@@ -99,22 +99,22 @@ function AnnouncementCard({ item }: { item: Announcement }) {
         {/* Badges row */}
         <div className="flex items-center gap-2 flex-wrap">
           {item.is_material && (
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-accent-red/10 text-accent-red border border-accent-red/20">
+            <span className="px-2 py-0.5 rounded-full text-[14.5px] font-medium bg-accent-red/10 text-accent-red border border-accent-red/20">
               {t('جوهري', 'Material')}
             </span>
           )}
           {!item.is_material && (
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-accent-blue/10 text-accent-blue border border-accent-blue/20">
+            <span className="px-2 py-0.5 rounded-full text-[14.5px] font-medium bg-accent-blue/10 text-accent-blue border border-accent-blue/20">
               {t('عام', 'General')}
             </span>
           )}
           {item.ticker && (
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gold/10 text-gold border border-gold/20">
+            <span className="px-2 py-0.5 rounded-full text-[14.5px] font-medium bg-gold/10 text-gold border border-gold/20">
               {item.ticker}
             </span>
           )}
           {item.category && (
-            <span className="text-[11px] text-[var(--text-muted)]">
+            <span className="text-[14.5px] text-[var(--text-muted)]">
               {item.category}
             </span>
           )}

@@ -1,0 +1,16 @@
+ticker,short_name,sector,recommendation,recommendation_score,analyst_count,target_mean_price,current_price,upside_pct,roe,profit_margin,trailing_pe
+1833.SR,Al Mawarid Manpower Co.,Industrials,strong_buy,1.25,4,163.75,125.7,30.3,0.3045,0.05222,14.718969
+8010.SR,The Company for Cooperative Ins,Financial Services,strong_buy,1.25,4,167.925,137.0,22.6,0.22674,0.05765,19.16084
+2223.SR,Saudi Aramco Base Oil Co.,Energy,strong_buy,1.25,4,122.025,101.9,19.7,0.22211,0.10411,17.97178
+1060.SR,Saudi Awwal Bank,Financial Services,strong_buy,1.38462,13,42.15846,35.8,17.8,0.11999,0.60780996,9.109414
+4005.SR,National Medical Care Co.,Healthcare,strong_buy,1.4,5,195.6,157.0,24.6,0.20113,0.21344,20.961283
+4260.SR,United International Transporta,Industrials,strong_buy,1.42857,7,87.37143,59.9,45.9,0.12515001,0.14977,13.135965
+2280.SR,Almarai Co.,Consumer Defensive,strong_buy,1.44444,18,58.32778,41.74,39.7,0.124960005,0.11131,16.96748
+6010.SR,National Agricultural Developme,Consumer Defensive,strong_buy,1.5,4,25.0,17.6,42.0,0.08879,0.11153,6.821706
+4003.SR,United Electronics Co.,Consumer Cyclical,strong_buy,1.5,8,113.2125,87.9,28.8,0.35222,0.069070004,13.886256
+1010.SR,Riyad Bank,Financial Services,buy,1.57143,14,34.56857,28.76,20.2,0.14737001,0.60299,8.9875
+1180.SR,The Saudi National Bank,Financial Services,buy,1.57143,14,49.26429,43.5,13.3,0.12806,0.65549004,11.153846
+2281.SR,Tanmiah Food Co,Consumer Defensive,buy,1.66667,3,117.86667,56.55,108.4,0.05538,0.01155,37.20395
+1080.SR,Arab National Bank,Financial Services,buy,1.75,8,26.04375,21.5,21.1,0.12507,0.56378,8.3984375
+1831.SR,Maharah Human Resources Co.,Industrials,buy,1.75,4,5.9975,6.1,-1.7,0.20076999,0.04749,20.333332
+7020.SR,Etihad Etisalat Co.,Communication Services,buy,1.76923,13,75.56154,68.2,10.8,0.18788,0.18235001,15.022026

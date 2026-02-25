@@ -22,20 +22,22 @@ import unittest
 # ===========================================================================
 
 INTENT_TYPES = [
-    "sql_query",        # "What is the market cap of Aramco?"
-    "company_lookup",   # "Show me details for 2222.SR"
+    "sql_query",  # "What is the market cap of Aramco?"
+    "company_lookup",  # "Show me details for 2222.SR"
     "sector_analysis",  # "Compare energy sector companies"
-    "news_search",      # "Latest news for Aramco"
-    "report_search",    # "Analyst reports for banking sector"
-    "chart_request",    # "Show me a chart of sector P/E ratios"
-    "general_chat",     # "Hello", "What can you do?"
+    "news_search",  # "Latest news for Aramco"
+    "report_search",  # "Analyst reports for banking sector"
+    "chart_request",  # "Show me a chart of sector P/E ratios"
+    "general_chat",  # "Hello", "What can you do?"
 ]
 
 # SQL patterns by category (used by the future router)
 SELECT_PATTERN = re.compile(r"^\s*SELECT\b", re.IGNORECASE)
 AGGREGATE_PATTERN = re.compile(r"\b(COUNT|SUM|AVG|MIN|MAX)\s*\(", re.IGNORECASE)
 MULTI_TABLE_PATTERN = re.compile(r"\bJOIN\b", re.IGNORECASE)
-WRITE_PATTERN = re.compile(r"^\s*(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE)\b", re.IGNORECASE)
+WRITE_PATTERN = re.compile(
+    r"^\s*(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE)\b", re.IGNORECASE
+)
 
 
 def classify_sql(query: str) -> str:
@@ -74,6 +76,7 @@ class TestQueryRouterPlaceholder(unittest.TestCase):
 # ===========================================================================
 # SQL pattern classification
 # ===========================================================================
+
 
 class TestSqlPatternClassification(unittest.TestCase):
     """Tests for classify_sql() routing helper."""
@@ -148,7 +151,9 @@ class TestSqlPatternClassification(unittest.TestCase):
 
     def test_very_long_query_handled(self):
         """Very long SQL strings do not raise and are classified correctly."""
-        long_sql = "SELECT " + ", ".join([f"col_{i}" for i in range(200)]) + " FROM companies"
+        long_sql = (
+            "SELECT " + ", ".join([f"col_{i}" for i in range(200)]) + " FROM companies"
+        )
         result = classify_sql(long_sql)
         self.assertEqual(result, "select")
 
@@ -160,6 +165,7 @@ class TestSqlPatternClassification(unittest.TestCase):
 # ===========================================================================
 # Read vs Write classification
 # ===========================================================================
+
 
 class TestReadWriteClassification(unittest.TestCase):
     """Tests distinguishing read-only vs write SQL queries."""
@@ -188,6 +194,7 @@ class TestReadWriteClassification(unittest.TestCase):
 # ===========================================================================
 # Intent taxonomy completeness
 # ===========================================================================
+
 
 class TestIntentTaxonomy(unittest.TestCase):
     """Validate the intent taxonomy is complete and consistent."""

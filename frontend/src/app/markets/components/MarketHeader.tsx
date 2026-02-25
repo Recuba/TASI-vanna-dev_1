@@ -45,7 +45,7 @@ function MarketHeaderInner({
       )}
     >
       <div>
-        <h1 className="text-2xl sm:text-[30px] font-bold leading-tight text-[--text-primary]">
+        <h1 className="text-2xl sm:text-[33.5px] font-bold leading-tight text-[--text-primary]">
           {t('\u0646\u0638\u0631\u0629 360\u00B0', 'Market Overview 360\u00B0')}
         </h1>
         <p
@@ -65,10 +65,10 @@ function MarketHeaderInner({
       </div>
 
       <div className="flex flex-col items-end gap-1 flex-shrink-0" style={{ direction: 'ltr' }}>
-        <div className="font-mono text-[10px] flex items-center gap-1.5 text-[--text-muted]">
+        <div className="font-mono text-[13.5px] flex items-center gap-1.5 text-[--text-muted]">
           {/* Connection status badge */}
           <span
-            className="font-mono text-[9px] font-bold px-1.5 py-px rounded"
+            className="font-mono text-[12.5px] font-bold px-1.5 py-px rounded"
             style={{
               color: statusColor,
               background: `${statusColor}18`,
@@ -103,7 +103,7 @@ function MarketHeaderInner({
             </button>
           )}
         </div>
-        <div className="flex gap-3 font-mono text-[9px] text-[--text-muted]">
+        <div className="flex gap-3 font-mono text-[12.5px] text-[--text-muted]">
           <span>Avg Corr = {Math.round(stats.avgAbsCorr * 100)}%</span>
           <span>{'\u03C3\u0304'} = {pctFmt(stats.avgVol)}</span>
           <span>{edges.length} links</span>

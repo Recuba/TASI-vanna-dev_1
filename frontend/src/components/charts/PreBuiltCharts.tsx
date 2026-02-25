@@ -189,7 +189,7 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
                   : t('تعذر تحميل البيانات', 'Failed to load data')}
               </p>
               {httpStatus && httpStatus !== 404 && (
-                <p className="text-[10px] dark:text-[#606060] text-gray-400">
+                <p className="text-[13.5px] dark:text-[#606060] text-gray-400">
                   {t(`رمز الخطأ: ${httpStatus}`, `Error code: ${httpStatus}`)}
                 </p>
               )}
@@ -213,12 +213,12 @@ function BarChartCard({ config }: { config: ChartCardConfig }) {
                 <div key={item.label} className="group">
                   <div className="flex items-center justify-between mb-0.5">
                     <span
-                      className="text-[11px] text-[var(--text-secondary)] truncate max-w-[60%]"
+                      className="text-[14.5px] text-[var(--text-secondary)] truncate max-w-[60%]"
                       title={item.label}
                     >
                       {item.label}
                     </span>
-                    <span className="text-[11px] font-medium text-[var(--text-primary)] shrink-0 ms-2">
+                    <span className="text-[14.5px] font-medium text-[var(--text-primary)] shrink-0 ms-2">
                       {formatLargeNumber(item.value, config.suffix)}
                     </span>
                   </div>

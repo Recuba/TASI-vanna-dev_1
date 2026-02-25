@@ -56,7 +56,7 @@ export function VisBarChart({ data, title, config }: VisBarChartProps) {
               border: '1px solid rgba(212, 168, 75, 0.3)',
               borderRadius: '8px',
               color: '#FFFFFF',
-              fontSize: 12,
+              fontSize: 15.5,
             }}
             cursor={{ fill: 'rgba(212, 168, 75, 0.05)' }}
           />

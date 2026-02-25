@@ -105,7 +105,7 @@ export function AlertModal({ open, onClose, onAdd, defaultTicker, currentPrice }
               className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[#2A2A2A] rounded-lg text-sm text-[var(--text-primary)]"
             />
             {currentPrice !== undefined && (
-              <p className="text-[10px] text-[var(--text-muted)] mt-1">
+              <p className="text-[13.5px] text-[var(--text-muted)] mt-1">
                 {t('السعر الحالي:', 'Current price:')} {currentPrice.toFixed(2)} SAR
               </p>
             )}

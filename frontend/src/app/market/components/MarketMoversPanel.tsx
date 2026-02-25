@@ -32,7 +32,7 @@ function MoverRow({ stock, showVolume }: { stock: MoverStock; showVolume?: boole
         <p className="text-xs font-semibold text-[var(--text-primary)] group-hover:text-gold transition-colors truncate">
           {stock.short_name || stock.ticker}
         </p>
-        <p className="text-[10px] text-[var(--text-muted)]">
+        <p className="text-[13.5px] text-[var(--text-muted)]">
           {stock.ticker}
           {showVolume && stock.volume != null && (
             <span className="ms-1">&middot; {fmtVol(stock.volume)}</span>
@@ -45,12 +45,12 @@ function MoverRow({ stock, showVolume }: { stock: MoverStock; showVolume?: boole
         </p>
         {stock.change_pct !== null ? (
           <span className={cn(
-            'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
+            'text-[13.5px] font-bold px-1.5 py-0.5 rounded-full',
             isUp ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10'
           )}>
             {isUp ? '+' : ''}{stock.change_pct.toFixed(2)}%
           </span>
-        ) : <span className="text-[10px] text-[var(--text-muted)]">{'\u2014'}</span>}
+        ) : <span className="text-[13.5px] text-[var(--text-muted)]">{'\u2014'}</span>}
       </div>
     </Link>
   );

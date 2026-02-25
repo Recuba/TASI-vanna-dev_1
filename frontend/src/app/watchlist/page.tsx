@@ -413,7 +413,7 @@ export default function WatchlistPage() {
               )}
             >
               {wl.name}
-              <span className="text-[10px] opacity-60">({wl.tickers.length})</span>
+              <span className="text-[13.5px] opacity-60">({wl.tickers.length})</span>
             </button>
           ))}
         </div>

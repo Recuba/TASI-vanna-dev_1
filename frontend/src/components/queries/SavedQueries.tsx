@@ -109,7 +109,7 @@ export function SavedQueries({ onRerun, className }: SavedQueriesProps) {
             <button
               onClick={() => setSelectedTag(null)}
               className={cn(
-                'text-[10px] px-2 py-0.5 rounded-full border transition-colors',
+                'text-[13.5px] px-2 py-0.5 rounded-full border transition-colors',
                 selectedTag === null
                   ? 'bg-gold/20 border-gold/40 text-gold'
                   : 'border-[var(--bg-input)] text-[var(--text-muted)] hover:border-gold/30'
@@ -122,7 +122,7 @@ export function SavedQueries({ onRerun, className }: SavedQueriesProps) {
                 key={tag}
                 onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
                 className={cn(
-                  'text-[10px] px-2 py-0.5 rounded-full border transition-colors',
+                  'text-[13.5px] px-2 py-0.5 rounded-full border transition-colors',
                   selectedTag === tag
                     ? 'bg-gold/20 border-gold/40 text-gold'
                     : 'border-[var(--bg-input)] text-[var(--text-muted)] hover:border-gold/30'
@@ -181,7 +181,7 @@ export function SavedQueries({ onRerun, className }: SavedQueriesProps) {
                     {record.tags.map((tag, i) => (
                       <span
                         key={i}
-                        className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/20"
+                        className="inline-block text-[13.5px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/20"
                       >
                         {tag}
                       </span>
@@ -191,7 +191,7 @@ export function SavedQueries({ onRerun, className }: SavedQueriesProps) {
 
                 {/* Notes */}
                 {record.notes && (
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1.5 line-clamp-2">
+                  <p className="text-[13.5px] text-[var(--text-muted)] mt-1.5 line-clamp-2">
                     {record.notes}
                   </p>
                 )}
@@ -200,7 +200,7 @@ export function SavedQueries({ onRerun, className }: SavedQueriesProps) {
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => onRerun(record.naturalLanguageQuery)}
-                    className="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-gold/10 text-gold hover:bg-gold/20 transition-colors"
+                    className="flex items-center gap-1 text-[13.5px] px-2 py-1 rounded bg-gold/10 text-gold hover:bg-gold/20 transition-colors"
                   >
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="5 3 19 12 5 21 5 3" />
@@ -209,7 +209,7 @@ export function SavedQueries({ onRerun, className }: SavedQueriesProps) {
                   </button>
                   <button
                     onClick={() => handleShare(record)}
-                    className="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-[var(--bg-input)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    className="flex items-center gap-1 text-[13.5px] px-2 py-1 rounded bg-[var(--bg-input)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -219,7 +219,7 @@ export function SavedQueries({ onRerun, className }: SavedQueriesProps) {
                   </button>
                   <button
                     onClick={() => handleRemoveFavorite(record.id)}
-                    className="text-[10px] px-2 py-1 rounded text-accent-red/70 hover:text-accent-red hover:bg-accent-red/10 transition-colors ms-auto"
+                    className="text-[13.5px] px-2 py-1 rounded text-accent-red/70 hover:text-accent-red hover:bg-accent-red/10 transition-colors ms-auto"
                   >
                     Remove
                   </button>

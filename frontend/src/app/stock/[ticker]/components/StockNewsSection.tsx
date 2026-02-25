@@ -38,15 +38,15 @@ export const StockNewsSection = memo(function StockNewsSection({ ticker, languag
               </h3>
               <div className="flex items-center gap-2 mt-2">
                 {article.source_name && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold font-medium">{article.source_name}</span>
+                  <span className="text-[13.5px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold font-medium">{article.source_name}</span>
                 )}
                 {article.published_at && (
-                  <time className="text-[10px] text-[var(--text-muted)]" dateTime={article.published_at}>
+                  <time className="text-[13.5px] text-[var(--text-muted)]" dateTime={article.published_at}>
                     {new Date(article.published_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                   </time>
                 )}
                 {article.sentiment_label && (
-                  <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                  <span className={cn('text-[13.5px] px-1.5 py-0.5 rounded-full font-medium',
                     article.sentiment_label.toLowerCase().includes('positive') || article.sentiment_label === 'إيجابي'
                       ? 'bg-accent-green/15 text-accent-green'
                       : article.sentiment_label.toLowerCase().includes('negative') || article.sentiment_label === 'سلبي'

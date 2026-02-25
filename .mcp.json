@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "codemod": {
+      "type": "stdio",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "codemod@latest",
+        "mcp"
+      ],
+      "env": {}
+    }
+  }
+}

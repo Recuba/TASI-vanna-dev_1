@@ -49,18 +49,18 @@ export default function GlobalError({
               </svg>
             </div>
 
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: 8 }}>
+            <h2 style={{ fontSize: '1.47rem', fontWeight: 700, marginBottom: 8 }}>
               Something went wrong
             </h2>
 
-            <p style={{ fontSize: '0.875rem', color: '#A0A0A0', marginBottom: 24 }}>
+            <p style={{ fontSize: '1.09rem', color: '#A0A0A0', marginBottom: 24 }}>
               An unexpected error occurred. Please try again.
             </p>
 
             {process.env.NODE_ENV === 'development' && error.message && (
               <pre
                 style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.97rem',
                   color: '#A0A0A0',
                   backgroundColor: '#1A1A1A',
                   padding: 12,
@@ -91,7 +91,7 @@ export default function GlobalError({
                   borderRadius: 12,
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '0.875rem',
+                  fontSize: '1.09rem',
                 }}
               >
                 <svg
@@ -112,7 +112,7 @@ export default function GlobalError({
               <a
                 href="/"
                 style={{
-                  fontSize: '0.875rem',
+                  fontSize: '1.09rem',
                   color: '#A0A0A0',
                   textDecoration: 'none',
                 }}

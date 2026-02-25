@@ -62,7 +62,7 @@ function CentralHubInner({ stats, count, cx, cy, t }: CentralHubProps) {
           <div className="font-mono text-sm font-bold text-[--text-primary]">
             {stats.advancing}/{count}
           </div>
-          <div className="font-mono text-[10px] text-[--text-muted]">
+          <div className="font-mono text-[13.5px] text-[--text-muted]">
             A/D
           </div>
         </div>
@@ -74,7 +74,7 @@ function CentralHubInner({ stats, count, cx, cy, t }: CentralHubProps) {
           >
             {pctFmt(stats.diversification)}
           </div>
-          <div className="font-mono text-[10px] text-[--text-muted]">
+          <div className="font-mono text-[13.5px] text-[--text-muted]">
             Div.R
           </div>
         </div>

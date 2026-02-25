@@ -402,7 +402,7 @@ export function CommandPalette() {
             aria-controls="command-palette-listbox"
             aria-activedescendant={results[selectedIndex] ? `palette-option-${results[selectedIndex].id}` : undefined}
           />
-          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-[var(--text-muted)] bg-[#2A2A2A] rounded">
+          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[13.5px] font-mono text-[var(--text-muted)] bg-[#2A2A2A] rounded">
             ESC
           </kbd>
         </div>
@@ -410,7 +410,7 @@ export function CommandPalette() {
         {/* Recent searches */}
         {!query.trim() && recentSearches.length > 0 && (
           <div className="px-4 py-2 border-b border-[#2A2A2A]">
-            <p className="text-[10px] text-[var(--text-muted)] mb-1.5">{t('البحث الأخير', 'Recent searches')}</p>
+            <p className="text-[13.5px] text-[var(--text-muted)] mb-1.5">{t('البحث الأخير', 'Recent searches')}</p>
             <div className="flex flex-wrap gap-1.5">
               {recentSearches.map((s) => (
                 <button
@@ -434,7 +434,7 @@ export function CommandPalette() {
           ) : (
             Array.from(grouped.entries()).map(([section, entries]) => (
               <div key={section}>
-                <p className="px-4 py-1.5 text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                <p className="px-4 py-1.5 text-[13.5px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
                   {section}
                 </p>
                 {entries.map(({ item, globalIndex }) => (
@@ -497,7 +497,7 @@ export function CommandPalette() {
         </div>
 
         {/* Footer hints */}
-        <div className="px-4 py-2 border-t border-[#2A2A2A] flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
+        <div className="px-4 py-2 border-t border-[#2A2A2A] flex items-center gap-4 text-[13.5px] text-[var(--text-muted)]">
           <span className="flex items-center gap-1">
             <kbd className="px-1 py-0.5 bg-[#2A2A2A] rounded font-mono">&uarr;&darr;</kbd>
             {t('للتنقل', 'to navigate')}

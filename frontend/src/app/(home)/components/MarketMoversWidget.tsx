@@ -75,7 +75,7 @@ function MoverRow({ stock, isGainer }: { stock: { ticker: string; current_price?
       <div style={{ flex: 1, minWidth: 0, paddingLeft: 8 }}>
         <p style={{
           fontFamily: F.ui,
-          fontSize: 12,
+          fontSize: 15.5,
           fontWeight: 500,
           color: hovered ? P.goldBright : P.text,
           overflow: 'hidden',
@@ -88,7 +88,7 @@ function MoverRow({ stock, isGainer }: { stock: { ticker: string; current_price?
         </p>
         <p style={{
           fontFamily: F.mono,
-          fontSize: 9,
+          fontSize: 12.5,
           color: P.textMuted,
           letterSpacing: '0.06em',
         }}>
@@ -100,7 +100,7 @@ function MoverRow({ stock, isGainer }: { stock: { ticker: string; current_price?
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         <span style={{
           fontFamily: F.mono,
-          fontSize: 12,
+          fontSize: 15.5,
           color: P.textSecondary,
           letterSpacing: '0.02em',
         }}>
@@ -108,7 +108,7 @@ function MoverRow({ stock, isGainer }: { stock: { ticker: string; current_price?
         </span>
         <span style={{
           fontFamily: F.mono,
-          fontSize: 11,
+          fontSize: 14.5,
           fontWeight: 700,
           color: changeColor,
           background: badgeBg,
@@ -158,7 +158,7 @@ export function MarketMoversWidget() {
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
           <span style={{
             fontFamily: F.display,
-            fontSize: 16,
+            fontSize: 19.5,
             fontWeight: 600,
             color: P.goldBright,
             letterSpacing: '0.02em',
@@ -173,7 +173,7 @@ export function MarketMoversWidget() {
                 onClick={() => setTab(item.id)}
                 style={{
                   fontFamily: F.mono,
-                  fontSize: 9,
+                  fontSize: 12.5,
                   letterSpacing: '0.12em',
                   textTransform: 'uppercase' as const,
                   padding: '3px 8px',
@@ -194,7 +194,7 @@ export function MarketMoversWidget() {
           href="/market"
           style={{
             fontFamily: F.mono,
-            fontSize: 9,
+            fontSize: 12.5,
             color: P.textMuted,
             letterSpacing: '0.1em',
             textDecoration: 'none',
@@ -217,7 +217,7 @@ export function MarketMoversWidget() {
             onClick={refetch}
             style={{
               fontFamily: F.mono,
-              fontSize: 11,
+              fontSize: 14.5,
               color: P.red,
               background: 'none',
               border: 'none',
@@ -234,7 +234,7 @@ export function MarketMoversWidget() {
           ))}
         </div>
       ) : (
-        <p style={{ fontFamily: F.mono, fontSize: 11, color: P.textMuted, padding: '0 16px' }}>
+        <p style={{ fontFamily: F.mono, fontSize: 14.5, color: P.textMuted, padding: '0 16px' }}>
           {t('لا توجد بيانات', 'NO DATA')}
         </p>
       )}

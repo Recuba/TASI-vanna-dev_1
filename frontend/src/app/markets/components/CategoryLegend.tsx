@@ -25,7 +25,7 @@ function CategoryLegendInner({ language, t }: CategoryLegendProps) {
             <span
               className={cn(
                 language === 'ar' ? 'font-arabic' : 'font-mono',
-                'text-[11px] text-[--text-secondary]',
+                'text-[14.5px] text-[--text-secondary]',
               )}
             >
               {t(c.labelAr, c.labelEn)}
@@ -33,7 +33,7 @@ function CategoryLegendInner({ language, t }: CategoryLegendProps) {
             <span
               className={cn(
                 language === 'ar' ? 'font-mono' : 'font-arabic',
-                'text-[9px] text-[--text-muted]',
+                'text-[12.5px] text-[--text-muted]',
               )}
             >
               {t(c.labelEn, c.labelAr)}
@@ -43,19 +43,19 @@ function CategoryLegendInner({ language, t }: CategoryLegendProps) {
         <div className="w-px h-3.5 bg-[#2A2A2A]" />
         <div className="flex items-center gap-1.5">
           <div className="w-3.5 h-0.5 rounded-sm bg-gold" />
-          <span className="font-mono text-[9px] text-[--text-muted]">
+          <span className="font-mono text-[12.5px] text-[--text-muted]">
             {t('\u0627\u0631\u062A\u0628\u0627\u0637 \u0625\u064A\u062C\u0627\u0628\u064A', 'Positive corr.')}
           </span>
-          <span className="font-mono text-[8px] opacity-50 text-[--text-muted]">
+          <span className="font-mono text-[11.5px] opacity-50 text-[--text-muted]">
             {'+\u03C1'}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3.5 h-0.5 rounded-sm" style={{ background: C.cyan }} />
-          <span className="font-mono text-[9px] text-[--text-muted]">
+          <span className="font-mono text-[12.5px] text-[--text-muted]">
             {t('\u0627\u0631\u062A\u0628\u0627\u0637 \u0639\u0643\u0633\u064A', 'Inverse corr.')}
           </span>
-          <span className="font-mono text-[8px] opacity-50 text-[--text-muted]">
+          <span className="font-mono text-[11.5px] opacity-50 text-[--text-muted]">
             {'\u2212\u03C1'}
           </span>
         </div>
@@ -69,7 +69,7 @@ function CategoryLegendInner({ language, t }: CategoryLegendProps) {
             'The percentages on lines show how much assets move together \u2014 \u2197 90% means they move together 90% of the time, while \u2198 70% means they move inversely 70% of the time.',
           )}
         </p>
-        <div className="flex gap-3.5 justify-center flex-wrap font-mono text-[8px] opacity-50 text-[--text-muted]">
+        <div className="flex gap-3.5 justify-center flex-wrap font-mono text-[11.5px] opacity-50 text-[--text-muted]">
           <span>{'\u03C3'} = {t('\u0627\u0644\u062A\u0642\u0644\u0628 \u0627\u0644\u0633\u0646\u0648\u064A', 'Ann. Volatility')}</span>
           <span>{'\u03B2'} = {t('\u0628\u064A\u062A\u0627 \u0645\u0642\u0627\u0628\u0644 SPX', 'Beta vs SPX')}</span>
           <span>SR = {t('\u0646\u0633\u0628\u0629 \u0634\u0627\u0631\u0628', 'Sharpe Ratio')}</span>

@@ -71,14 +71,14 @@ export default function AlertsPage() {
               <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4">
                 <h2 className="text-sm font-bold text-red-400 mb-3" dir={dir}>
                   {t('تنبيهات مفعّلة', 'Triggered Alerts')}
-                  <span className="text-[10px] font-normal ms-2">({triggeredAlerts.length})</span>
+                  <span className="text-[13.5px] font-normal ms-2">({triggeredAlerts.length})</span>
                 </h2>
                 <div className="space-y-2">
                   {triggeredAlerts.map((alert) => (
                     <div key={alert.id} className="flex items-center justify-between bg-[var(--bg-card)] border border-[#2A2A2A] rounded-lg p-3">
                       <div className="flex items-center gap-3">
                         <span className={cn(
-                          'text-[9px] font-bold px-2 py-1 rounded-full',
+                          'text-[12.5px] font-bold px-2 py-1 rounded-full',
                           alert.alert_type === 'price_above' ? 'bg-accent-green/20 text-accent-green' : 'bg-red-500/20 text-red-400'
                         )}>
                           {alert.alert_type === 'price_above' ? '▲ ' + t('أعلى من', 'ABOVE') : '▼ ' + t('أقل من', 'BELOW')}
@@ -87,7 +87,7 @@ export default function AlertsPage() {
                           <Link href={`/stock/${encodeURIComponent(alert.ticker)}`} className="text-sm font-medium text-gold hover:text-gold-light">
                             {alert.ticker.replace('.SR', '')}
                           </Link>
-                          <p className="text-[10px] text-[var(--text-muted)]">
+                          <p className="text-[13.5px] text-[var(--text-muted)]">
                             {t('السعر المستهدف:', 'Target:')} {alert.threshold_value.toFixed(2)} SAR
                           </p>
                         </div>
@@ -132,7 +132,7 @@ export default function AlertsPage() {
                           </td>
                           <td className="py-2.5">
                             <span className={cn(
-                              'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
+                              'text-[12.5px] font-bold px-1.5 py-0.5 rounded-full',
                               alert.alert_type === 'price_above' ? 'bg-accent-green/20 text-accent-green' : 'bg-red-500/20 text-red-400'
                             )}>
                               {alert.alert_type === 'price_above' ? t('أعلى من', 'ABOVE') : t('أقل من', 'BELOW')}
@@ -141,11 +141,11 @@ export default function AlertsPage() {
                           <td className="text-end py-2.5 text-[var(--text-primary)] font-medium">{alert.threshold_value.toFixed(2)}</td>
                           <td className="text-center py-2.5">
                             {isTriggered ? (
-                              <span className="text-[9px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">{t('مفعّل', 'TRIGGERED')}</span>
+                              <span className="text-[12.5px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">{t('مفعّل', 'TRIGGERED')}</span>
                             ) : alert.is_active ? (
-                              <span className="text-[9px] font-bold text-accent-green bg-accent-green/10 px-2 py-0.5 rounded-full">{t('نشط', 'ACTIVE')}</span>
+                              <span className="text-[12.5px] font-bold text-accent-green bg-accent-green/10 px-2 py-0.5 rounded-full">{t('نشط', 'ACTIVE')}</span>
                             ) : (
-                              <span className="text-[9px] font-bold text-[var(--text-muted)] bg-[var(--bg-input)] px-2 py-0.5 rounded-full">{t('متوقف', 'PAUSED')}</span>
+                              <span className="text-[12.5px] font-bold text-[var(--text-muted)] bg-[var(--bg-input)] px-2 py-0.5 rounded-full">{t('متوقف', 'PAUSED')}</span>
                             )}
                           </td>
                           <td className="text-end py-2.5 text-[var(--text-muted)]">
@@ -198,18 +198,18 @@ export default function AlertsPage() {
                         </Link>
                         <div className="flex items-center gap-2">
                           {isTriggered ? (
-                            <span className="text-[9px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">{t('مفعّل', 'TRIGGERED')}</span>
+                            <span className="text-[12.5px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">{t('مفعّل', 'TRIGGERED')}</span>
                           ) : alert.is_active ? (
-                            <span className="text-[9px] font-bold text-accent-green bg-accent-green/10 px-2 py-0.5 rounded-full">{t('نشط', 'ACTIVE')}</span>
+                            <span className="text-[12.5px] font-bold text-accent-green bg-accent-green/10 px-2 py-0.5 rounded-full">{t('نشط', 'ACTIVE')}</span>
                           ) : (
-                            <span className="text-[9px] font-bold text-[var(--text-muted)] bg-[var(--bg-input)] px-2 py-0.5 rounded-full">{t('متوقف', 'PAUSED')}</span>
+                            <span className="text-[12.5px] font-bold text-[var(--text-muted)] bg-[var(--bg-input)] px-2 py-0.5 rounded-full">{t('متوقف', 'PAUSED')}</span>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-xs">
                           <span className={cn(
-                            'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
+                            'text-[12.5px] font-bold px-1.5 py-0.5 rounded-full',
                             alert.alert_type === 'price_above' ? 'bg-accent-green/20 text-accent-green' : 'bg-red-500/20 text-red-400'
                           )}>
                             {alert.alert_type === 'price_above' ? '▲' : '▼'}
@@ -232,7 +232,7 @@ export default function AlertsPage() {
         )}
 
         {/* Info notice */}
-        <p className="text-[10px] text-[var(--text-muted)] text-center" dir={dir}>
+        <p className="text-[13.5px] text-[var(--text-muted)] text-center" dir={dir}>
           {t(
             'التنبيهات محفوظة في المتصفح فقط. يتم التحقق من الأسعار كل 30 ثانية.',
             'Alerts stored in browser localStorage. Prices checked every 30 seconds via batch quotes.'

@@ -316,13 +316,13 @@ function RelatedArticleCard({
       </h4>
       <div className="flex items-center gap-2">
         <span
-          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-[13.5px] font-medium"
           style={{ backgroundColor: `${color}20`, color }}
         >
           {sourceName}
         </span>
         {publishedAt && (
-          <span className="text-[10px] text-[var(--text-muted)]">
+          <span className="text-[13.5px] text-[var(--text-muted)]">
             {timeAgo(publishedAt, t, language)}
           </span>
         )}
@@ -653,7 +653,7 @@ export default function ArticleDetailPage() {
                 ID: {id}
               </span>
               <span className="hidden sm:flex items-center gap-1 text-[var(--text-muted)] opacity-60">
-                <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-input)] border border-[#2A2A2A] text-[10px] font-mono">Esc</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-input)] border border-[#2A2A2A] text-[13.5px] font-mono">Esc</kbd>
                 {t('للعودة', 'to go back')}
               </span>
             </div>

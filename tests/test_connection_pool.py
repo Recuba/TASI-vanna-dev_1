@@ -248,3 +248,185 @@ class TestClosePool:
         # Should not raise even if closeall fails
         close_pool()
         assert is_pool_initialized() is False
+
+
+# ===========================================================================
+# SQLitePool tests (services/sqlite_pool.py)
+# ===========================================================================
+
+import sqlite3  # noqa: E402
+import threading  # noqa: E402
+
+from services.sqlite_pool import SQLitePool, init_pool as sqlite_init_pool, get_pool  # noqa: E402
+
+
+class TestSQLitePoolCreation:
+    """Test SQLitePool initialization."""
+
+    def test_creates_pool_with_default_size(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path)
+        assert pool.pool_size == 5
+        # Should have 5 connections in the queue
+        assert pool._pool.qsize() == 5
+
+    def test_creates_pool_with_custom_size(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=3)
+        assert pool.pool_size == 3
+        assert pool._pool.qsize() == 3
+
+    def test_connections_are_sqlite(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=1)
+        conn = pool.acquire()
+        assert isinstance(conn, sqlite3.Connection)
+        pool.release(conn)
+
+    def test_connections_have_row_factory(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=1)
+        conn = pool.acquire()
+        assert conn.row_factory is sqlite3.Row
+        pool.release(conn)
+
+    def test_wal_mode_enabled(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=1)
+        conn = pool.acquire()
+        mode = conn.execute("PRAGMA journal_mode").fetchone()[0]
+        assert mode == "wal"
+        pool.release(conn)
+
+
+class TestSQLitePoolAcquireRelease:
+    """Test acquire/release cycle."""
+
+    def test_acquire_and_release(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=2)
+
+        conn1 = pool.acquire()
+        assert pool._pool.qsize() == 1
+
+        conn2 = pool.acquire()
+        assert pool._pool.qsize() == 0
+
+        pool.release(conn1)
+        assert pool._pool.qsize() == 1
+
+        pool.release(conn2)
+        assert pool._pool.qsize() == 2
+
+    def test_acquire_timeout_raises(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=1)
+
+        # Exhaust the pool
+        conn = pool.acquire()
+        with pytest.raises(RuntimeError, match="pool exhausted"):
+            pool.acquire(timeout=0.1)
+        pool.release(conn)
+
+    def test_connection_context_manager(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=2)
+
+        with pool.connection() as conn:
+            assert isinstance(conn, sqlite3.Connection)
+            assert pool._pool.qsize() == 1
+
+        # After exiting context, connection returned to pool
+        assert pool._pool.qsize() == 2
+
+    def test_context_manager_releases_on_exception(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=1)
+
+        with pytest.raises(ValueError):
+            with pool.connection() as _:
+                raise ValueError("test error")
+
+        # Connection should still be returned to pool
+        assert pool._pool.qsize() == 1
+
+
+class TestSQLitePoolConcurrency:
+    """Test thread-safety of SQLitePool."""
+
+    def test_concurrent_acquire_release(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=3)
+        errors = []
+
+        def worker():
+            try:
+                conn = pool.acquire(timeout=5)
+                conn.execute("SELECT 1")
+                pool.release(conn)
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=worker) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=10)
+
+        assert errors == []
+        assert pool._pool.qsize() == 3
+
+
+class TestSQLitePoolDataPersistence:
+    """Test that connections from the pool share the same database."""
+
+    def test_data_visible_across_connections(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        pool = SQLitePool(db_path, pool_size=2)
+
+        conn1 = pool.acquire()
+        conn1.execute("CREATE TABLE t (id INTEGER)")
+        conn1.execute("INSERT INTO t VALUES (42)")
+        conn1.commit()
+        pool.release(conn1)
+
+        conn2 = pool.acquire()
+        row = conn2.execute("SELECT id FROM t").fetchone()
+        assert row["id"] == 42
+        pool.release(conn2)
+
+
+# ---------------------------------------------------------------------------
+# Module-level init_pool / get_pool
+# ---------------------------------------------------------------------------
+
+
+class TestSQLitePoolModuleFunctions:
+    """Test services.sqlite_pool module-level functions."""
+
+    @pytest.fixture(autouse=True)
+    def reset_sqlite_pool(self):
+        """Reset the module global before/after each test."""
+        import services.sqlite_pool as mod
+
+        original = mod._pool
+        mod._pool = None
+        yield
+        mod._pool = original
+
+    def test_get_pool_raises_before_init(self):
+        with pytest.raises(RuntimeError, match="not initialized"):
+            get_pool()
+
+    def test_init_and_get_pool(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        sqlite_init_pool(db_path, pool_size=2)
+        pool = get_pool()
+        assert isinstance(pool, SQLitePool)
+        assert pool.pool_size == 2
+
+    def test_init_pool_custom_size(self, tmp_path):
+        db_path = str(tmp_path / "test.db")
+        sqlite_init_pool(db_path, pool_size=7)
+        pool = get_pool()
+        assert pool.pool_size == 7

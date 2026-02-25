@@ -47,7 +47,7 @@ function EdgeTooltipInner({ edge, x, y, t, isRTL }: EdgeTooltipProps) {
           {edge.from} \u2194 {edge.to}
         </span>
         <span
-          className="font-mono text-[9px] rounded px-1.5 py-px"
+          className="font-mono text-[12.5px] rounded px-1.5 py-px"
           style={{ color, background: `${color}18` }}
         >
           {edge.rho > 0 ? '+' : '\u2212'}
@@ -62,19 +62,19 @@ function EdgeTooltipInner({ edge, x, y, t, isRTL }: EdgeTooltipProps) {
       </div>
       <div className="flex gap-3.5">
         <div>
-          <div className="font-mono text-[8px] text-[--text-muted]">
+          <div className="font-mono text-[11.5px] text-[--text-muted]">
             {t('\u0627\u0644\u0627\u0631\u062A\u0628\u0627\u0637 (\u03C1)', 'Correlation (\u03C1)')}
           </div>
-          <div className="font-mono text-[13px] font-semibold" style={{ color }}>
+          <div className="font-mono text-[16.5px] font-semibold" style={{ color }}>
             {edge.rho > 0 ? '+' : ''}
             {edge.rho.toFixed(3)}
           </div>
         </div>
         <div>
-          <div className="font-mono text-[8px] text-[--text-muted]">
+          <div className="font-mono text-[11.5px] text-[--text-muted]">
             {t('\u0627\u0644\u062A\u0641\u0633\u064A\u0631 (R\u00B2)', 'Explained (R\u00B2)')}
           </div>
-          <div className="font-mono text-[13px] font-semibold text-[--text-secondary]">
+          <div className="font-mono text-[16.5px] font-semibold text-[--text-secondary]">
             {(edge.r2 * 100).toFixed(1)}%
           </div>
         </div>

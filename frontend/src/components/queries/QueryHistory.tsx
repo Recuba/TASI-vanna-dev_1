@@ -75,7 +75,7 @@ export function QueryHistory({ onRerun, onSave, className }: QueryHistoryProps) 
         {records.length > 0 && (
           <button
             onClick={handleClearAll}
-            className="text-[10px] text-[var(--text-muted)] hover:text-accent-red transition-colors"
+            className="text-[13.5px] text-[var(--text-muted)] hover:text-accent-red transition-colors"
           >
             Clear All
           </button>
@@ -114,7 +114,7 @@ export function QueryHistory({ onRerun, onSave, className }: QueryHistoryProps) 
           <button
             onClick={() => setFavoritesOnly(!favoritesOnly)}
             className={cn(
-              'flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border transition-colors',
+              'flex items-center gap-1 text-[13.5px] px-2 py-1 rounded-full border transition-colors',
               favoritesOnly
                 ? 'bg-gold/20 border-gold/40 text-gold'
                 : 'border-[var(--bg-input)] text-[var(--text-muted)] hover:border-gold/30'
@@ -146,7 +146,7 @@ export function QueryHistory({ onRerun, onSave, className }: QueryHistoryProps) 
                 key={field}
                 onClick={() => toggleSort(field)}
                 className={cn(
-                  'text-[10px] px-2 py-1 rounded-full border transition-colors',
+                  'text-[13.5px] px-2 py-1 rounded-full border transition-colors',
                   isActive
                     ? 'bg-gold/10 border-gold/30 text-gold'
                     : 'border-[var(--bg-input)] text-[var(--text-muted)] hover:border-gold/30'

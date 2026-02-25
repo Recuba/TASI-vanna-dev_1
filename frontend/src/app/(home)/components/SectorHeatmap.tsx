@@ -166,16 +166,16 @@ function HeatmapCell({ item }: { item: HeatmapCellData }) {
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
         }}>
-          <p style={{ fontFamily: F.ui, fontWeight: 600, fontSize: 11, color: P.goldBright, marginBottom: 2 }}>
+          <p style={{ fontFamily: F.ui, fontWeight: 600, fontSize: 14.5, color: P.goldBright, marginBottom: 2 }}>
             {item.name}
           </p>
-          <p style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, marginBottom: 4 }}>
+          <p style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted, marginBottom: 4 }}>
             {item.sector}
           </p>
-          <p style={{ fontFamily: F.mono, fontSize: 11, fontWeight: 700, color: colors.text }}>
+          <p style={{ fontFamily: F.mono, fontSize: 14.5, fontWeight: 700, color: colors.text }}>
             {item.change_pct >= 0 ? '+' : ''}{item.change_pct.toFixed(2)}%
           </p>
-          <p style={{ fontFamily: F.mono, fontSize: 9, color: P.textSecondary, marginTop: 2 }}>
+          <p style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textSecondary, marginTop: 2 }}>
             {(item.market_cap / 1e9).toFixed(1)}B SAR
           </p>
         </div>
@@ -191,14 +191,14 @@ function HeatmapCell({ item }: { item: HeatmapCellData }) {
 function GradientLegend() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14 }}>
-      <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>-3%</span>
+      <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>-3%</span>
       <div style={{
         height: 3,
         width: 160,
         borderRadius: 2,
         background: 'linear-gradient(to right, #521E1E, #B84444, #E06C6C, #16181E, #6BCB8B, #2D8B55, #1A4D2E)',
       }} />
-      <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted }}>+3%</span>
+      <span style={{ fontFamily: F.mono, fontSize: 12.5, color: P.textMuted }}>+3%</span>
     </div>
   );
 }
@@ -242,7 +242,7 @@ export function SectorHeatmap() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <span style={{
           fontFamily: F.mono,
-          fontSize: 9,
+          fontSize: 12.5,
           color: P.gold,
           letterSpacing: '0.2em',
           textTransform: 'uppercase' as const,
@@ -251,7 +251,7 @@ export function SectorHeatmap() {
         </span>
         <Link href="/market" style={{
           fontFamily: F.mono,
-          fontSize: 9,
+          fontSize: 12.5,
           color: P.textMuted,
           letterSpacing: '0.1em',
           textDecoration: 'none',
@@ -272,7 +272,7 @@ export function SectorHeatmap() {
         <div style={{ height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <button
             onClick={refetch}
-            style={{ fontFamily: F.mono, fontSize: 11, color: P.red, background: 'none', border: 'none', cursor: 'pointer' }}
+            style={{ fontFamily: F.mono, fontSize: 14.5, color: P.red, background: 'none', border: 'none', cursor: 'pointer' }}
           >
             {t('إعادة المحاولة', 'RETRY')}
           </button>
@@ -287,7 +287,7 @@ export function SectorHeatmap() {
         </Link>
       ) : (
         <div style={{ height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ fontFamily: F.mono, fontSize: 11, color: P.textMuted }}>
+          <p style={{ fontFamily: F.mono, fontSize: 14.5, color: P.textMuted }}>
             {t('لا توجد بيانات', 'NO DATA')}
           </p>
         </div>

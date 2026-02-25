@@ -155,7 +155,7 @@ function CompareTickerSelector({
                 key={stock.ticker}
                 onClick={() => onAdd(stock.ticker)}
                 className={cn(
-                  'px-2.5 py-1 rounded-full text-[11px] font-medium',
+                  'px-2.5 py-1 rounded-full text-[14.5px] font-medium',
                   'border transition-all duration-200',
                   'bg-[var(--bg-input)] border-[var(--bg-input)] text-[var(--text-secondary)]',
                   'hover:border-gold/40 hover:text-gold',

@@ -142,7 +142,7 @@ export function MobileBottomNav() {
               <span className="flex-shrink-0" suppressHydrationWarning>{item.icon}</span>
             )}
             <span className={cn(
-              'text-[10px] font-medium',
+              'text-[13.5px] font-medium',
               item.center && 'mt-0.5',
             )}>
               {t(item.labelAr, item.labelEn)}

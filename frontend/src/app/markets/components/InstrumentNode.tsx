@@ -129,7 +129,7 @@ function InstrumentNodeInner({
       <div
         className={cn(
           language === 'ar' ? 'font-mono' : 'font-arabic',
-          'text-[10px] text-center mt-1.5 text-[--text-muted]',
+          'text-[13.5px] text-center mt-1.5 text-[--text-muted]',
         )}
         style={{ direction: language === 'ar' ? 'ltr' : 'rtl' }}
       >
