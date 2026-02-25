@@ -316,10 +316,10 @@ export default function PortfolioPage() {
                 },
               ].map((card) => (
                 <div key={card.label} className="bg-[var(--bg-card)] border border-[#2A2A2A] rounded-xl p-3">
-                  <p className="text-[10px] text-[var(--text-muted)] mb-1">{card.label}</p>
+                  <p className="text-[13.5px] text-[var(--text-muted)] mb-1">{card.label}</p>
                   <p className={cn('text-sm font-bold', card.color || 'text-[var(--text-primary)]')}>
                     {quotesLoading ? '...' : card.value}
-                    <span className="text-[10px] font-normal">{card.suffix}</span>
+                    <span className="text-[13.5px] font-normal">{card.suffix}</span>
                   </p>
                 </div>
               ))}
@@ -366,7 +366,7 @@ export default function PortfolioPage() {
                                   <Link href={`/stock/${encodeURIComponent(h.ticker)}`} className="text-gold hover:text-gold-light font-medium">
                                     {h.ticker.replace('.SR', '')}
                                   </Link>
-                                  {quote && <p className="text-[10px] text-[var(--text-muted)] truncate max-w-[120px]">{quote.name}</p>}
+                                  {quote && <p className="text-[13.5px] text-[var(--text-muted)] truncate max-w-[120px]">{quote.name}</p>}
                                 </td>
                                 <td className="text-end py-2.5 text-[var(--text-secondary)]">{h.totalShares.toLocaleString()}</td>
                                 <td className="text-end py-2.5 text-[var(--text-secondary)]">{h.avgCostBasis.toFixed(2)}</td>
@@ -374,7 +374,7 @@ export default function PortfolioPage() {
                                 <td className="text-end py-2.5 text-[var(--text-primary)]">{formatNum(value)}</td>
                                 <td className={cn('text-end py-2.5 font-medium', pnl >= 0 ? 'text-accent-green' : 'text-red-400')}>
                                   {pnl >= 0 ? '+' : ''}{formatNum(pnl)}
-                                  <span className="text-[10px] block">{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%</span>
+                                  <span className="text-[13.5px] block">{pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%</span>
                                 </td>
                                 <td className="text-end py-2.5 text-[var(--text-muted)]">{weight.toFixed(1)}%</td>
                               </tr>
@@ -404,7 +404,7 @@ export default function PortfolioPage() {
                                 {pnl >= 0 ? '+' : ''}{formatNum(pnl)} ({pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%)
                               </span>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 text-[10px]">
+                            <div className="grid grid-cols-3 gap-2 text-[13.5px]">
                               <div>
                                 <p className="text-[var(--text-muted)]">{t('الأسهم', 'Shares')}</p>
                                 <p className="text-[var(--text-secondary)] font-medium">{h.totalShares}</p>
@@ -461,7 +461,7 @@ export default function PortfolioPage() {
                   {allocationData.map((item, i) => {
                     const pct = summary.totalValue > 0 ? (item.value / summary.totalValue) * 100 : 0;
                     return (
-                      <div key={item.ticker} className="flex items-center justify-between text-[10px]">
+                      <div key={item.ticker} className="flex items-center justify-between text-[13.5px]">
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                           <span className="text-[var(--text-secondary)]">{item.ticker}</span>
@@ -479,7 +479,7 @@ export default function PortfolioPage() {
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-bold text-[var(--text-primary)]" dir={dir}>
                   {t('سجل الصفقات', 'Transaction History')}
-                  <span className="text-[10px] text-[var(--text-muted)] font-normal ms-2">({transactions.length})</span>
+                  <span className="text-[13.5px] text-[var(--text-muted)] font-normal ms-2">({transactions.length})</span>
                 </h2>
                 <button
                   onClick={() => setShowTxns(!showTxns)}
@@ -499,7 +499,7 @@ export default function PortfolioPage() {
                       <div key={tx.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-[var(--bg-input)] transition-colors text-xs">
                         <div className="flex items-center gap-2">
                           <span className={cn(
-                            'text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase',
+                            'text-[12.5px] font-bold px-1.5 py-0.5 rounded-full uppercase',
                             tx.type === 'buy' ? 'bg-accent-green/20 text-accent-green' : 'bg-red-500/20 text-red-400'
                           )}>
                             {tx.type === 'buy' ? t('شراء', 'BUY') : t('بيع', 'SELL')}
@@ -531,7 +531,7 @@ export default function PortfolioPage() {
         )}
 
         {/* Data notice */}
-        <p className="text-[10px] text-[var(--text-muted)] text-center" dir={dir}>
+        <p className="text-[13.5px] text-[var(--text-muted)] text-center" dir={dir}>
           {t('البيانات محفوظة في المتصفح فقط', 'Data stored in browser localStorage only')}
         </p>
 

@@ -195,7 +195,7 @@ export default function LoginPage() {
                 )}
               />
               {emailError && (
-                <p className="mt-1 text-[11px] text-accent-red">{emailError}</p>
+                <p className="mt-1 text-[14.5px] text-accent-red">{emailError}</p>
               )}
             </div>
 
@@ -223,7 +223,7 @@ export default function LoginPage() {
               />
               {mode === 'register' && (
                 <p className={cn(
-                  'mt-1 text-[11px]',
+                  'mt-1 text-[14.5px]',
                   passwordError ? 'text-accent-red' : 'text-[var(--text-muted)]'
                 )}>
                   {password.length >= 8

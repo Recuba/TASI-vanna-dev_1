@@ -37,7 +37,7 @@ export const StockReportsSection = memo(function StockReportsSection({ ticker, l
                   )}
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     {report.recommendation && (
-                      <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase',
+                      <span className={cn('text-[13.5px] px-1.5 py-0.5 rounded-full font-bold uppercase',
                         report.recommendation.toLowerCase().includes('buy') ? 'bg-accent-green/15 text-accent-green'
                           : report.recommendation.toLowerCase().includes('sell') ? 'bg-accent-red/15 text-accent-red'
                             : 'bg-gold/15 text-gold',
@@ -46,11 +46,11 @@ export const StockReportsSection = memo(function StockReportsSection({ ticker, l
                       </span>
                     )}
                     {report.target_price !== null && (
-                      <span className="text-[10px] text-[var(--text-muted)]">{t('السعر المستهدف', 'Target')}: {report.target_price.toFixed(2)} SAR</span>
+                      <span className="text-[13.5px] text-[var(--text-muted)]">{t('السعر المستهدف', 'Target')}: {report.target_price.toFixed(2)} SAR</span>
                     )}
-                    {report.author && <span className="text-[10px] text-[var(--text-muted)]">{report.author}</span>}
+                    {report.author && <span className="text-[13.5px] text-[var(--text-muted)]">{report.author}</span>}
                     {report.published_at && (
-                      <time className="text-[10px] text-[var(--text-muted)]" dateTime={report.published_at}>
+                      <time className="text-[13.5px] text-[var(--text-muted)]" dateTime={report.published_at}>
                         {new Date(report.published_at).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </time>
                     )}

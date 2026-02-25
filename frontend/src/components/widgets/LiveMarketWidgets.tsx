@@ -66,15 +66,15 @@ const QuoteCard = React.memo(function QuoteCard({
     >
       {/* Name + asset icon */}
       <div className="flex items-center gap-1 mb-0.5">
-        <span className="text-[10px] opacity-60" aria-hidden="true">
+        <span className="text-[13.5px] opacity-60" aria-hidden="true">
           {ASSET_ICONS[q.asset_class] ?? ASSET_ICONS.other}
         </span>
-        <span className="text-[11px] text-[var(--text-muted)] truncate max-w-[90px]">
+        <span className="text-[14.5px] text-[var(--text-muted)] truncate max-w-[90px]">
           {q.name}
         </span>
         {q.is_delayed && (
           <span
-            className="text-[9px] text-amber-400/70 flex-shrink-0"
+            className="text-[12.5px] text-amber-400/70 flex-shrink-0"
             title={`Delayed ${q.delay_minutes ?? 15}min`}
           >
             D
@@ -90,7 +90,7 @@ const QuoteCard = React.memo(function QuoteCard({
       {/* Change % */}
       <div
         className={cn(
-          'text-[11px] font-medium',
+          'text-[14.5px] font-medium',
           isPositive && 'text-accent-green',
           isNegative && 'text-accent-red',
           isNeutral && 'text-[var(--text-muted)]',

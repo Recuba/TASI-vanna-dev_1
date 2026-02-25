@@ -207,14 +207,14 @@ export default function ReportsPage() {
                   <div className="flex items-center gap-2 mb-2">
                     {report.report_type && (
                       <span className={cn(
-                        'text-[10px] px-2 py-0.5 rounded-pill border tracking-wider font-medium',
+                        'text-[13.5px] px-2 py-0.5 rounded-pill border tracking-wider font-medium',
                         typeColors[report.report_type] || 'bg-[var(--bg-input)] text-[var(--text-muted)]'
                       )}>
                         {typeLabels[report.report_type] || report.report_type}
                       </span>
                     )}
                     {report.recommendation && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-pill bg-gold/10 text-gold border border-gold/20 tracking-wider font-medium">
+                      <span className="text-[13.5px] px-2 py-0.5 rounded-pill bg-gold/10 text-gold border border-gold/20 tracking-wider font-medium">
                         {recommendationLabels[report.recommendation.toLowerCase()] || report.recommendation}
                       </span>
                     )}
@@ -254,7 +254,7 @@ export default function ReportsPage() {
                     {report.ticker && (
                       <a
                         href={`/stock/${encodeURIComponent(report.ticker)}`}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-gold/10 text-gold font-medium hover:bg-gold/20 transition-colors"
+                        className="text-[13.5px] px-1.5 py-0.5 rounded bg-gold/10 text-gold font-medium hover:bg-gold/20 transition-colors"
                       >
                         {report.ticker}
                       </a>

@@ -172,7 +172,7 @@ export function FilterBar({
           </svg>
           {t('فلاتر متقدمة', 'Advanced Filters')}
           {advancedFilterCount > 0 && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#D4A84B] text-[#0E0E0E] text-[10px] font-bold">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#D4A84B] text-[#0E0E0E] text-[13.5px] font-bold">
               {advancedFilterCount}
             </span>
           )}

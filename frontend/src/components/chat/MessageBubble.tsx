@@ -82,7 +82,7 @@ export function MessageBubble({ message, onRetry, progressText }: MessageBubbleP
         {/* Timestamp on hover */}
         <div
           className={cn(
-            'text-[10px] text-[var(--text-muted)] transition-all duration-200 px-1',
+            'text-[13.5px] text-[var(--text-muted)] transition-all duration-200 px-1',
             isUser ? 'text-end' : 'text-start',
             showTime ? 'opacity-100' : 'opacity-0'
           )}

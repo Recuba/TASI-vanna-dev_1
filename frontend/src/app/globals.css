@@ -124,14 +124,14 @@ body {
 .prose-chat table {
   border-collapse: collapse;
   width: 100%;
-  font-size: 0.875rem;
+  font-size: 1.09rem;
 }
 .prose-chat th {
   background: var(--bg-input);
   color: var(--gold-primary);
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.97rem;
   letter-spacing: 0.05em;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--gold-border);
@@ -150,7 +150,7 @@ body {
   background: var(--bg-input);
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
-  font-size: 0.875em;
+  font-size: 1.09em;
 }
 
 .gold-underline {
@@ -298,7 +298,7 @@ body {
   body::before {
     content: "Ra'd AI \2014  Saudi Stock Market Platform";
     display: block;
-    font-size: 10pt;
+    font-size: 13pt;
     color: #666;
     border-bottom: 1px solid #ccc;
     padding-bottom: 8px;
@@ -316,7 +316,7 @@ body {
   table {
     border-collapse: collapse;
     width: 100%;
-    font-size: 9pt;
+    font-size: 12pt;
   }
 
   th, td {

@@ -464,7 +464,7 @@ export default function NewsPage() {
               {t('آخر أخبار سوق تداول السعودي', 'Latest Saudi Tadawul market news')}
             </p>
             {total > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-gold/10 text-gold border border-gold/20">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[14.5px] font-medium bg-gold/10 text-gold border border-gold/20">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>

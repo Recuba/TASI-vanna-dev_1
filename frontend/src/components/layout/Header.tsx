@@ -106,10 +106,10 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
             RA
           </div>
           <div className="flex flex-col gap-px">
-            <h1 className="text-[16px] font-bold text-[var(--text-primary)] leading-tight">
+            <h1 className="text-[19.5px] font-bold text-[var(--text-primary)] leading-tight">
               Ra&apos;d AI
             </h1>
-            <p className="text-[10px] text-[var(--text-muted)] leading-tight hidden sm:block">
+            <p className="text-[13.5px] text-[var(--text-muted)] leading-tight hidden sm:block">
               {t('رعد للذكاء الاصطناعي', 'Saudi Stock Market AI')}
             </p>
           </div>

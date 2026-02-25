@@ -9,6 +9,22 @@ const config: Config = {
   ],
   darkMode: 'class',
   theme: {
+    /* ── Global font-size bump (+3.5 px on every named size) ── */
+    fontSize: {
+      xs:   ['15.5px', { lineHeight: '20px' }],   // was 12px/16px
+      sm:   ['17.5px', { lineHeight: '24px' }],   // was 14px/20px
+      base: ['19.5px', { lineHeight: '28px' }],   // was 16px/24px
+      lg:   ['21.5px', { lineHeight: '32px' }],   // was 18px/28px
+      xl:   ['23.5px', { lineHeight: '32px' }],   // was 20px/28px
+      '2xl': ['27.5px', { lineHeight: '36px' }],  // was 24px/32px
+      '3xl': ['33.5px', { lineHeight: '40px' }],  // was 30px/36px
+      '4xl': ['39.5px', { lineHeight: '44px' }],  // was 36px/40px
+      '5xl': ['51.5px', { lineHeight: '1' }],     // was 48px/1
+      '6xl': ['63.5px', { lineHeight: '1' }],     // was 60px/1
+      '7xl': ['75.5px', { lineHeight: '1' }],     // was 72px/1
+      '8xl': ['99.5px', { lineHeight: '1' }],     // was 96px/1
+      '9xl': ['131.5px', { lineHeight: '1' }],    // was 128px/1
+    },
     extend: {
       colors: {
         ...tailwindTokens.colors,

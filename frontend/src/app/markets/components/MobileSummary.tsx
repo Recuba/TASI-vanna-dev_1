@@ -43,7 +43,7 @@ function MobileSummaryInner({
             <div className="font-mono text-xs font-semibold text-[--text-primary]">
               {stats.advancing}/{instruments.length}
             </div>
-            <div className="font-mono text-[9px] text-[--text-muted]">
+            <div className="font-mono text-[12.5px] text-[--text-muted]">
               {t('\u0635\u0627\u0639\u062F/\u0647\u0627\u0628\u0637', 'Adv/Dec')}
             </div>
           </div>
@@ -54,7 +54,7 @@ function MobileSummaryInner({
             >
               {pctFmt(stats.diversification)}
             </div>
-            <div className="font-mono text-[9px] text-[--text-muted]">
+            <div className="font-mono text-[12.5px] text-[--text-muted]">
               {t('\u0627\u0644\u062A\u0646\u0648\u0639', 'Diversification')}
             </div>
           </div>
@@ -62,7 +62,7 @@ function MobileSummaryInner({
             <div className="font-mono text-xs font-semibold text-[--text-secondary]">
               {Math.round(stats.avgAbsCorr * 100)}%
             </div>
-            <div className="font-mono text-[9px] text-[--text-muted]">
+            <div className="font-mono text-[12.5px] text-[--text-muted]">
               {t('\u0645\u062A\u0648\u0633\u0637 \u0627\u0644\u0627\u0631\u062A\u0628\u0627\u0637', 'Avg Corr')}
             </div>
           </div>
@@ -106,7 +106,7 @@ function MobileSummaryInner({
                         }}
                       />
                     </div>
-                    <span className="font-mono text-[11px] font-semibold w-12 text-end" style={{ color }}>
+                    <span className="font-mono text-[14.5px] font-semibold w-12 text-end" style={{ color }}>
                       {edge.rho > 0 ? '+' : '\u2212'}
                       {edge.pct}%
                     </span>

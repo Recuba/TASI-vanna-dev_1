@@ -81,7 +81,7 @@ export function AIChatInterface() {
         <div className="flex items-center justify-between px-4 py-2 border-b gold-border bg-[var(--bg-card)]">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-sm bg-gold-gradient flex items-center justify-center">
-              <span className="text-[10px] font-bold text-[#0E0E0E]">RA</span>
+              <span className="text-[13.5px] font-bold text-[#0E0E0E]">RA</span>
             </div>
             <span className="text-sm font-medium text-[var(--text-primary)]">{t('محادثة رعد', 'Ra\'d Chat')}</span>
           </div>
@@ -135,7 +135,7 @@ export function AIChatInterface() {
                   }} className={cn('flex items-center justify-between gap-2 px-3 py-2 rounded-lg cursor-pointer', 'hover:bg-[var(--bg-input)] transition-colors group/conv', getActiveConvId() === conv.id && 'bg-gold/10 border border-gold/20')}>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[var(--text-primary)] truncate">{conv.title}</p>
-                    <p className="text-[10px] text-[var(--text-muted)]">
+                    <p className="text-[13.5px] text-[var(--text-muted)]">
                       {new Date(conv.timestamp).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       {' '}&middot;{' '}{conv.messageCount} {t('رسائل', 'messages')}
                     </p>

@@ -95,7 +95,7 @@ function getCompanyShortName(event: CalendarEvent): string {
     const parts = event.title.split(' — ');
     if (parts[0]) {
       const name = parts[0].trim();
-      return name.length > 15 ? name.slice(0, 14) + '…' : name;
+      return name.length > 20 ? name.slice(0, 19) + '…' : name;
     }
   }
   return event.ticker.replace('.SR', '');
@@ -125,18 +125,18 @@ function EventCard({ event, language }: { event: CalendarEvent; language: string
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: F.display, fontSize: 14, fontWeight: 600, color: P.text, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div style={{ fontFamily: F.display, fontSize: 20, fontWeight: 600, color: P.text, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {event.title}
           </div>
           {event.description && (
-            <div style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, letterSpacing: "0.05em" }}>
+            <div style={{ fontFamily: F.mono, fontSize: 15, color: P.textMuted, letterSpacing: "0.05em" }}>
               {event.description}
             </div>
           )}
         </div>
         <span style={{
           fontFamily: F.mono,
-          fontSize: 9,
+          fontSize: 15,
           fontWeight: 600,
           padding: "3px 8px",
           borderRadius: 2,
@@ -149,7 +149,7 @@ function EventCard({ event, language }: { event: CalendarEvent; language: string
           {isDividend ? (language === 'ar' ? 'توزيعات' : 'DIV') : (language === 'ar' ? 'أرباح' : 'EARN')}
         </span>
       </div>
-      <div style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, marginTop: 6, letterSpacing: "0.05em" }}>
+      <div style={{ fontFamily: F.mono, fontSize: 15, color: P.textMuted, marginTop: 6, letterSpacing: "0.05em" }}>
         {event.date} · {event.ticker.replace('.SR', '')}
       </div>
     </Link>
@@ -280,13 +280,13 @@ export default function CalendarPage() {
             {/* Title Row */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
               <div>
-                <div style={{ fontFamily: F.mono, fontSize: 9, color: P.gold, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 6 }}>
+                <div style={{ fontFamily: F.mono, fontSize: 15, color: P.gold, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 6 }}>
                   TASI · TADAWUL
                 </div>
-                <h1 style={{ fontFamily: F.display, fontSize: 32, fontWeight: 600, color: P.text, margin: 0, lineHeight: 1.1 }}>
+                <h1 style={{ fontFamily: F.display, fontSize: 35.5, fontWeight: 600, color: P.text, margin: 0, lineHeight: 1.1 }}>
                   {t('التقويم المالي', 'Financial Calendar')}
                 </h1>
-                <p style={{ fontFamily: F.mono, fontSize: 10, color: P.textMuted, marginTop: 6, letterSpacing: "0.05em" }}>
+                <p style={{ fontFamily: F.mono, fontSize: 15, color: P.textMuted, marginTop: 6, letterSpacing: "0.05em" }}>
                   {events.length > 0
                     ? `${events.length} ${t('حدث', 'events')} — ${monthNames[month]} ${year}`
                     : `${monthNames[month]} ${year}`}
@@ -304,7 +304,7 @@ export default function CalendarPage() {
                       padding: "6px 18px",
                       borderRadius: 2,
                       fontFamily: F.mono,
-                      fontSize: 10,
+                      fontSize: 15,
                       letterSpacing: "0.1em",
                       background: viewMode === m ? P.goldSubtle : "transparent",
                       color: viewMode === m ? P.gold : P.textMuted,
@@ -340,7 +340,7 @@ export default function CalendarPage() {
                       color: isActive ? P.gold : P.textMuted,
                       border: isActive ? `1px solid ${P.borderHover}` : `1px solid ${P.border}`,
                       fontFamily: F.mono,
-                      fontSize: 10,
+                      fontSize: 15,
                       letterSpacing: "0.1em",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
@@ -351,12 +351,12 @@ export default function CalendarPage() {
                   >
                     {labels[f]}
                     {f === 'dividend' && dividendCount > 0 && (
-                      <span style={{ fontSize: 9, color: P.green, fontWeight: 600 }}>
+                      <span style={{ fontSize: 15, color: P.green, fontWeight: 600 }}>
                         {dividendCount}
                       </span>
                     )}
                     {f === 'earnings' && earningsCount > 0 && (
-                      <span style={{ fontSize: 9, color: P.gold, fontWeight: 600 }}>
+                      <span style={{ fontSize: 15, color: P.gold, fontWeight: 600 }}>
                         {earningsCount}
                       </span>
                     )}
@@ -384,7 +384,7 @@ export default function CalendarPage() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "all 0.2s ease",
                   fontFamily: F.display,
-                  fontSize: 18,
+                  fontSize: 24,
                   lineHeight: 1,
                 }}
               >
@@ -394,12 +394,12 @@ export default function CalendarPage() {
               <div style={{ textAlign: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 4 }}>
                   <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${P.border})` }} />
-                  <div style={{ fontFamily: F.mono, fontSize: 9, color: P.goldMuted, letterSpacing: "0.2em" }}>
+                  <div style={{ fontFamily: F.mono, fontSize: 15, color: P.goldMuted, letterSpacing: "0.2em" }}>
                     {year}
                   </div>
                   <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${P.border}, transparent)` }} />
                 </div>
-                <h2 style={{ fontFamily: F.display, fontSize: 30, fontWeight: 600, color: P.text, letterSpacing: "0.04em", margin: 0 }}>
+                <h2 style={{ fontFamily: F.display, fontSize: 33.5, fontWeight: 600, color: P.text, letterSpacing: "0.04em", margin: 0 }}>
                   {monthNames[month]}
                 </h2>
                 <button
@@ -407,7 +407,7 @@ export default function CalendarPage() {
                   className="today-btn"
                   style={{
                     fontFamily: F.mono,
-                    fontSize: 9,
+                    fontSize: 15,
                     color: P.gold,
                     background: "none",
                     border: "none",
@@ -434,7 +434,7 @@ export default function CalendarPage() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "all 0.2s ease",
                   fontFamily: F.display,
-                  fontSize: 18,
+                  fontSize: 24,
                   lineHeight: 1,
                 }}
               >
@@ -447,7 +447,7 @@ export default function CalendarPage() {
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "60px 0", flexDirection: "column", gap: 12 }}>
                 <div style={{
                   fontFamily: F.mono,
-                  fontSize: 9,
+                  fontSize: 15,
                   color: P.textMuted,
                   letterSpacing: "0.15em",
                   animation: "breathe 1.5s ease-in-out infinite",
@@ -457,17 +457,17 @@ export default function CalendarPage() {
               </div>
             ) : error ? (
               <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: 14 }}>
-                <p style={{ fontFamily: F.display, fontSize: 22, fontWeight: 500, color: P.red, margin: 0 }}>
+                <p style={{ fontFamily: F.display, fontSize: 28, fontWeight: 500, color: P.red, margin: 0 }}>
                   {t('تعذّر تحميل التقويم', 'Failed to load calendar')}
                 </p>
-                <p style={{ fontFamily: F.mono, fontSize: 10, color: P.textMuted, letterSpacing: '0.06em', margin: 0 }}>
+                <p style={{ fontFamily: F.mono, fontSize: 15, color: P.textMuted, letterSpacing: '0.06em', margin: 0 }}>
                   {t('حدث خطأ أثناء جلب البيانات', 'An error occurred while fetching data')}
                 </p>
                 <button
                   onClick={refetch}
                   style={{
                     fontFamily: F.mono,
-                    fontSize: 9,
+                    fontSize: 15,
                     letterSpacing: '0.12em',
                     color: P.gold,
                     background: P.goldSubtle,
@@ -491,7 +491,7 @@ export default function CalendarPage() {
                       textAlign: "center",
                       padding: "8px 4px",
                       fontFamily: F.mono,
-                      fontSize: 9,
+                      fontSize: 15,
                       color: P.textMuted,
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
@@ -538,7 +538,7 @@ export default function CalendarPage() {
                         {/* Day number */}
                         <div style={{
                           fontFamily: F.mono,
-                          fontSize: 11,
+                          fontSize: 17,
                           fontWeight: isToday ? 700 : 400,
                           color: isToday ? P.gold : P.textMuted,
                           marginBottom: 5,
@@ -553,7 +553,7 @@ export default function CalendarPage() {
                             <div
                               key={i}
                               style={{
-                                fontSize: 9,
+                                fontSize: 15,
                                 padding: "2px 5px",
                                 borderRadius: 2,
                                 background: ev.type === 'dividend' ? P.greenMuted : P.goldSubtle,
@@ -579,7 +579,7 @@ export default function CalendarPage() {
                             </div>
                           ))}
                           {dayEvents.length > 3 && (
-                            <div style={{ fontFamily: F.mono, fontSize: 8, color: P.textMuted, paddingLeft: 4 }}>
+                            <div style={{ fontFamily: F.mono, fontSize: 14, color: P.textMuted, paddingLeft: 4 }}>
                               +{dayEvents.length - 3} {t('المزيد', 'more')}
                             </div>
                           )}
@@ -601,7 +601,7 @@ export default function CalendarPage() {
                     animation: "slideUp 0.2s ease",
                   }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                      <div style={{ fontFamily: F.display, fontSize: 18, fontWeight: 600, color: P.text }}>
+                      <div style={{ fontFamily: F.display, fontSize: 24, fontWeight: 600, color: P.text }}>
                         {new Date(selectedDate + 'T00:00:00').toLocaleDateString(
                           language === 'ar' ? 'ar-SA' : 'en-US',
                           { weekday: 'long', day: 'numeric', month: 'long' }
@@ -611,7 +611,7 @@ export default function CalendarPage() {
                         onClick={() => setSelectedDate(null)}
                         style={{
                           fontFamily: F.mono,
-                          fontSize: 10,
+                          fontSize: 15,
                           color: P.textMuted,
                           background: "none",
                           border: "none",
@@ -645,7 +645,7 @@ export default function CalendarPage() {
                     textAlign: "center",
                     padding: "60px 0",
                     fontFamily: F.mono,
-                    fontSize: 11,
+                    fontSize: 17,
                     color: P.textMuted,
                     letterSpacing: "0.1em",
                   }}>
@@ -662,7 +662,7 @@ export default function CalendarPage() {
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                           <div style={{
                             fontFamily: F.mono,
-                            fontSize: 10,
+                            fontSize: 15,
                             fontWeight: isToday ? 700 : 400,
                             color: isToday ? P.gold : P.textSecondary,
                             letterSpacing: "0.1em",
@@ -674,7 +674,7 @@ export default function CalendarPage() {
                           {isToday && (
                             <span style={{
                               fontFamily: F.mono,
-                              fontSize: 8,
+                              fontSize: 14,
                               background: P.goldSubtle,
                               color: P.gold,
                               padding: "2px 6px",
@@ -686,7 +686,7 @@ export default function CalendarPage() {
                           )}
                           <span style={{
                             fontFamily: F.mono,
-                            fontSize: 9,
+                            fontSize: 15,
                             background: P.surface,
                             color: P.textMuted,
                             padding: "1px 6px",
@@ -734,7 +734,7 @@ export default function CalendarPage() {
                   border: `1px solid ${color}`,
                   opacity: 0.8,
                 }} />
-                <span style={{ fontFamily: F.mono, fontSize: 9, color: P.textMuted, letterSpacing: "0.08em" }}>
+                <span style={{ fontFamily: F.mono, fontSize: 15, color: P.textMuted, letterSpacing: "0.08em" }}>
                   {label}
                 </span>
               </div>

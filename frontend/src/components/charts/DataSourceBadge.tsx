@@ -77,7 +77,7 @@ export function DataSourceBadge({ source, lastUpdated, className }: DataSourceBa
   return (
     <span className={cn('inline-flex items-center gap-1.5', className)}>
       <span
-        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium leading-none tracking-wide select-none"
+        className="inline-flex items-center rounded-full px-2 py-0.5 text-[13.5px] font-medium leading-none tracking-wide select-none"
         style={{ backgroundColor: config.bg, color: config.text }}
         aria-label={`Data source: ${config.label}`}
         aria-describedby={config.description ? descId : undefined}
@@ -104,7 +104,7 @@ export function DataSourceBadge({ source, lastUpdated, className }: DataSourceBa
       </span>
       {timeAgo && (
         <span
-          className="text-[10px] leading-none select-none"
+          className="text-[13.5px] leading-none select-none"
           style={{ color: '#606060' }}
           title={timeAgo.ar}
         >

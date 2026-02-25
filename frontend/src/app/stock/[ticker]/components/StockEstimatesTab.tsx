@@ -80,10 +80,10 @@ export function StockEstimatesTab({ ticker, language, t }: StockEstimatesTabProp
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+              <XAxis dataKey="name" tick={{ fontSize: 14.5, fill: 'var(--text-muted)' }} />
               <YAxis
                 domain={[Math.floor(targetLow * 0.95), Math.ceil(targetHigh * 1.05)]}
-                tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+                tick={{ fontSize: 14.5, fill: 'var(--text-muted)' }}
                 width={50}
               />
               <ReTooltip
@@ -97,7 +97,7 @@ export function StockEstimatesTab({ ticker, language, t }: StockEstimatesTabProp
                   y={currentPrice}
                   stroke="#D4A84B"
                   strokeDasharray="5 5"
-                  label={{ value: `${t('الحالي', 'Current')} ${currentPrice.toFixed(2)}`, fill: '#D4A84B', fontSize: 10 }}
+                  label={{ value: `${t('الحالي', 'Current')} ${currentPrice.toFixed(2)}`, fill: '#D4A84B', fontSize: 13.5 }}
                 />
               )}
             </AreaChart>

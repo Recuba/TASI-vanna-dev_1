@@ -14,7 +14,7 @@ export interface StatBadgeProps {
 function StatBadgeInner({ label, value, color }: StatBadgeProps) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="font-mono text-[10px] uppercase font-medium text-[--text-muted]">
+      <span className="font-mono text-[13.5px] uppercase font-medium text-[--text-muted]">
         {label}
       </span>
       <span

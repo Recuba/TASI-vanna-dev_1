@@ -111,10 +111,10 @@ export function FinancialTrendChart({ ticker, language, t }: FinancialTrendChart
               <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+                tick={{ fontSize: 14.5, fill: 'var(--text-muted)' }}
               />
               <YAxis
-                tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+                tick={{ fontSize: 14.5, fill: 'var(--text-muted)' }}
                 tickFormatter={formatValue}
                 width={60}
               />

@@ -228,7 +228,7 @@ export function StockDetailClient({ ticker: rawTicker }: StockDetailClientProps)
             <div className="flex items-start gap-2">
               <div className="text-end">
                 <p className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">{detail.current_price?.toFixed(2) || '-'}<span className="text-sm text-[var(--text-muted)] ms-1">{detail.currency || 'SAR'}</span></p>
-                {priceChange !== null && (<p className={cn('text-sm font-bold mt-0.5', isUp ? 'text-accent-green' : 'text-accent-red')}>{isUp ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePct?.toFixed(2)}%)<span className="text-[10px] ms-1">{isUp ? '▲' : '▼'}</span></p>)}
+                {priceChange !== null && (<p className={cn('text-sm font-bold mt-0.5', isUp ? 'text-accent-green' : 'text-accent-red')}>{isUp ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePct?.toFixed(2)}%)<span className="text-[13.5px] ms-1">{isUp ? '▲' : '▼'}</span></p>)}
               </div>
               <Tooltip text={t('طباعة / تصدير PDF', 'Print / Export PDF')} position="bottom">
                 <button onClick={() => window.print()} className={cn('p-2 rounded-md transition-colors mt-1 print:hidden', 'text-[var(--text-muted)] hover:text-gold hover:bg-[var(--bg-card-hover)]')} aria-label={t('طباعة', 'Print')}>

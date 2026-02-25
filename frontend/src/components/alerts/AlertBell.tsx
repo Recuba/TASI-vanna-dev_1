@@ -52,7 +52,7 @@ export function AlertBell() {
         </svg>
         {/* Badge */}
         {newTriggeredCount > 0 && (
-          <span className="absolute -top-0.5 -end-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -end-0.5 w-4 h-4 bg-red-500 text-white text-[12.5px] font-bold rounded-full flex items-center justify-center">
             {newTriggeredCount > 9 ? '9+' : newTriggeredCount}
           </span>
         )}
@@ -70,7 +70,7 @@ export function AlertBell() {
           <div className="p-3 border-b border-[#2A2A2A]">
             <h3 className="text-sm font-bold text-[var(--text-primary)]">
               {t('التنبيهات', 'Price Alerts')}
-              <span className="text-[10px] text-[var(--text-muted)] font-normal ms-2">
+              <span className="text-[13.5px] text-[var(--text-muted)] font-normal ms-2">
                 ({activeAlerts.length} {t('نشط', 'active')})
               </span>
             </h3>
@@ -79,7 +79,7 @@ export function AlertBell() {
           <div className="max-h-[240px] overflow-y-auto">
             {triggeredAlerts.length > 0 ? (
               <div className="p-2 space-y-1">
-                <p className="text-[10px] text-red-400 font-medium px-1 mb-1">
+                <p className="text-[13.5px] text-red-400 font-medium px-1 mb-1">
                   {t('تنبيهات مفعّلة', 'Triggered Alerts')}
                 </p>
                 {triggeredAlerts.map((alert) => (
@@ -87,7 +87,7 @@ export function AlertBell() {
                     <div className="flex items-center justify-between">
                       <span className="text-[var(--text-primary)] font-medium">{alert.ticker.replace('.SR', '')}</span>
                       <span className={cn(
-                        'text-[9px] px-1.5 py-0.5 rounded-full font-bold',
+                        'text-[12.5px] px-1.5 py-0.5 rounded-full font-bold',
                         alert.alert_type === 'price_above' ? 'bg-accent-green/20 text-accent-green' : 'bg-red-500/20 text-red-400'
                       )}>
                         {alert.alert_type === 'price_above' ? '▲' : '▼'} {alert.threshold_value.toFixed(2)}

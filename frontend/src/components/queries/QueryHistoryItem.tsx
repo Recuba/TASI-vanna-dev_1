@@ -131,7 +131,7 @@ export function QueryHistoryItem({
             {/* SQL block */}
             {record.generatedSql && (
               <div className="mt-2">
-                <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-1">
+                <p className="text-[13.5px] uppercase tracking-wider text-[var(--text-muted)] mb-1">
                   SQL
                 </p>
                 <pre className="text-xs text-[var(--text-secondary)] bg-[var(--bg-input)] rounded p-2 overflow-x-auto max-h-[120px] overflow-y-auto whitespace-pre-wrap break-all">
@@ -143,7 +143,7 @@ export function QueryHistoryItem({
             {/* Result preview */}
             {record.results && record.results.columns.length > 0 && (
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-1">
+                <p className="text-[13.5px] uppercase tracking-wider text-[var(--text-muted)] mb-1">
                   {t(`\u0645\u0639\u0627\u064A\u0646\u0629 (${record.rowCount} \u0635\u0641)`, `Preview (${record.rowCount} rows)`)}
                 </p>
                 <div className="overflow-x-auto">
@@ -185,7 +185,7 @@ export function QueryHistoryItem({
                 {record.tags.map((tag, i) => (
                   <span
                     key={i}
-                    className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/20"
+                    className="inline-block text-[13.5px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold border border-gold/20"
                   >
                     {tag}
                   </span>

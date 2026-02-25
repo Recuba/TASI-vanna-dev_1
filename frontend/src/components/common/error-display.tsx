@@ -91,7 +91,7 @@ export function ErrorDisplay({ message, onRetry, className }: ErrorDisplayProps)
       {message && (
         <button
           onClick={() => setShowDetails((prev) => !prev)}
-          className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mb-3 underline underline-offset-2"
+          className="text-[13.5px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mb-3 underline underline-offset-2"
         >
           {showDetails
             ? t('إخفاء التفاصيل', 'Hide details')
@@ -99,7 +99,7 @@ export function ErrorDisplay({ message, onRetry, className }: ErrorDisplayProps)
         </button>
       )}
       {showDetails && (
-        <p className="text-[10px] text-[var(--text-muted)] mb-3 max-w-md mx-auto break-all font-mono opacity-60">
+        <p className="text-[13.5px] text-[var(--text-muted)] mb-3 max-w-md mx-auto break-all font-mono opacity-60">
           {message}
         </p>
       )}

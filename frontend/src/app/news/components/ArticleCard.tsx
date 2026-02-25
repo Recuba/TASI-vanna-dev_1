@@ -33,7 +33,7 @@ function PriorityIndicator({ priority }: { priority: number }) {
   if (priority < 4) return null;
   if (priority >= 5) {
     return (
-      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-accent-red/15 text-accent-red">
+      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[13.5px] font-bold bg-accent-red/15 text-accent-red">
         <span className="w-1.5 h-1.5 rounded-full bg-accent-red animate-pulse" />
         عاجل
       </span>
@@ -49,7 +49,7 @@ function SourceBadge({ name }: { name: string }) {
 
   return (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium"
+      className="inline-flex items-center px-2 py-0.5 rounded-full text-[14.5px] font-medium"
       style={{ backgroundColor: `${color}20`, color }}
     >
       {name}
@@ -59,7 +59,7 @@ function SourceBadge({ name }: { name: string }) {
 
 function SentimentBadge({ label }: { label: string | null | undefined }) {
   if (!label) return null;
-  let classes = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium';
+  let classes = 'inline-flex items-center px-2 py-0.5 rounded-full text-[13.5px] font-medium';
   if (label === 'إيجابي') {
     classes += ' bg-accent-green/20 text-accent-green';
   } else if (label === 'سلبي') {
@@ -77,7 +77,7 @@ function StockBadge({ ticker }: { ticker: string | null | undefined }) {
       href={`/stock/${ticker}`}
       onClick={(e) => e.stopPropagation()}
       className={cn(
-        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium',
+        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[13.5px] font-medium',
         'border border-[#D4A84B]/30 text-[#D4A84B] hover:bg-[#D4A84B]/10',
         'focus-visible:ring-2 focus-visible:ring-[#D4A84B]/40 focus-visible:outline-none',
         'transition-colors',

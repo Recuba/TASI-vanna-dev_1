@@ -43,7 +43,7 @@ function MobileCardInner({ inst, language }: MobileCardProps) {
           </span>
         </div>
         <span
-          className="font-mono text-[9px] rounded px-1.5 py-px text-[--text-secondary]"
+          className="font-mono text-[12.5px] rounded px-1.5 py-px text-[--text-secondary]"
           style={{ background: bgTint }}
         >
           {inst.key}
@@ -71,7 +71,7 @@ function MobileCardInner({ inst, language }: MobileCardProps) {
         <span
           className={cn(
             language === 'ar' ? 'font-mono' : 'font-arabic',
-            'text-[8px] text-[--text-muted]',
+            'text-[11.5px] text-[--text-muted]',
           )}
           style={{ direction: language === 'ar' ? 'ltr' : 'rtl' }}
         >

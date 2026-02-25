@@ -119,7 +119,7 @@ export async function exportToPdf(
     body: bodyRows,
     startY: 30,
     styles: {
-      fontSize: 8,
+      fontSize: 11.5,
       cellPadding: 2,
     },
     headStyles: {

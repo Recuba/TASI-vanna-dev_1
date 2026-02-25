@@ -56,7 +56,7 @@ export function VisLineChart({ data, title, config }: VisLineChartProps) {
               border: '1px solid rgba(212, 168, 75, 0.3)',
               borderRadius: '8px',
               color: '#FFFFFF',
-              fontSize: 12,
+              fontSize: 15.5,
             }}
           />
           {yKeys.length > 1 && <Legend />}

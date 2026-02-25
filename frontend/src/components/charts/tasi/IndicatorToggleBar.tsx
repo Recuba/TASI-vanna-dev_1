@@ -34,7 +34,7 @@ export const IndicatorToggleBar = memo(function IndicatorToggleBar({
           title={t('المتوسط المتحرك 20', 'Moving Average 20')}
           aria-label={t('تبديل المتوسط المتحرك 20', 'Toggle Moving Average 20')}
           aria-pressed={showMA20}
-          className="text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium"
+          className="text-[13.5px] px-1.5 py-0.5 rounded transition-colors font-medium"
           style={{
             background: showMA20 ? 'rgba(212, 168, 75, 0.2)' : 'transparent',
             color: showMA20 ? MA20_COLOR : '#707070',
@@ -48,7 +48,7 @@ export const IndicatorToggleBar = memo(function IndicatorToggleBar({
           title={t('المتوسط المتحرك 50', 'Moving Average 50')}
           aria-label={t('تبديل المتوسط المتحرك 50', 'Toggle Moving Average 50')}
           aria-pressed={showMA50}
-          className="text-[10px] px-1.5 py-0.5 rounded transition-colors font-medium"
+          className="text-[13.5px] px-1.5 py-0.5 rounded transition-colors font-medium"
           style={{
             background: showMA50 ? 'rgba(74, 159, 255, 0.2)' : 'transparent',
             color: showMA50 ? MA50_COLOR : '#707070',
@@ -67,7 +67,7 @@ export const IndicatorToggleBar = memo(function IndicatorToggleBar({
           aria-label={t('رسم بياني شمعي', 'Candlestick chart')}
           aria-pressed={chartType === 'candlestick'}
           className={cn(
-            'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
+            'text-[13.5px] px-1.5 py-0.5 rounded transition-colors border',
             chartType === 'candlestick'
               ? 'bg-gold/20 text-gold border-gold'
               : 'bg-transparent text-[#707070] border-transparent',
@@ -86,7 +86,7 @@ export const IndicatorToggleBar = memo(function IndicatorToggleBar({
           aria-label={t('رسم بياني خطي', 'Line chart')}
           aria-pressed={chartType === 'line'}
           className={cn(
-            'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
+            'text-[13.5px] px-1.5 py-0.5 rounded transition-colors border',
             chartType === 'line'
               ? 'bg-gold/20 text-gold border-gold'
               : 'bg-transparent text-[#707070] border-transparent',
@@ -102,7 +102,7 @@ export const IndicatorToggleBar = memo(function IndicatorToggleBar({
           aria-label={t('رسم بياني مساحي', 'Area chart')}
           aria-pressed={chartType === 'area'}
           className={cn(
-            'text-[10px] px-1.5 py-0.5 rounded transition-colors border',
+            'text-[13.5px] px-1.5 py-0.5 rounded transition-colors border',
             chartType === 'area'
               ? 'bg-gold/20 text-gold border-gold'
               : 'bg-transparent text-[#707070] border-transparent',

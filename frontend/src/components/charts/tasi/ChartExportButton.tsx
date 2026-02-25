@@ -53,7 +53,7 @@ export const ChartExportButton = memo(function ChartExportButton({
         onClick={handleScreenshot}
         title={t('تحميل PNG', 'Download PNG')}
         aria-label={t('تحميل صورة الرسم البياني', 'Download chart image')}
-        className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block text-[#707070] hover:text-gold"
+        className="text-[13.5px] px-1.5 py-0.5 rounded transition-colors hidden sm:block text-[#707070] hover:text-gold"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -65,7 +65,7 @@ export const ChartExportButton = memo(function ChartExportButton({
         onClick={handleCSVExport}
         title={t('تصدير CSV', 'Export CSV')}
         aria-label={t('تصدير بيانات الرسم البياني كملف CSV', 'Export chart data as CSV')}
-        className="text-[10px] px-1.5 py-0.5 rounded transition-colors hidden sm:block text-[#707070] hover:text-gold"
+        className="text-[13.5px] px-1.5 py-0.5 rounded transition-colors hidden sm:block text-[#707070] hover:text-gold"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <path d="M14,2 L6,2 C4.9,2 4,2.9 4,4 L4,20 C4,21.1 4.9,22 6,22 L18,22 C19.1,22 20,21.1 20,20 L20,8 Z" />
